@@ -13,11 +13,13 @@ Fill after the first physical board is inspected.
 
 ## Measured identity
 
-- Chip:
-- Revision:
+- Chip: ESP32-S3 QFN56
+- Revision: v0.2
 - Flash ID:
-- Flash size:
-- PSRAM:
+- Flash size: 16 MB dump captured
+- PSRAM: 8 MB embedded PSRAM reported by esptool
+- Crystal: 40 MHz
+- MAC: 84:fc:e6:6c:69:3c
 - USB bridge/native USB:
 
 ## Factory firmware preservation
@@ -28,11 +30,21 @@ Local evidence folder:
 evidence/specimens/sample-a/factory-firmware/
 ```
 
-Expected safe public artifacts after review:
+Factory firmware dump status:
 
-- SHA-256 file for repeated reads;
-- first-pass partition/string analysis;
-- notes on possible factory-test strings or entry points.
+```text
+Timestamp   : 20260822-195722
+Read size   : 16 MB / 0x01000000
+Reads       : 2
+SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
+Result      : MATCH all reads are identical
+```
+
+Commit-safe hash record:
+
+```text
+evidence/specimens/sample-a/factory-firmware/factory-dump-20260822-195722.sha256.txt
+```
 
 Do not commit factory `.bin` dumps.
 
@@ -41,9 +53,9 @@ Do not commit factory `.bin` dumps.
 | Stage | Target | Status |
 |---|---|---|
 | HW-00 | Photos and visible identity | OPEN |
-| HW-01 | Chip / flash / PSRAM | OPEN |
-| FW-00 | Factory flash double-read dump | OPEN |
-| FW-01 | Factory dump SHA-256 match | OPEN |
+| HW-01 | Chip / flash / PSRAM | PARTIAL |
+| FW-00 | Factory flash double-read dump | CAPTURED |
+| FW-01 | Factory dump SHA-256 match | MATCH |
 | FW-02 | Factory partition/string analysis | OPEN |
 | FW-03 | Possible factory-test leads | OPEN |
 | HW-02 | RGB display | OPEN |
