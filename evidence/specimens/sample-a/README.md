@@ -20,12 +20,32 @@ Fill after the first physical board is inspected.
 - PSRAM:
 - USB bridge/native USB:
 
+## Factory firmware preservation
+
+Local evidence folder:
+
+```text
+evidence/specimens/sample-a/factory-firmware/
+```
+
+Expected safe public artifacts after review:
+
+- SHA-256 file for repeated reads;
+- first-pass partition/string analysis;
+- notes on possible factory-test strings or entry points.
+
+Do not commit factory `.bin` dumps.
+
 ## Acceptance status
 
 | Stage | Target | Status |
 |---|---|---|
 | HW-00 | Photos and visible identity | OPEN |
 | HW-01 | Chip / flash / PSRAM | OPEN |
+| FW-00 | Factory flash double-read dump | OPEN |
+| FW-01 | Factory dump SHA-256 match | OPEN |
+| FW-02 | Factory partition/string analysis | OPEN |
+| FW-03 | Possible factory-test leads | OPEN |
 | HW-02 | RGB display | OPEN |
 | HW-03 | GT911 touch | OPEN |
 | HW-04 | Backlight | OPEN |
