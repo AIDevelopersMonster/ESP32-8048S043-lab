@@ -40,10 +40,22 @@ SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
 Result      : MATCH all reads are identical
 ```
 
-Commit-safe hash record:
+First-pass partition analysis:
+
+```text
+Partition table : 0x00008000
+Entries         : 5
+Layout          : nvs / otadata / app0 / app1 / spiffs
+App slots       : app0 0x00010000 size 0x140000, app1 0x00150000 size 0x140000
+SPIFFS          : 0x00290000 size 0x170000
+Strings         : 2689 printable strings >=5 chars
+```
+
+Commit-safe records:
 
 ```text
 evidence/specimens/sample-a/factory-firmware/factory-dump-20260822-195722.sha256.txt
+evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-summary.md
 ```
 
 Do not commit factory `.bin` dumps.
@@ -56,7 +68,7 @@ Do not commit factory `.bin` dumps.
 | HW-01 | Chip / flash / PSRAM | PARTIAL |
 | FW-00 | Factory flash double-read dump | CAPTURED |
 | FW-01 | Factory dump SHA-256 match | MATCH |
-| FW-02 | Factory partition/string analysis | OPEN |
+| FW-02 | Factory partition/string analysis | FIRST-PASS DONE |
 | FW-03 | Possible factory-test leads | OPEN |
 | HW-02 | RGB display | OPEN |
 | HW-03 | GT911 touch | OPEN |
