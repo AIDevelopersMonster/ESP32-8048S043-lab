@@ -5,41 +5,50 @@ param(
     [int]$Baud = 921600,
     [int]$SizeMB = 16,
     [int]$Reads = 2,
-    [string]$OutDir = "evidence\specimens\sample-a\factory-firmware"
+    [string]$OutDir = "evidence\specimens\sample-a\factory-firmware",
+    [switch]$VerboseEsptool
 )
 
 $ErrorActionPreference = "Stop"
 
 function Invoke-LoggedPy {
     param(
+        [string]$Step,
         [string[]]$Arguments,
         [string]$LogFile
     )
 
     $display = "py " + ($Arguments -join " ")
-    Write-Host "> $display"
+    Write-Host "$Step ... " -NoNewline
     Add-Content -Path $LogFile -Value "> $display"
 
-    # esptool sometimes writes normal progress/reset messages to stderr.
-    # Windows PowerShell can wrap that as NativeCommandError when stderr is redirected.
-    # Treat stderr as log output, then rely on the native exit code instead.
-    $oldEap = $ErrorActionPreference
-    $ErrorActionPreference = "Continue"
+    $tmpOut = [System.IO.Path]::GetTempFileName()
+    $tmpErr = [System.IO.Path]::GetTempFileName()
+
     try {
-        & py @Arguments 2>&1 | ForEach-Object {
-            $line = $_.ToString()
-            Write-Host $line
-            Add-Content -Path $LogFile -Value $line
+        $p = Start-Process -FilePath "py" -ArgumentList $Arguments -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
+        $outText = Get-Content -Raw -Path $tmpOut -ErrorAction SilentlyContinue
+        $errText = Get-Content -Raw -Path $tmpErr -ErrorAction SilentlyContinue
+
+        if ($outText) { Add-Content -Path $LogFile -Value $outText }
+        if ($errText) { Add-Content -Path $LogFile -Value $errText }
+        Add-Content -Path $LogFile -Value "EXIT_CODE: $($p.ExitCode)"
+
+        if ($p.ExitCode -eq 0) {
+            Write-Host "OK"
+            if ($VerboseEsptool) {
+                if ($outText) { Write-Host $outText }
+                if ($errText) { Write-Host $errText }
+            }
+        } else {
+            Write-Host "FAIL $($p.ExitCode)" -ForegroundColor Red
+            if ($outText) { Write-Host $outText }
+            if ($errText) { Write-Host $errText }
+            throw "Command failed with exit code $($p.ExitCode): $display"
         }
-        $exitCode = $LASTEXITCODE
     }
     finally {
-        $ErrorActionPreference = $oldEap
-    }
-
-    Add-Content -Path $LogFile -Value "EXIT_CODE: $exitCode"
-    if ($exitCode -ne 0) {
-        throw "Command failed with exit code $exitCode: $display"
+        Remove-Item -Force -ErrorAction SilentlyContinue $tmpOut, $tmpErr
     }
 }
 
@@ -61,28 +70,30 @@ Add-Content -Path $logFile -Value "SizeMB: $SizeMB"
 Add-Content -Path $logFile -Value "Reads: $Reads"
 Add-Content -Path $logFile -Value ""
 
-Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "chip_id") $logFile
-Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "flash_id") $logFile
+Write-Host "FACTORY DUMP  port=$Port  flash=${SizeMB}MB  reads=$Reads  baud=$Baud"
+
+Invoke-LoggedPy "chip_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "chip_id") $logFile
+Invoke-LoggedPy "flash_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "flash_id") $logFile
 
 $hashes = @()
 for ($i = 1; $i -le $Reads; $i++) {
     $dumpFile = Join-Path $outPath ("factory-flash-read{0}-{1}mb.bin" -f $i, $SizeMB)
-    Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "read_flash", "0x000000", $sizeHex, $dumpFile) $logFile
+    Invoke-LoggedPy "read_flash $i/$Reads" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "read_flash", "0x000000", $sizeHex, $dumpFile) $logFile
 
     $hash = Get-FileHash -Algorithm SHA256 -Path $dumpFile
     $hashes += $hash.Hash
     Add-Content -Path $hashFile -Value ("{0}  {1}" -f $hash.Hash, $dumpFile)
-    Write-Host ("SHA256 read {0}: {1}" -f $i, $hash.Hash)
+    Write-Host ("sha256 read{0} {1}" -f $i, $hash.Hash)
 }
 
 if ($hashes.Count -gt 1) {
     $unique = $hashes | Select-Object -Unique
     if ($unique.Count -eq 1) {
         Add-Content -Path $hashFile -Value "MATCH: all reads are identical"
-        Write-Host "MATCH: all reads are identical"
+        Write-Host "MATCH all reads are identical"
     } else {
         Add-Content -Path $hashFile -Value "MISMATCH: repeated reads differ"
-        Write-Host "MISMATCH: repeated reads differ" -ForegroundColor Red
+        Write-Host "MISMATCH repeated reads differ" -ForegroundColor Red
         exit 2
     }
 }
@@ -91,12 +102,5 @@ $stableDump = Join-Path $outPath ("factory-flash-{0}mb.bin" -f $SizeMB)
 Copy-Item -Force -Path (Join-Path $outPath ("factory-flash-read1-{0}mb.bin" -f $SizeMB)) -Destination $stableDump
 Add-Content -Path $hashFile -Value ("STABLE_COPY  {0}" -f $stableDump)
 
-Write-Host ""
-Write-Host "Factory firmware dump complete."
-Write-Host "Dump directory: $outPath"
-Write-Host "Log: $logFile"
-Write-Host "Hashes: $hashFile"
-Write-Host "Stable copy: $stableDump"
-Write-Host ""
-Write-Host "Next analysis command:"
-Write-Host "py tools\analysis\firmware_scan.py '$stableDump' --out '$outPath\analysis'"
+Write-Host "DONE dump=$stableDump log=$logFile hashes=$hashFile"
+Write-Host "NEXT py tools\analysis\firmware_scan.py '$stableDump' --out '$outPath\analysis'"
