@@ -6,10 +6,31 @@ param(
     [int]$SizeMB = 16,
     [int]$Reads = 2,
     [string]$OutDir = "evidence\specimens\sample-a\factory-firmware",
-    [switch]$VerboseEsptool
+    [switch]$VerboseEsptool,
+    [int]$FailTailLines = 12
 )
 
 $ErrorActionPreference = "Stop"
+
+function Show-CompactFailure {
+    param(
+        [string]$Text,
+        [int]$TailLines
+    )
+
+    if (-not $Text) { return }
+
+    $lines = $Text -split "`r?`n" | Where-Object { $_.Trim().Length -gt 0 }
+    $important = $lines | Where-Object {
+        $_ -match "A fatal error|Corrupt data|PermissionError|Cannot configure port|could not open port|Failed to|Timed out|Invalid|Serial exception|No serial data|port is busy|error occurred"
+    }
+
+    if ($important.Count -gt 0) {
+        $important | Select-Object -Last $TailLines | ForEach-Object { Write-Host "  $_" }
+    } else {
+        $lines | Select-Object -Last $TailLines | ForEach-Object { Write-Host "  $_" }
+    }
+}
 
 function Invoke-LoggedPy {
     param(
@@ -29,6 +50,7 @@ function Invoke-LoggedPy {
         $p = Start-Process -FilePath "py" -ArgumentList $Arguments -NoNewWindow -Wait -PassThru -RedirectStandardOutput $tmpOut -RedirectStandardError $tmpErr
         $outText = Get-Content -Raw -Path $tmpOut -ErrorAction SilentlyContinue
         $errText = Get-Content -Raw -Path $tmpErr -ErrorAction SilentlyContinue
+        $allText = ($outText + "`n" + $errText)
 
         if ($outText) { Add-Content -Path $LogFile -Value $outText }
         if ($errText) { Add-Content -Path $LogFile -Value $errText }
@@ -42,8 +64,7 @@ function Invoke-LoggedPy {
             }
         } else {
             Write-Host "FAIL $($p.ExitCode)" -ForegroundColor Red
-            if ($outText) { Write-Host $outText }
-            if ($errText) { Write-Host $errText }
+            Show-CompactFailure $allText $FailTailLines
             throw "Command failed with exit code $($p.ExitCode): $display"
         }
     }
@@ -72,13 +93,13 @@ Add-Content -Path $logFile -Value ""
 
 Write-Host "FACTORY DUMP  port=$Port  flash=${SizeMB}MB  reads=$Reads  baud=$Baud"
 
-Invoke-LoggedPy "chip_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "chip_id") $logFile
-Invoke-LoggedPy "flash_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "flash_id") $logFile
+Invoke-LoggedPy "chip_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "chip-id") $logFile
+Invoke-LoggedPy "flash_id" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "flash-id") $logFile
 
 $hashes = @()
 for ($i = 1; $i -le $Reads; $i++) {
     $dumpFile = Join-Path $outPath ("factory-flash-read{0}-{1}mb.bin" -f $i, $SizeMB)
-    Invoke-LoggedPy "read_flash $i/$Reads" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "read_flash", "0x000000", $sizeHex, $dumpFile) $logFile
+    Invoke-LoggedPy "read_flash $i/$Reads" @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "read-flash", "0x000000", $sizeHex, $dumpFile) $logFile
 
     $hash = Get-FileHash -Algorithm SHA256 -Path $dumpFile
     $hashes += $hash.Hash
