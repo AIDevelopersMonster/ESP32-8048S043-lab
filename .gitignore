@@ -2,11 +2,22 @@
 .vscode/
 .idea/
 .DS_Store
+
+# Build and firmware binaries. Do not commit factory or third-party firmware dumps.
 *.bin
 *.elf
 *.map
-*.log
 *.uf2
+*.hex
+*.img
+*.raw
+*.dump
+*.bak
+*.backup
+
+# Local logs may include host paths, COM ports, MAC addresses or Wi-Fi names.
+*.log
+
 .env
 secrets.h
 wifi_secrets.h
