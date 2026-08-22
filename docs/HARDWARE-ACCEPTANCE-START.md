@@ -1,6 +1,6 @@
 # Hardware acceptance start
 
-This is the first-board workflow. Do not flash experimental display firmware before identity capture.
+This is the first-board workflow. Do not flash experimental display firmware before identity capture and factory firmware preservation.
 
 ## Stage 0 — photos
 
@@ -42,15 +42,39 @@ Capture:
 - PSRAM result;
 - USB bridge / native USB path.
 
-## Stage 3 — first safe firmware
+## Stage 3 — factory firmware preservation
+
+Before flashing any lab firmware, read the original flash at least twice and compare SHA-256:
+
+```powershell
+.\tools\windows\dump_factory_firmware.ps1 -Port COM7 -SizeMB 16 -Reads 2
+```
+
+The script writes local binaries under:
+
+```text
+evidence/specimens/sample-a/factory-firmware/
+```
+
+Firmware binaries are ignored by Git. Commit only reviewed metadata such as SHA-256 and analysis reports.
+
+Then run the offline first-pass scanner:
+
+```powershell
+py tools\analysis\firmware_scan.py `
+  evidence\specimens\sample-a\factory-firmware\factory-flash-16mb.bin `
+  --out evidence\specimens\sample-a\factory-firmware\analysis
+```
+
+## Stage 4 — first safe firmware
 
 Upload only `01_BoardInfo` first. It should not drive the RGB panel aggressively.
 
-## Stage 4 — display bring-up
+## Stage 5 — display bring-up
 
-Only after identity capture, test RGB timing and backlight with a minimal display pattern.
+Only after identity capture and factory-firmware preservation, test RGB timing and backlight with a minimal display pattern.
 
-## Stage 5 — touch bring-up
+## Stage 6 — touch bring-up
 
 Run I2C scan, then GT911 coordinate test.
 
@@ -67,4 +91,5 @@ PHYSICAL PASS
 PHYSICAL FAIL
 PARTIAL
 PENDING EXTERNAL HARDWARE
+POSSIBLE FACTORY TEST LEAD
 ```
