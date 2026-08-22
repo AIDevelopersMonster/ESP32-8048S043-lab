@@ -1,0 +1,23 @@
+name: PR Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  arduino-bsp:
+    name: Arduino BSP
+    uses: ./.github/workflows/arduino-bsp.yml
+
+  gate:
+    name: Required PR Gate
+    if: always()
+    needs: [arduino-bsp]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require validations
+        env:
+          ARDUINO_RESULT: ${{ needs.arduino-bsp.result }}
+        run: |
+          echo "Arduino BSP: ${ARDUINO_RESULT}"
+          test "${ARDUINO_RESULT}" = "success"

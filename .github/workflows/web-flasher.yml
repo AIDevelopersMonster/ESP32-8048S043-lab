@@ -1,0 +1,13 @@
+name: Web Flasher
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Explain status
+        run: |
+          echo "Web Flasher is intentionally a skeleton until non-destructive firmware targets are physically validated."

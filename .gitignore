@@ -1,0 +1,24 @@
+.pio/
+.vscode/
+.idea/
+.DS_Store
+*.bin
+*.elf
+*.map
+*.log
+*.uf2
+.env
+secrets.h
+wifi_secrets.h
+__pycache__/
+*.pyc
+build/
+sdkconfig
+sdkconfig.old
+
+# Local board identity captures may include MAC addresses, serial ports and host paths.
+board-info/
+
+# Local generated web-flasher output.
+web-site/
+.web-build/

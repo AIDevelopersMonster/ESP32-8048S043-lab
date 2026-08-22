@@ -1,0 +1,39 @@
+name: Arduino Library Package
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'arduino-v*'
+    paths:
+      - 'libraries/ESP32_8048S043/**'
+      - '.github/workflows/arduino-library-package.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read library version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(grep '^version=' libraries/ESP32_8048S043/library.properties | cut -d= -f2)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Build Arduino ZIP
+        shell: bash
+        run: |
+          rm -rf package
+          mkdir -p package/ESP32_8048S043
+          cp -a libraries/ESP32_8048S043/. package/ESP32_8048S043/
+          cd package
+          zip -r "../ESP32_8048S043-Arduino-v${{ steps.version.outputs.version }}.zip" ESP32_8048S043
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESP32_8048S043-Arduino-v${{ steps.version.outputs.version }}
+          path: ESP32_8048S043-Arduino-v${{ steps.version.outputs.version }}.zip
+          if-no-files-found: error

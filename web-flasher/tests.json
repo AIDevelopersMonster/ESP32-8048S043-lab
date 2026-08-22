@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "board": {
+    "id": "esp32-8048s043c-i-reference",
+    "name": "ESP32-8048S043C-I reported reference profile",
+    "chipFamily": "ESP32-S3",
+    "status": "reported-only"
+  },
+  "tests": []
+}

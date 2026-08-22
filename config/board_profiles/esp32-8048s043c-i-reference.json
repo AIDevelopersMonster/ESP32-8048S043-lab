@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "status": "reported-only",
+  "profile_id": "esp32-8048s043c-i-reference",
+  "display_name": "ESP32-8048S043C-I reference profile",
+  "warning": "Reported/community profile only until validated on a named physical specimen.",
+  "mcu": "ESP32-S3",
+  "display": {
+    "width": 800,
+    "height": 480,
+    "bus": "RGB/DPI",
+    "status": "reported-only"
+  },
+  "touch": {
+    "controller": "GT911",
+    "i2c_sda": 19,
+    "i2c_scl": 20,
+    "address": "0x5D",
+    "status": "reported-only"
+  },
+  "pins_reported": {
+    "backlight": 2,
+    "de": 40,
+    "hsync": 39,
+    "vsync": 41,
+    "pclk": 42,
+    "red": [45, 48, 47, 21, 14],
+    "green": [5, 6, 7, 15, 16, 4],
+    "blue": [8, 3, 46, 9, 1]
+  }
+}

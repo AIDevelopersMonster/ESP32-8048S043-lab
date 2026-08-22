@@ -1,0 +1,31 @@
+name: Arduino BSP CI
+
+on:
+  workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - 'libraries/ESP32_8048S043/**'
+      - '.github/workflows/arduino-bsp.yml'
+  pull_request:
+    branches: [main]
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install ESP32 Arduino core
+        run: |
+          arduino-cli config init
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@3.3.8 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Compile skeleton examples
+        run: |
+          for example in 01_BoardInfo 02_DisplayRGBTest 03_TouchGT911Test 04_BacklightTest 05_TestConsole; do
+            arduino-cli compile \
+              --fqbn esp32:esp32:esp32s3:PSRAM=enabled,FlashSize=16M \
+              --library libraries/ESP32_8048S043 \
+              "libraries/ESP32_8048S043/examples/$example"
+          done

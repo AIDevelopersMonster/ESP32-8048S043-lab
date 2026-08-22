@@ -1,0 +1,23 @@
+name: PlatformIO CI
+
+on:
+  workflow_call:
+  push:
+    branches: [main]
+    paths:
+      - 'platformio.ini'
+      - 'libraries/ESP32_8048S043/**'
+      - '.github/workflows/platformio.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install PlatformIO
+        run: pip install platformio
+      - name: Build default environment
+        run: pio run
