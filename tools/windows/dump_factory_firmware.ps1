@@ -10,15 +10,37 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function Invoke-Logged {
+function Invoke-LoggedPy {
     param(
-        [string]$CommandLine,
+        [string[]]$Arguments,
         [string]$LogFile
     )
 
-    Write-Host "> $CommandLine"
-    Add-Content -Path $LogFile -Value "> $CommandLine"
-    powershell -NoProfile -ExecutionPolicy Bypass -Command $CommandLine 2>&1 | Tee-Object -FilePath $LogFile -Append
+    $display = "py " + ($Arguments -join " ")
+    Write-Host "> $display"
+    Add-Content -Path $LogFile -Value "> $display"
+
+    # esptool sometimes writes normal progress/reset messages to stderr.
+    # Windows PowerShell can wrap that as NativeCommandError when stderr is redirected.
+    # Treat stderr as log output, then rely on the native exit code instead.
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & py @Arguments 2>&1 | ForEach-Object {
+            $line = $_.ToString()
+            Write-Host $line
+            Add-Content -Path $LogFile -Value $line
+        }
+        $exitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $oldEap
+    }
+
+    Add-Content -Path $LogFile -Value "EXIT_CODE: $exitCode"
+    if ($exitCode -ne 0) {
+        throw "Command failed with exit code $exitCode: $display"
+    }
 }
 
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
@@ -27,6 +49,7 @@ New-Item -ItemType Directory -Force -Path $outPath | Out-Null
 
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $sizeBytes = $SizeMB * 1024 * 1024
+$sizeHex = "0x{0:X}" -f $sizeBytes
 $logFile = Join-Path $outPath "factory-dump-$timestamp.log"
 $hashFile = Join-Path $outPath "factory-dump-$timestamp.sha256.txt"
 
@@ -38,13 +61,14 @@ Add-Content -Path $logFile -Value "SizeMB: $SizeMB"
 Add-Content -Path $logFile -Value "Reads: $Reads"
 Add-Content -Path $logFile -Value ""
 
-Invoke-Logged "py -m esptool --chip esp32s3 --port $Port --baud $Baud chip_id" $logFile
-Invoke-Logged "py -m esptool --chip esp32s3 --port $Port --baud $Baud flash_id" $logFile
+Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "chip_id") $logFile
+Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "flash_id") $logFile
 
 $hashes = @()
 for ($i = 1; $i -le $Reads; $i++) {
     $dumpFile = Join-Path $outPath ("factory-flash-read{0}-{1}mb.bin" -f $i, $SizeMB)
-    Invoke-Logged "py -m esptool --chip esp32s3 --port $Port --baud $Baud read_flash 0x000000 0x$($sizeBytes.ToString('X')) '$dumpFile'" $logFile
+    Invoke-LoggedPy @("-m", "esptool", "--chip", "esp32s3", "--port", $Port, "--baud", "$Baud", "read_flash", "0x000000", $sizeHex, $dumpFile) $logFile
+
     $hash = Get-FileHash -Algorithm SHA256 -Path $dumpFile
     $hashes += $hash.Hash
     Add-Content -Path $hashFile -Value ("{0}  {1}" -f $hash.Hash, $dumpFile)
