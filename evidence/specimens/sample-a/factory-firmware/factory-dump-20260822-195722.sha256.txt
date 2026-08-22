@@ -1,0 +1,20 @@
+ESP32-8048S043 Sample A factory firmware dump hash evidence
+
+Timestamp: 20260822-195722
+Port: COM12
+Baud: 460800
+Read size: 16 MB / 0x01000000
+Reads: 2
+
+SHA256 read1  3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
+SHA256 read2  3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
+
+MATCH: all reads are identical
+
+Local binary dumps are intentionally not committed:
+- factory-flash-read1-16mb.bin
+- factory-flash-read2-16mb.bin
+- factory-flash-16mb.bin
+
+Stable local dump path reported by script:
+evidence/specimens/sample-a/factory-firmware/factory-flash-16mb.bin
