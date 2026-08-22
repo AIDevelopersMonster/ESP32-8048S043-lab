@@ -10,6 +10,7 @@ This repository is intentionally evidence-first. It is **not** a generic pinout 
 REPOSITORY STRUCTURE        CREATED
 REFERENCE BOARD PASSPORT    OPEN
 CHIP / FLASH / PSRAM        OPEN
+FACTORY FIRMWARE WORKFLOW   SOURCE IMPLEMENTED
 DISPLAY RGB PANEL           OPEN
 GT911 TOUCH                 OPEN
 BSP LIBRARY                 SKELETON
@@ -32,25 +33,28 @@ Important: board labels, sellers and OEM revisions may differ. Treat every new b
 
 ## Repository philosophy
 
-1. **Identify before flashing.** First capture photos, chip identity, flash size and PSRAM.
+1. **Identify before flashing.** First capture photos, chip identity, flash size, PSRAM and the factory firmware dump.
 2. **Separate reported from verified.** Vendor/community pin maps live in docs until tested.
-3. **Keep examples incremental.** BoardInfo -> display -> touch -> backlight -> LVGL -> Web/OTA.
+3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> LVGL -> Web/OTA.
 4. **No hidden negative branches.** Failed experiments may be kept as history, but current README status must reflect the current validated result.
 5. **No PASS without evidence.** A working video/log/photo must name the specimen and firmware.
 
 ## Start here
 
 - [`docs/HARDWARE-ACCEPTANCE-START.md`](docs/HARDWARE-ACCEPTANCE-START.md) — first-board acceptance workflow.
+- [`docs/firmware/README.md`](docs/firmware/README.md) — factory and third-party firmware preservation/analysis rules.
 - [`docs/pinout.md`](docs/pinout.md) — reported and future verified pin map.
 - [`docs/videos.md`](docs/videos.md) — shooting plan and future evidence links.
-- [`docs/third-party/README.md`](docs/third-party/README.md) — reference projects to study without copying blindly.
+- [`docs/third-party/README.md`](docs/third-party/README.md) — reference projects and firmware to study without copying blindly.
 - [`evidence/specimens/sample-a/README.md`](evidence/specimens/sample-a/README.md) — first specimen evidence folder.
 - [`libraries/ESP32_8048S043/README.md`](libraries/ESP32_8048S043/README.md) — Arduino BSP skeleton and example plan.
 
 ## Planned architecture
 
 ```text
-USB / browser first install
+Factory firmware preservation
+        ↓
+USB / browser first lab install
         ↓
 Arduino BSP for verified board profile
         ↓
@@ -69,7 +73,7 @@ Widget runtime and GitHub OTA only after stable partition layout
 ESP32-8048S043-lab/
 ├── .github/                 # issue templates and CI workflows
 ├── config/board_profiles/   # machine-readable board/specimen profiles
-├── docs/                    # hardware, software, variants, research, videos
+├── docs/                    # hardware, software, firmware, variants, research, videos
 ├── evidence/                # named specimen evidence only
 ├── hardware/images/         # raw and annotated own photos
 ├── libraries/               # Arduino BSP and examples
