@@ -9,14 +9,28 @@ This repository is intentionally evidence-first. It is **not** a generic pinout 
 ```text
 REPOSITORY STRUCTURE        CREATED
 REFERENCE BOARD PASSPORT    OPEN
-CHIP / FLASH / PSRAM        OPEN
-FACTORY FIRMWARE WORKFLOW   SOURCE IMPLEMENTED
+CHIP / FLASH / PSRAM        PARTIAL
+FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
+FACTORY FIRMWARE ANALYSIS   OPEN
 DISPLAY RGB PANEL           OPEN
 GT911 TOUCH                 OPEN
 BSP LIBRARY                 SKELETON
 WEB FLASHER                 SKELETON
 PHYSICAL PASS CLAIMS        NONE YET
 ```
+
+## Factory firmware baseline
+
+```text
+Specimen    : Sample A
+Dump time   : 20260822-195722
+Read size   : 16 MB / 0x01000000
+Reads       : 2
+SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
+Result      : MATCH all reads are identical
+```
+
+The factory `.bin` dump is intentionally not committed. Only metadata, hashes and reviewed analysis outputs are tracked.
 
 ## Target family
 
