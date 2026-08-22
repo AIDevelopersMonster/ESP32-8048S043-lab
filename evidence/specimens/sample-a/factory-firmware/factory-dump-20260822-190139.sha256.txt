@@ -1,0 +1,1 @@
+3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C  C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\factory-flash-read1-16mb.bin

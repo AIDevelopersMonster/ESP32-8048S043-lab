@@ -1,0 +1,2689 @@
+0x00000048: Assert failed in %s, %s:%d (%s)
+0x0000006A: abort() was called at PC 0x%08x
+0x0000008C: mosi_len <= 32
+0x0000009B: /IDF/components/bootloader_support/src/bootloader_flash.c
+0x000000D5: miso_len <= 32
+0x000000E4: miso_byte_num <= 4
+0x000000F7: bootloader_flash_read_sfdp
+0x00000112: bootloader_flash_execute_command_common
+0x0000013A: end1>start1
+0x00000146: /IDF/components/bootloader_support/include/bootloader_util.h
+0x00000183: end2>start2
+0x0000018F: load_end > load_addr
+0x000001A4: /IDF/components/bootloader_support/src/esp_image_format.c
+0x000001DE: Calculated hash
+0x000001EE: Expected hash
+0x000001FC: bootloader_util_regions_overlap
+0x0000021C: verify_load_addresses
+0x00000232: handle != NULL
+0x00000241: /IDF/components/bootloader_support/src/esp32s3/bootloader_sha.c
+0x00000281: data_len % 4 == 0
+0x00000293: bootloader_sha256_finish
+0x000002AC: bootloader_sha256_data
+0x000002C3: &_bss_start <= &_bss_end
+0x000002DC: /IDF/components/bootloader_support/src/esp32s3/bootloader_esp32s3.c
+0x00000320: &_data_start <= &_data_end
+0x0000033B: bootloader_init
+0x0000034B: buffer != NULL
+0x0000035A: /IDF/components/bootloader_support/src/bootloader_random.c
+0x00000395: bootloader_fill_random
+0x000003B6: WinBond
+0x000003C1: XM25QU64A
+0x00000420: g;@Lg;@
+0x00000443: 4g;@ g;@
+0x00000808: @9 00t
+0x00000CD3: 0@3 7
+0x000014A1: PPT@3
+0x00001596: PPtRa
+0x000015C9: P`u:60(
+0x000015D8: >*& 8
+0x000017BC:  *0  t  `F
+0x000017DD: @t0vT0
+0x000017E4: T0lT0RU08U
+0x000018C2:  b@  
+0x00001B95:  $  #   
+0x00001B9E: PPtV2
+0x0000209F: PD0@@t
+0x000022EC: aAB!A
+0x0000230E: 8"(29
+0x0000231E: 8R(B9
+0x000025CB: :778k1#
+0x0000274D: !08A0
+0x00002781: jcbd7-
+0x0000279F: b7""7
+0x00002843: ""7i!*#)a"
+0x00002860:   t8aI
+0x0000287C: "'7XaP"
+0x00002884: :22g7
+0x00002B6D: `bAg2
+0x00002CCF: "(&A|
+0x00002CE1: "(&Ay
+0x00002D1C: "(&@"
+0x00002D62: "(&AY
+0x00002D86: "(&AQ
+0x00002D98: "(&AN
+0x00002EB3: &#J&3j
+0x00002ED1: Rh&@AA
+0x00002F4A: &#nf3
+0x000037F5: PXA&$
+0x0000389B: ``d&$
+0x0000802C: otadata
+0x0000808C: spiffs
+0x00010030: heads/idf-release/v4.4-0-gd3340
+0x00010050: arduino-lib-builder
+0x00010070: 08:02:58
+0x00010080: Apr 20 2022
+0x00010090: v4.4.1-1-gb8050b365e
+0x00010120: LVGL Widgets Demo
+0x00010132: LVGL disp_draw_buf allocate failed!
+0x00010156: Setup done
+0x00010182: %u FPS
+0x00010189: %u%% CPU
+0x0001019B: March
+0x00010227: <%02d.%02d.%d
+0x00010235: Desktop: %u
+0x00010241: Tablet: %u
+0x0001024C: Mobile: %u
+0x00010257: Costs: %d %%
+0x00010264: Sales: %d %%
+0x00010271: Revenue: %d %%
+0x00010296: Blue jeans
+0x000102A1: Clothes
+0x000102A9: Elena Smith
+0x000102B5: This is a short description of me. Take a look at my profile!
+0x000102F7: elena@smith.com
+0x0001030B: +79 246 123 4567
+0x0001031C: Log out
+0x00010324: Invite
+0x0001032B: Your profile
+0x00010338: User name
+0x00010342: Your name
+0x0001034C: Password
+0x00010355: Min. 8 chars.
+0x00010363: Gender
+0x0001036F: Female
+0x00010376: Other
+0x0001037C: Birthday
+0x00010385: Your skills
+0x00010391: Experience
+0x0001039C: Team player
+0x000103A8: Hard-working
+0x000103B5: LVGL v8
+0x000103BD: Widgets demo
+0x000103CA: Profile
+0x000103D2: Analytics
+0x000103E1: Unique visitors
+0x000103F1: Monthly revenue
+0x00010401: Costs: 58%
+0x0001040C: Sales: 44%
+0x00010417: Revenue: 63%
+0x00010424: Monthly Target
+0x00010433: Mobile: 
+0x0001043C: Tablet: 
+0x00010445: Desktop: 
+0x0001044F: Sessions
+0x00010458: High Speed
+0x00010463: Normal Speed
+0x00010470: Low speed
+0x0001047A: Network Speed
+0x0001048D: Monthly Summary
+0x0001049D: 8-15 July, 2021
+0x000104AD: $27,123.25
+0x000104BB:  17% growth this week
+0x000104D1: Top products
+0x000104F6: Notification
+0x00010503: Item purchased
+0x00010512: New connection
+0x00010521: New subscriber
+0x00010530: New message
+0x0001053C: Milestone reached
+0x0001054E: Out of stock
+0x000255DC: "3DUfw
+0x000255F0: "3DUfw
+0x0002561E:  !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+0x00025700: "3DUfw
+0x000257C8: %d %s
+0x000257CE: January
+0x000257D6: February
+0x000257DF: April
+0x000257EA: August
+0x000257F1: September
+0x000257FB: October
+0x00025803: November
+0x0002580C: December
+0x00025B57: Enter
+0x000260C4: d d @
+0x00026133: Bd d 
+0x00026188: d d @
+0x00026DC3: %&'''
+0x00026DC9: '&()&&**'*'*+,-../.0
+0x00026E56: %%&'()*+
+0x00026E61: -./0123-4450--..67893::;:<)
+0x00027BEB: dkp/@
+0x000288A4: DDDDB
+0x00028F44: """""
+0x000290CD: """"!
+0x0002928C: """""
+0x000292AF: &fffff
+0x00029309: &fffc
+0x00029513: 5fffffP
+0x000296ED: YuQ4A
+0x00029727: lETC3F
+0x00029759: I$9oS
+0x00029794: X[9|[
+0x0002986E: !!H#l%
+0x00029895: GjI<K
+0x00029906:  ,.;:-_
+0x00029999: Check box
+0x000299C4: Option 1
+0x000299CD: Option 2
+0x000299D6: Option 3
+0x00029A74: Option 1
+0x00029A7D: Option 2
+0x00029A86: Option 3
+0x00029A8F: Option 4
+0x00029A98: Option 5
+0x00029C69: >[O[>>kOk>
+0x00029CA0: &)y)&@
+0x00029CD1: j`````
+0x00029CFA: 08>80
+0x00029D20: db6IV P
+0x00029D54: >QIE>
+0x00029D5E: rIIIF!AIM3
+0x00029D6D: 'EEE9<JII1A!
+0x00029D7C: 6III6FII)
+0x00029DA4: >A]YN|
+0x00029DAF: III6>AAA"
+0x00029DC7: >AAQs
+0x00029DEF: >AAA>
+0x00029DF9: >AQ!^
+0x00029E01: )F&III2
+0x00029E0D: ?@@@?
+0x00029E17: ?@8@?c
+0x00029E26: aYIMC
+0x00029E3F: @@@@@
+0x00029E49:  TTx@
+0x00029E4F: (DD88DDD(8DD(
+0x00029E8E: x8DDD8
+0x00029EA3: HTTT$
+0x00029EAA: ?D$<@@ |
+0x00029EB7: <@0@<D(
+0x00029EC5: |DdTLD
+0x00029EDF: <&#&<
+0x00029EE9: :@@ z8TTUY!UUyA"TTxB!UTx@ TUy@
+0x00029F0C: 9UUUY9TTTY9UTTX
+0x00029F39:  TT|T|
+0x00029F42: I2III2:DDD:2JHH0:AA!z:B@ x
+0x00029F60: }=BBB==@@@=<$
+0x00029F6E: $$H~ICf+/
+0x00029F84:  TTyA
+0x00029F8B: D}A0HHJ28@@"z
+0x00029FA0: 1}&))/(&)))&0HM@ 8
+0x0002A0C4: 8DD8D
+0x0002A0CA: JJJ4~
+0x0002A0D8: cUIAc8DD<
+0x0002A0F9: rL0JMM00HxH0
+0x0002A106: bZF=>III
+0x0002A113: ~*****DD_DD@QJD@@DJQ@
+0x0002A164: esp_lcd_new_rgb_panel(_panel_config, &_panel_handle)
+0x0002A199: C:\Users\zhang'pei\Documents\Arduino\libraries\Arduino_GFX-master\src\databus\Arduino_ESP32RGBPanel.cpp
+0x0002A201: esp_lcd_panel_reset(_panel_handle)
+0x0002A224: esp_lcd_panel_init(_panel_handle)
+0x0002A246: _panel_handle->draw_bitmap(_panel_handle, 0, 0, 1, 1, &color)
+0x0002A284: uint16_t* Arduino_ESP32RGBPanel::getFrameBuffer(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, int32_t)
+0x0002A457: Bi2c_slave_task
+0x0002A467: uart_event_task
+0x0002A4CF: BloopTask
+0x0002A4D9: uart_flush_input(uart->num)
+0x0002A4F5: C:\Users\zhang'pei\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.3\cores\esp32\esp32-hal-uart.c
+0x0002A561: uart_driver_install(uart_nr, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0)
+0x0002A5C0: uart_param_config(uart_nr, &uart_config)
+0x0002A5E9: uart_set_pin(uart_nr, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE)
+0x0002A635: uart_set_line_inverse(uart_nr, UART_SIGNAL_TXD_INV | UART_SIGNAL_RXD_INV)
+0x0002A67F: uartFlushTxOnly
+0x0002A68F: uartBegin
+0x0002A699: (pxRingbuffer->xItemsWaiting > 0) && ((pxRingbuffer->pucRead != pxRingbuffer->pucWrite) || (pxRingbuffer->uxRingbufferFlags & ( ( UBaseType_t ) 4 )))
+0x0002A72F: /IDF/components/esp_ringbuf/ringbuf.c
+0x0002A755: pxRingbuffer->pucRead >= pxRingbuffer->pucHead && pxRingbuffer->pucRead < pxRingbuffer->pucTail
+0x0002A7B5: pxRingbuffer->pucRead == pxRingbuffer->pucFree
+0x0002A7E4: ( ( ( UBaseType_t ) ( pucItem ) & (0x03) ) == 0 )
+0x0002A816: pucItem <= pxRingbuffer->pucTail
+0x0002A837: pxCurHeader->xItemLen <= pxRingbuffer->xMaxItemSize
+0x0002A86B: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 2 )) == 0
+0x0002A8A3: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 1 )) == 0
+0x0002A8DB: pxRingbuffer->pucFree <= pxRingbuffer->pucHead + pxRingbuffer->xSize
+0x0002A920: pxIsSplit != ((void *)0)
+0x0002A939: ( ( ( UBaseType_t ) ( pxRingbuffer->pucRead ) & (0x03) ) == 0 )
+0x0002A979: (pxHeader->xItemLen <= pxRingbuffer->xMaxItemSize) || (pxHeader->uxItemFlags & ( ( UBaseType_t ) 2 ))
+0x0002A9DF: pxHeader->xItemLen <= pxRingbuffer->xMaxItemSize
+0x0002AA10: pcReturn >= pxRingbuffer->pucHead && pcReturn <= pxRingbuffer->pucTail
+0x0002AA57: pcReturn >= pxRingbuffer->pucHead && pcReturn < pxRingbuffer->pucTail
+0x0002AA9D: ( ( ( UBaseType_t ) ( pxRingbuffer->pucAcquire ) & (0x03) ) == 0 )
+0x0002AAE0: pxRingbuffer->pucAcquire >= pxRingbuffer->pucHead && pxRingbuffer->pucAcquire < pxRingbuffer->pucTail
+0x0002AB46: xRemLen >= sizeof(ItemHeader_t)
+0x0002AB66: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 8 )) == 0
+0x0002AB9E: pxRingbuffer->pucWrite <= pxRingbuffer->pucHead + pxRingbuffer->xSize
+0x0002ABE4: *pvItem2 < *pvItem1
+0x0002ABF8: xIsSplit == ( ( BaseType_t ) 0 )
+0x0002AC19: (uint8_t *)pucItem >= pxRingbuffer->pucHead
+0x0002AC45: (uint8_t *)pucItem < pxRingbuffer->pucTail
+0x0002AC70: xReturn <= pxRingbuffer->xSize
+0x0002AC8F: xBufferSize > 0
+0x0002AC9F: xBufferType < RINGBUF_TYPE_MAX
+0x0002ACBE: pxRingbuffer
+0x0002ACCB: ppvItem != ((void *)0) || xItemSize == 0
+0x0002ACF4: (pxRingbuffer->uxRingbufferFlags & (( ( UBaseType_t ) 2 ) | ( ( UBaseType_t ) 1 ))) == 0
+0x0002AD4D: pvItem != ((void *)0)
+0x0002AD63: pxRingbuffer->uxRingbufferFlags & ( ( UBaseType_t ) 2 )
+0x0002AD9B: vRingbufferGetInfo
+0x0002ADAE: xRingbufferGetMaxItemSize
+0x0002ADC8: vRingbufferDelete
+0x0002ADDA: vRingbufferReturnItemFromISR
+0x0002ADF7: vRingbufferReturnItem
+0x0002AE0D: xRingbufferReceiveUpToFromISR
+0x0002AE2B: xRingbufferReceiveUpTo
+0x0002AE42: prvReceiveGenericFromISR
+0x0002AE5B: xRingbufferReceiveFromISR
+0x0002AE75: prvReceiveGeneric
+0x0002AE87: xRingbufferReceive
+0x0002AE9A: xRingbufferSendFromISR
+0x0002AEB1: xRingbufferSend
+0x0002AEC1: prvGetFreeSize
+0x0002AED0: prvCheckItemFitsDefault
+0x0002AEE8: prvSendItemDoneNoSplit
+0x0002AEFF: prvAcquireItemNoSplit
+0x0002AF15: prvGetItemDefault
+0x0002AF27: prvReturnItemDefault
+0x0002AF3C: prvCopyItemAllowSplit
+0x0002AF52: prvCheckItemFitsByteBuffer
+0x0002AF6D: prvCopyItemByteBuf
+0x0002AF80: prvGetItemByteBuf
+0x0002AF92: prvReturnItemByteBuf
+0x0002AFA7: xRingbufferCreate
+0x0002AFBE: E (%u) %s: %s(%d): %s
+0x0002AFD5: GPIO number error
+0x0002AFE7: GPIO output gpio_num error
+0x0002B002: GPIO interrupt type error
+0x0002B01C: GPIO pull mode error
+0x0002B031: E (%u) %s: GPIO_PIN mask error 
+0x0002B052: io_reg != (intptr_t)NULL
+0x0002B06B: /IDF/components/driver/gpio.c
+0x0002B089: gpio_config
+0x0002B095: gpio_od_disable
+0x0002B0A5: gpio_od_enable
+0x0002B0B4: gpio_output_disable
+0x0002B0C8: gpio_output_enable
+0x0002B0DB: gpio_input_disable
+0x0002B0EE: gpio_input_enable
+0x0002B100: gpio_set_direction
+0x0002B113: gpio_set_pull_mode
+0x0002B126: gpio_set_level
+0x0002B135: gpio_intr_disable
+0x0002B147: gpio_intr_enable_on_core
+0x0002B160: gpio_intr_enable
+0x0002B171: gpio_set_intr_type
+0x0002B184: gpio_pulldown_dis
+0x0002B196: gpio_pulldown_en
+0x0002B1A7: gpio_pullup_dis
+0x0002B1B7: gpio_pullup_en
+0x0002B1CA: E (%u) %s: i2c command link allocation error: the buffer provided is too small.
+0x0002B21B: E (%u) %s: i2c command link malloc error
+0x0002B245: cmd_desc != NULL
+0x0002B256: /IDF/components/driver/i2c.c
+0x0002B273: cmd_desc->cur != NULL
+0x0002B289: E (%u) %s: %s(%d): i2c number error
+0x0002B2AE: E (%u) %s: %s(%d): i2c driver install error
+0x0002B2DB: E (%u) %s: %s(%d): i2c timing value error
+0x0002B306: E (%u) %s: %s(%d): i2c null address error
+0x0002B331: E (%u) %s: %s(%d): i2c buffer size too small for slave mode
+0x0002B36E: E (%u) %s: i2c driver malloc error
+0x0002B392: E (%u) %s: i2c ringbuffer error
+0x0002B3B3: E (%u) %s: i2c semaphore error
+0x0002B3D3: E (%u) %s: i2c driver install error
+0x0002B3F8: E (%u) %s: %s(%d): sda gpio number error
+0x0002B422: E (%u) %s: %s(%d): scl gpio number error
+0x0002B44C: E (%u) %s: %s(%d): this i2c pin does not support internal pull-up
+0x0002B48F: E (%u) %s: %s(%d): scl and sda gpio numbers are the same
+0x0002B4C9: E (%u) %s: %s(%d): i2c mode error
+0x0002B4EC: E (%u) %s: %s(%d): i2c clock choice is invalid, please check flag and frequency
+0x0002B53D: E (%u) %s: %s(%d): i2c command link error
+0x0002B568: E (%u) %s: %s(%d): i2c ack type error
+0x0002B58F: E (%u) %s: %s(%d): i2c data read length error
+0x0002B5BE: E (%u) %s: %s(%d): i2c driver not installed
+0x0002B5EB: E (%u) %s: %s(%d): Only allowed in master mode
+0x0002B61B: E (%u) %s: Using buffer allocated from psram
+0x0002B649: i2c_master_cmd_begin
+0x0002B65E: i2c_master_read
+0x0002B66E: i2c_master_read_byte
+0x0002B683: i2c_master_write_byte
+0x0002B699: i2c_master_write
+0x0002B6AA: i2c_master_stop
+0x0002B6BA: i2c_cmd_link_append
+0x0002B6CE: i2c_master_start
+0x0002B6DF: i2c_set_pin
+0x0002B6EB: i2c_isr_register
+0x0002B6FC: i2c_set_timeout
+0x0002B70C: i2c_param_config
+0x0002B71D: i2c_reset_rx_fifo
+0x0002B72F: i2c_reset_tx_fifo
+0x0002B741: i2c_driver_delete
+0x0002B753: i2c_driver_install
+0x0002B766: periph < PERIPH_MODULE_MAX
+0x0002B781: /IDF/components/driver/periph_ctrl.c
+0x0002B7A6: periph_module_reset
+0x0002B7BA: periph_module_disable
+0x0002B7D0: periph_module_enable
+0x0002B7E5: RTCIO
+0x0002B7EB: E (%u) %s: %s(%d): RTCIO number error
+0x0002B812: rtc_gpio_deinit
+0x0002B822: E (%u) %s: %s(%d): uart_num error
+0x0002B845: E (%u) %s: %s(%d): data bit error
+0x0002B868: E (%u) %s: %s(%d): stop bit error
+0x0002B88B: E (%u) %s: %s(%d): rx flow thresh error
+0x0002B8B4: E (%u) %s: %s(%d): hw_flowctrl mode error
+0x0002B8DF: E (%u) %s: %s(%d): uart driver error
+0x0002B905: E (%u) %s: %s(%d): empty intr threshold error
+0x0002B934: E (%u) %s: %s(%d): tx_io_num error
+0x0002B958: E (%u) %s: %s(%d): rx_io_num error
+0x0002B97C: E (%u) %s: %s(%d): rts_io_num error
+0x0002B9A1: E (%u) %s: %s(%d): cts_io_num error
+0x0002B9C6: E (%u) %s: %s(%d): param null
+0x0002B9E5: E (%u) %s: %s(%d): buffer null
+0x0002BA05: E (%u) %s: %s(%d): uart size error
+0x0002BA29: E (%u) %s: %s(%d): uart data null
+0x0002BA4C: E (%u) %s: %s(%d): break_num error
+0x0002BA70: E (%u) %s: rx_buffered_len error
+0x0002BA92: rtc_enabled & RTC_ENABLED(uart_num)
+0x0002BAB6: /IDF/components/driver/uart.c
+0x0002BAD4: E (%u) %s: %s(%d): uart rx buffer length error
+0x0002BB04: E (%u) %s: %s(%d): uart tx buffer length error
+0x0002BB34: E (%u) %s: UART driver malloc error
+0x0002BB59: E (%u) %s: UART driver already installed
+0x0002BB8C: E (%u) %s: tout_thresh = %d > maximum value = %d
+0x0002BBBE: uart_set_rx_timeout
+0x0002BBD2: rtc_clk_disable
+0x0002BBE2: uart_driver_delete
+0x0002BBF5: uart_driver_install
+0x0002BC09: uart_flush_input
+0x0002BC1A: uart_get_buffered_data_len
+0x0002BC35: uart_reenable_intr_mask
+0x0002BC4D: uart_read_bytes
+0x0002BC5D: uart_write_bytes
+0x0002BC6E: uart_wait_tx_done
+0x0002BC80: uart_intr_config
+0x0002BC91: uart_param_config
+0x0002BCA3: uart_set_pin
+0x0002BCB0: uart_isr_register
+0x0002BCC2: uart_enable_tx_intr
+0x0002BCD6: uart_pattern_queue_reset
+0x0002BCEF: uart_disable_intr_mask
+0x0002BD06: uart_set_line_inverse
+0x0002BD1C: uart_get_baudrate
+0x0002BD2E: uart_set_baudrate
+0x0002BD40: uart_get_parity
+0x0002BD50: uart_set_parity
+0x0002BD60: uart_get_stop_bits
+0x0002BD73: uart_set_stop_bits
+0x0002BD86: uart_get_word_length
+0x0002BD9B: uart_set_word_length
+0x0002BDB0: s_platform.groups[group_id]
+0x0002BDCC: /IDF/components/driver/gdma.c
+0x0002BDEA: group->pairs[pair_id]
+0x0002BE05: E (%u) %s: %s(%d): invalid argument
+0x0002BE2A: E (%u) %s: %s(%d): no mem for gdma tx channel
+0x0002BE59: E (%u) %s: %s(%d): no mem for gdma rx channel
+0x0002BE88: E (%u) %s: %s(%d): invalid sibling channel
+0x0002BEB4: E (%u) %s: %s(%d): sibling channel should have a different direction
+0x0002BEFA: E (%u) %s: %s(%d): no free gdma channel, search code=%d
+0x0002BF33: E (%u) %s: %s(%d): channel is using by peripheral: %d
+0x0002BF6A: E (%u) %s: %s(%d): no peripheral is connected to the channel
+0x0002BFA8: E (%u) %s: %s(%d): invalid sram alignment: %zu
+0x0002BFD8: E (%u) %s: %s(%d): invalid psram alignment: %zu
+0x0002C009: gdma_reset
+0x0002C014: gdma_start
+0x0002C01F: gdma_set_transfer_ability
+0x0002C039: gdma_disconnect
+0x0002C049: gdma_connect
+0x0002C056: gdma_del_channel
+0x0002C067: gdma_uninstall_group
+0x0002C07C: gdma_uninstall_pair
+0x0002C090: gdma_new_channel
+0x0002C0A1: partition
+0x0002C0AB: E (%u) %s: No MD5 found in partition table
+0x0002C0D7: E (%u) %s: Partition table MD5 mismatch
+0x0002C100: E (%u) %s: load_partitions returned 0x%x
+0x0002C12A: /IDF/components/spi_flash/partition.c
+0x0002C150: iterator != NULL
+0x0002C161: partition != NULL
+0x0002C173: esp_partition_mmap
+0x0002C186: esp_partition_erase_range
+0x0002C1A0: esp_partition_write_raw
+0x0002C1B8: esp_partition_read_raw
+0x0002C1CF: esp_partition_write
+0x0002C1E3: esp_partition_read
+0x0002C1F6: esp_partition_get
+0x0002C208: esp_partition_next
+0x0002C21B: s_mmap_page_refcnt[i] == 0 || (entry_pro == SOC_MMU_PAGE_IN_FLASH(pages[pageno]) )
+0x0002C26E: /IDF/components/spi_flash/flash_mmap.c
+0x0002C295: s_mmap_page_refcnt[i] > 0
+0x0002C2AF: 0 && "invalid handle, or handle already unmapped"
+0x0002C2E1: spi_flash_munmap
+0x0002C2F2: spi_flash_mmap_pages
+0x0002C307: E (%u) %s: unexpected spi flash error code: 0x%x
+0x0002C339: E (%u) %s: failed to get chip size
+0x0002C35D: len_remain < len
+0x0002C36E: /IDF/components/spi_flash/esp_flash_api.c
+0x0002C398: len_remain < length
+0x0002C3AC: E (%u) %s: flash encrypted write address must be 16 bytes aligned
+0x0002C3EF: E (%u) %s: flash encrypted write length must be multiple of 16
+0x0002C42F: bus_acquired
+0x0002C43C: esp_flash_write_encrypted
+0x0002C456: esp_flash_write
+0x0002C466: esp_flash_erase_region
+0x0002C47D: spi_flash
+0x0002C487: E (%u) %s: Detected size(%dk) smaller than the size in the binary image header(%dk). Probe failed.
+0x0002C4EB: spi_flash
+0x0002C4F5: chip_status == 0
+0x0002C506: /IDF/components/spi_flash/spi_flash_os_func_app.c
+0x0002C538: spi1_flash_os_check_yield
+0x0002C552: s_flash_op_mutex != NULL
+0x0002C56B: /IDF/components/spi_flash/cache_utils.c
+0x0002C593: esp_task_stack_is_sane_cache_disabled()
+0x0002C5BB: s_flash_op_cpu == -1
+0x0002C5D0: other_cpuid == 1
+0x0002C5E1: esp_ipc_call(other_cpuid, &spi_flash_op_block_func, (void *) other_cpuid)
+0x0002C62B: xPortGetCoreID() == cpuid
+0x0002C645: cpuid == s_flash_op_cpu
+0x0002C65D: !(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED && cpuid != 0)
+0x0002C6A4: spi_flash_enable_interrupts_caches_and_other_cpu
+0x0002C6D5: spi_flash_disable_interrupts_caches_and_other_cpu
+0x0002C707: spi_flash_init_lock
+0x0002C71F: index < Nitems
+0x0002C72E: /IDF/components/nvs_flash/src/compressed_enum_table.hpp
+0x0002C766: itemTypeOf(dst) == datatype
+0x0002C782: /IDF/components/nvs_flash/src/nvs_types.hpp
+0x0002C7AE: void CompressedEnumTable<Tenum, Nbits, Nitems>::set(size_t, Tenum) [with Tenum = bool; unsigned int Nbits = 1; unsigned int Nitems = 256; size_t = unsigned int]
+0x0002C84F: void nvs::Item::getValue(T&) [with T = unsigned char]
+0x0002C8C7: Bentry < ENTRY_COUNT
+0x0002C8DC: /IDF/components/nvs_flash/src/nvs_page.hpp
+0x0002C907: mState == PageState::UNINITIALIZED
+0x0002C92A: /IDF/components/nvs_flash/src/nvs_page.cpp
+0x0002C955: index == mFirstUsedEntry
+0x0002C96E: index < ENTRY_COUNT
+0x0002C982: readEntryIndex != mFirstUsedEntry
+0x0002C9A4: end <= ENTRY_COUNT
+0x0002C9B7: end > begin
+0x0002C9C3: item.span > 0
+0x0002C9D1: esp_err_t nvs::Page::alterEntryRangeState(size_t, size_t, nvs::Page::EntryState)
+0x0002CA22: void CompressedEnumTable<Tenum, Nbits, Nitems>::set(size_t, Tenum) [with Tenum = nvs::Page::EntryState; unsigned int Nbits = 2; unsigned int Nitems = 126; size_t = unsigned int]
+0x0002CAD4: esp_err_t nvs::Page::alterEntryState(size_t, nvs::Page::EntryState)
+0x0002CB18: esp_err_t nvs::Page::initialize()
+0x0002CB3A: esp_err_t nvs::Page::mLoadEntryTable()
+0x0002CB61: esp_err_t nvs::Page::copyItems(nvs::Page&)
+0x0002CB8C: void nvs::Page::updateFirstUsedEntry(size_t, size_t)
+0x0002CBC1: Tenum CompressedEnumTable<Tenum, Nbits, Nitems>::get(size_t) const [with Tenum = nvs::Page::EntryState; unsigned int Nbits = 2; unsigned int Nitems = 126; size_t = unsigned int]
+0x0002CC73: uint32_t nvs::Page::getEntryAddress(size_t) const
+0x0002CCA5: mPageList.back().getSeqNumber(lastSeqNo)
+0x0002CCCE: IDF/components/nvs_flash/src/nvs_pagemanager.cpp
+0x0002CCFF: esp_err_t nvs::PageManager::load(nvs::Partition*, uint32_t, uint32_t)
+0x0002CD45: pthread
+0x0002CD4D: E (%u) %s: Failed to allocate task args!
+0x0002CD77: E (%u) %s: Failed to allocate pthread data!
+0x0002CDA4: E (%u) %s: Failed to create task!
+0x0002CDC7: false && "Failed to lock threads list!"
+0x0002CDEF: /IDF/components/pthread/pthread.c
+0x0002CE11: E (%u) %s: %s: not supported!
+0x0002CE30: false && "Failed to release mutex!"
+0x0002CE54: false && "Failed to unlock mutex!"
+0x0002CE77: pthread_mutex_unlock
+0x0002CE8C: pthread_mutex_destroy
+0x0002CEA2: pthread_cancel
+0x0002CEB1: tls != NULL
+0x0002CEBD: /IDF/components/pthread/pthread_local_storage.c
+0x0002CEED: pthread_local_storage_thread_deleted_callback
+0x0002CF1D: Stack smashing protect failure!
+0x0002CF41: task_wdt
+0x0002CF4A: E (%u) %s: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+0x0002CFAB: E (%u) %s:  - %s (%s)
+0x0002CFC2: E (%u) %s: %s
+0x0002CFD1: E (%u) %s: CPU %d: %s
+0x0002CFE8: E (%u) %s: Aborting.
+0x0002CFFE: E (%u) %s: Print CPU %d (current core) backtrace
+0x0002D030: E (%u) %s: Print CPU %d backtrace
+0x0002D053: esp_intr_alloc(ETS_TG0_WDT_LEVEL_INTR_SOURCE, 0, task_wdt_isr, NULL, &twdt_config->intr_handle)
+0x0002D0B3: IDF/components/esp_system/task_wdt.c
+0x0002D0D8: esp_register_freertos_idle_hook_for_cpu(idle_hook_cb, i)
+0x0002D111: esp_task_wdt_add
+0x0002D122: esp_task_wdt_init
+0x0002D134: cpu_start
+0x0002D13E: E (%u) %s: Running on single core variant of a chip, but app is built with multi-core support.
+0x0002D19E: E (%u) %s: Check that CONFIG_FREERTOS_UNICORE is enabled in menuconfig
+0x0002D1E6: rtc_clk_xtal_freq_get() == RTC_XTAL_FREQ_40M
+0x0002D213: /IDF/components/esp_system/port/soc/esp32s3/clk.c
+0x0002D24F: 'esp_clk_init
+0x0002D25D: (hint & (~RST_REASON_MASK)) == 0
+0x0002D27E: /IDF/components/esp_system/port/soc/esp32s3/reset_reason.c
+0x0002D2B9: esp_reset_reason_set_hint
+0x0002D2D7: Backtrace:
+0x0002D2E6: 0x%08X:0x%08X
+0x0002D2F4:  |<-CORRUPTED
+0x0002D302:  |<-CONTINUES
+0x0002D310: core_id<portNUM_PROCESSORS
+0x0002D32B: /IDF/components/esp_system/crosscore_int.c
+0x0002D35A: esp_crosscore_int_send
+0x0002D371: esp_crosscore_int_init
+0x0002D397: `Guru Meditation Error: Core 
+0x0002D3B5:  panic'ed (
+0x0002D3C5: Setting breakpoint at 0x
+0x0002D3DE:  and returning...
+0x0002D3F4: ELF file SHA256: 
+0x0002D406: Rebooting...
+0x0002D415: E (%u) %s: External RAM could not be added to heap!
+0x0002D44A: vfs_err == ESP_OK && "Failed to register vfs console"
+0x0002D480: /IDF/components/esp_system/startup.c
+0x0002D4A5: /dev/console/
+0x0002D4B3: err == ESP_OK && "Failed to init pthread module!"
+0x0002D4E5: flash_ret == ESP_OK
+0x0002D4F9: do_core_init
+0x0002D50B: BPo7@Unknown
+0x0002D52F: `Memory dump at 0x
+0x0002D542: Icache sync parameter configuration error, the error address and size is 0x
+0x0002D596: Icache preload parameter configuration error, the error address and size is 0x
+0x0002D5E5: Dcache sync parameter configuration error, the error address and size is 0x
+0x0002D631: Dcache preload parameter configuration error, the error address and size is 0x
+0x0002D680: Write back error occurred while dcache tries to write back to flash
+0x0002D6C6: MMU entry fault error occurred while accessing the address 0x
+0x0002D704:  (invalid mmu entry)
+0x0002D719: Debug exception reason: 
+0x0002D732: SingleStep 
+0x0002D73E: HwBreakpoint 
+0x0002D74C: Stack canary watchpoint triggered (
+0x0002D773: Watchpoint 0 triggered 
+0x0002D78B: BREAK instr 
+0x0002D798: BREAKN instr 
+0x0002D7A6: DebugIntr 
+0x0002D7B1:  register dump:
+0x0002D7C1:  was running in ISR context:
+0x0002D7E0: EPC1    : 0x
+0x0002D7ED:   EPC2    : 0x
+0x0002D7FC:   EPC3    : 0x
+0x0002D80B:   EPC4    : 0x
+0x0002D81A: PC      
+0x0002D823: PS      
+0x0002D82C: A0      
+0x0002D835: A1      
+0x0002D83E: A2      
+0x0002D847: A3      
+0x0002D850: A4      
+0x0002D859: A5      
+0x0002D862: A6      
+0x0002D86B: A7      
+0x0002D874: A8      
+0x0002D87D: A9      
+0x0002D886: A10     
+0x0002D88F: A11     
+0x0002D898: A12     
+0x0002D8A1: A13     
+0x0002D8AA: A14     
+0x0002D8B3: A15     
+0x0002D8BC: SAR     
+0x0002D8C5: EXCCAUSE
+0x0002D8CE: EXCVADDR
+0x0002D8D7: LBEG    
+0x0002D8E0: LEND    
+0x0002D8E9: LCOUNT  
+0x0002D953: <Exception was unhandled.
+0x0002D96D: Unknown reason
+0x0002D97C: Unhandled debug exception
+0x0002D996: Double exception
+0x0002D9A7: Unhandled kernel exception
+0x0002D9C2: Coprocessor exception
+0x0002D9D8: Interrupt wdt timeout on CPU0
+0x0002D9F6: Interrupt wdt timeout on CPU1
+0x0002DA14: Cache disabled but cached memory region accessed
+0x0002DA45: IllegalInstruction
+0x0002DA58: Syscall
+0x0002DA60: InstructionFetchError
+0x0002DA76: LoadStoreError
+0x0002DA85: Level1Interrupt
+0x0002DA95: Alloca
+0x0002DA9C: IntegerDivideByZero
+0x0002DAB0: PCValue
+0x0002DAB8: Privileged
+0x0002DAC3: LoadStoreAlignment
+0x0002DAD6: InstrPDAddrError
+0x0002DAE7: LoadStorePIFDataError
+0x0002DAFD: InstrPIFAddrError
+0x0002DB0F: LoadStorePIFAddrError
+0x0002DB25: InstTLBMiss
+0x0002DB31: InstTLBMultiHit
+0x0002DB41: InstFetchPrivilege
+0x0002DB54: InstrFetchProhibited
+0x0002DB69: LoadStoreTLBMiss
+0x0002DB7A: LoadStoreTLBMultihit
+0x0002DB8F: LoadStorePrivilege
+0x0002DBA2: LoadProhibited
+0x0002DBB1: StoreProhibited
+0x0002DBC1: Cp0Dis
+0x0002DBC8: Cp1Dis
+0x0002DBCF: Cp2Dis
+0x0002DBD6: Cp3Dis
+0x0002DBDD: Cp4Dis
+0x0002DBE4: Cp5Dis
+0x0002DBEB: Cp6Dis
+0x0002DBF2: Cp7Dis
+0x0002DD2C: strncmp(src_path, vfs->path_prefix, vfs->path_prefix_len) == 0
+0x0002DD6B: /IDF/components/vfs/vfs.c
+0x0002DD85: translate_path
+0x0002DD94: /dev/uart
+0x0002DDA1: /dev/secondary
+0x0002DDB0: /dev/console
+0x0002DE5F: Bs_ctx.peek_char == NONE
+0x0002DE78: /IDF/components/vfs/vfs_usb_serial_jtag.c
+0x0002DEA2: usb_serial_jtag_return_char
+0x0002DF66: fd >=0 && fd < 3
+0x0002DF77: /IDF/components/vfs/vfs_uart.c
+0x0002DF96: s_ctx[fd]->peek_char == NONE
+0x0002DFB3: fd >= 0 && fd < 3
+0x0002DFC5: uart_write
+0x0002DFD0: uart_return_char
+0x0002DFE1: uart_read
+0x0002DFEB: uart_close
+0x0002DFF6: uart_fstat
+0x0002E001: uart_fcntl
+0x0002E00C: uart_fsync
+0x0002E0C3: ?i == 0 || s_log_cache[(i - 1) / 2].generation < s_log_cache[i].generation
+0x0002E10E: /IDF/components/log/log.c
+0x0002E128: get_cached_log_level
+0x0002E13D: esp_log_level_set
+0x0002E14F: esp_ptr_in_diram_dram((void *)dstart)
+0x0002E175: /IDF/components/heap/heap_caps.c
+0x0002E196: esp_ptr_in_diram_dram((void *)dend)
+0x0002E1BA: (dstart & 3) == 0
+0x0002E1CC: (dend & 3) == 0
+0x0002E1DC: heap != NULL && "free() target pointer is outside heap areas"
+0x0002E21A: heap != NULL && "realloc() pointer is outside heap areas"
+0x0002E254: old_size > 0
+0x0002E261: heap_caps_aligned_alloc
+0x0002E279: heap_caps_realloc
+0x0002E28B: heap_caps_free
+0x0002E29A: heap_caps_realloc_base
+0x0002E2B1: heap_caps_realloc_default
+0x0002E2CB: heap_caps_malloc_default
+0x0002E2E4: dram_alloc_to_iram_addr
+0x0002E2FC: heap_caps_malloc
+0x0002E30D: heap_size <= HEAP_SIZE_MAX
+0x0002E328: /IDF/components/heap/heap_caps_init.c
+0x0002E34E: heap_idx <= num_heaps
+0x0002E364: heap_idx == num_heaps
+0x0002E37A: SLIST_EMPTY(&registered_heaps)
+0x0002E399: heaps_array != NULL
+0x0002E3AD: heap_caps_init
+0x0002E3BC: register_heap
+0x0002E3CA: reserved[i].start <= reserved[i].end
+0x0002E3EF: /IDF/components/heap/port/memory_layout_utils.c
+0x0002E41F: reserved[i + 1].start > reserved[i].start
+0x0002E449: memory_layout
+0x0002E457: E (%u) %s: SOC_RESERVE_MEMORY_REGION region range 0x%08x - 0x%08x overlaps with 0x%08x - 0x%08x
+0x0002E4B8: s_prepare_reserved_regions
+0x0002E588: STACK/DRAM
+0x0002E593: D/IRAM
+0x0002E59A: SPIRAM
+0x0002E5A1: NON_DMA_DRAM
+0x0002E5AE: RTCRAM
+0x0002E733: `ZZYY*
+0x0002E740: \\[[+
+0x0002ED3C: !((vd->flags&VECDESC_FL_SHARED)&&(vd->flags&VECDESC_FL_NONSHARED))
+0x0002ED7F: /IDF/components/esp_hw_support/intr_alloc.c
+0x0002EDAB: svd != NULL
+0x0002EDBB: esp_intr_disable
+0x0002EDCC: esp_intr_free
+0x0002EDDA: is_vect_desc_usable
+0x0002EDEE: find_desc_for_source
+0x0002EE03: err == ESP_OK
+0x0002EE11: /IDF/components/esp_hw_support/port/esp32s3/rtc_init.c
+0x0002EE48: set_ocode_by_efuse
+0x0002EE5B: spiram
+0x0002EE62: E (%u) %s: SPI RAM enabled but initialization failed. Bailing out.
+0x0002EEA6: E (%u) %s: SPI RAM not initialized
+0x0002EECA: Unhandled interrupt %d on cpu %d!
+0x0002EEED: ERROR
+0x0002EEF3: ESP_FAIL
+0x0002EEFC: ESP_ERR_NO_MEM
+0x0002EF0B: ESP_ERR_INVALID_ARG
+0x0002EF1F: ESP_ERR_INVALID_STATE
+0x0002EF35: ESP_ERR_INVALID_SIZE
+0x0002EF4A: ESP_ERR_NOT_FOUND
+0x0002EF5C: ESP_ERR_NOT_SUPPORTED
+0x0002EF72: ESP_ERR_TIMEOUT
+0x0002EF82: ESP_ERR_INVALID_RESPONSE
+0x0002EF9B: ESP_ERR_INVALID_CRC
+0x0002EFAF: ESP_ERR_INVALID_VERSION
+0x0002EFC7: ESP_ERR_INVALID_MAC
+0x0002EFDB: ESP_ERR_NOT_FINISHED
+0x0002EFF0: ESP_ERR_NVS_BASE
+0x0002F001: ESP_ERR_NVS_NOT_INITIALIZED
+0x0002F01D: ESP_ERR_NVS_NOT_FOUND
+0x0002F033: ESP_ERR_NVS_TYPE_MISMATCH
+0x0002F04D: ESP_ERR_NVS_READ_ONLY
+0x0002F063: ESP_ERR_NVS_NOT_ENOUGH_SPACE
+0x0002F080: ESP_ERR_NVS_INVALID_NAME
+0x0002F099: ESP_ERR_NVS_INVALID_HANDLE
+0x0002F0B4: ESP_ERR_NVS_REMOVE_FAILED
+0x0002F0CE: ESP_ERR_NVS_KEY_TOO_LONG
+0x0002F0E7: ESP_ERR_NVS_PAGE_FULL
+0x0002F0FD: ESP_ERR_NVS_INVALID_STATE
+0x0002F117: ESP_ERR_NVS_INVALID_LENGTH
+0x0002F132: ESP_ERR_NVS_NO_FREE_PAGES
+0x0002F14C: ESP_ERR_NVS_VALUE_TOO_LONG
+0x0002F167: ESP_ERR_NVS_PART_NOT_FOUND
+0x0002F182: ESP_ERR_NVS_NEW_VERSION_FOUND
+0x0002F1A0: ESP_ERR_NVS_XTS_ENCR_FAILED
+0x0002F1BC: ESP_ERR_NVS_XTS_DECR_FAILED
+0x0002F1D8: ESP_ERR_NVS_XTS_CFG_FAILED
+0x0002F1F3: ESP_ERR_NVS_XTS_CFG_NOT_FOUND
+0x0002F211: ESP_ERR_NVS_ENCR_NOT_SUPPORTED
+0x0002F230: ESP_ERR_NVS_KEYS_NOT_INITIALIZED
+0x0002F251: ESP_ERR_NVS_CORRUPT_KEY_PART
+0x0002F26E: ESP_ERR_NVS_CONTENT_DIFFERS
+0x0002F28A: ESP_ERR_NVS_WRONG_ENCRYPTION
+0x0002F2A7: ESP_ERR_ULP_BASE
+0x0002F2B8: ESP_ERR_ULP_SIZE_TOO_BIG
+0x0002F2D1: ESP_ERR_ULP_INVALID_LOAD_ADDR
+0x0002F2EF: ESP_ERR_ULP_DUPLICATE_LABEL
+0x0002F30B: ESP_ERR_ULP_UNDEFINED_LABEL
+0x0002F327: ESP_ERR_ULP_BRANCH_OUT_OF_RANGE
+0x0002F347: ESP_ERR_OTA_BASE
+0x0002F358: ESP_ERR_OTA_PARTITION_CONFLICT
+0x0002F377: ESP_ERR_OTA_SELECT_INFO_INVALID
+0x0002F397: ESP_ERR_OTA_VALIDATE_FAILED
+0x0002F3B3: ESP_ERR_OTA_SMALL_SEC_VER
+0x0002F3CD: ESP_ERR_OTA_ROLLBACK_FAILED
+0x0002F3E9: ESP_ERR_OTA_ROLLBACK_INVALID_STATE
+0x0002F40C: ESP_ERR_EFUSE
+0x0002F41A: ESP_OK_EFUSE_CNT
+0x0002F42B: ESP_ERR_EFUSE_CNT_IS_FULL
+0x0002F445: ESP_ERR_EFUSE_REPEATED_PROG
+0x0002F461: ESP_ERR_CODING
+0x0002F470: ESP_ERR_NOT_ENOUGH_UNUSED_KEY_BLOCKS
+0x0002F495: ESP_ERR_DAMAGED_READING
+0x0002F4AD: ESP_ERR_IMAGE_BASE
+0x0002F4C0: ESP_ERR_IMAGE_FLASH_FAIL
+0x0002F4D9: ESP_ERR_IMAGE_INVALID
+0x0002F4EF: ESP_ERR_WIFI_BASE
+0x0002F501: ESP_ERR_WIFI_NOT_INIT
+0x0002F517: ESP_ERR_WIFI_NOT_STARTED
+0x0002F530: ESP_ERR_WIFI_NOT_STOPPED
+0x0002F549: ESP_ERR_WIFI_IF
+0x0002F559: ESP_ERR_WIFI_MODE
+0x0002F56B: ESP_ERR_WIFI_STATE
+0x0002F57E: ESP_ERR_WIFI_CONN
+0x0002F590: ESP_ERR_WIFI_NVS
+0x0002F5A1: ESP_ERR_WIFI_MAC
+0x0002F5B2: ESP_ERR_WIFI_SSID
+0x0002F5C4: ESP_ERR_WIFI_PASSWORD
+0x0002F5DA: ESP_ERR_WIFI_TIMEOUT
+0x0002F5EF: ESP_ERR_WIFI_WAKE_FAIL
+0x0002F606: ESP_ERR_WIFI_WOULD_BLOCK
+0x0002F61F: ESP_ERR_WIFI_NOT_CONNECT
+0x0002F638: ESP_ERR_WIFI_POST
+0x0002F64A: ESP_ERR_WIFI_INIT_STATE
+0x0002F662: ESP_ERR_WIFI_STOP_STATE
+0x0002F67A: ESP_ERR_WIFI_NOT_ASSOC
+0x0002F691: ESP_ERR_WIFI_TX_DISALLOW
+0x0002F6AA: ESP_ERR_WIFI_REGISTRAR
+0x0002F6C1: ESP_ERR_WIFI_WPS_TYPE
+0x0002F6D7: ESP_ERR_WIFI_WPS_SM
+0x0002F6EB: ESP_ERR_ESPNOW_BASE
+0x0002F6FF: ESP_ERR_ESPNOW_NOT_INIT
+0x0002F717: ESP_ERR_ESPNOW_ARG
+0x0002F72A: ESP_ERR_ESPNOW_NO_MEM
+0x0002F740: ESP_ERR_ESPNOW_FULL
+0x0002F754: ESP_ERR_ESPNOW_NOT_FOUND
+0x0002F76D: ESP_ERR_ESPNOW_INTERNAL
+0x0002F785: ESP_ERR_ESPNOW_EXIST
+0x0002F79A: ESP_ERR_ESPNOW_IF
+0x0002F7AC: ESP_ERR_DPP_FAILURE
+0x0002F7C0: ESP_ERR_DPP_TX_FAILURE
+0x0002F7D7: ESP_ERR_DPP_INVALID_ATTR
+0x0002F7F0: ESP_ERR_MESH_BASE
+0x0002F802: ESP_ERR_MESH_WIFI_NOT_START
+0x0002F81E: ESP_ERR_MESH_NOT_INIT
+0x0002F834: ESP_ERR_MESH_NOT_CONFIG
+0x0002F84C: ESP_ERR_MESH_NOT_START
+0x0002F863: ESP_ERR_MESH_NOT_SUPPORT
+0x0002F87C: ESP_ERR_MESH_NOT_ALLOWED
+0x0002F895: ESP_ERR_MESH_NO_MEMORY
+0x0002F8AC: ESP_ERR_MESH_ARGUMENT
+0x0002F8C2: ESP_ERR_MESH_EXCEED_MTU
+0x0002F8DA: ESP_ERR_MESH_TIMEOUT
+0x0002F8EF: ESP_ERR_MESH_DISCONNECTED
+0x0002F909: ESP_ERR_MESH_QUEUE_FAIL
+0x0002F921: ESP_ERR_MESH_QUEUE_FULL
+0x0002F939: ESP_ERR_MESH_NO_PARENT_FOUND
+0x0002F956: ESP_ERR_MESH_NO_ROUTE_FOUND
+0x0002F972: ESP_ERR_MESH_OPTION_NULL
+0x0002F98B: ESP_ERR_MESH_OPTION_UNKNOWN
+0x0002F9A7: ESP_ERR_MESH_XON_NO_WINDOW
+0x0002F9C2: ESP_ERR_MESH_INTERFACE
+0x0002F9D9: ESP_ERR_MESH_DISCARD_DUPLICATE
+0x0002F9F8: ESP_ERR_MESH_DISCARD
+0x0002FA0D: ESP_ERR_MESH_VOTING
+0x0002FA21: ESP_ERR_MESH_XMIT
+0x0002FA33: ESP_ERR_MESH_QUEUE_READ
+0x0002FA4B: ESP_ERR_MESH_PS
+0x0002FA5B: ESP_ERR_MESH_RECV_RELEASE
+0x0002FA75: ESP_ERR_ESP_NETIF_BASE
+0x0002FA8C: ESP_ERR_ESP_NETIF_INVALID_PARAMS
+0x0002FAAD: ESP_ERR_ESP_NETIF_IF_NOT_READY
+0x0002FACC: ESP_ERR_ESP_NETIF_DHCPC_START_FAILED
+0x0002FAF1: ESP_ERR_ESP_NETIF_DHCP_ALREADY_STARTED
+0x0002FB18: ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED
+0x0002FB3F: ESP_ERR_ESP_NETIF_NO_MEM
+0x0002FB58: ESP_ERR_ESP_NETIF_DHCP_NOT_STOPPED
+0x0002FB7B: ESP_ERR_ESP_NETIF_DRIVER_ATTACH_FAILED
+0x0002FBA2: ESP_ERR_ESP_NETIF_INIT_FAILED
+0x0002FBC0: ESP_ERR_ESP_NETIF_DNS_NOT_CONFIGURED
+0x0002FBE5: ESP_ERR_ESP_NETIF_MLD6_FAILED
+0x0002FC03: ESP_ERR_ESP_NETIF_IP6_ADDR_FAILED
+0x0002FC25: ESP_ERR_FLASH_BASE
+0x0002FC38: ESP_ERR_FLASH_OP_FAIL
+0x0002FC4E: ESP_ERR_FLASH_OP_TIMEOUT
+0x0002FC67: ESP_ERR_FLASH_NOT_INITIALISED
+0x0002FC85: ESP_ERR_FLASH_UNSUPPORTED_HOST
+0x0002FCA4: ESP_ERR_FLASH_UNSUPPORTED_CHIP
+0x0002FCC3: ESP_ERR_FLASH_PROTECTED
+0x0002FCDB: ESP_ERR_HTTP_BASE
+0x0002FCED: ESP_ERR_HTTP_MAX_REDIRECT
+0x0002FD07: ESP_ERR_HTTP_CONNECT
+0x0002FD1C: ESP_ERR_HTTP_WRITE_DATA
+0x0002FD34: ESP_ERR_HTTP_FETCH_HEADER
+0x0002FD4E: ESP_ERR_HTTP_INVALID_TRANSPORT
+0x0002FD6D: ESP_ERR_HTTP_CONNECTING
+0x0002FD85: ESP_ERR_HTTP_EAGAIN
+0x0002FD99: ESP_ERR_HTTP_CONNECTION_CLOSED
+0x0002FDB8: ESP_ERR_ESP_TLS_BASE
+0x0002FDCD: ESP_ERR_ESP_TLS_CANNOT_RESOLVE_HOSTNAME
+0x0002FDF5: ESP_ERR_ESP_TLS_CANNOT_CREATE_SOCKET
+0x0002FE1A: ESP_ERR_ESP_TLS_UNSUPPORTED_PROTOCOL_FAMILY
+0x0002FE46: ESP_ERR_ESP_TLS_FAILED_CONNECT_TO_HOST
+0x0002FE6D: ESP_ERR_ESP_TLS_SOCKET_SETOPT_FAILED
+0x0002FE92: ESP_ERR_ESP_TLS_CONNECTION_TIMEOUT
+0x0002FEB5: ESP_ERR_ESP_TLS_SE_FAILED
+0x0002FECF: ESP_ERR_ESP_TLS_TCP_CLOSED_FIN
+0x0002FEEE: ESP_ERR_MBEDTLS_CERT_PARTLY_OK
+0x0002FF0D: ESP_ERR_MBEDTLS_CTR_DRBG_SEED_FAILED
+0x0002FF32: ESP_ERR_MBEDTLS_SSL_SET_HOSTNAME_FAILED
+0x0002FF5A: ESP_ERR_MBEDTLS_SSL_CONFIG_DEFAULTS_FAILED
+0x0002FF85: ESP_ERR_MBEDTLS_SSL_CONF_ALPN_PROTOCOLS_FAILED
+0x0002FFB4: ESP_ERR_MBEDTLS_X509_CRT_PARSE_FAILED
+0x0002FFDA: ESP_ERR_MBEDTLS_SSL_CONF_OWN_CERT_FAILED
+0x00030003: ESP_ERR_MBEDTLS_SSL_SETUP_FAILED
+0x00030024: ESP_ERR_MBEDTLS_SSL_WRITE_FAILED
+0x00030045: ESP_ERR_MBEDTLS_PK_PARSE_KEY_FAILED
+0x00030069: ESP_ERR_MBEDTLS_SSL_HANDSHAKE_FAILED
+0x0003008E: ESP_ERR_MBEDTLS_SSL_CONF_PSK_FAILED
+0x000300B2: ESP_ERR_MBEDTLS_SSL_TICKET_SETUP_FAILED
+0x000300DA: ESP_ERR_WOLFSSL_SSL_SET_HOSTNAME_FAILED
+0x00030102: ESP_ERR_WOLFSSL_SSL_CONF_ALPN_PROTOCOLS_FAILED
+0x00030131: ESP_ERR_WOLFSSL_CERT_VERIFY_SETUP_FAILED
+0x0003015A: ESP_ERR_WOLFSSL_KEY_VERIFY_SETUP_FAILED
+0x00030182: ESP_ERR_WOLFSSL_SSL_HANDSHAKE_FAILED
+0x000301A7: ESP_ERR_WOLFSSL_CTX_SETUP_FAILED
+0x000301C8: ESP_ERR_WOLFSSL_SSL_SETUP_FAILED
+0x000301E9: ESP_ERR_WOLFSSL_SSL_WRITE_FAILED
+0x0003020A: ESP_ERR_HTTPS_OTA_BASE
+0x00030221: ESP_ERR_HTTPS_OTA_IN_PROGRESS
+0x0003023F: ESP_ERR_PING_BASE
+0x00030251: ESP_ERR_PING_INVALID_PARAMS
+0x0003026D: ESP_ERR_PING_NO_MEM
+0x00030281: ESP_ERR_HTTPD_BASE
+0x00030294: ESP_ERR_HTTPD_HANDLERS_FULL
+0x000302B0: ESP_ERR_HTTPD_HANDLER_EXISTS
+0x000302CD: ESP_ERR_HTTPD_INVALID_REQ
+0x000302E7: ESP_ERR_HTTPD_RESULT_TRUNC
+0x00030302: ESP_ERR_HTTPD_RESP_HDR
+0x00030319: ESP_ERR_HTTPD_RESP_SEND
+0x00030331: ESP_ERR_HTTPD_ALLOC_MEM
+0x00030349: ESP_ERR_HTTPD_TASK
+0x0003035C: ESP_ERR_HW_CRYPTO_BASE
+0x00030373: ESP_ERR_HW_CRYPTO_DS_HMAC_FAIL
+0x00030392: ESP_ERR_HW_CRYPTO_DS_INVALID_KEY
+0x000303B3: ESP_ERR_HW_CRYPTO_DS_INVALID_DIGEST
+0x000303D7: ESP_ERR_HW_CRYPTO_DS_INVALID_PADDING
+0x000303FC: ESP_ERR_MEMPROT_BASE
+0x00030411: ESP_ERR_MEMPROT_MEMORY_TYPE_INVALID
+0x00030435: ESP_ERR_MEMPROT_SPLIT_ADDR_INVALID
+0x00030458: ESP_ERR_MEMPROT_SPLIT_ADDR_OUT_OF_RANGE
+0x00030480: ESP_ERR_MEMPROT_SPLIT_ADDR_UNALIGNED
+0x000304A5: ESP_ERR_MEMPROT_UNIMGMT_BLOCK_INVALID
+0x000304CB: ESP_ERR_MEMPROT_WORLD_INVALID
+0x000304E9: ESP_ERR_MEMPROT_AREA_INVALID
+0x00030BA7: <esp_timer
+0x00030BB2: esp_timer_systimer
+0x00030BC5: E (%u) %s: esp_intr_alloc failed (0x%x)
+0x00030BEE: E (%u) %s: esp_intr_enable failed (0x%x)
+0x00030C18: ( uint32_t ) p >= frame->a1
+0x00030C34: /IDF/components/freertos/port/xtensa/port.c
+0x00030C68: /IDF/components/esp_hw_support/include/soc/spinlock.h
+0x00030CA0: result == core_id || result == SPINLOCK_FREE
+0x00030CD0: (result == SPINLOCK_FREE) == (lock->count == 0)
+0x00030D00: lock->count < 0xFF
+0x00030D14: core_id == lock->owner
+0x00030D2C: lock->count < 0x100
+0x00030D40: ***ERROR*** A stack overflow in task 
+0x00030D66:  has been detected.
+0x00030D7A: spinlock_release
+0x00030D8B: spinlock_acquire
+0x00030D9C: pxPortInitialiseStack
+0x00030DF0: esp_task_wdt_init(CONFIG_ESP_TASK_WDT_TIMEOUT_S, true)
+0x00030E27: esp_task_wdt_add(idle_0)
+0x00030E45: res == pdTRUE
+0x00030E53: /IDF/components/freertos/port/port_common.c
+0x00030E7F: pxTCBBufferTemp != NULL
+0x00030E97: pxStackBufferTemp != NULL
+0x00030EB1: vApplicationGetIdleTaskMemory
+0x00030ECF: main_task
+0x00030ED9: esp_startup_start_app_common
+0x00030EF6: esp_intr_alloc(ETS_SYSTIMER_TARGET0_EDGE_INTR_SOURCE + cpuid, ESP_INTR_FLAG_IRAM | level, SysTickIsrHandler, &systimer_hal, NULL)
+0x00030F78: IDF/components/freertos/port/port_systick.c
+0x00030FA4: vPortSetupTimer
+0x00030FB4: pxQueueSetContainer
+0x00030FC8: /IDF/components/freertos/queue.c
+0x00030FE9: pxQueueSetContainer->uxMessagesWaiting < pxQueueSetContainer->uxLength
+0x00031030: pxQueue
+0x00031038: uxQueueLength > ( UBaseType_t ) 0
+0x0003105A: pxStaticQueue != ((void *)0)
+0x00031077: !( ( pucQueueStorage != ((void *)0) ) && ( uxItemSize == 0 ) )
+0x000310B6: !( ( pucQueueStorage == ((void *)0) ) && ( uxItemSize != 0 ) )
+0x000310F5: xSize == sizeof( Queue_t )
+0x00031110: ( uxItemSize == 0 ) || ( uxQueueLength == ( xQueueSizeInBytes / uxItemSize ) )
+0x0003115F: ( sizeof( Queue_t ) + xQueueSizeInBytes ) > xQueueSizeInBytes
+0x0003119D: uxMaxCount != 0
+0x000311AD: uxInitialCount <= uxMaxCount
+0x000311CA: !( ( pvItemToQueue == ((void *)0) ) && ( pxQueue->uxItemSize != ( UBaseType_t ) 0U ) )
+0x00031221: !( ( xCopyPosition == ( ( BaseType_t ) 2 ) ) && ( pxQueue->uxLength != 1 ) )
+0x0003126E: !( ( xTaskGetSchedulerState() == ( ( BaseType_t ) 0 ) ) && ( xTicksToWait != 0 ) )
+0x000312C1: pxQueue->pcHead != ((void *)0) || pxQueue->u.xSemaphore.xMutexHolder == ((void *)0) || pxQueue->u.xSemaphore.xMutexHolder == xTaskGetCurrentTaskHandle()
+0x0003135A: pxMutex
+0x00031362: pxQueue->uxItemSize == 0
+0x0003137B: !( ( pxQueue->pcHead == ((void *)0) ) && ( pxQueue->u.xSemaphore.xMutexHolder != ((void *)0) ) )
+0x000313DC: ( pxQueue )
+0x000313E8: !( ( ( pvBuffer ) == ((void *)0) ) && ( ( pxQueue )->uxItemSize != ( UBaseType_t ) 0U ) )
+0x00031442: xInheritanceOccurred == ( ( BaseType_t ) 0 )
+0x0003146F: !( ( pvBuffer == ((void *)0) ) && ( pxQueue->uxItemSize != ( UBaseType_t ) 0U ) )
+0x000314C1: vQueueDelete
+0x000314CE: uxQueueSpacesAvailable
+0x000314E5: xQueueReceiveFromISR
+0x000314FA: xQueueSemaphoreTake
+0x0003150E: xQueueReceive
+0x0003151C: xQueueGiveFromISR
+0x0003152E: xQueueGenericSendFromISR
+0x00031547: prvNotifyQueueSetContainer
+0x00031562: xQueueGenericSend
+0x00031574: xQueueCreateCountingSemaphore
+0x00031592: xQueueTakeMutexRecursive
+0x000315AB: xQueueGiveMutexRecursive
+0x000315C4: xQueueGenericCreate
+0x000315D8: xQueueGenericCreateStatic
+0x000315F2: xQueueGenericReset
+0x00031605: pxTCB
+0x0003160B: /IDF/components/freertos/tasks.c
+0x0003162C: pxTCB->ucStaticallyAllocated == ( ( uint8_t ) 2 )
+0x0003165E: xPortCheckValidTCBMem(pxTaskBuffer)
+0x00031682: xPortcheckValidStackMem(pxStackBuffer)
+0x000316A9: (xCoreID>=0 && xCoreID<2) || (xCoreID==( 0x7FFFFFFF ))
+0x000316E0: xSize == sizeof( TCB_t )
+0x000316F9: cpuid < 2
+0x00031703: ( xIdleTaskHandle[cpuid] != ((void *)0) )
+0x0003172D: ( ( ( ( pxDelayedTaskList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? ( ( BaseType_t ) 1 ) : ( ( BaseType_t ) 0 ) ) )
+0x000317A3: xTaskScheduled == pdTRUE
+0x000317BC: pxEventList
+0x000317C8: pxUnblockedTCB
+0x000317D7: pxTimeOut
+0x000317E1: pxTicksToWait
+0x000317EF: ( uxNewPriority < ( 25 ) )
+0x0003180A: xTaskGetSchedulerState() != ( ( BaseType_t ) 0 )
+0x0003183B: xTaskGetSchedulerState() != ( ( BaseType_t ) 2 )
+0x0003186C: xNextTaskUnblockTime >= xTickCount
+0x0003188F: pxTCB == pxCurrentTCB[xPortGetCoreID()]
+0x000318B7: pxTCB->uxMutexesHeld
+0x000318CC: pxTCB != pxCurrentTCB[xPortGetCoreID()]
+0x000318F4: uxIndexToWait < 1
+0x00031906: uxIndexToNotify < 1
+0x0003191A: xTaskToNotify
+0x00031928: pxTCB->ulNotifiedValue[ uxIndexToNotify ] == ~0UL
+0x0003195A: ( ( &( pxTCB->xEventListItem ) )->pvContainer ) == ((void *)0)
+0x0003199E: xReturn != ( -1 )
+0x000319B0: vTaskGenericNotifyGiveFromISR
+0x000319CE: ulTaskGenericNotifyTake
+0x000319E6: vTaskPriorityDisinheritAfterTimeout
+0x00031A0A: xTaskPriorityDisinherit
+0x00031A22: xTaskCheckForTimeOut
+0x00031A37: xTaskRemoveFromEventList
+0x00031A50: vTaskPlaceOnEventList
+0x00031A66: taskSelectHighestPriorityTaskSMP
+0x00031A9B: xTaskIncrementTick
+0x00031AAE: xTaskGetIdleTaskHandleForCPU
+0x00031ACB: pcTaskGetName
+0x00031AD9: xTaskResumeAll
+0x00031AE8: vTaskStartScheduler
+0x00031AFC: vTaskPrioritySet
+0x00031B0D: vTaskDelay
+0x00031B18: prvDeleteTCB
+0x00031B25: prvDeleteTLS
+0x00031B32: vTaskDelete
+0x00031B3E: xTaskCreateStaticPinnedToCore
+0x00031B5C: h != ((void *)0)
+0x00031B6D: /IDF/components/newlib/locks.c
+0x00031B8C: lock != NULL && "Uninitialized lock used"
+0x00031BB6: xQueueGetMutexHolder( ( h ) ) == ((void *)0)
+0x00031BE3: handle == (SemaphoreHandle_t) &s_common_mutex
+0x00031C11: handle == (SemaphoreHandle_t) &s_common_recursive_mutex
+0x00031C49: esp_newlib_locks_init
+0x00031C5F: check_lock_nonzero
+0x00031C72: lock_release_generic
+0x00031C87: lock_acquire_generic
+0x00031C9C: _lock_close
+0x00031CA8: lcd_panel
+0x00031CB2: E (%u) %s: %s(%d): invalid panel handle
+0x00031CDB: esp_lcd_panel_init
+0x00031CEE: esp_lcd_panel_reset
+0x00031D02: (x_start < x_end) && (y_start < y_end) && "start position must be smaller than end position"
+0x00031D5F: /IDF/components/esp_lcd/src/esp_lcd_rgb_panel.c
+0x00031D8F: lcd_panel.rgb
+0x00031D9D: E (%u) %s: %s(%d): prescaler can't satisfy PCLK clock %uHz
+0x00031DD9: E (%u) %s: %s(%d): invalid parameter
+0x00031DFF: E (%u) %s: %s(%d): unsupported data width %d
+0x00031E2D: E (%u) %s: %s(%d): no mem for rgb panel
+0x00031E56: E (%u) %s: %s(%d): no free rgb panel slot
+0x00031E81: E (%u) %s: %s(%d): no mem for frame buffer
+0x00031EAD: E (%u) %s: %s(%d): create done sem failed
+0x00031ED8: false && "unsupported clock source"
+0x00031EFC: IDF/components/hal/esp32s3/include/hal/lcd_ll.h
+0x00031F2C: E (%u) %s: %s(%d): install interrupt failed
+0x00031F59: E (%u) %s: %s(%d): alloc DMA channel failed
+0x00031F86: E (%u) %s: %s(%d): install DMA failed
+0x00031FAD: E (%u) %s: %s(%d): configure GPIO failed
+0x00031FD7: lcd_rgb_panel_create_trans_link
+0x00031FF7: lcd_ll_set_group_clock_src
+0x00032012: rgb_panel_init
+0x00032021: rgb_panel_draw_bitmap
+0x00032037: esp_lcd_new_rgb_panel
+0x00032058: blk >= 0 && blk < EFUSE_BLK_MAX
+0x00032078: /IDF/components/efuse/src/esp_efuse_utility.c
+0x000320A6: num_reg <= (range_read_addr_blocks[blk].end - range_read_addr_blocks[blk].start) / sizeof(uint32_t)
+0x0003210A: efuse
+0x00032110: E (%u) %s: Range of data does not match the coding scheme
+0x0003214B: bits_counter <= req_size
+0x00032164: esp_efuse_utility_read_reg
+0x0003217F: esp_efuse_utility_process
+0x000321F3: `cpuid == xPortGetCoreID()
+0x0003220E: /IDF/components/esp_ipc/src/esp_ipc.c
+0x00032234: ipc%d
+0x0003223A: ipc_task
+0x00032243: esp_ipc_init
+0x00032254: phys_offs != SPI_FLASH_CACHE2PHYS_FAIL
+0x0003227B: /IDF/components/app_update/esp_ota_ops.c
+0x000322A4: it != NULL
+0x000322AF: esp_ota_get_running_partition
+0x000322CD: mosi_len <= 32
+0x000322DC: /IDF/components/bootloader_support/src/bootloader_flash.c
+0x00032316: miso_len <= 32
+0x00032325: miso_byte_num <= 4
+0x00032338: bootloader_flash_execute_command_common
+0x0003256A: smartconfig
+0x00032576: ESPNOW
+0x0003262C: Invalid coexist adapter function md5, internal: %s, idf: %s
+0x00032669: coexist adapter function is NULL
+0x0003268A: coexist adapter function version error! Version %x is expected, but it is %x
+0x000326D8: coexist adapter function magic error! Magic %x is expected, but it is %x
+0x00032722: 9da3695
+0x0003272A: 63017e0
+0x00032732: coexist rom version %s
+0x0003276D: St9exception
+0x00032783: <St9bad_alloc
+0x000327FF: Bbad_function_call
+0x00032812: St17bad_function_call
+0x00032847: Bstd::bad_alloc
+0x00032897: B__gnu_cxx::__concurrence_lock_error
+0x000328BC: __gnu_cxx::__concurrence_unlock_error
+0x000328E2: N9__gnu_cxx24__concurrence_lock_errorE
+0x00032917: <N9__gnu_cxx26__concurrence_unlock_errorE
+0x000329E9:          (((((                  
+0x00032A2A: AAAAAA
+0x00032A4A: BBBBBB
+0x00032DE7: B0000000000000000                INF
+0x00032E18: 0123456789abcdef
+0x00032E29: 0123456789ABCDEF
+0x000330D7: B0000000000000000                Infinity
+0x00033105: REENT malloc succeeded
+0x0003311C: /builds/idf/crosstool-NG/.build/HOST-i686-w64-mingw32/xtensa-esp32s3-elf/src/newlib/newlib/libc/stdlib/dtoa.c
+0x0003318A: Balloc succeeded
+0x0003319B: POSIX
+0x000332CE: ASCII
+0x000332EE: ASCII
+0x00033310: /builds/idf/crosstool-NG/.build/HOST-i686-w64-mingw32/xtensa-esp32s3-elf/src/newlib/newlib/libc/stdlib/mprec.c
+0x00033743: B0000000000000000                
+0x00033BD7: B0000000000000000                
+0x0003A114: |y7@ 
+0x0003A11C: |y7@!
+0x0003A124: |y7@"
+0x0003A12C: |y7@#
+0x0003A134: |y7@$
+0x0003A13C: |y7@%
+0x0003A144: |y7@&
+0x0003A14C: |y7@'
+0x0003A154: |y7@(
+0x0003A15C: |y7@)
+0x0003A164: |y7@*
+0x0003A16C: |y7@+
+0x0003A174: |y7@,
+0x0003A17C: |y7@-
+0x0003A184: |y7@.
+0x0003A18C: |y7@/
+0x0003A194: |y7@0
+0x0003A19C: |y7@1
+0x0003A1A4: |y7@2
+0x0003A1AC: |y7@3
+0x0003A1B4: |y7@4
+0x0003A1BC: |y7@5
+0x0003A1C4: |y7@6
+0x0003A1CC: |y7@7
+0x0003A1D4: |y7@8
+0x0003A1DC: |y7@9
+0x0003A1E4: |y7@:
+0x0003A1EC: |y7@;
+0x0003A1F4: |y7@<
+0x0003A1FC: |y7@=
+0x0003A204: |y7@>
+0x0003A20C: |y7@?
+0x0003B16F: B [7@
+0x0003B1C5: c7@hc7@ c7@
+0x0003B1D1: c7@xc7@
+0x0003B1F0: `d7@@d7@
+0x0003B2B9: f7@Tasks currently running:
+0x0003B2D5: CPU 0/1
+0x0003B2DD: CPU 1
+0x0003B2E3: CPU 0
+0x0003B2F0: [%u] CO: init coex schm error!
+0x0003B310: [%u] CO: create semaphore error!
+0x0003B364: [%u] No memory to allocate coexist osi funcs
+0x0003B392: [%u] CO: create schm semaphore error!
+0x0003B3BC: rtc_clk
+0x0003B3C4: E (%u) %s: invalid frequency
+0x0003B3E2: E (%u) %s: unsupported frequency configuration
+0x0003B412: %s failed: esp_err_t 0x%x
+0x0003B42C:  (%s)
+0x0003B432: file: "%s" line %d
+0x0003B445: func: %s
+0x0003B44E: expression: %s
+0x0003B45E: ESP_ERROR_CHECK
+0x0003B46E: period < (1 << 26)
+0x0003B484: IDF/components/hal/esp32s3/include/hal/systimer_ll.h
+0x0003B4C4: %p %s size: %x (%p)
+0x0003B4D9: integ->prev_status == this_prev_status && "prev status incorrect"
+0x0003B51B: /IDF/components/heap/heap_tlsf.c
+0x0003B53C: size == this_block_size && "block size incorrect"
+0x0003B56E: tlsf_add_pool: Memory must be aligned by %u bytes.
+0x0003B5A2: tlsf_add_pool: Memory size must be between %u and %u bytes.
+0x0003B5DF: current && "free list cannot have a null entry"
+0x0003B60F: block_to_ptr(block) == align_ptr(block_to_ptr(block), ALIGN_SIZE) && "block not aligned properly"
+0x0003B671: !block_is_free(block_next(block)) && "next block should not be free"
+0x0003B6B6: block_size(block_next(block)) == 0 && "next block size should be zero"
+0x0003B6FD: prev && "prev_free field can not be null"
+0x0003B727: next && "next_free field can not be null"
+0x0003B751: tlsf_create: Memory must be aligned to %u bytes.
+0x0003B783: sl_map && "internal error - second level bitmap is null"
+0x0003B7BC: block_size(block) >= size
+0x0003B7D6: block_is_free(block) && "block must be free"
+0x0003B803: block_to_ptr(remaining) == align_ptr(block_to_ptr(remaining), ALIGN_SIZE) && "remaining block not aligned properly"
+0x0003B877: block_size(block) == remain_size + size + block_header_overhead
+0x0003B8B7: block_size(remaining) >= block_size_min && "block split with invalid size"
+0x0003B902: 0 == (align & (align - 1)) && "must align to a power of two"
+0x0003B93F: gap >= gap_minimum && "gap size too small"
+0x0003B96A: size && "size must be non-zero"
+0x0003B98A: !block_is_free(block) && "block already marked as free"
+0x0003B9C2: prev && "prev physical block can't be null"
+0x0003B9EE: block_is_free(prev) && "prev block is not free though marked as such"
+0x0003BA34: !block_is_last(prev) && "previous block can't be last"
+0x0003BA6B: next && "next physical block can't be null"
+0x0003BA97: !block_is_last(block) && "previous block can't be last"
+0x0003BACF: !block_is_free(block) && "block must be used"
+0x0003BAFD: block_trim_used
+0x0003BB0D: tlsf_realloc
+0x0003BB1A: block_merge_next
+0x0003BB2B: block_absorb
+0x0003BB38: block_merge_prev
+0x0003BB49: tlsf_free
+0x0003BB53: tlsf_memalign_offs
+0x0003BB66: block_split
+0x0003BB72: block_trim_free
+0x0003BB82: block_prepare_used
+0x0003BB95: search_suitable_block
+0x0003BBAB: block_locate_free
+0x0003BBBD: align_up
+0x0003BBC6: remove_free_block
+0x0003BBD8: align_ptr
+0x0003BBE2: insert_free_block
+0x0003BBF4: CORRUPT HEAP: multi_heap.c:%d detected at 0x%08x
+0x0003BC26: start_ptr
+0x0003BC30: /IDF/components/heap/multi_heap.c
+0x0003BC52: heap != NULL
+0x0003BC5F: multi_heap_realloc_impl
+0x0003BC77: multi_heap_register_impl
+0x0003BC90: CORRUPT HEAP: Bad head at %p. Expected 0x%08x got 0x%08x
+0x0003BCCA: CORRUPT HEAP: Bad tail at %p. Expected 0x%08x got 0x%08x
+0x0003BD04: head != NULL
+0x0003BD11: /IDF/components/heap/multi_heap_poisoning.c
+0x0003BD3D: multi_heap_get_allocated_size
+0x0003BD5B: multi_heap_realloc
+0x0003BD6E: multi_heap_free
+0x0003BD7E: abort() was called at PC 0x
+0x0003BD9A:  on core 
+0x0003BDA4: <cached disabled>
+0x0003BDB8: assert failed: 
+0x0003BDD0: start_address < 0x1000000
+0x0003BDEA: /IDF/components/spi_flash/memspi_host_driver.c
+0x0003BE19: address + length <= 0x1000000
+0x0003BE37: memspi_host_program_page
+0x0003BE50: memspi_host_erase_block
+0x0003BE68: memspi_host_erase_sector
+0x0003BE81: memspi
+0x0003BF5A: 8@boya
+0x0003BFE3: E (%u) %s: configure host io mode failed - unsupported
+0x0003C01B: E (%u) %s: No response from device when trying to retrieve Unique ID
+0x0003C062: out_write_protect!=NULL
+0x0003C07A: /IDF/components/spi_flash/spi_flash_chip_generic.c
+0x0003C0AD: E (%u) %s: The flash you use doesn't support auto suspend, only 'XMC' is supported
+0x0003C101: spi_flash_chip_generic_get_write_protect
+0x0003C1A6: 8@generic
+0x0003C1B0: chip_generic
+0x0003C23A: 8@issi
+0x0003C2BE: 8@mxic
+0x0003C2C5: (io_mode == SPI_FLASH_OPI_STR) || (io_mode == SPI_FLASH_OPI_DTR)
+0x0003C306: /IDF/components/spi_flash/spi_flash_chip_mxic_opi.c
+0x0003C33A: E (%u) %s: no response
+0x0003C353: out_write_protected!=NULL
+0x0003C36D: spi_flash_chip_mxic_opi_get_write_protect
+0x0003C397: spi_flash_chip_mxic_opi_get_data_length_zoom
+0x0003C43E: 8@mxic (opi)
+0x0003C546: 8@winbond
+0x0003C550: chip_wb
+0x0003C57B: `freqdiv > 0
+0x0003C588: /IDF/components/spi_flash/esp32s3/spi_timing_config.c
+0x0003C5BE: spi_timing_config_set_flash_clock
+0x0003C5E1: @7@0:
+0x0003C641:  84@30@
+0x0003C6F6: I@@IPPI``IppI
+0x0003D86D: IAIQHC
+0x0003D88E: 4H%hSjDh5I%
+0x0003D89D: BY3B#
+0x0003D90B: (X8@j
+0x0003D979: I3H8&
+0x0003DA5A: pz XH
+0x0003DAA9: H1f$2A
+0x0003E054: ((C)H(C
+0x0003E10B: @@tq^
+0x0003E1D1:  r R%
+0x0003E4D3: hw6$p
+0x0003E5AF: peci!V
+0x0003E5BA: qh(hF
+0x0003E610: 81(#(R
+0x0003E6A3: (1hRG
+0x0003E75F: j3j")
+0x0003E7CF: xWZcg
+0x0003E839: h!:r*
+0x0003F035: d  tP"
+0x0003F04E:   tP"
+0x0003F237:  R @@t"
+0x0003F7EA: $@3 ;"|
+0x0003F8DF:  2 !2
+0x0003FBC2:  b@  
+0x0003FE62:   t00t@@tPPt``t
+0x0003FEA0:   t00t@@tPPt
+0x0003FED3:   t00t@@tPPt``tppt
+0x0004020B: Bgfff<
+0x000402C7: <VUUU@M
+0x00040BD2: 7@ {7@
+0x00040E86: 7@tR7@
+0x00041083: <0V7@@
+0x000410CF: @@Z7@t
+0x00041103: <|_7@
+0x00041285: f7@D#
+0x00041309: m7@xn7@
+0x000413B7: `<k7@
+0x00041405: n7@h#
+0x0004140F: ?gfff
+0x000414D9: D7@t#
+0x000414E7: BXk7@|
+0x00041503: @Pq7@`q7@0
+0x000415D7: BLl7@
+0x0004186B: <`v7@
+0x000418B3: ?|y7@L'
+0x000418DD: y7@D%
+0x000418FF: B,z7@x
+0x0004192B: ?pz7@
+0x00041942: 7@8w7@l
+0x0004198B: ?Pz7@
+0x00041B95: ++CCUNG
+0x00041BC7: <0g7@X
+0x00041F74:  %Y'!*
+0x0004221E: 6h"(6
+0x00042523: 08 2B
+0x00042893: !pq!`a!PQ!
+0x000429A8: `U RB
+0x000429FA: X"Y2VJ
+0x00042A2C: bR YRYb
+0x00042BED: xBXaW
+0x00042D10: pU RB
+0x000431EE:  2 "*
+0x00043297: 3#;S05
+0x000432EB: *( !!*f
+0x00043325: 1&'F&7
+0x000433BC: Yqe`F=
+0x000433EC: 1egFA6
+0x00043420: %AFV*
+0x0004342F: z&#<&3If
+0x000434D0: YqePF=
+0x00043500: 1%VFA
+0x00043543: z&#<&3If
+0x000435DE:  b VC3"
+0x00043763:  U RV 
+0x000437D2: A&**f:
+0x00043826: &*jf:
+0x00043869: ZWPQ!Z"  
+0x000438C1: @A!@"
+0x00043923:   4&2
+0x00043950: @_!@U
+0x0004396B:  _! U
+0x00043D65: )s(sA
+0x00043D71: @" )s
+0x00043FEB: Q$RQ&bQ%
+0x00044060: `D BB#
+0x00044120: BB"BB*BB6iB
+0x00044327: RB*RB6%w
+0x00044531: E%)EV:
+0x00044676:  e7E=
+0x00044834: U#JUP6
+0x00044C8A: *08t2D
+0x00044C9A: PXt08t2D
+0x00044CA5: "RD* 3
+0x00044CAC: 08t2D"2
+0x00044CB8: 08t2D6
+0x000450F9: `PQ`P
+0x00045118:  %lE2b
+0x000455D4: D#PPt
+0x000457E5: D#::JJ
+0x0004580C: $# h 
+0x0004595E: 0?1pu!07
+0x0004599F: @O1pu!@G
+0x00045B46: aHq@9
+0x00045B66: jDzu@A!pq!pD
+0x00045CA1: P_1@E!PD
+0x00045CAE: $C0"S
+0x00045CF9: D#I1)q
+0x0004626D: "*DBS
+0x0004627D:  e~CM
+0x0004634D: 1%nCm
+0x00046699: w#JMp
+0x000466F9: w#JMp
+0x00046762: !@A!@
+0x0004684C: 08 2Y
+0x00046A0D: ZVZ3}
+0x00046A23: "#@"S
+0x00046AE5: "#@"S
+0x00046B5B: D#@c 
+0x00046BF4: 0`9q9
+0x00046C57: D#@c 
+0x00046CC9: D#:6JG
+0x00046EC3: p/!p"
+0x00046EE2: 0/!0"
+0x00046F79: 01!ZVz3PQ!P3
+0x00046FD5: *' !! 
+0x00046FDD: (a*VPZ
+0x00046FEA: ZVPQ!Z
+0x000471CF: Q%xB}
+0x0004750C: x#ZWW*
+0x0004764C: @B081jD
+0x00047742: 1:52Y
+0x0004780A: #zxw*
+0x0004789A: 1z32X
+0x000479B1: @_!@U
+0x00047FEB: `cUg4
+0x00048091: 7$1H2
+0x00048101: @C!@H
+0x00048112: @C @@
+0x00048146: `cUg7
+0x000481D1: kg<#b
+0x00048282: x*h"g
+0x000482CD: pf bR
+0x0004853F: "AN(F)
+0x00048557: I!060
+0x00048566: 03U74
+0x000485B3: eGBV:
+0x000485C1: eFBVZ
+0x00048623: e@BV:
+0x00048631: e?BVZ
+0x00048DF2: xFYQ<
+0x00048F0A: nPQ!Ra
+0x00048F14: jUPQ!
+0x00048F20: PnSYaYq
+0x00048F56: `"0  
+0x00048FF3: z}jmZ]
+0x0004911C: f#W&$xC
+0x00049248:  %]@R
+0x00049296: eX@VJ
+0x000495E4: Z"j""
+0x0004960D: 1jXZRR
+0x00049649: %PD BB(
+0x000497A8: *zjwr
+0x00049848: h1H:g
+0x00049970: @"CHk
+0x00049ADC: DcJUYBX2
+0x00049CD2: <0"S"Z
+0x00049DD3: /1`c! &
+0x00049E02: /1`c! &
+0x00049E8B: L"Q&%
+0x0004A001:  %n?M
+0x0004A022: t?&*R
+0x0004A3CC: BAoHb
+0x0004A3D7: )BQ8B
+0x0004A48D: ?x2&*
+0x0004A502: :801!:wpp
+0x0004A60E: 3#2Q62
+0x0004AA4B: 1@F!@J
+0x0004C6D7: 1PV!PZ
+0x0004C84D: 1 &! *
+0x0004CBEB: "#9qPP
+0x0004CDD3: !JJBW
+0x0004D110: hZ``D
+0x0004D284: 8Q9"F
+0x0004D2C9: %Q=2B
+0x0004D37F: R#*) 
+0x0004D38F: Q;  t
+0x0004D43E: "#"QH"
+0x0004D456: 0" "A
+0x0004D4D1: 01!Z3X
+0x0004D4E3: UPQ!Z3R
+0x0004D4F4: 2Q=RQC2QDbQG
+0x0004D53E: 2Q=RQC2QDbQG%p<8
+0x0004D63D: U#RQ;
+0x0004D783: a%F<=
+0x0004D7F7: :>2QE8
+0x0004D82F: abQRe@<
+0x0004D940: 00`W#
+0x0004DC73: 0O10D
+0x0004DEB3:   tVr
+0x0004DF95: pU PPt
+0x0004E05F: U@C0JUHV
+0x0004E075: cZS8$
+0x0004E092: JJJK@@
+0x0004E114: el<`3
+0x0004E429: U#ppt
+0x0004E45C: px 2R
+0x0004E47A: 0Q`@q`
+0x0004E493: pf q+
+0x0004E49B: bB(YrYby
+0x0004E4B6: `j!bb
+0x0004E4C7: 0:!9b8rB
+0x0004E4E2: 2B(`2!
+0x0004E4FB: `j!ib
+0x0004E50B: @J!Ir8b
+0x0004E519: $@3 F
+0x0004E545: D#``tW
+0x0004E59D: SW&\g(a
+0x0004E631: f#`3C
+0x0004E637: D#01!PPtG
+0x0004E656: pU RB
+0x0004E6B9: 0wCyEYRF
+0x0004E740: +"**)3
+0x0004E806: `oA+"
+0x0004E8C9: (QH1XaJ
+0x0004EC49: D#h"fY)
+0x0004EC8A: 0 $JF03!:D
+0x0004ECB2: @ `  t
+0x0004ECEA: 02!*&:""
+0x0004ED2A: " !!@"
+0x0004ED31: 01!*&
+0x0004ED91: O102!@3
+0x0004EE56: B400tB
+0x0004EE79: 8bBB4B
+0x0004EE8A: ``D`3 @@
+0x0004EEB1: 9b@1AZ3@3
+0x0004EFD1: !`o1`i
+0x0004EFDA: 1PR!`
+0x0004F03F: 8C@J!pz!
+0x0004F051: 3C`j!Z^
+0x0004F05F: w#jlPZ!
+0x0004F070: Sp4CpDS
+0x0004F0A6: o@@th
+0x0004F0BF: 4#0?!@3
+0x0004F0E0: G#@O!pD
+0x0004F1A2: :408!2B
+0x0004F270: 3:6Jf
+0x0004F3A6: `b!J3PV
+0x0004F3AE: 02!Px!
+0x0004F3F9: `j!:8ZV0:!
+0x0004F452: rR bR!
+0x0004F600:  Dfbr
+0x0004F733: @S!@B0Z
+0x0004F798: @R! D0@@
+0x0004F7BE: @Q!@@
+0x0004F822:  @twb
+0x0004F869: ;@&zYR
+0x0004F98E: 0@twc
+0x0004FE3E: P tVB
+0x0004FE7F: 2a+"A
+0x0004FFFC: )!`1Ap!AP3
+0x00050010: 9a)Q\
+0x0005001C: 8!XqP#
+0x0005005F:  RQDe!
+0x000500B6: 8a))&
+0x0005016A: Xa9"&%
+0x000501B4:  2QE2
+0x0005020E: 8a))&3
+0x0005030D: AjcbQ"b
+0x00050318: Dj32Q$b
+0x00050324: jcbQ#b
+0x0005032B: %j32Q%2
+0x00050390: A:22Q"2
+0x0005039B: D:""Q$2
+0x000503A7: :22Q#2
+0x000503AE: %:""Q%"
+0x00050422:  *%"QD"
+0x0005044B: !XqP)
+0x00050494: ""QDZ!
+0x000504C7: (a8Q7
+0x000504F2: P tXQf%
+0x00050509: 12QB"QC:8*(2QD"QE
+0x00050537: :("QE
+0x00050540: !XqP)
+0x000505BB: em9(Q&
+0x0005060F: 3"QC*)2QD"QE
+0x0005063D: ""QEe
+0x00050645: !XqP)
+0x00050671: 1RQDR
+0x000506C4: \9(Q&"
+0x000506D2: 8aXQW
+0x00050724: "RQC2QD"QE
+0x0005074C: 2QB"QCe
+0x00050781: 1:YRQDR
+0x000507B4: ""QCZ!
+0x000507D6: K9(Q&2
+0x000507E4: 8aXQW
+0x00050804: P t00t
+0x00050831: "RQC2QD"QE
+0x00050A02: U8s@U
+0x00050CF0:  e]9ZD
+0x00050D49: j"07U 'E
+0x00050D65: `m ``
+0x00050F5C: &#R&3U&
+0x00051188: *D:fZ
+0x000512F8: &#(&3+&
+0x0005139D: ZD:f*
+0x000513F0: {" %t
+0x00051508:  %-917
+0x00051525: D#`h!G&
+0x000515DD: 0:E *UP"
+0x000515E7: 3  # 
+0x00051605: 3#  $
+0x00051623: @T   $"
+0x0005162C: 0q! S
+0x00051632: pv0p%0
+0x0005166F: @T   $"
+0x0005167B: @3SP% 
+0x00051751: ZR9*Y
+0x0005176F: ``tba
+0x0005178D: rQ6bQ7%
+0x000517A8: h3``4bA
+0x000517B2: pv0ppt
+0x000519EE: RQMXqx
+0x00051A05: RQRXSra(PP
+0x00051A20: `e0ba
+0x00051A34: `uT``DP
+0x00051C7C: f#bQ9bQ;
+0x00051D21: $2QC82BAkBA
+0x00051DC0: @@5f4
+0x00051EA0: 03%2A
+0x00051EF7: #bQ&bQ*
+0x0005209A: )1IARa
+0x000520CF: Cp"S*$"Q
+0x000520D8: `%C`USh1@
+0x00052108: &I&hQ
+0x00052131:  uC %S
+0x000521D9: @U0"A
+0x000521E6: Qt !!PP
+0x000521EE: 'd7HA
+0x0005221E: Q_bQ`BQa
+0x0005225C: bQ_2Q`"Qa
+0x00052283: "#Y!R
+0x000523C2: ba:RH
+0x000523EA: a=ba?
+0x000524B2: ?`G!@
+0x000527B2:   tPP
+0x00052896: CpzC`kSPZS
+0x000528CA: iah!I&kcB
+0x000529BD: 8a(!9"F
+0x00052A27: 9qXq01!9a
+0x00052A5E: '.D r
+0x00052A8F: `@`0D
+0x00052C76: BA:%g
+0x00052C9F: U RA,R
+0x00052CB0: PXtPX 
+0x00052E0F: X3PX%VE
+0x00052E45: bA}BQ6
+0x00052EB1: #`a!B
+0x00052EC4: D#IA`O1`D
+0x00052F27: rA|%m
+0x00052F8B: rQ!%~7
+0x00052FCA: 'rAtF
+0x00053085: DrQ"r
+0x0005308C: rQ$`p
+0x000530C1: Q!RA|
+0x0005316B: )QYa}
+0x00053221: Q@W&ER
+0x00053229: RQ?'$D"
+0x00053232: "QAB!
+0x0005325A: "Q@g%
+0x00053405:   tb!
+0x00053430: PD0@@tBa
+0x0005345C: A"Q.BQ0
+0x00053481: URQ/R
+0x00053488: "Q.RQ1R
+0x00053496: ABQ0eP
+0x000534D9: URQ.R
+0x000534EC: RQ/bQ1
+0x0005357F: RQ/RQ1
+0x00053597: bQ/bQ1%@
+0x000535A9: "C"Q0P"
+0x000535CC: 2Q."Q0
+0x0005360E: RQ/RQ1e"7
+0x0005366C:  bQ/bQ1
+0x000536A9: RQ/RQ1
+0x000536E5: 2Q/2Q1%
+0x00053754: ZTzD*Djh
+0x0005388E: Q?bQA*G
+0x00053948: @FABE
+0x00053A29: ,BQNB
+0x00053A4A: jD@A!Jw
+0x00053A82: US`a!jdR[
+0x00053AAA: a*"a(i
+0x00053ABB: t6VZ+R
+0x00053AD7: USBQ9RQ6
+0x00053B56: "a(jeR
+0x00053B82: JIBQ6B
+0x00053B9F: D#PDC
+0x00053BFA: JIBQ6B
+0x00053C19: D#PDS
+0x00053C23: tBQ7%^6
+0x00053C66: ba(hqpD
+0x00053C7F: JHbQ8b
+0x00053C9F: TBQ8B
+0x00053CCA: PYSRQ6X
+0x00053CDF: tBQ9eR6
+0x00053D1E: D#ZYm
+0x00053DCB: "a(jeR
+0x00053DF2: rQ7rQ9V
+0x00053E3D: rQ7rQ9V
+0x00053EB0: bQ7bQ9
+0x00053F05: rQ7rQ9
+0x00053F54: U#jDhqJyg%
+0x00053F69: -RQ6JH
+0x00053F90: BQ7`ISBQ9B!
+0x00053FA0: tpUCRQ8X
+0x00053FBC: RQ6BQ7
+0x00053FE1: tRQ8BQ9
+0x0005406D: BQ6RQ9
+0x0005408A: USptC
+0x00054094: tRQ7rQ8
+0x000540FF: jhrQ8
+0x0005411C: JIBQ6B
+0x00054131: lJIBQ7B
+0x00054234: `````
+0x0005423A: jURQK]
+0x00054244: *^PP`PP
+0x000542D2: bQ?JG
+0x000542E3: D#bQM@
+0x000542F0: !"Q@`
+0x00054359: jUZYY
+0x000543A2: RQ7RQ9
+0x000543E4: BQ7BQ9V
+0x00054431: rQ7rQ9V
+0x0005447E: RQ7RQ9e;6
+0x0005450B: bQ7bQ9
+0x00054562: YQiara
+0x000545C6: Y(Y8I
+0x000547FC: 3 2At1
+0x000549E6: 0D0@O
+0x00054A46: UjiJF
+0x00054ABE: =R!!@3
+0x00054AC6: 3#B!"2a
+0x00054B0B: X2Q,2Q-e#5X
+0x00054B1E: 00t2a
+0x00054C32: tr!"b!!V
+0x00054C6C: pD BU
+0x00054DEC: ,zxpp
+0x00054E49: `D0@@
+0x00054EB9: +hQZ3:4B
+0x000550DE: #j30E
+0x0005539C: e[4W*
+0x000553DD: UZY+DF\
+0x000554C9: 3:9+DFJ
+0x0005552B: V:31W
+0x0005555A: VD0qL
+0x000556AB: z301!::
+0x00055815: zzJwPP
+0x00055875: wpq!z
+0x000563DE:  %I3M
+0x000569BB: PPt!;
+0x00057201: ;:f%w
+0x00057213: +:f%v
+0x00057B17: %C2JU
+0x0005807F: RB/2R
+0x000580E1: 00tJB
+0x000580EF: tg9`PPt
+0x000581B5: 300tF
+0x000588B3: B""00t@@$7
+0x000588C2: @@$&4,f3
+0x000588E6: @3 2B
+0x000589B1: ?00t 
+0x000589B7:  @@t7
+0x000589C4: 2Z?BZ@%
+0x00058A43: :#9Q2
+0x00058A4B: 100$&
+0x00058ADC: f3)2'
+0x00058B83: mHa8q@
+0x00058B8F: D@A!J
+0x00058BC0:  R @@t
+0x00058BE8: 00$f3
+0x00058CE0: (18*m
+0x00058D9F: Y\X&9l8
+0x0005907C: haZR`%
+0x000590AE: tbQ(bQ'
+0x000590BF: T"a"Ra#"
+0x000590D3: P tba
+0x000590E4: &ba+  $
+0x000590F6: "#)a8$(
+0x000592C8: *fXa`a!j%
+0x000592D2: "#)a:*
+0x0005950B: raSraHRaLraOraPBaTe
+0x0005956C: 2aO2aP%
+0x000596D6: DPX!pt
+0x000597CA: aLraG
+0x000597D5: raH01!
+0x000598AD: aPBaT
+0x000598E3: J?j3b!
+0x0005996A: w#rQJrQOqh
+0x0005998C: QRaTBaOraP
+0x00059A0A: QBZRjdr
+0x00059A50: 4BaHA
+0x00059A6B: BaJ2aWi
+0x00059AB2: bQOZDh
+0x00059AC5: ZDBQRbQP
+0x00059AE9: aPBaIRaV%j
+0x00059BE6: D#BQBBQ@
+0x00059C16: DBQBY
+0x00059C48: RQO@Z
+0x00059C9E: BaTRaI
+0x0005A03F: 301!B
+0x0005A052: VC01!W
+0x0005A05F: P3 2A
+0x0005A06E: @3 2A
+0x0005A087: 00t2a
+0x0005A0CF: QFZ32
+0x0005A100: 84ZV04
+0x0005A11D: %F0R!
+0x0005A13F: 2aS1t
+0x0005A156: 12aJBaW]
+0x0005A193: zfbQQb
+0x0005A1A7: QPbQRR
+0x0005A1C8: aP2aIRaV%
+0x0005A1F3: 2QF2QGF
+0x0005A650: J&#d2
+0x0005A7EF: Z#`"S
+0x0005A7F8: .P"S2
+0x0005A802: "#0"S"Z
+0x0005A8B3: 30CAPD
+0x0005A949: 30@tBA[F
+0x0005A971: 30@tBAZF
+0x0005AA54: 01`7%
+0x0005AAC2: RQ bQ!
+0x0005AB2D: 04 2B<%
+0x0005AC11: .@A!R
+0x0005AC19: D#ZTPP
+0x0005AC55: 1P\!pU
+0x0005B083: #2B<1
+0x0005B264: {" %t
+0x0005B92D: u#jj`n!
+0x0005B94D: 1jd+300
+0x0005B960: SZSjD
+0x0005BA16: )A9QIa
+0x0005BA83: Q*&:6JfB
+0x0005BB44: JfbQzb
+0x0005BB78: raO2aU
+0x0005BBB1: :w`1!pa!`3C00
+0x0005BBC2: :URQ7
+0x0005BCA2: 2aNJ12aV%r.
+0x0005BDC6: ra^RaVe<
+0x0005BE5D: QC2a^%{
+0x0005BE97: QGrQHew
+0x0005BECC: QJRQLbQK
+0x0005BFD6: jk`h!BQRJH@
+0x0005C010: aVBa[
+0x0005C093: UPQ!Pw
+0x0005C0A3: `o!zv
+0x0005C0E8: QPrQOR
+0x0005C139: BQQR!
+0x0005C140: F@@tRQRI
+0x0005C22E:  raRraX
+0x0005C2AA: JJ@N!
+0x0005C2B5: :DBV&2
+0x0005C2DA: 08A2Fl
+0x0005C2F8: BaW2aSe
+0x0005C388: V)2V'2
+0x0005C49D:  r @@
+0x0005C4D9:  r @@
+0x0005C52B: %+.2g
+0x0005C545: 0f 81
+0x0005C568: I#I3f8
+0x0005CB09: "C,f"
+0x0005D206: (%JB($ 
+0x0005D237: (%JB($ 
+0x0005D31F: HF@i5B
+0x0005D773: @"0"C
+0x0005DB56: "C@BC@@
+0x0005DD2C:  *0  t
+0x0005DDC3:  ( 0" 
+0x0005DE50: &< fL
+0x0005DF9E: d,8"Ia(#
+0x0005E075: xqjgi
+0x0005E0A7:  e1,Vz
+0x0005E3A4:  R 0C 
+0x0005E4FC: 0" "H
+0x0005E563: !#ppt
+0x0005E59D: 00tg8
+0x0005E5A5: 000t2E
+0x0005E5D0: <%.,15
+0x0005E614: p( 2!&R!'b!*
+0x0005E698: 7iAb!)
+0x0005E6A0: i1b!(
+0x0005E6E7: "! R!!)
+0x0005E871: %```P
+0x0005EE43: @C BR
+0x0005EED8: I"Y2iBy
+0x0005EEEB: 3'9X<
+0x0005EEF7: '9.,Y
+0x0005EF4D: a'9#\9
+0x0005F531: @@tQ+
+0x0005F6DE: #)39:
+0x0005F70E: 08 9R
+0x0005F779: I!I1G
+0x0005F909:  %'+ B 
+0x0005FCEC: @@tV4
+0x0005FD19: U#ppt
+0x0005FD34: @ tV2&
+0x0005FDB4: P?!P3
+0x0005FF80: aHaBV
+0x0006005F: I!9QIaY1Yq
+0x000600CC: U#``tV
+0x000601A5: H1j4B
+0x000602AC: !ej)P
+0x000602DD: DJGZW(1BS
+0x0006038E: h:>JN00
+0x000604B4: q*D@@
+0x0006094D: @3 2B4%
+0x00060962: C#;t@G
+0x0006096D: f#`DS@3
+0x00060988: h:wpp
+0x00060998: 7#jd`
+0x00060A57: zypq!
+0x00060C5D: "#p"S
+0x00060C63: "#P"S+"
+0x00060C70: 0"S"Z
+0x00060CC3: Ba'Ba
+0x00060CD3: BQRba
+0x00060CD9: ra#2a"eK
+0x00060D3C: 3#p3S
+0x00060D7A: Ba#2QRba
+0x00060E03: ra'ba
+0x00060F00: "Q$P&
+0x00060F08: &"Q%"
+0x00060F0E: 'JH*%@@
+0x00060F46: @/1@"
+0x0006100F: Z" !!J"  
+0x0006106B: z" !!J"  
+0x0006114F: !s|Hq"a?
+0x00061163:  "a3Ba4ba5e
+0x000612C0: "a4Ba6ba5
+0x00061346: JHBQ(
+0x0006135F: "JHBQ)
+0x000613F0: Q-RQ/
+0x00061677: D@" "S
+0x00061737: XBaD"aG}
+0x000617A9: JHBQ(B
+0x000617BB: Q*BQ+V
+0x00061818: qRaPe
+0x00061835: @I BHk
+0x0006184F: D BHkB
+0x0006187B: @H BA
+0x000618A7: @H BA
+0x000618D3: @H BA
+0x00061A13: @"   
+0x00061A1E: @"   
+0x00061A2C: @"   
+0x00061CFF: aN{BR
+0x00062102: :+VPP
+0x00062202: 0E!03!04 
+0x0006222E: @i!@8!`3 @c!`3 @E!@3 
+0x000622BC: !03!08 
+0x0006230F:  wc`R
+0x00062340: 0H!0i!`D 
+0x0006234C: 0E!03!04 
+0x00062396: @4!@e!`3 00
+0x000623A5: @3 V#
+0x00062419: 0C!05!04 
+0x00062435: 0E!0s!pD 
+0x0006249E: 0S!05!05 
+0x000624EF: @U!@C!@E 
+0x00062525: 3#01!:4
+0x0006255D: !@C!@L 
+0x000625A3: @U!@C!@E 
+0x000625D9: 3#01!
+0x00062616: !@E!@L 
+0x000626A5: @U!@C!@E 
+0x00062949: Q*RQ)
+0x0006296C: a1Ba;
+0x000629DF: 2Q,J32Q.
+0x00062B17: !:HpD
+0x00062B59: F`U RW
+0x00062F9B: 3#PP4&
+0x0006321E: h$Y$R
+0x000632A3:  *0  t
+0x00063343: %R&%A&
+0x00063350: A&fJ3
+0x000633C1:  %3&2
+0x000635A9: UPQ!Z300
+0x000637E4: J f:#2
+0x00063804: 4@3 2R
+0x000639B6: @@tpx!V
+0x00063A20: +jb@F
+0x00063A7D: :U`h!
+0x00063AE5: ZSRQ(R
+0x00063AEC: )ZRRQ)R
+0x00063AF4: *Z32Q*2
+0x00063AFC: +:""Q+
+0x00063B70:  D0@ 
+0x00063C2D: zurQ(r
+0x00063C37: zsrQ)r
+0x00063C41: PzURQ*R
+0x00063DC9: wpq!pp`pp
+0x00063E27: BQ)Hq|
+0x00063E35: QBQ*B
+0x00063E54: D BAdB
+0x00063E5E: JHBQ 
+0x00063E6A: JHBQ!B
+0x00063E80: BQ#H(
+0x00063EDF: %')a(AI"
+0x00064031: 2R#ep
+0x00064041: 2R"eo
+0x0006415E: 1iA0D
+0x0006437A: HPP$&%
+0x0006440E: BAnr!
+0x0006441A: %PD BAn
+0x00064459: D @@t
+0x0006449A: 2AnR!
+0x000644A6: $@3 2Anra
+0x0006450F: QnoPZ
+0x0006453A: D#qFq
+0x0006476A: p3 2BH8
+0x0006477B: ;DZ3rC
+0x0006488E: 0"S"Z
+0x0006489A: 0"S"Z
+0x000648F8: 0BQ#B
+0x00064903: BQ$bAMeG
+0x00064952: (f$9B
+0x00064995: PP$&5
+0x000649C1: HPP$V
+0x00064A02: Y#X#y#r
+0x00064A0A: Hpp$&7
+0x00064AA5:  bQ$%
+0x00064B4B: H|t@3
+0x00064B5B: I!Y1iAyQ
+0x00064B9A: H|s0D
+0x00064BCD: D BBH9
+0x00064C35: 3 2BH 
+0x00064D58: B f !,o
+0x00064F8C: ,bA+)
+0x0006509F: 1on2#
+0x00065175: @IS`eS
+0x000652DC: UPQ!P
+0x00065444: !pq!p
+0x00065485:  IAiQe
+0x00065494: )q!\k
+0x000654FF: @U RB*0
+0x000656DD: )#%e%
+0x0006584B: *0D BB*
+0x000658E0: :D@A!2
+0x00065954: 2Q$eR
+0x000659B3: fJZVt
+0x00065B78: di .!
+0x00065BBF: "Q!:""Q#
+0x00065D88: RQO%B$
+0x00065DA1: 5f$2B
+0x00065DC3: BQOe>$
+0x00065DE9: t0" "Gt
+0x00065E3C: 0'$_R
+0x00065E53: 6 !!Z"`S
+0x00065E5F: Z301!j3@"
+0x00065E6C:  !`01`
+0x00065EB0: " D F
+0x00065ED3: Z" !!:"2
+0x00065EE6: Z301!
+0x00065EF0:  !`01`
+0x00065F9C: 1W.c*80
+0x00065FD3: `BC"#
+0x00065FF8: X#Z" 3
+0x0006606A: %p#&J
+0x0006616C: %}#JJ
+0x0006617D: eW#8q@A!0"S
+0x0006618B: D#`"SP"S
+0x00066196: +"z"@H!2
+0x000661A3: "#0"S"Z
+0x0006626F: EC9q  
+0x00066305: a32a)"a*
+0x000663A4: `"W1"
+0x000663B5: `"W3"
+0x000663BF: "$Ba(2a)"a*Ba4
+0x000664C4: "Sp"S`"S+"
+0x000664E2: g *S"S
+0x0006654A: "a P"
+0x00066550: aJi !`0"
+0x0006655C: aHi (A
+0x00066568: Ra!ba
+0x0006656E: "a"%D
+0x0006665D: fj300
+0x00066773: jeYqR
+0x0006683C: `iSZ3Zw
+0x000669E4: Ra_QDg
+0x000669FB: QbaTRaWi
+0x00066B58: `a!`i
+0x00066B5E: bQA7h'b
+0x00066B7E: f`a!pp
+0x00066CEC: ba`raU%J
+0x00066DB4: QEbQG
+0x00066FE8: #0C 0
+0x000671D1: @3 2BP
+0x00067321: UZSRQ
+0x00067419: V"RV#r
+0x0006742A: "V$2V%z
+0x00067432: JUz"J3
+0x0006745E:  e'"M
+0x00067494: #1qe8
+0x00067540: )a!We
+0x00067795: %Z#1Vb7
+0x000677DE: dI1H1JCB
+0x0006783B: \'d3X
+0x00067873: QzdB"
+0x000678D9: \917d
+0x000679B2: 8Q::2
+0x00067DB3: B @@tW
+0x00067E88: @f bB\
+0x00067EED: 2B\F|
+0x00067FA9: %P3 2AY
+0x0006811F: aebZSW
+0x00068345: d{406
+0x0006834B: 03!9a
+0x00068525: 7#9a8
+0x0006874C: 3#9Q2
+0x000688CA: D#PPt
+0x00068979: U#IaZDPP
+0x00068986: "#je``
+0x00068A4F: U``t@@
+0x00068CF1: Q1x_9
+0x00068D29: %1j_2b
+0x00068D30: 1j_2b
+0x00068D50: 1c_2b
+0x00068DA5: 00t"a
+0x00068DAE: @@t"a
+0x00068DB7: PPt"a
+0x00068DC0: ``t"a
+0x00068DD9: qppt2H
+0x00068E31: "H(2H#2!
+0x00068E3C: 2H$2!
+0x00068E43: H"2H%2!
+0x00068E4D: 2H&2!
+0x00068ED3: @3 Xq|
+0x00068EDD: p3 `E
+0x00068FD0: 2j Rj!|
+0x00068FE4: D@3 2J
+0x0006903A: Bj 2j!
+0x000693D9: DJEPP`
+0x000693EA: #G+oZ
+0x00069495: #7(WP
+0x0006954A: s]2R#8aPD
+0x00069554: 2R$2!
+0x0006958C: R"2BPI
+0x00069617: 00t9q2"L
+0x000698AD: RF(Rb%Rb&R
+0x0006990A: Rb%Rb&
+0x00069A21: 2B7BB908!@H!
+0x00069A2F: 2B8BB:
+0x00069B52: 4Y2B-
+0x00069D0A: 00tGZ<
+0x00069D21: 1IAIQIaIq
+0x00069F56: XqPSc=
+0x00069FD6: 2$!P3 
+0x0006A0C5: X%08TPQ
+0x0006A1AA: P3 91
+0x0006A1CB: P3 2A
+0x0006A25E: 9(I8YH
+0x0006A27B:   t)qI
+0x0006A29C: 9dQOZ
+0x0006A2A5: ZPSc(q1KZ
+0x0006A3BF: 8BA"Y@3
+0x0006A416: Y07A`p
+0x0006A46D: 00D09 
+0x0006A490: PPtPS 
+0x0006A798: qdXpD
+0x0006A7F4: (cA6V@" 
+0x0006A862: A(V@U 
+0x0006A933: Y1  t
+0x0006AA83: 00t `t91@ t2
+0x0006AA97: jG1`X
+0x0006AB5D: jg!/X
+0x0006AB8B: Q$Xj4
+0x0006AEC5: %Y VJ
+0x0006AED1: W eW 
+0x0006B0FC: PPt``t
+0x0006B13E: `wtph
+0x0006B1B4: `wtph
+0x0006B1C7: H`wtph
+0x0006B445: % 0`'3
+0x0006B4E6: @3 2B
+0x0006B51B: pD BB
+0x0006B5AD: 3@@dBB
+0x0006B748: QU  t
+0x0006B764: KU  t
+0x0006B780: EU  t
+0x0006BA59: hPPtY1)Q
+0x0006C382:  &#"&3&&
+0x0006C43F: #AJR1JR@E
+0x0006C7ED: QjQ t
+0x0006C88F: c0J68
+0x0006C8CD: *%Q3Q
+0x0006CBAC: 2b/2b.z&8
+0x0006CBC8: 2b12b0z&8
+0x0006CC90: 2b/2b.
+0x0006CCD8: Bb1Bb.Bb0
+0x0006CD8F: PPt``t
+0x0006D03E: Z f:4
+0x0006D1FB: 00t@@t
+0x0006D2DA: YA9QBa
+0x0006D442: YA9QBa
+0x0006D4BB: YQhQQANjUR%
+0x0006D58E: 7Na8N
+0x0006D6E4: "  t'4
+0x0006DC15: 300t2H
+0x0006DD8E: (-"(/
+0x0006DED6: Zd9AK4Z3iQia
+0x0006DF8B: X6pU 
+0x0006E06E: rb3r"5
+0x0006E077: rb5r"6
+0x0006E095: b3rb6
+0x0006E0B1: "5rb4rb3V
+0x0006E11A: a{KQ+Hr
+0x0006E13F: alKPP
+0x0006E560: y9jux
+0x0006E58E: [JjUJ{x
+0x0006E65B: A(JK5J3|
+0x0006E676: ZD"",
+0x0006E6D5: JK3*3|
+0x0006EA73: Q"IKFZD|
+0x0006EA90: "),0800"
+0x0006EA99: jU"i,(
+0x0006EB37: KD*D|
+0x0006EB4E: bh02h/"h."h-
+0x0006EC41: Y!ZVh
+0x0006ECAC: 85 # 
+0x0006ED2A: QqHh!
+0x0006F13B: *#1mG
+0x0006F20A: >adG|
+0x0006F227: PD BH
+0x0006F24D: a+GKTjU|
+0x0006F30F: FKbJf
+0x0006F422: K'*(|
+0x0006F918: AyEK7J3|
+0x0006F9DE: *%QEE
+0x0006FC43: ha2#99
+0x0006FF03: 04 9q
+0x0006FF49: b@,Kp
+0x0006FF59: a@3 ]
+0x0006FF8A: XqYaf
+0x0007005C: R)$8aI
+0x000701E0: Z08 9F=
+0x00070751: H1!W>1NB*$)1:D=
+0x00070981: )JI*%
+0x00070B26: 7+q]A
+0x00070C0F: 1DA'#J
+0x00070C60: 11A:2001
+0x000710DF: :20C G
+0x0007137E: )*):)J)Z)j)z)
+0x000713E5: yJyZyjyzy
+0x00071500: ()#;(
+0x00071518: PR Y3
+0x00071556: "@ tPR (#Y3
+0x00071855: ~P3cJHR
+0x00071A5E: d`tA2
+0x00071A8C: JF@DAG
+0x00071B23: URR R
+0x00071B2B: URR!V
+0x00071BEF: i19!b
+0x00071C8E: qhag3
+0x00071D65: 1a0=9
+0x00071D81: taI9ppt
+0x00071DF8: S+D@7
+0x00071EB4: 32R 2
+0x00071EBC: 32R!F
+0x00071EE2: ~07c2a
+0x00072152: pg QT8
+0x00072308: jc`v w
+0x000724E3: Q\;ZZg
+0x00072BD2: 900th
+0x00072EAD: 60"  
+0x000732C9: #6!J8|
+0x00073321: #6!48|
+0x00073542: 792`C
+0x00073599: I!911
+0x000736FB: !X71X77
+0x0007374E: *!~6""
+0x00073809: !&71'7"
+0x000739C2: 62A,Ba
+0x00073B5E: !y6Ay6
+0x00073B94: !h6Ah6
+0x00073C6F: H6 B ez
+0x00073EA3: 1q20:
+0x00074197: h!(4 
+0x0007465D: !(2 3
+0x000746E3: 1a|3JH
+0x000746F8: 1Av3*('
+0x0007477A: (3)H"
+0x00074790: C0" )h
+0x000749DB: "c,Rc-rc.
+0x00074AD6: 2%,78C
+0x00074B94: R&.rH
+0x00074EDB: )!91  t
+0x00074F1F: )!91  t
+0x0007549A: 0(RVr
+0x0007556B: MQf0|
+0x00075579: qd0ac0
+0x000755F4: 4@"CB!
+0x0007563E: 9*y:YJ
+0x000758D7: 1&(`&8mV(
+0x00076297: "jUYR
+0x000763F6: PPtVu
+0x00076432: +96IF"f
+0x000765B2: G;2ji(
+0x0007685F: PZ0PPt
+0x00076EAA: !@)&:
+0x00076EE6: :"1r*
+0x00077055: zyzxF
+0x00077404: 0/109
+0x00077416: *(*+%
+0x000774A2: !<)1<)
+0x00077721: "':9Z
+0x0007776E: R"&@F
+0x00077792: \Bb1B
+0x000777F8: 8R@3 
+0x00077860: "$2"%09
+0x0007791B: 1y%QU'0D
+0x00077AA0: ]PPd`D
+0x00077BFA: (6X& U
+0x00077C07: PSA %
+0x00077C0D:  )A@2
+0x00077CA8: ZDQB'
+0x00077E75: Q<#Rc$Xa
+0x00077F20: @AAPD0R
+0x00077F34: @E r#
+0x00078037: PD0@O
+0x00078052: PZ0P_
+0x000782B4: PD0@P
+0x000782C0: PD BC
+0x000782C6: B&#XqBc3B&$Bc4A
+0x00078531: @:cAY%
+0x00078585: !B%g#
+0x00078BA9:  B VC
+0x00078DB7: I!Y1iAyQ9
+0x00078F95: 2IAZX
+0x000790D0:   t"a
+0x0007989B:   `)X"
+0x00079ECB: pf i3
+0x0007AB04: pKAV$
+0x0007AD15: PD IBH
+0x0007B279: @" "S
+0x0007B2B9: GX?Ah
+0x0007B2FE: @F BS
+0x0007B339: @" "S
+0x0007B527: Ib2b72b8
+0x0007B5A4: XI22b
+0x0007B5C2: 9B9R9b0
+0x0007BD03: ,0~cP
+0x0007BD56: $zUp3
+0x0007BE31: 0" "V
+0x0007BEED: PD BS
+0x0007BF3B:  D BS
+0x0007BF47: IaYqi
+0x0007BF7B: 9QIaYqi
+0x0007C1D8:  D BS
+0x0007C204: EPD BS
+0x0007C2A3: ba$ra%
+0x0007C30B: Ra#ba$ra%
+0x0007C497: ?gfff
+0x0007C53B: ?aCoc
+0x0007C752: 7@hx7@H
+0x0007C7E2: )!Y1(
+0x0007C8CD: t<z  D
+0x0007C93C: ,B)$(
+0x0007C942: X$Z""
+0x0007C97E: X$Z""
+0x0007C9B0: ,B)$(
+0x0007C9B6: X$Z""
+0x0007C9E6: ,B)$(
+0x0007C9EC: X$Z""
+0x0007CA1C: ,B)$(
+0x0007CA22: X$Z""
+0x0007CA5E: X$Z""
+0x0007CB24: ,B)$(
+0x0007CBB9: RY$W,
+0x0007CBE5: RY$W,
+0x0007CC0C: KRY$W,
+0x0007CCCE: wb.(H
+0x0007CD1E: BaD"a
+0x0007D073: `hSba
+0x0007D585: 0_1Ba
+0x0007D81C: BCQba
+0x0007D842: 0" "Y
+0x0007D8A8:  # "a
+0x0007D8BF:  $0Ra
+0x0007D9DE: 900tW
+0x0007DA6F: LfJYg
+0x0007DB09: `@t2a
+0x0007DB53: 0_1@B!PD
+0x0007DBB1: "F9J+"
+0x0007DBC3: G*!2!
+0x0007DBF4: 02 2a
+0x0007DC1B: fZ2:DBa
+0x0007E0B9: Pf ba
+0x0007E4EB: "rFQaT
+0x0007E5D4: 2BR"!
+0x0007E62A: Pf ba
+0x0007ED1E: rFRBa
+0x0007ED7B: 006 PSA"H
+0x0007EE94: 0 4*$"
+0x0007EE9F: 04A"H
+0x0007EEA8: 02 PTAP# VB
+0x0007F3BF:  ) `P
+0x0007F419: 00` r 
+0x0007F4E7: `DS@B
+0x0007F6D2: j"Po1Pf
+0x0007F6DD: 0o10f
+0x0007F6EC: J90"c2!
+0x0007F7AB:  3SR!
+0x0007FA00: @#S*U"!
+0x0007FB86: )!Y1(
+0x0007FC71: t<z  D
+0x0007FCE0: ,B)$(
+0x0007FCE6: X$Z""
+0x0007FD22: X$Z""
+0x0007FD54: ,B)$(
+0x0007FD5A: X$Z""
+0x0007FD8A: ,B)$(
+0x0007FD90: X$Z""
+0x0007FDC0: ,B)$(
+0x0007FDC6: X$Z""
+0x0007FE02: X$Z""
+0x0007FEC8: ,B)$(
+0x0007FF5D: RY$W,
+0x0007FF89: RY$W,
+0x0007FFB0: KRY$W,
+0x000804EB: `hSba
+0x00080A01: 0_1Ba
+0x00080C9C: BCUba
+0x00080CC2: 0" "Y
+0x00080D24:  # "a
+0x00080D3B:  $0Ra
+0x00080E5A: 900tW
+0x00080EEB: LfJYg
+0x00080F88: `@t2a
+0x00080FD0: 0_1@B!PD
+0x00081001: ::ZZF
+0x0008102D: "F9J+"
+0x0008103F: G*!2!
+0x00081070: 02 2a
+0x00081097: fZ2:DBa
+0x00081539: Pf ba
+0x0008196B: "rFUa
+0x00081A54: 2BV"!
+0x00081AAA: Pf ba
+0x0008219E: rFVBa
+0x000821FB: 006 PSA"H
+0x00082314: 0 4*$"
+0x0008231F: 04A"H
+0x00082328: 02 PTAP# VB
+0x00082841:  ) `P
+0x00082899: 00` r 
+0x00082967: `DS@B
+0x00082B52: j"Po1Pf
+0x00082B5D: 0o10f
+0x00082B6C: J90"c2!
+0x00082C2F:  3SR!
+0x00082E8C: @#S*U"!
+0x0008307B: a%ra>
+0x0008318F: YAiQra
+0x00083267: )#(S  `)c
+0x00083277: HSI#HC
+0x0008328D:  D BS
+0x000833B8: IAYQ"!)
+0x00083420: (B!(!@
+0x00083466: R!(a*
+0x000834C6: 2JBhA@
+0x00083702: :"`4!H
+0x0008370C: "Gc?!
+0x00083770: @`@P4
+0x000837AE: 0c @A!
+0x00083A2E: )A9QHa
+0x00083A63: HAjcXQiAF
+0x00083BDB:  _1 U
+0x00083BE6: `_1`U
+0x00083D85: P"0)a(
+0x00084199: )J):-
+0x0008421F: H#G&9
+0x000843EF: hCXDW
+0x000843FA: PE xChD
+0x00084592: p7 @A!
+0x00084748: :" 01
+0x000848D3: 9bIB=
+0x00084A92: )!Y1(
+0x00084B7D: t<z  D
+0x00084BEC: ,B)$(
+0x00084BF2: X$Z""
+0x00084C2E: X$Z""
+0x00084C60: ,B)$(
+0x00084C66: X$Z""
+0x00084C96: ,B)$(
+0x00084C9C: X$Z""
+0x00084CCC: ,B)$(
+0x00084CD2: X$Z""
+0x00084D0E: X$Z""
+0x00084DD4: ,B)$(
+0x00084E69: RY$W,
+0x00084E95: RY$W,
+0x00084EBC: KRY$W,
+0x00085045: @" "S
+0x00085076: wb*(H
+0x000850C4: BaD"a
+0x0008530D: @@`Ba
+0x00085427: @HSBa
+0x00086271: RD:B!
+0x000869FE: RC8BC9
+0x00086A67: `@$`cA
+0x00086A71: 0`h psABC
+0x00086B78: `@4JEB
+0x00086B85: `dA@G
+0x00086B8B: `d ptApF V
+0x00087022: )!Y1(
+0x0008710D: t<z  D
+0x0008717C: ,B)$(
+0x00087182: X$Z""
+0x000871BE: X$Z""
+0x000871F0: ,B)$(
+0x000871F6: X$Z""
+0x00087226: ,B)$(
+0x0008722C: X$Z""
+0x0008725C: ,B)$(
+0x00087262: X$Z""
+0x0008729E: X$Z""
+0x00087364: ,B)$(
+0x000873F9: RY$W,
+0x00087425: RY$W,
+0x0008744C: KRY$W,
+0x00087650: BaD2a
+0x00087885: @@`Ba
+0x0008799F: @HSBa
+0x000887E5: RD>B!
+0x00088F6A: RC<BC=
+0x00088FD3: `@$`cA
+0x00088FDD: 0`h psABC
+0x000890CF: `@4JEB
+0x000890DC: `dA@G
+0x000890E2: `d ptApF V
+0x00089450: PSSZD2!
+0x00089603: a%ra>
+0x000896BE: 0"0  
+0x000899AC: 8(h  
+0x000899BC: 8(h (4
+0x00089C83: :" 'u
+0x00089D52: 8,&2l
+0x00089D68: &B@fR
+0x00089D8C: :401!"
+0x00089E90: &Td&dEfD
+0x00089F0C: Z" !!"Y
+0x00089F5B: """  $
+0x00089FEC:  30@3
+0x00089FF2: 08A2E
+0x00089FFC:   `  t02
+0x0008A24E: 0"0  
+0x0008A45D:  *A*)
+0x0008A490: t00`'
+0x0008A4CC: "  t,
+0x0008A79A: T+JBG
+0x0008A85A: S,:2|
+0x0008AB2E: PX00U
+0x0008AC5F: @L0@@
+0x0008AD62: 3 2BP
+0x0008B264: "&""% (
+0x0008B311:  B 2H
+0x0008B34C: 00t@@tPPt``tpp
+0x0008B37D: B,2B.BB/RB0bB1rR
+0x0008B3F3: &#A&3
+0x0008B431: " 08 
+0x0008B4DD: (2 (e
+0x0008BD7F:  0t`U
+0x0008C143: @3 AD
+0x0008C2F3: @3 F|
+0x0008C4B5: 00$@3 9
+0x0008C75D: HI!Y1iAyQ9
+0x0008C8B8: )Q9aIq
+0x0008CAD6: Hq8a"!
+0x0008D225: 9 I0 
+0x0008D375: PPT@3
+0x0008D46A: PPtRa
+0x0008D6D4: 0" "E
+0x0008D6FF: )aIQ)!)
+0x0008D739: )aIQ)A)1)
+0x0008D74B: 9AY1,
+0x0008D759: )aIQ)!)
+0x0008D77C: )aIQ)!)
+0x0008D7A1: )aIQ)!)
+0x0008D7BB: 1)aIQ
+0x0008D81A: @3 A~
+0x0008E145: PXA&$
+0x0008E1EB: ``d&$
+0x0008E4C5: 8"'cO
+0x0008E81E:  !A941
+0x0008E826: ;"9D1
+0x0008E910: EP3 9"I
+0x0008E9D2: EP3 9"I
+0x0008EA07: YAiQyqe
+0x0008EB83: @?1@3
+0x0008ED15: h!00t
+0x0008F3B0: )Q9aIqY
+0x0008F47C: 8aHqX
+0x0008FD00: $ R b
+0x0008FDC0: $p' B
+0x000901AA: 0# @%
+0x0009126B: *$(2(2
+0x000919E1: :59E1
+0x00091DF2: h%x5i$y4
+0x0009214F: @S PP
+0x00092168: ;d`bA
+0x00092332: hH00t
+0x0009235C: 81`3 
+0x000923B2: (HZYP;
+0x000923DE: PPtPR 
+0x000927EB: ;tprA
+0x0009282B: @S PP
+0x00092842: ;d`bA
+0x000928D1: 8h`3 
+0x0009294C: (hZZP
+0x0009296E: PPTPR 
+0x00092A17: 8h`3 
+0x00092AB6: (10" 
+0x00092AF3: (10" 
+0x00092B2E: "(8`b 
+0x00093015: "#*l8
+0x00093061: ()  $
+0x0009335E: 080@3
+0x00093428: "(&@"
+0x000935BF: &#J&3j%a
+0x000935DD: Rh&@AA
+0x000935EF: 2(&!}
+0x00093610: 2(&!v
+0x00093633: 2(&!n
+0x00093656: &#nf3
+0x00093864: "(& /
+0x00093DE4: y6i'bm
+0x00093F01: 6`U Y
+0x00093F95: 06 9U
+0x00093FDF: Ktjww
+0x00094031: 4@E I
+0x00094058: i#)3962j
+0x0009407B: 8RPS YR8
+0x000940F2: %PD I
+0x00094AEC: iAyQY
+0x00094C40: 9q)A!;
+0x00094C47: IQ)a2
+0x00094CB5: :476-A!
+0x00094D66: "H4eJ
+0x00095043: 0Dc@"c
+0x00095228: @CABA
+0x000952DD: Zd fc(
+0x000955A8: z3zDF
+0x000957DD: @3 9r8
+0x0009584D: @3 9r8
+0x000958B5: @3 9r8
+0x00095A07: 1PX W
+0x00095BBC: @3 9r8
+0x00095C46: @3 9r8
+0x00095CD2: @3 9r8
+0x00095D51: @3 9r8
+0x0009648C: "A"RA'"
+0x00096664: j3j"`D
+0x00096674: YaYAY1
+0x00096712:   t (
+0x00096816: 300t2I
+0x00096A5B: 0"  0` 3
+0x00096A98: i#y3 aA
+0x00096AAC: i#y32
+0x00096AD3: )-9=2
+0x00096BFF:  4  300
