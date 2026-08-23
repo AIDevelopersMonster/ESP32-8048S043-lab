@@ -10,6 +10,12 @@ Example:
 libraries/ESP32_8048S043/examples/02_DisplayRGBTest/02_DisplayRGBTest.ino
 ```
 
+Video evidence:
+
+```text
+https://youtube.com/shorts/sKGejpLF3ZA
+```
+
 ## Summary
 
 `02_DisplayRGBTest` is the second validation step from the local `ESP32_8048S043` Arduino library. It was run after `01_BoardInfo` confirmed the basic ESP32-S3 / 16 MB flash / 8 MB PSRAM runtime profile.
@@ -72,7 +78,7 @@ Screen: stripe/data-line pattern
 
 ## Visual checks reported as passed
 
-The user visually confirmed:
+The user visually confirmed and published a video showing the display check:
 
 ```text
 full-screen RED / GREEN / BLUE / WHITE / BLACK sequence;
@@ -109,7 +115,8 @@ our own minimal Arduino_GFX RGB panel initialization;
 source-backed RGB control/data pin map at practical runtime level;
 backlight full-ON path through GPIO2;
 visual color/order/orientation sanity;
-serial-confirmed screen sequence.
+serial-confirmed screen sequence;
+published video evidence for Sample A.
 ```
 
 It does not prove:
