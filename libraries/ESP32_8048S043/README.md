@@ -9,8 +9,10 @@ BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
+04_BacklightTest        SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            OWN GT911 POLLING VISUAL TEST PASS
+Touch driver            GT911 POLLING VISUAL TEST PASS
+Backlight driver        DIGITAL/PWM TEST ADDED / PHYSICAL VALIDATION OPEN
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -43,7 +45,7 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
-04_BacklightTest        future dedicated backlight/PWM test
+04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          future combined diagnostic console
 09_LVGL_BasicUI        future
 10_LVGL_Dashboard      future
@@ -166,8 +168,6 @@ See also:
 
 ```text
 libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
-libraries/ESP32_8048S043/examples/03_TouchGT911Test/NOTICE.md
-docs/videos.md
 evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
 ```
 
@@ -183,10 +183,53 @@ Current Sample A status:
 PHYSICAL VISUAL PASS
 ```
 
-Video evidence:
+## 04_BacklightTest
+
+Purpose:
 
 ```text
-https://youtube.com/shorts/_zhtl-AWcCE
+validate the ESP32-8048S043 backlight control path separately from RGB display and touch
+```
+
+What it tests:
+
+- display initializes through `Arduino_GFX_Library`;
+- static 800x480 reference screen is drawn;
+- source-backed backlight pin GPIO2 is used;
+- GPIO2 HIGH / LOW behavior is tested;
+- visible blink sequence is tested;
+- PWM / `analogWrite()` duty steps are attempted;
+- serial output records every backlight stage.
+
+Dependencies:
+
+```text
+Arduino_GFX_Library by moononournation
+Arduino analogWrite / LEDC backend
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/04_BacklightTest/04_BacklightTest.ino
+```
+
+See also:
+
+```text
+libraries/ESP32_8048S043/examples/04_BacklightTest/README.md
+```
+
+PASS boundary:
+
+```text
+PASS requires physical evidence that GPIO2 HIGH turns the backlight on, GPIO2 LOW turns it off, blink is visible, and no brownout/crash occurs. PWM dimming is a separate stronger PASS only if intermediate duty steps visibly change brightness.
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
