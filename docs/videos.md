@@ -8,6 +8,7 @@
 | 02 | ESP32-8048S043 — visual display and touchscreen check on LVGL 8 | https://youtube.com/shorts/XVaWqrtXHE4 | Show the factory LVGL 8 Widgets Demo running on the physical 800x480 display and visually checking touchscreen interaction. | SAMPLE A FACTORY LVGL DISPLAY + TOUCHSCREEN VISUAL PASS |
 | 03 | ESP32-8048S043 — first test from our Arduino library: BoardInfo | https://youtube.com/shorts/wELRdRWqlnw | Show `01_BoardInfo` from the `ESP32_8048S043` Arduino library, using the current Sample A Arduino IDE profile and confirming ESP32-S3, 16 MB flash, 8 MB PSRAM and stable serial ALIVE output. | SAMPLE A ARDUINO BOARDINFO PASS |
 | 04 | ESP32-8048S043 — second test from our Arduino library: RGB display | https://youtube.com/shorts/sKGejpLF3ZA | Show `02_DisplayRGBTest` from the `ESP32_8048S043` Arduino library, validating our own Arduino_GFX RGB display path with full-screen colors, orientation frame, RGB color bars and stripe/data-line pattern. | SAMPLE A OWN MINIMAL RGB DISPLAY VISUAL PASS |
+| 05 | ESP32-8048S043 — third test from our Arduino library: GT911 touchscreen | https://youtube.com/shorts/_zhtl-AWcCE | Show `03_TouchGT911Test` from the `ESP32_8048S043` Arduino library, validating the GT911 touch controller at I2C address 0x5D, Product ID `911`, raw coordinate polling and visible touch marker movement on the 800x480 screen. | SAMPLE A OWN GT911 TOUCH VISUAL PASS |
 
 ## Planned shooting sequence
 
@@ -19,7 +20,7 @@
 | 04 Factory firmware analysis | scan partitions, strings, possible factory tests and entry points | FIRST-PASS DONE |
 | 05 RGB display first light | 800x480 color/timing/backlight | DONE / OWN MINIMAL RGB DISPLAY PASS |
 | 06 Touchscreen visual check | factory LVGL Widgets Demo responds to touch | PUBLISHED / FACTORY DEMO VISUAL PASS |
-| 07 Dedicated touch scan | identify controller address and coordinate behavior | OPEN |
+| 07 Dedicated touch scan | identify controller address and coordinate behavior | DONE / OWN GT911 TOUCH VISUAL PASS |
 | 08 LVGL basic UI | button, slider, touch using lab firmware | OPEN |
 | 09 Web setup | AP/browser setup path | OPEN |
 | 10 Web Flasher | browser firmware install | OPEN |
