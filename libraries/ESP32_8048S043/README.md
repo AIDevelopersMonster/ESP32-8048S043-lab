@@ -6,12 +6,12 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 
 ```text
 BSP API                 SKELETON
-01_BoardInfo            SOURCE IMPLEMENTED / README ADDED / PHYSICAL VALIDATION OPEN
-02_DisplayRGBTest       SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
-Display driver          FIRST MINIMAL ARDUINO_GFX TEST ADDED
+01_BoardInfo            PHYSICAL PASS / SAMPLE A
+02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
+Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            OPEN
 LVGL port               OPEN
-Physical PASS claims    FACTORY LVGL DISPLAY + TOUCH VISUAL ONLY
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + FACTORY LVGL DISPLAY + TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -22,14 +22,15 @@ Recommended starting profile for the examples in this library:
 Board package : esp32 by Espressif Systems
 Board         : ESP32S3 Dev Module
 Port          : CH340 / USB-SERIAL port of the board
-Upload Speed  : 460800 first; 921600 only if stable
+Upload Speed  : 921600 used successfully; 460800 if upload is unstable
 CPU Frequency : 240MHz (WiFi)
 Flash Size    : 16MB / 128Mb
-Flash Mode    : DIO recommended first
-Partition     : any 16MB-compatible scheme for early smoke tests
-PSRAM         : OPI PSRAM / Enabled
+Flash Mode    : QIO 80MHz
+Partition     : 16M Flash (3MB APP/9.9MB FATFS)
+PSRAM         : OPI PSRAM
 USB CDC Boot  : Disabled when using CH340C USB-UART
-Upload Mode   : UART0 / Hardware CDC, depending on Arduino menu wording
+Upload Mode   : UART0 / Hardware CDC
+USB Mode      : Hardware CDC and JTAG
 Core Debug    : None
 Serial Monitor: 115200 baud
 ```
@@ -71,6 +72,12 @@ See also:
 libraries/ESP32_8048S043/examples/01_BoardInfo/README.md
 ```
 
+Current Sample A result:
+
+```text
+PHYSICAL PASS / SAMPLE A
+```
+
 PASS boundary:
 
 ```text
@@ -94,17 +101,35 @@ What it tests:
 - RGB color-bar pattern;
 - stripe pattern for data-line sanity.
 
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/02_DisplayRGBTest/02_DisplayRGBTest.ino
+```
+
+See also:
+
+```text
+libraries/ESP32_8048S043/examples/02_DisplayRGBTest/README.md
+evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
+```
+
 Dependency:
 
 ```text
 Arduino_GFX_Library by moononournation
 ```
 
+Current Sample A result:
+
+```text
+PHYSICAL VISUAL PASS / SAMPLE A
+```
+
 PASS boundary:
 
 ```text
-PASS requires physical photo/video evidence from a named specimen.
-Until then the example is SOURCE IMPLEMENTED only.
+PASS requires serial Display begin: OK, the full planned screen sequence, and physical photo/video evidence from a named specimen.
 ```
 
 ## Rule
