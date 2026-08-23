@@ -1,6 +1,15 @@
 /*
   ESP32-8048S043 Lab / 01_BoardInfo
 
+  Author:
+    Alex Malachevsky
+
+  Project GitHub:
+    https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+
+  Confirming video / visual board check:
+    https://youtube.com/shorts/XVaWqrtXHE4
+
   Purpose:
     First Arduino IDE smoke test for a physical ESP32-8048S043 / ESP32-8048S043C-I board.
 
@@ -57,6 +66,10 @@ void setup() {
     Serial.println(" ESP32-8048S043 Lab / 01_BoardInfo");
     Serial.println(" First Arduino IDE smoke test");
     Serial.println("================================================================");
+    Serial.println("Author        : Alex Malachevsky");
+    Serial.println("GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
+    Serial.println("Evidence video: https://youtube.com/shorts/XVaWqrtXHE4");
+    Serial.println("----------------------------------------------------------------");
     Serial.println("Arduino IDE settings expected for Sample A:");
     Serial.println("  Board         : ESP32S3 Dev Module");
     Serial.println("  Upload Speed  : 460800 recommended first");
