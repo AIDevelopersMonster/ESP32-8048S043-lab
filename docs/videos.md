@@ -7,6 +7,7 @@
 | 01 | ESP32-8048S043 Lab — repository structure and first board overview | https://youtube.com/shorts/jd5o4FLpYEA | Introduce the board family, the new lab repository structure, planned checks, third-party firmware analysis and continuation of the evidence-first workflow from the WT32-SC01-PLUS-Lab project. | OVERVIEW ONLY / NO PHYSICAL PASS CLAIM |
 | 02 | ESP32-8048S043 — visual display and touchscreen check on LVGL 8 | https://youtube.com/shorts/XVaWqrtXHE4 | Show the factory LVGL 8 Widgets Demo running on the physical 800x480 display and visually checking touchscreen interaction. | SAMPLE A FACTORY LVGL DISPLAY + TOUCHSCREEN VISUAL PASS |
 | 03 | ESP32-8048S043 — first test from our Arduino library: BoardInfo | https://youtube.com/shorts/wELRdRWqlnw | Show `01_BoardInfo` from the `ESP32_8048S043` Arduino library, using the current Sample A Arduino IDE profile and confirming ESP32-S3, 16 MB flash, 8 MB PSRAM and stable serial ALIVE output. | SAMPLE A ARDUINO BOARDINFO PASS |
+| 04 | ESP32-8048S043 — second test from our Arduino library: RGB display | https://youtube.com/shorts/sKGejpLF3ZA | Show `02_DisplayRGBTest` from the `ESP32_8048S043` Arduino library, validating our own Arduino_GFX RGB display path with full-screen colors, orientation frame, RGB color bars and stripe/data-line pattern. | SAMPLE A OWN MINIMAL RGB DISPLAY VISUAL PASS |
 
 ## Planned shooting sequence
 
@@ -16,7 +17,7 @@
 | 02 Board passport | esptool/chip/flash/PSRAM identity | DONE / BOARDINFO PASS |
 | 03 Factory firmware dump | read full flash twice, compare SHA-256 and preserve evidence | DONE / HASH MATCH |
 | 04 Factory firmware analysis | scan partitions, strings, possible factory tests and entry points | FIRST-PASS DONE |
-| 05 RGB display first light | 800x480 color/timing/backlight | FACTORY LVGL DISPLAY PASS |
+| 05 RGB display first light | 800x480 color/timing/backlight | DONE / OWN MINIMAL RGB DISPLAY PASS |
 | 06 Touchscreen visual check | factory LVGL Widgets Demo responds to touch | PUBLISHED / FACTORY DEMO VISUAL PASS |
 | 07 Dedicated touch scan | identify controller address and coordinate behavior | OPEN |
 | 08 LVGL basic UI | button, slider, touch using lab firmware | OPEN |
