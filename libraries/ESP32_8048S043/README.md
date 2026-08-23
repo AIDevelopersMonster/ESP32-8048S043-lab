@@ -8,9 +8,9 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
-03_TouchGT911Test       SOURCE IMPLEMENTED / VISUAL TEST ADDED / PHYSICAL VALIDATION OPEN
+03_TouchGT911Test       KNOWN-GOOD-STYLE REWRITE / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            FIRST GT911 VISUAL/SERIAL TEST ADDED
+Touch driver            GT911 POLLING VISUAL TEST ADDED
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -42,7 +42,7 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 ```text
 01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
-03_TouchGT911Test       visual GT911 touch dots/trails + serial diagnostics
+03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        future dedicated backlight/PWM test
 05_TestConsole          future combined diagnostic console
 09_LVGL_BasicUI        future
@@ -132,20 +132,22 @@ PHYSICAL VISUAL PASS
 Purpose:
 
 ```text
-validate the GT911 capacitive touch path with our own visual Arduino sketch
+validate the GT911 capacitive touch path with our own visual Arduino sketch using a known-good-style polling pattern
 ```
 
 What it tests:
 
 - display initializes through `Arduino_GFX_Library`;
+- static 800x480 test screen is drawn;
 - I2C starts on SDA=19 / SCL=20;
 - I2C scan finds connected devices;
 - GT911 candidate address is detected at 0x5D or 0x14;
 - Product ID register at 0x8140 is readable;
 - firmware/resolution registers are read where available;
 - touch status register 0x814E is readable;
+- touch point data starts at 0x814F;
 - touch points print to Serial Monitor;
-- touch points draw as visible dots/trails on the 800x480 display.
+- touch points draw as a visible red marker on the 800x480 display.
 
 Dependencies:
 
@@ -169,13 +171,13 @@ libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
 PASS boundary:
 
 ```text
-PASS requires visual evidence that touching the panel draws plausible dots/trails on the display, plus serial evidence that GT911 is found at 0x5D or 0x14 and x/y coordinates change in an 800x480-class range.
+PASS requires visual evidence that touching the panel moves the red marker on the display, plus serial evidence that GT911 is found at 0x5D or 0x14 and raw/screen x/y coordinates change.
 ```
 
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / VISUAL TEST ADDED / PHYSICAL VALIDATION OPEN
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
