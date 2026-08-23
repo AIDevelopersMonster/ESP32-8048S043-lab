@@ -56,9 +56,11 @@ Factory runtime evidence:
 ```text
 Serial boot       : PASS, LVGL Widgets Demo banner, Setup done
 Display runtime   : PASS, lv_demo_widgets visible on 800x480 panel
+Touchscreen       : VISUAL PASS in factory LVGL Widgets Demo
+Video             : https://youtube.com/shorts/XVaWqrtXHE4
 Observed FPS      : about 66 FPS on demo screen
 Observed CPU load : about 16-18% on demo screen
-Boundary          : touch and exact pin map still open
+Boundary          : touch controller identity and exact pin map still open
 ```
 
 Commit-safe records:
@@ -67,6 +69,7 @@ Commit-safe records:
 evidence/specimens/sample-a/factory-firmware/factory-dump-20260822-195722.sha256.txt
 evidence/specimens/sample-a/factory-firmware/runtime-serial-boot-log.md
 evidence/specimens/sample-a/factory-firmware/runtime-lvgl-widgets-display-pass.md
+evidence/specimens/sample-a/factory-firmware/runtime-lvgl-widgets-touch-visual-pass.md
 evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
@@ -86,8 +89,10 @@ Do not commit factory `.bin` dumps.
 | FW-03 | Possible factory-test leads | NOT PROVEN |
 | FW-04 | Factory serial boot | PASS |
 | FW-05 | Factory LVGL Widgets Demo display | PASS |
+| FW-06 | Factory LVGL Widgets Demo touch visual check | PASS |
 | HW-02 | RGB display | FACTORY RUNTIME PASS |
-| HW-03 | GT911 touch | OPEN |
+| HW-03 | Touchscreen visual interaction | FACTORY DEMO PASS |
+| HW-03A | GT911 / Goodix identity | OPEN |
 | HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
 | HW-05 | SD card | OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
