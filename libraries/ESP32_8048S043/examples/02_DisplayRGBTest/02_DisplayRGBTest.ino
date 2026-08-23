@@ -1,22 +1,71 @@
 /*
   ESP32-8048S043 Lab / 02_DisplayRGBTest
 
+  Author:
+    Alex Malachevsky
+
+  Project GitHub:
+    https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+
+  Test order:
+    01_BoardInfo      -> already used for upload/serial/chip/flash/PSRAM baseline
+    02_DisplayRGBTest -> this test, first own RGB display validation
+
   Purpose:
-    First minimal RGB panel validation using the source-backed GPIO map.
+    First minimal display test from our ESP32_8048S043 Arduino library.
+    It validates that our own sketch can initialize the 800x480 RGB panel
+    using the source-backed GPIO map and Arduino_GFX.
 
-  What this example tests:
-    - RGB timing and data bus bring-up;
-    - backlight GPIO 2 at full ON;
-    - RGB color order by full-screen red/green/blue/white/black;
-    - orientation by border/corner markers;
-    - simple stripe pattern for data-line sanity.
+  What this example checks:
+    - RGB panel initialization through Arduino_GFX_Library;
+    - source-backed RGB control pins DE/VSYNC/HSYNC/PCLK;
+    - source-backed RGB data bus pins R0..R4, G0..G5, B0..B4;
+    - backlight GPIO 2 in simple full-ON mode;
+    - full-screen color output: red, green, blue, white, black;
+    - RGB color order by color bars;
+    - landscape 800x480 orientation by corner markers;
+    - basic stability of a repeated screen sequence;
+    - obvious data-line problems by stripe pattern.
 
-  Boundary:
-    PASS here means the minimal Arduino_GFX RGB path renders correctly on
-    the named physical specimen. It does not prove touch, SD or final BSP status.
+  What this example does NOT check:
+    - GT911 touch;
+    - SD card;
+    - Wi-Fi/BLE;
+    - LVGL integration;
+    - display tearing at high load;
+    - final BSP PASS for all peripherals.
+
+  Arduino IDE settings used for Sample A:
+    Board                                  : ESP32S3 Dev Module
+    Flash Mode                             : QIO 80MHz
+    Flash Size                             : 16MB (128Mb)
+    Partition Scheme                       : 16M Flash (3MB APP/9.9MB FATFS)
+    PSRAM                                  : OPI PSRAM
+    Upload Mode                            : UART0 / Hardware CDC
+    Upload Speed                           : 921600
+    USB CDC On Boot                        : Disabled
+    USB Mode                               : Hardware CDC and JTAG
+    Serial Monitor                         : 115200 baud
 
   Dependency:
     Install Arduino_GFX_Library by moononournation from Arduino Library Manager.
+
+  Expected visual result:
+    - screen lights up;
+    - full-screen red, green, blue, white and black are shown;
+    - color bars are recognizable and not obviously swapped;
+    - orientation frame is landscape 800x480;
+    - corner markers are:
+        top-left     red
+        top-right    green
+        bottom-left  blue
+        bottom-right white
+    - stripe pattern is stable and not random/noisy.
+
+  PASS boundary:
+    PASS here means our own minimal Arduino_GFX RGB/backlight example renders
+    correctly on the named physical Sample A specimen.
+    It does not prove touch, SD card or complete BSP status.
 */
 
 #include <Arduino.h>
@@ -194,6 +243,10 @@ void setup() {
   Serial.println(" ESP32-8048S043 Lab / 02_DisplayRGBTest");
   Serial.println(" Minimal RGB panel + backlight validation");
   Serial.println("================================================================");
+  Serial.println("Author : Alex Malachevsky");
+  Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
+  Serial.println("Purpose: validate own Arduino_GFX RGB path after 01_BoardInfo PASS");
+  Serial.println("----------------------------------------------------------------");
   printPinMap();
   initDisplay();
 
