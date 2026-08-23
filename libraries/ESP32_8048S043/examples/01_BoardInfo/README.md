@@ -33,7 +33,7 @@ ESP32-S3
 CH340C USB-UART bridge on the capacitive-touch Jingcai/TinyTronics variant
 ```
 
-## Arduino IDE setup
+## Arduino IDE setup used for Sample A
 
 Install the ESP32 board package:
 
@@ -41,30 +41,46 @@ Install the ESP32 board package:
 Boards Manager -> esp32 by Espressif Systems
 ```
 
-Recommended first settings:
+The following table mirrors the Arduino IDE Tools menu used for Sample A.
 
 | Arduino IDE menu | Value |
 |---|---|
 | Board | ESP32S3 Dev Module |
-| Port | CH340 / USB-SERIAL port of the board |
-| Upload Speed | 460800 first; 921600 only if stable |
+| Port | COM12 / CH340 USB-SERIAL port of the board |
+| USB CDC On Boot | Disabled |
 | CPU Frequency | 240MHz (WiFi) |
-| Flash Size | 16MB / 128Mb |
-| Flash Mode | DIO recommended first |
-| Partition Scheme | Any 16MB-compatible scheme for this smoke test |
-| PSRAM | OPI PSRAM / Enabled |
-| USB CDC On Boot | Disabled when using CH340C USB-UART |
-| Upload Mode | UART0 / Hardware CDC, depending on menu wording |
 | Core Debug Level | None |
+| USB DFU On Boot | Disabled |
+| Erase All Flash Before Sketch Upload | Disabled |
+| Events Run On | Core 1 |
+| Flash Mode | QIO 80MHz |
+| Flash Size | 16MB (128Mb) |
+| JTAG Adapter | Disabled |
+| Arduino Runs On | Core 1 |
+| USB Firmware MSC On Boot | Disabled |
+| Partition Scheme | 16M Flash (3MB APP/9.9MB FATFS) |
+| PSRAM | QSPI PSRAM |
+| Upload Mode | UART0 / Hardware CDC |
+| Upload Speed | 921600 |
+| USB Mode | Hardware CDC and JTAG |
+| Zigbee Mode | Disabled |
 | Serial Monitor | 115200 baud |
+
+Notes:
+
+```text
+COM12 is the local port observed on Sample A. Choose your actual CH340 port.
+If upload is unstable at 921600, retry Upload Speed = 460800 before changing other settings.
+For factory flash readback/dump workflows, 460800 was more reliable than 921600.
+```
 
 Menu names differ between ESP32 Arduino core versions. If your IDE does not show exactly the same wording, preserve the intent:
 
 ```text
 ESP32-S3 target
 16 MB flash
-8 MB / OPI PSRAM enabled
-external UART upload through CH340C
+QSPI PSRAM enabled
+external UART upload through CH340C / UART0 Hardware CDC
 serial monitor at 115200
 ```
 
@@ -92,9 +108,14 @@ First Arduino IDE smoke test
 Author        : Alex Malachevsky
 GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
 Evidence video: https://youtube.com/shorts/XVaWqrtXHE4
-Board         : ESP32S3 Dev Module
-Flash Size    : 16MB / 128Mb
-PSRAM         : OPI PSRAM / Enabled
+Board                                : ESP32S3 Dev Module
+Flash Mode                           : QIO 80MHz
+Flash Size                           : 16MB (128Mb)
+Partition Scheme                     : 16M Flash (3MB APP/9.9MB FATFS)
+PSRAM                                : QSPI PSRAM
+Upload Mode                          : UART0 / Hardware CDC
+Upload Speed                         : 921600
+USB Mode                             : Hardware CDC and JTAG
 ```
 
 The board information block should report approximately:
