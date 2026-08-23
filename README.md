@@ -9,7 +9,8 @@ This repository is intentionally evidence-first. It is **not** a generic pinout 
 ```text
 REPOSITORY STRUCTURE        CREATED
 REFERENCE BOARD PASSPORT    OPEN
-CHIP / FLASH / PSRAM        PARTIAL
+CHIP / FLASH / PSRAM        PARTIAL / ARDUINO PSRAM RETEST REQUIRED
+ARDUINO BOARDINFO           PARTIAL PASS / PSRAM NOT DETECTED WITH QSPI SETTING
 SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
 PIN MAP                     SOURCE-BACKED / OWN BSP TESTS OPEN
 FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
@@ -48,6 +49,35 @@ spiffs   0x00290000  size 0x170000
 ```
 
 The factory `.bin` dump is intentionally not committed. Only metadata, hashes and reviewed analysis outputs are tracked.
+
+## Arduino BoardInfo baseline
+
+`01_BoardInfo` now runs from the Arduino IDE examples menu and records a first Arduino runtime result for Sample A.
+
+Current result:
+
+```text
+Upload / serial monitor : PASS
+Flash size              : PASS, 16777216 bytes / 16 MB
+Flash mode / speed      : QIO / 80 MHz
+Running partition       : app0, address 0x010000, size 3145728
+Runtime stability       : PASS, ALIVE lines observed through at least 100000 ms
+PSRAM                   : FAIL / RETEST, Arduino runtime reported 0 bytes with QSPI PSRAM selected
+Overall 01_BoardInfo    : PARTIAL PASS
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+```
+
+Next action:
+
+```text
+Retest 01_BoardInfo with PSRAM set to OPI PSRAM / Enabled instead of QSPI PSRAM.
+Keep other Arduino IDE settings unchanged for the first retest.
+```
 
 ## Source-backed hardware baseline
 
