@@ -91,6 +91,29 @@ Note:
 An earlier run reported PSRAM as 0 bytes. A later run detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
 ```
 
+## Arduino RGB display evidence
+
+`02_DisplayRGBTest` was run after `01_BoardInfo` and visually passed on Sample A.
+
+Current result:
+
+```text
+Display begin           : PASS, serial reports Display begin: OK
+RGB control/data pins   : PASS candidate, source-backed map exercised by own sketch
+Backlight               : PASS candidate, GPIO2 full ON used by own sketch
+Color sequence          : PASS, RED/GREEN/BLUE/WHITE/BLACK shown visually
+Orientation frame       : PASS, landscape 800x480 visual check passed
+RGB color bars          : PASS, visual color-bar check passed
+Stripe pattern          : PASS, data-line sanity pattern visible
+Overall 02_DisplayRGBTest: PHYSICAL VISUAL PASS / SAMPLE A
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
+```
+
 ## Source-backed hardware map
 
 Source-backed map recovered from `hardware/SCHEMATIC_BOM_RESEARCH.md` and now mirrored in `docs/pinout.md`:
@@ -129,6 +152,7 @@ evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-
 evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
 hardware/SCHEMATIC_BOM_RESEARCH.md
 docs/pinout.md
 ```
@@ -143,16 +167,16 @@ Do not commit factory `.bin` dumps.
 | HW-01 | Chip / flash / PSRAM | PASS |
 | HW-01B | CH340C bridge identity | SOURCE-BACKED / LOCAL ID OPEN |
 | HW-01C | Schematic/BOM research | SOURCE-BACKED |
-| HW-01D | GPIO pin map | SOURCE-BACKED / OWN TESTS OPEN |
+| HW-01D | GPIO pin map | SOURCE-BACKED / RGB OWN TEST PASS / TOUCH+SD OPEN |
 | FW-00 | Factory flash double-read dump | CAPTURED |
 | FW-01 | Factory dump SHA-256 match | MATCH |
 | FW-02 | Factory partition/string analysis | FIRST-PASS DONE |
 | FW-03 | Possible factory-test leads | NOT PROVEN |
 | FW-04 | Factory serial boot | PASS |
 | FW-05 | Factory LVGL Widgets Demo display | PASS |
-| HW-02 | RGB display | FACTORY RUNTIME PASS / OWN MINIMAL TEST OPEN |
+| HW-02 | RGB display | OWN MINIMAL ARDUINO_GFX TEST PASS |
 | HW-03 | GT911 touch | SOURCE-BACKED / FACTORY TOUCH VISUAL PASS / I2C SCAN OPEN |
-| HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
+| HW-04 | Backlight | BASIC ON PASS VIA DISPLAY TEST / DEDICATED PWM TEST OPEN |
 | HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
 | SW-01 | Arduino BSP BoardInfo | PASS |
