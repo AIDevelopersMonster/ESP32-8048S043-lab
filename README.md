@@ -14,11 +14,12 @@ FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
 FACTORY FIRMWARE ANALYSIS   FIRST-PASS DONE
 FACTORY SERIAL BOOT         PASS
 FACTORY LVGL DISPLAY        PASS
+TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS
 DISPLAY RGB PANEL           FACTORY RUNTIME PASS
-GT911 TOUCH                 OPEN
+GT911 / GOODIX IDENTITY     OPEN
 BSP LIBRARY                 SKELETON
 WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY ONLY
+PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL
 ```
 
 ## Factory firmware baseline
@@ -31,7 +32,8 @@ Reads       : 2
 SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
 Result      : MATCH all reads are identical
 Analysis    : partition table found at 0x00008000, 5 entries
-Runtime     : serial boot PASS, factory LVGL Widgets Demo display PASS
+Runtime     : serial boot PASS, factory LVGL Widgets Demo display PASS, touchscreen visual PASS
+Video       : https://youtube.com/shorts/XVaWqrtXHE4
 ```
 
 Factory partition layout:
