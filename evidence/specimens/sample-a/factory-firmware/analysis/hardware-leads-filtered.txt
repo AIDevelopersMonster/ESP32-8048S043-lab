@@ -1,0 +1,310 @@
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:4:0x0000009B: /IDF/components/bootloader_support/src/bootloader_flash.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:7:0x000000F7: bootloader_flash_read_sfdp
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:8:0x00000112: bootloader_flash_execute_command_common
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:10:0x00000146: /IDF/components/bootloader_support/include/bootloader_util.h
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:13:0x000001A4: /IDF/components/bootloader_support/src/esp_image_format.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:14:0x000001DE: Calculated hash
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:16:0x000001FC: bootloader_util_regions_overlap
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:19:0x00000241: /IDF/components/bootloader_support/src/esp32s3/bootloader_sha.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:21:0x00000293: bootloader_sha256_finish
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:22:0x000002AC: bootloader_sha256_data
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:24:0x000002DC: /IDF/components/bootloader_support/src/esp32s3/bootloader_esp32s3.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:26:0x0000033B: bootloader_init
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:28:0x0000035A: /IDF/components/bootloader_support/src/bootloader_random.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:29:0x00000395: bootloader_fill_random
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:73:0x00010050: arduino-lib-builder
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:77:0x00010120: LVGL Widgets Demo
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:84:0x00010235: Desktop: %u
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:85:0x00010241: Tablet: %u
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:90:0x00010296: Blue jeans
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:93:0x000102B5: This is a short description of me. Take a look at my profile!
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:103:0x00010363: Gender
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:112:0x000103BD: Widgets demo
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:122:0x0001043C: Tablet: 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:123:0x00010445: Desktop: 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:143:0x0002561E:  !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:153:0x0002580C: December
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:198:0x00029DEF: >AAA>
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:228:0x0002A164: esp_lcd_new_rgb_panel(_panel_config, &_panel_handle)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:229:0x0002A199: C:\Users\zhang'pei\Documents\Arduino\libraries\Arduino_GFX-master\src\databus\Arduino_ESP32RGBPanel.cpp
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:230:0x0002A201: esp_lcd_panel_reset(_panel_handle)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:233:0x0002A284: uint16_t* Arduino_ESP32RGBPanel::getFrameBuffer(uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, uint16_t, int32_t)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:234:0x0002A457: Bi2c_slave_task
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:236:0x0002A4CF: BloopTask
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:251:0x0002A837: pxCurHeader->xItemLen <= pxRingbuffer->xMaxItemSize
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:252:0x0002A86B: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 2 )) == 0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:253:0x0002A8A3: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 1 )) == 0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:257:0x0002A979: (pxHeader->xItemLen <= pxRingbuffer->xMaxItemSize) || (pxHeader->uxItemFlags & ( ( UBaseType_t ) 2 ))
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:258:0x0002A9DF: pxHeader->xItemLen <= pxRingbuffer->xMaxItemSize
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:263:0x0002AB46: xRemLen >= sizeof(ItemHeader_t)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:264:0x0002AB66: (pxCurHeader->uxItemFlags & ( ( UBaseType_t ) 8 )) == 0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:268:0x0002AC19: (uint8_t *)pucItem >= pxRingbuffer->pucHead
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:269:0x0002AC45: (uint8_t *)pucItem < pxRingbuffer->pucTail
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:280:0x0002ADC8: vRingbufferDelete
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:292:0x0002AED0: prvCheckItemFitsDefault
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:295:0x0002AF15: prvGetItemDefault
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:296:0x0002AF27: prvReturnItemDefault
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:306:0x0002B002: GPIO interrupt type error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:307:0x0002B01C: GPIO pull mode error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:309:0x0002B052: io_reg != (intptr_t)NULL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:312:0x0002B095: gpio_od_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:313:0x0002B0A5: gpio_od_enable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:314:0x0002B0B4: gpio_output_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:315:0x0002B0C8: gpio_output_enable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:316:0x0002B0DB: gpio_input_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:317:0x0002B0EE: gpio_input_enable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:319:0x0002B113: gpio_set_pull_mode
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:321:0x0002B135: gpio_intr_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:322:0x0002B147: gpio_intr_enable_on_core
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:323:0x0002B160: gpio_intr_enable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:324:0x0002B171: gpio_set_intr_type
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:329:0x0002B1CA: E (%u) %s: i2c command link allocation error: the buffer provided is too small.
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:330:0x0002B21B: E (%u) %s: i2c command link malloc error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:331:0x0002B245: cmd_desc != NULL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:332:0x0002B256: /IDF/components/driver/i2c.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:333:0x0002B273: cmd_desc->cur != NULL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:334:0x0002B289: E (%u) %s: %s(%d): i2c number error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:335:0x0002B2AE: E (%u) %s: %s(%d): i2c driver install error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:336:0x0002B2DB: E (%u) %s: %s(%d): i2c timing value error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:337:0x0002B306: E (%u) %s: %s(%d): i2c null address error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:338:0x0002B331: E (%u) %s: %s(%d): i2c buffer size too small for slave mode
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:339:0x0002B36E: E (%u) %s: i2c driver malloc error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:340:0x0002B392: E (%u) %s: i2c ringbuffer error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:341:0x0002B3B3: E (%u) %s: i2c semaphore error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:342:0x0002B3D3: E (%u) %s: i2c driver install error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:343:0x0002B3F8: E (%u) %s: %s(%d): sda gpio number error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:344:0x0002B422: E (%u) %s: %s(%d): scl gpio number error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:345:0x0002B44C: E (%u) %s: %s(%d): this i2c pin does not support internal pull-up
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:346:0x0002B48F: E (%u) %s: %s(%d): scl and sda gpio numbers are the same
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:347:0x0002B4C9: E (%u) %s: %s(%d): i2c mode error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:348:0x0002B4EC: E (%u) %s: %s(%d): i2c clock choice is invalid, please check flag and frequency
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:349:0x0002B53D: E (%u) %s: %s(%d): i2c command link error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:350:0x0002B568: E (%u) %s: %s(%d): i2c ack type error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:351:0x0002B58F: E (%u) %s: %s(%d): i2c data read length error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:352:0x0002B5BE: E (%u) %s: %s(%d): i2c driver not installed
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:353:0x0002B5EB: E (%u) %s: %s(%d): Only allowed in master mode
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:355:0x0002B649: i2c_master_cmd_begin
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:356:0x0002B65E: i2c_master_read
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:357:0x0002B66E: i2c_master_read_byte
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:358:0x0002B683: i2c_master_write_byte
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:359:0x0002B699: i2c_master_write
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:360:0x0002B6AA: i2c_master_stop
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:361:0x0002B6BA: i2c_cmd_link_append
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:362:0x0002B6CE: i2c_master_start
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:363:0x0002B6DF: i2c_set_pin
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:364:0x0002B6EB: i2c_isr_register
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:365:0x0002B6FC: i2c_set_timeout
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:366:0x0002B70C: i2c_param_config
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:367:0x0002B71D: i2c_reset_rx_fifo
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:368:0x0002B72F: i2c_reset_tx_fifo
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:369:0x0002B741: i2c_driver_delete
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:370:0x0002B753: i2c_driver_install
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:373:0x0002B7A6: periph_module_reset
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:374:0x0002B7BA: periph_module_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:375:0x0002B7D0: periph_module_enable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:378:0x0002B812: rtc_gpio_deinit
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:383:0x0002B8B4: E (%u) %s: %s(%d): hw_flowctrl mode error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:385:0x0002B905: E (%u) %s: %s(%d): empty intr threshold error
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:396:0x0002BA92: rtc_enabled & RTC_ENABLED(uart_num)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:404:0x0002BBD2: rtc_clk_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:405:0x0002BBE2: uart_driver_delete
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:409:0x0002BC35: uart_reenable_intr_mask
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:413:0x0002BC80: uart_intr_config
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:417:0x0002BCC2: uart_enable_tx_intr
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:418:0x0002BCD6: uart_pattern_queue_reset
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:419:0x0002BCEF: uart_disable_intr_mask
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:431:0x0002BDEA: group->pairs[pair_id]
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:435:0x0002BE88: E (%u) %s: %s(%d): invalid sibling channel
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:436:0x0002BEB4: E (%u) %s: %s(%d): sibling channel should have a different direction
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:437:0x0002BEFA: E (%u) %s: %s(%d): no free gdma channel, search code=%d
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:442:0x0002C009: gdma_reset
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:447:0x0002C056: gdma_del_channel
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:452:0x0002C0AB: E (%u) %s: No MD5 found in partition table
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:453:0x0002C0D7: E (%u) %s: Partition table MD5 mismatch
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:472:0x0002C307: E (%u) %s: unexpected spi flash error code: 0x%x
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:484:0x0002C487: E (%u) %s: Detected size(%dk) smaller than the size in the binary image header(%dk). Probe failed.
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:491:0x0002C593: esp_task_stack_is_sane_cache_disabled()
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:494:0x0002C5E1: esp_ipc_call(other_cpuid, &spi_flash_op_block_func, (void *) other_cpuid)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:497:0x0002C65D: !(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED && cpuid != 0)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:498:0x0002C6A4: spi_flash_enable_interrupts_caches_and_other_cpu
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:499:0x0002C6D5: spi_flash_disable_interrupts_caches_and_other_cpu
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:501:0x0002C71F: index < Nitems
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:502:0x0002C72E: /IDF/components/nvs_flash/src/compressed_enum_table.hpp
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:505:0x0002C7AE: void CompressedEnumTable<Tenum, Nbits, Nitems>::set(size_t, Tenum) [with Tenum = bool; unsigned int Nbits = 1; unsigned int Nitems = 256; size_t = unsigned int]
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:511:0x0002C955: index == mFirstUsedEntry
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:512:0x0002C96E: index < ENTRY_COUNT
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:513:0x0002C982: readEntryIndex != mFirstUsedEntry
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:518:0x0002CA22: void CompressedEnumTable<Tenum, Nbits, Nitems>::set(size_t, Tenum) [with Tenum = nvs::Page::EntryState; unsigned int Nbits = 2; unsigned int Nitems = 126; size_t = unsigned int]
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:521:0x0002CB3A: esp_err_t nvs::Page::mLoadEntryTable()
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:523:0x0002CB8C: void nvs::Page::updateFirstUsedEntry(size_t, size_t)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:524:0x0002CBC1: Tenum CompressedEnumTable<Tenum, Nbits, Nitems>::get(size_t) const [with Tenum = nvs::Page::EntryState; unsigned int Nbits = 2; unsigned int Nitems = 126; size_t = unsigned int]
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:525:0x0002CC73: uint32_t nvs::Page::getEntryAddress(size_t) const
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:528:0x0002CCFF: esp_err_t nvs::PageManager::load(nvs::Partition*, uint32_t, uint32_t)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:534:0x0002CDEF: /IDF/components/pthread/pthread.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:539:0x0002CE8C: pthread_mutex_destroy
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:543:0x0002CEED: pthread_local_storage_thread_deleted_callback
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:546:0x0002CF4A: E (%u) %s: Task watchdog got triggered. The following tasks did not reset the watchdog in time:
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:551:0x0002CFFE: E (%u) %s: Print CPU %d (current core) backtrace
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:552:0x0002D030: E (%u) %s: Print CPU %d backtrace
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:553:0x0002D053: esp_intr_alloc(ETS_TG0_WDT_LEVEL_INTR_SOURCE, 0, task_wdt_isr, NULL, &twdt_config->intr_handle)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:560:0x0002D19E: E (%u) %s: Check that CONFIG_FREERTOS_UNICORE is enabled in menuconfig
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:564:0x0002D25D: (hint & (~RST_REASON_MASK)) == 0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:565:0x0002D27E: /IDF/components/esp_system/port/soc/esp32s3/reset_reason.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:566:0x0002D2B9: esp_reset_reason_set_hint
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:572:0x0002D32B: /IDF/components/esp_system/crosscore_int.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:573:0x0002D35A: esp_crosscore_int_send
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:574:0x0002D371: esp_crosscore_int_init
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:577:0x0002D3C5: Setting breakpoint at 0x
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:578:0x0002D3DE:  and returning...
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:581:0x0002D415: E (%u) %s: External RAM could not be added to heap!
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:583:0x0002D480: /IDF/components/esp_system/startup.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:584:0x0002D4A5: /dev/console/
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:597:0x0002D719: Debug exception reason: 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:599:0x0002D73E: HwBreakpoint 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:600:0x0002D74C: Stack canary watchpoint triggered (
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:601:0x0002D773: Watchpoint 0 triggered 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:604:0x0002D7A6: DebugIntr 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:637:0x0002D97C: Unhandled debug exception
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:638:0x0002D996: Double exception
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:641:0x0002D9D8: Interrupt wdt timeout on CPU0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:642:0x0002D9F6: Interrupt wdt timeout on CPU1
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:643:0x0002DA14: Cache disabled but cached memory region accessed
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:648:0x0002DA85: Level1Interrupt
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:650:0x0002DA9C: IntegerDivideByZero
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:678:0x0002DD94: /dev/uart
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:679:0x0002DDA1: /dev/secondary
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:680:0x0002DDB0: /dev/console
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:681:0x0002DE5F: Bs_ctx.peek_char == NONE
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:682:0x0002DE78: /IDF/components/vfs/vfs_usb_serial_jtag.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:683:0x0002DEA2: usb_serial_jtag_return_char
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:701:0x0002E196: esp_ptr_in_diram_dram((void *)dend)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:703:0x0002E1CC: (dend & 3) == 0
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:704:0x0002E1DC: heap != NULL && "free() target pointer is outside heap areas"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:705:0x0002E21A: heap != NULL && "realloc() pointer is outside heap areas"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:711:0x0002E2B1: heap_caps_realloc_default
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:712:0x0002E2CB: heap_caps_malloc_default
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:736:0x0002ED3C: !((vd->flags&VECDESC_FL_SHARED)&&(vd->flags&VECDESC_FL_NONSHARED))
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:737:0x0002ED7F: /IDF/components/esp_hw_support/intr_alloc.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:739:0x0002EDBB: esp_intr_disable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:740:0x0002EDCC: esp_intr_free
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:741:0x0002EDDA: is_vect_desc_usable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:742:0x0002EDEE: find_desc_for_source
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:745:0x0002EE48: set_ocode_by_efuse
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:747:0x0002EE62: E (%u) %s: SPI RAM enabled but initialization failed. Bailing out.
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:749:0x0002EECA: Unhandled interrupt %d on cpu %d!
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:782:0x0002F1BC: ESP_ERR_NVS_XTS_DECR_FAILED
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:794:0x0002F30B: ESP_ERR_ULP_UNDEFINED_LABEL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:808:0x0002F470: ESP_ERR_NOT_ENOUGH_UNUSED_KEY_BLOCKS
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:818:0x0002F559: ESP_ERR_WIFI_MODE
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:827:0x0002F606: ESP_ERR_WIFI_WOULD_BLOCK
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:843:0x0002F76D: ESP_ERR_ESPNOW_INTERNAL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:868:0x0002F9C2: ESP_ERR_MESH_INTERFACE
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:900:0x0002FD34: ESP_ERR_HTTP_FETCH_HEADER
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:917:0x0002FF5A: ESP_ERR_MBEDTLS_SSL_CONFIG_DEFAULTS_FAILED
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:958:0x00030480: ESP_ERR_MEMPROT_SPLIT_ADDR_UNALIGNED
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:959:0x000304A5: ESP_ERR_MEMPROT_UNIMGMT_BLOCK_INVALID
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:964:0x00030BC5: E (%u) %s: esp_intr_alloc failed (0x%x)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:965:0x00030BEE: E (%u) %s: esp_intr_enable failed (0x%x)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:966:0x00030C18: ( uint32_t ) p >= frame->a1
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:968:0x00030C68: /IDF/components/esp_hw_support/include/soc/spinlock.h
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:975:0x00030D66:  has been detected.
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:988:0x00030EF6: esp_intr_alloc(ETS_SYSTIMER_TARGET0_EDGE_INTR_SOURCE + cpuid, ESP_INTR_FLAG_IRAM | level, SysTickIsrHandler, &systimer_hal, NULL)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1006:0x0003126E: !( ( xTaskGetSchedulerState() == ( ( BaseType_t ) 0 ) ) && ( xTicksToWait != 0 ) )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1007:0x000312C1: pxQueue->pcHead != ((void *)0) || pxQueue->u.xSemaphore.xMutexHolder == ((void *)0) || pxQueue->u.xSemaphore.xMutexHolder == xTaskGetCurrentTaskHandle()
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1010:0x0003137B: !( ( pxQueue->pcHead == ((void *)0) ) && ( pxQueue->u.xSemaphore.xMutexHolder != ((void *)0) ) )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1015:0x000314C1: vQueueDelete
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1016:0x000314CE: uxQueueSpacesAvailable
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1029:0x000315F2: xQueueGenericReset
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1032:0x0003162C: pxTCB->ucStaticallyAllocated == ( ( uint8_t ) 2 )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1039:0x0003172D: ( ( ( ( pxDelayedTaskList )->uxNumberOfItems == ( UBaseType_t ) 0 ) ? ( ( BaseType_t ) 1 ) : ( ( BaseType_t ) 0 ) ) )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1042:0x000317C8: pxUnblockedTCB
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1046:0x0003180A: xTaskGetSchedulerState() != ( ( BaseType_t ) 0 )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1047:0x0003183B: xTaskGetSchedulerState() != ( ( BaseType_t ) 2 )
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1048:0x0003186C: xNextTaskUnblockTime >= xTickCount
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1052:0x000318F4: uxIndexToWait < 1
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1053:0x00031906: uxIndexToNotify < 1
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1055:0x00031928: pxTCB->ulNotifiedValue[ uxIndexToNotify ] == ~0UL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1072:0x00031B0D: vTaskDelay
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1073:0x00031B18: prvDeleteTCB
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1074:0x00031B25: prvDeleteTLS
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1075:0x00031B32: vTaskDelete
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1080:0x00031BB6: xQueueGetMutexHolder( ( h ) ) == ((void *)0)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1091:0x00031CEE: esp_lcd_panel_reset
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1093:0x00031D5F: /IDF/components/esp_lcd/src/esp_lcd_rgb_panel.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1094:0x00031D8F: lcd_panel.rgb
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1095:0x00031D9D: E (%u) %s: %s(%d): prescaler can't satisfy PCLK clock %uHz
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1097:0x00031DFF: E (%u) %s: %s(%d): unsupported data width %d
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1098:0x00031E2D: E (%u) %s: %s(%d): no mem for rgb panel
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1099:0x00031E56: E (%u) %s: %s(%d): no free rgb panel slot
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1103:0x00031EFC: IDF/components/hal/esp32s3/include/hal/lcd_ll.h
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1104:0x00031F2C: E (%u) %s: %s(%d): install interrupt failed
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1108:0x00031FD7: lcd_rgb_panel_create_trans_link
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1110:0x00032012: rgb_panel_init
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1111:0x00032021: rgb_panel_draw_bitmap
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1112:0x00032037: esp_lcd_new_rgb_panel
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1113:0x00032058: blk >= 0 && blk < EFUSE_BLK_MAX
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1115:0x000320A6: num_reg <= (range_read_addr_blocks[blk].end - range_read_addr_blocks[blk].start) / sizeof(uint32_t)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1131:0x000322DC: /IDF/components/bootloader_support/src/bootloader_flash.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1134:0x00032338: bootloader_flash_execute_command_common
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1137:0x0003262C: Invalid coexist adapter function md5, internal: %s, idf: %s
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1156:0x00032DE7: B0000000000000000                INF
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1157:0x00032E18: 0123456789abcdef
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1158:0x00032E29: 0123456789ABCDEF
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1160:0x00033105: REENT malloc succeeded
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1162:0x0003318A: Balloc succeeded
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1223:0x0003B484: IDF/components/hal/esp32s3/include/hal/systimer_ll.h
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1225:0x0003B4D9: integ->prev_status == this_prev_status && "prev status incorrect"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1227:0x0003B53C: size == this_block_size && "block size incorrect"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1231:0x0003B60F: block_to_ptr(block) == align_ptr(block_to_ptr(block), ALIGN_SIZE) && "block not aligned properly"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1232:0x0003B671: !block_is_free(block_next(block)) && "next block should not be free"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1233:0x0003B6B6: block_size(block_next(block)) == 0 && "next block size should be zero"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1237:0x0003B783: sl_map && "internal error - second level bitmap is null"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1238:0x0003B7BC: block_size(block) >= size
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1239:0x0003B7D6: block_is_free(block) && "block must be free"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1240:0x0003B803: block_to_ptr(remaining) == align_ptr(block_to_ptr(remaining), ALIGN_SIZE) && "remaining block not aligned properly"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1241:0x0003B877: block_size(block) == remain_size + size + block_header_overhead
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1242:0x0003B8B7: block_size(remaining) >= block_size_min && "block split with invalid size"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1246:0x0003B98A: !block_is_free(block) && "block already marked as free"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1247:0x0003B9C2: prev && "prev physical block can't be null"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1248:0x0003B9EE: block_is_free(prev) && "prev block is not free though marked as such"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1249:0x0003BA34: !block_is_last(prev) && "previous block can't be last"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1250:0x0003BA6B: next && "next physical block can't be null"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1251:0x0003BA97: !block_is_last(block) && "previous block can't be last"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1252:0x0003BACF: !block_is_free(block) && "block must be used"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1253:0x0003BAFD: block_trim_used
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1255:0x0003BB1A: block_merge_next
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1256:0x0003BB2B: block_absorb
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1257:0x0003BB38: block_merge_prev
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1260:0x0003BB66: block_split
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1261:0x0003BB72: block_trim_free
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1262:0x0003BB82: block_prepare_used
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1263:0x0003BB95: search_suitable_block
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1264:0x0003BBAB: block_locate_free
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1266:0x0003BBC6: remove_free_block
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1268:0x0003BBE2: insert_free_block
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1269:0x0003BBF4: CORRUPT HEAP: multi_heap.c:%d detected at 0x%08x
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1284:0x0003BDA4: <cached disabled>
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1287:0x0003BDEA: /IDF/components/spi_flash/memspi_host_driver.c
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1290:0x0003BE50: memspi_host_erase_block
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1294:0x0003BFE3: E (%u) %s: configure host io mode failed - unsupported
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1295:0x0003C01B: E (%u) %s: No response from device when trying to retrieve Unique ID
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1304:0x0003C2C5: (io_mode == SPI_FLASH_OPI_STR) || (io_mode == SPI_FLASH_OPI_DTR)
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1361:0x000415D7: BLl7@
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1391:0x000435DE:  b VC3"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1454:0x00048091: 7$1H2
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1517:0x0004DEB3:   tVr
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1581:0x0005005F:  RQDe!
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1766:0x00054DEC: ,zxpp
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1769:0x000550DE: #j30E
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1778:0x000563DE:  %I3M
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1898:0x0005DE50: &< fL
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:1919:0x0005F6DE: #)39:
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2075:0x00065DE9: t0" "Gt
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2125:0x000677DE: dI1H1JCB
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2229:0x0006DED6: Zd9AK4Z3iQia
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2243:0x0006EA90: "),0800"
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2257:0x0006F9DE: *%QEE
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2408:0x0007D9DE: 900tW
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2569:0x00089E90: &Td&dEfD
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2633:0x000923DE: PPtPR 
+C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\analysis\strings.txt:2655:0x00093DE4: y6i'bm
