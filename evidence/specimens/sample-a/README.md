@@ -17,7 +17,7 @@ Fill after the first physical board is inspected.
 - Revision: v0.2
 - Flash ID:
 - Flash size: 16 MB dump captured; Arduino runtime also reports 16 MB
-- PSRAM: 8 MB expected/source-backed and reported by earlier identity evidence; **Arduino 01_BoardInfo with QSPI PSRAM currently reports 0 bytes, retest with OPI PSRAM required**
+- PSRAM: 8 MB detected by Arduino `01_BoardInfo` runtime report
 - Crystal: 40 MHz
 - MAC: 84:fc:e6:6c:69:3c
 - USB bridge/native USB: CH340C source-backed, local bridge identification still to be recorded
@@ -70,12 +70,13 @@ Current result:
 
 ```text
 Upload / serial monitor : PASS
+Chip                    : PASS, ESP32-S3 rev 2, 2 cores, 240 MHz
 Flash size              : PASS, 16777216 bytes / 16 MB
 Flash mode / speed      : QIO / 80 MHz
+PSRAM                   : PASS, 8388608 bytes / 8 MB
 Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : PASS, ALIVE lines observed through at least 100000 ms
-PSRAM                   : FAIL / RETEST, Arduino runtime reported 0 bytes with QSPI PSRAM selected
-Overall 01_BoardInfo    : PARTIAL PASS
+Runtime stability       : PASS, ALIVE lines observed with PSRAM available
+Overall 01_BoardInfo    : PASS
 ```
 
 Commit-safe runtime record:
@@ -84,11 +85,10 @@ Commit-safe runtime record:
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 ```
 
-Next action:
+Note:
 
 ```text
-Retest 01_BoardInfo with PSRAM set to OPI PSRAM / Enabled instead of QSPI PSRAM.
-Keep other Arduino IDE settings unchanged for the first retest.
+An earlier run reported PSRAM as 0 bytes. A later run detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
 ```
 
 ## Source-backed hardware map
@@ -140,7 +140,7 @@ Do not commit factory `.bin` dumps.
 | Stage | Target | Status |
 |---|---|---|
 | HW-00 | Photos and visible identity | PARTIAL |
-| HW-01 | Chip / flash / PSRAM | PARTIAL / ARDUINO PSRAM RETEST REQUIRED |
+| HW-01 | Chip / flash / PSRAM | PASS |
 | HW-01B | CH340C bridge identity | SOURCE-BACKED / LOCAL ID OPEN |
 | HW-01C | Schematic/BOM research | SOURCE-BACKED |
 | HW-01D | GPIO pin map | SOURCE-BACKED / OWN TESTS OPEN |
@@ -155,7 +155,7 @@ Do not commit factory `.bin` dumps.
 | HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
 | HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
-| SW-01 | Arduino BSP BoardInfo | PARTIAL PASS / PSRAM RETEST REQUIRED |
+| SW-01 | Arduino BSP BoardInfo | PASS |
 | SW-02 | LVGL basic UI | OPEN |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
