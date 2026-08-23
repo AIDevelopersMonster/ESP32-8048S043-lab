@@ -10,21 +10,25 @@
   Test order:
     01_BoardInfo       -> PASS: ESP32-S3 / 16 MB flash / 8 MB PSRAM / serial alive
     02_DisplayRGBTest  -> PASS: own Arduino_GFX RGB display path
-    03_TouchGT911Test  -> this test, first own visual GT911 touch validation
+    03_TouchGT911Test  -> this test, low-power visual GT911 touch validation
 
   Purpose:
-    First visual GT911 capacitive touch validation from our ESP32_8048S043
+    Low-power staged GT911 capacitive touch validation from our ESP32_8048S043
     Arduino library.
 
+  Why this version is staged:
+    A first combined visual version caused a black screen and repeated brownout
+    resets on Sample A. This safer version starts serial and I2C first, does not
+    force GT911 reset/address strap by default, lowers I2C speed to 100 kHz and
+    enables the display/backlight only after the touch controller is detected.
+
   What this example checks:
-    - RGB display still initializes through Arduino_GFX;
     - source-backed I2C pins SDA=19 and SCL=20;
     - GT911 candidate addresses 0x5D and 0x14;
-    - optional GT911 reset/address strap using RST=38 and INT=18;
     - GT911 Product ID register at 0x8140;
     - touch status register at 0x814E;
     - raw touch point coordinates while touching the screen;
-    - visual touch trail on the 800x480 display.
+    - optional low-power visual touch trail on the 800x480 display.
 
   What this example does NOT check:
     - final LVGL touch integration;
@@ -48,21 +52,6 @@
   Dependency:
     Install Arduino_GFX_Library by moononournation from Arduino Library Manager.
 
-  Expected result:
-    - the display shows a touch test screen;
-    - I2C scan finds GT911 at 0x5D or 0x14;
-    - Product ID is readable;
-    - touching the screen draws dots/trails on the display;
-    - Serial Monitor prints sane x/y coordinates in the 800x480 range;
-    - movement on the panel changes x/y and the visual trail.
-
-  Note about coordinate byte order:
-    Observed Sample A raw GT911 point bytes use high byte first for x/y:
-      raw=.. 00 9B 00 39 .. -> x=155, y=57
-    Earlier serial-only code treated those bytes as little-endian and printed
-    impossible values such as x=39680/y=14592. This visual version uses the
-    observed high-byte-first point decoding.
-
   PASS boundary:
     PASS here means our own GT911/I2C test detects the controller and shows
     changing touch coordinates visually on Sample A. It does not prove final
@@ -82,7 +71,7 @@ ESP32_8048S043 board;
 static Arduino_ESP32RGBPanel *bus = nullptr;
 static Arduino_RGB_Display *gfx = nullptr;
 
-static constexpr uint32_t I2C_SPEED_HZ = 400000;
+static constexpr uint32_t I2C_SPEED_HZ = 100000;
 static constexpr uint16_t GT911_REG_PRODUCT_ID = 0x8140;
 static constexpr uint16_t GT911_REG_FW_VERSION = 0x8144;
 static constexpr uint16_t GT911_REG_X_RESOLUTION = 0x8146;
@@ -90,19 +79,21 @@ static constexpr uint16_t GT911_REG_Y_RESOLUTION = 0x8148;
 static constexpr uint16_t GT911_REG_STATUS = 0x814E;
 static constexpr uint16_t GT911_REG_POINT1 = 0x8150;
 static constexpr uint8_t MAX_TOUCH_POINTS = 5;
+static constexpr bool ALLOW_GT911_RESET_STRAP = false;
+static constexpr bool ENABLE_VISUAL_DISPLAY = true;
+static constexpr uint8_t BACKLIGHT_DIM_DUTY = 96;  // 0..255, lower current than full ON.
 
 static constexpr uint16_t COLOR_BLACK = 0x0000;
 static constexpr uint16_t COLOR_WHITE = 0xFFFF;
 static constexpr uint16_t COLOR_RED = 0xF800;
 static constexpr uint16_t COLOR_GREEN = 0x07E0;
-static constexpr uint16_t COLOR_BLUE = 0x001F;
 static constexpr uint16_t COLOR_YELLOW = 0xFFE0;
 static constexpr uint16_t COLOR_CYAN = 0x07FF;
 static constexpr uint16_t COLOR_MAGENTA = 0xF81F;
 static constexpr uint16_t COLOR_GRAY = 0x8410;
-static constexpr uint16_t COLOR_DARK = 0x2104;
 
 static uint8_t activeAddress = 0;
+static bool displayReady = false;
 static uint32_t lastIdlePrint = 0;
 static uint32_t lastScreenIdle = 0;
 static int lastX = -1;
@@ -153,17 +144,41 @@ static uint16_t be16(const uint8_t *data) {
   return (static_cast<uint16_t>(data[0]) << 8) | static_cast<uint16_t>(data[1]);
 }
 
+static uint16_t decodeCoord(const uint8_t *data, uint16_t limit) {
+  const uint16_t be = be16(data);
+  const uint16_t le = le16(data);
+  if (be < limit) {
+    return be;
+  }
+  if (le < limit) {
+    return le;
+  }
+  return be;
+}
+
 static char printableOrDot(uint8_t value) {
   return (value >= 32 && value <= 126) ? static_cast<char>(value) : '.';
 }
 
-static void backlightOn() {
+static void backlightOff() {
   pinMode(BACKLIGHT, OUTPUT);
-  digitalWrite(BACKLIGHT, HIGH);
+  digitalWrite(BACKLIGHT, LOW);
 }
 
-static void initDisplay() {
-  backlightOn();
+static void backlightDim() {
+  pinMode(BACKLIGHT, OUTPUT);
+  analogWrite(BACKLIGHT, BACKLIGHT_DIM_DUTY);
+}
+
+static bool initDisplayLowPower() {
+  if (!ENABLE_VISUAL_DISPLAY) {
+    Serial.println("Visual display: disabled at compile time");
+    return false;
+  }
+
+  Serial.println("Display init: staged low-power start");
+  backlightOff();
+  delay(100);
 
   bus = new Arduino_ESP32RGBPanel(
     RGB_DE, RGB_VSYNC, RGB_HSYNC, RGB_PCLK,
@@ -172,7 +187,7 @@ static void initDisplay() {
     RGB_B0, RGB_B1, RGB_B2, RGB_B3, RGB_B4,
     1 /* hsync polarity */, 40 /* hsync front porch */, 48 /* hsync pulse width */, 40 /* hsync back porch */,
     1 /* vsync polarity */, 13 /* vsync front porch */, 3 /* vsync pulse width */, 29 /* vsync back porch */,
-    1 /* pclk active neg */, 16000000 /* prefer speed */
+    1 /* pclk active neg */, 12000000 /* safer lower pixel clock */
   );
 
   gfx = new Arduino_RGB_Display(
@@ -185,15 +200,22 @@ static void initDisplay() {
 
   if (!gfx->begin()) {
     Serial.println("Display begin: FAIL");
-    while (true) {
-      delay(1000);
-    }
+    backlightOff();
+    return false;
   }
 
-  Serial.println("Display begin: OK");
+  gfx->fillScreen(COLOR_BLACK);
+  delay(100);
+  backlightDim();
+  displayReady = true;
+  Serial.println("Display begin: OK, backlight dimmed");
+  return true;
 }
 
 static void screenText(int x, int y, uint16_t color, uint16_t bg, uint8_t size, const char *text) {
+  if (!displayReady || !gfx) {
+    return;
+  }
   gfx->setTextSize(size);
   gfx->setTextColor(color, bg);
   gfx->setCursor(x, y);
@@ -201,6 +223,9 @@ static void screenText(int x, int y, uint16_t color, uint16_t bg, uint8_t size, 
 }
 
 static void drawTarget(int x, int y, const char *label) {
+  if (!displayReady || !gfx) {
+    return;
+  }
   gfx->drawCircle(x, y, 18, COLOR_CYAN);
   gfx->drawCircle(x, y, 19, COLOR_CYAN);
   gfx->drawFastHLine(x - 26, y, 52, COLOR_CYAN);
@@ -212,11 +237,15 @@ static void drawTarget(int x, int y, const char *label) {
 }
 
 static void drawTouchCanvas(const char *stateLine) {
+  if (!displayReady || !gfx) {
+    return;
+  }
+
   gfx->fillScreen(COLOR_BLACK);
   gfx->drawRect(0, 0, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE);
   gfx->drawRect(1, 1, LCD_WIDTH - 2, LCD_HEIGHT - 2, COLOR_WHITE);
 
-  screenText(20, 18, COLOR_WHITE, COLOR_BLACK, 3, "03 Touch GT911 Visual Test");
+  screenText(20, 18, COLOR_WHITE, COLOR_BLACK, 3, "03 Touch GT911 Safe Visual");
   screenText(20, 58, COLOR_CYAN, COLOR_BLACK, 2, "Touch the panel: dots/trails should follow your finger");
   screenText(20, 88, COLOR_GRAY, COLOR_BLACK, 2, stateLine);
 
@@ -231,26 +260,27 @@ static void drawTouchCanvas(const char *stateLine) {
 }
 
 static void drawStatusLine(const char *line, uint16_t color = COLOR_YELLOW) {
+  if (!displayReady || !gfx) {
+    return;
+  }
   gfx->fillRect(2, LCD_HEIGHT - 56, LCD_WIDTH - 4, 54, COLOR_BLACK);
   gfx->drawFastHLine(0, LCD_HEIGHT - 58, LCD_WIDTH, COLOR_WHITE);
   screenText(20, LCD_HEIGHT - 43, color, COLOR_BLACK, 2, line);
 }
 
 static int clampX(uint16_t x) {
-  if (x >= LCD_WIDTH) {
-    return LCD_WIDTH - 1;
-  }
-  return static_cast<int>(x);
+  return (x >= LCD_WIDTH) ? (LCD_WIDTH - 1) : static_cast<int>(x);
 }
 
 static int clampY(uint16_t y) {
-  if (y >= LCD_HEIGHT) {
-    return LCD_HEIGHT - 1;
-  }
-  return static_cast<int>(y);
+  return (y >= LCD_HEIGHT) ? (LCD_HEIGHT - 1) : static_cast<int>(y);
 }
 
 static void drawTouchPoint(uint16_t rawX, uint16_t rawY, uint8_t id, uint8_t pointIndex) {
+  if (!displayReady || !gfx) {
+    return;
+  }
+
   const int x = clampX(rawX);
   const int y = clampY(rawY);
 
@@ -288,22 +318,20 @@ static void printI2CScan() {
 }
 
 static void gt911ResetForAddress(uint8_t targetAddress) {
-  Serial.printf("GT911 reset/address strap attempt for 0x%02X\n", targetAddress);
+  if (!ALLOW_GT911_RESET_STRAP) {
+    Serial.printf("GT911 reset/address strap skipped for 0x%02X (safe mode)\n", targetAddress);
+    return;
+  }
 
+  Serial.printf("GT911 reset/address strap attempt for 0x%02X\n", targetAddress);
   pinMode(TOUCH_RST, OUTPUT);
   pinMode(TOUCH_INT, OUTPUT);
-
   digitalWrite(TOUCH_RST, LOW);
   delay(10);
-
-  // Common GT911 strap convention:
-  // INT high during reset release selects 0x5D, INT low selects 0x14.
   digitalWrite(TOUCH_INT, targetAddress == TOUCH_GT911_ADDR ? HIGH : LOW);
   delay(5);
-
   digitalWrite(TOUCH_RST, HIGH);
   delay(60);
-
   pinMode(TOUCH_INT, INPUT);
   delay(80);
 }
@@ -324,21 +352,9 @@ static uint8_t detectGt911() {
     return TOUCH_GT911_ADDR_ALT;
   }
 
-  Serial.println("GT911 not found before reset. Trying address strap reset sequence.");
-
+  Serial.println("GT911 not found before reset. Safe mode does not force reset strap by default.");
   gt911ResetForAddress(TOUCH_GT911_ADDR);
-  if (i2cPresent(TOUCH_GT911_ADDR)) {
-    Serial.printf("GT911 candidate present after reset at 0x%02X\n", TOUCH_GT911_ADDR);
-    return TOUCH_GT911_ADDR;
-  }
-
   gt911ResetForAddress(TOUCH_GT911_ADDR_ALT);
-  if (i2cPresent(TOUCH_GT911_ADDR_ALT)) {
-    Serial.printf("GT911 candidate present after reset at 0x%02X\n", TOUCH_GT911_ADDR_ALT);
-    return TOUCH_GT911_ADDR_ALT;
-  }
-
-  Serial.println("GT911 candidate not detected at 0x5D or 0x14.");
   return 0;
 }
 
@@ -422,8 +438,8 @@ static void pollTouch(uint8_t address) {
     }
 
     const uint8_t id = point[0];
-    const uint16_t x = be16(&point[1]);
-    const uint16_t y = be16(&point[3]);
+    const uint16_t x = decodeCoord(&point[1], LCD_WIDTH);
+    const uint16_t y = decodeCoord(&point[3], LCD_HEIGHT);
     const uint16_t size = be16(&point[5]);
 
     Serial.printf("  P%u id=%u x=%u y=%u size=%u raw=%02X %02X %02X %02X %02X %02X %02X %02X\n",
@@ -448,15 +464,14 @@ void setup() {
   Serial.println();
   Serial.println("================================================================");
   Serial.println(" ESP32-8048S043 Lab / 03_TouchGT911Test");
-  Serial.println(" Visual GT911 touch validation");
+  Serial.println(" Safe low-power visual GT911 touch validation");
   Serial.println("================================================================");
   Serial.println("Author : Alex Malachevsky");
   Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
-  Serial.println("Purpose: validate own visual GT911 touch path after 01/02 PASS");
+  Serial.println("Purpose: validate GT911 first, then enable dim visual touch canvas");
   Serial.println("----------------------------------------------------------------");
-
-  initDisplay();
-  drawTouchCanvas("Display OK. Starting I2C/GT911 probe...");
+  Serial.println("Safe mode: I2C first, 100 kHz, no forced reset strap, dim backlight");
+  Serial.println("----------------------------------------------------------------");
 
   Wire.begin(TOUCH_SDA, TOUCH_SCL, I2C_SPEED_HZ);
   delay(50);
@@ -472,10 +487,8 @@ void setup() {
   if (activeAddress == 0) {
     Serial.println("----------------------------------------------------------------");
     Serial.println("GT911 TEST RESULT: NOT DETECTED");
-    Serial.println("Check pins, reset line, address strap, panel cable and power.");
+    Serial.println("Display not enabled because touch controller was not detected in safe mode.");
     Serial.println("================================================================");
-    drawTouchCanvas("GT911 NOT DETECTED at 0x5D/0x14");
-    drawStatusLine("GT911 NOT DETECTED - check cable/pins/reset", COLOR_RED);
     return;
   }
 
@@ -483,12 +496,16 @@ void setup() {
   Serial.printf("Active GT911 address: 0x%02X\n", activeAddress);
   printGt911Info(activeAddress);
 
-  char stateLine[96];
-  snprintf(stateLine, sizeof(stateLine), "GT911 address 0x%02X active. Touch the screen.", activeAddress);
-  drawTouchCanvas(stateLine);
+  if (initDisplayLowPower()) {
+    char stateLine[96];
+    snprintf(stateLine, sizeof(stateLine), "GT911 0x%02X active. Dim visual mode.", activeAddress);
+    drawTouchCanvas(stateLine);
+  } else {
+    Serial.println("Visual display not available; serial touch polling continues.");
+  }
 
   Serial.println("----------------------------------------------------------------");
-  Serial.println("PASS candidate if touches draw visible points/trails and serial x/y changes in 800x480 range.");
+  Serial.println("PASS candidate if touches print x/y and, if display is on, draw visible dots/trails.");
   Serial.println("================================================================");
 }
 
