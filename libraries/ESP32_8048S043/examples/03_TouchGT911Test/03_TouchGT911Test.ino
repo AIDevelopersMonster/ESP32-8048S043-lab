@@ -10,29 +10,37 @@
   Test order:
     01_BoardInfo       -> PASS: ESP32-S3 / 16 MB flash / 8 MB PSRAM / serial alive
     02_DisplayRGBTest  -> PASS: own Arduino_GFX RGB display path
-    03_TouchGT911Test  -> this test, low-power visual GT911 touch validation
+    03_TouchGT911Test  -> this test, known-good-style GT911 display/touch test
 
   Purpose:
-    Low-power staged GT911 capacitive touch validation from our ESP32_8048S043
-    Arduino library.
+    Validate the ESP32-8048S043 GT911 capacitive touch path with a conservative
+    visual Arduino_GFX test.
 
-  Why this version is staged:
-    A first combined visual version caused a black screen and repeated brownout
-    resets on Sample A. This safer version starts serial and I2C first, does not
-    force GT911 reset/address strap by default, lowers I2C speed to 100 kHz and
-    enables the display/backlight only after the touch controller is detected.
+  Why this version exists:
+    The first visual version was too different from working community examples.
+    It used the wrong GT911 point-register start and an aggressive touch-trail
+    update style. This version follows the known-good ESP32-8048S043C pattern:
+      - static display first;
+      - GT911 polling, no dependency on INT interrupt;
+      - point data starts at 0x814F, not 0x8150;
+      - x/y are little-endian after track id;
+      - status register 0x814E is cleared after each read;
+      - touch marker updates are throttled.
 
   What this example checks:
-    - source-backed I2C pins SDA=19 and SCL=20;
+    - RGB display static screen through Arduino_GFX;
+    - backlight GPIO2 full ON, same simple path as 02_DisplayRGBTest;
+    - GT911 on I2C SDA=19 / SCL=20;
     - GT911 candidate addresses 0x5D and 0x14;
-    - GT911 Product ID register at 0x8140;
-    - touch status register at 0x814E;
-    - raw touch point coordinates while touching the screen;
-    - optional low-power visual touch trail on the 800x480 display.
+    - Product ID register 0x8140;
+    - touch status register 0x814E;
+    - touch point data from 0x814F;
+    - raw coordinates and calibrated screen coordinates;
+    - visible touch marker on the 800x480 display.
 
   What this example does NOT check:
     - final LVGL touch integration;
-    - final coordinate calibration;
+    - final production calibration;
     - gestures;
     - SD card;
     - final full BSP status.
@@ -53,9 +61,9 @@
     Install Arduino_GFX_Library by moononournation from Arduino Library Manager.
 
   PASS boundary:
-    PASS here means our own GT911/I2C test detects the controller and shows
-    changing touch coordinates visually on Sample A. It does not prove final
-    LVGL coordinate mapping or full touch UI integration.
+    PASS here means GT911 is detected and touching the screen prints changing
+    coordinates and moves the visible marker on Sample A. It does not prove
+    final LVGL coordinate mapping or complete BSP status.
 */
 
 #include <Arduino.h>
@@ -68,453 +76,484 @@ using namespace esp32_8048s043::pins;
 
 ESP32_8048S043 board;
 
-static Arduino_ESP32RGBPanel *bus = nullptr;
-static Arduino_RGB_Display *gfx = nullptr;
+static constexpr int LCD_W = LCD_WIDTH;
+static constexpr int LCD_H = LCD_HEIGHT;
+static constexpr int LCD_PCLK_HZ = 16000000;
 
-static constexpr uint32_t I2C_SPEED_HZ = 100000;
-static constexpr uint16_t GT911_REG_PRODUCT_ID = 0x8140;
-static constexpr uint16_t GT911_REG_FW_VERSION = 0x8144;
-static constexpr uint16_t GT911_REG_X_RESOLUTION = 0x8146;
-static constexpr uint16_t GT911_REG_Y_RESOLUTION = 0x8148;
-static constexpr uint16_t GT911_REG_STATUS = 0x814E;
-static constexpr uint16_t GT911_REG_POINT1 = 0x8150;
-static constexpr uint8_t MAX_TOUCH_POINTS = 5;
-static constexpr bool ALLOW_GT911_RESET_STRAP = false;
-static constexpr bool ENABLE_VISUAL_DISPLAY = true;
-static constexpr uint8_t BACKLIGHT_DIM_DUTY = 96;  // 0..255, lower current than full ON.
+static constexpr uint32_t TOUCH_POLL_INTERVAL_MS = 15;
+static constexpr uint32_t TOUCH_LOG_INTERVAL_MS = 80;
+static constexpr uint32_t TOUCH_DRAW_INTERVAL_MS = 120;
+static constexpr bool TOUCH_DRAW_ENABLED = true;
+static constexpr bool ANIMATION_ENABLED = false;
+
+static constexpr uint32_t I2C_SPEED_HZ = 400000;
+static constexpr uint16_t GT911_STATUS_REG = 0x814E;
+static constexpr uint16_t GT911_POINT_REG = 0x814F;
+static constexpr uint16_t GT911_PRODUCT_ID_REG = 0x8140;
+static constexpr uint16_t GT911_FW_VERSION_REG = 0x8144;
+static constexpr uint16_t GT911_X_RESOLUTION_REG = 0x8146;
+static constexpr uint16_t GT911_Y_RESOLUTION_REG = 0x8148;
+
+// Initial calibration seed taken from a same-class ESP32-8048S043C test.
+// It maps compressed GT911 raw values to the 800x480 display for this orientation.
+// If the marker is mirrored/rotated on Sample A, keep the raw serial evidence
+// and adjust these constants in a later calibration pass.
+static constexpr bool TOUCH_USE_CALIBRATION = true;
+static constexpr float TOUCH_CAL_X_RX = 1.65867031f;
+static constexpr float TOUCH_CAL_X_RY = -0.02261823f;
+static constexpr float TOUCH_CAL_X_C = 2.12817001f;
+static constexpr float TOUCH_CAL_Y_RX = 0.02082564f;
+static constexpr float TOUCH_CAL_Y_RY = 1.79517055f;
+static constexpr float TOUCH_CAL_Y_C = 10.62223816f;
 
 static constexpr uint16_t COLOR_BLACK = 0x0000;
 static constexpr uint16_t COLOR_WHITE = 0xFFFF;
 static constexpr uint16_t COLOR_RED = 0xF800;
 static constexpr uint16_t COLOR_GREEN = 0x07E0;
+static constexpr uint16_t COLOR_BLUE = 0x001F;
 static constexpr uint16_t COLOR_YELLOW = 0xFFE0;
 static constexpr uint16_t COLOR_CYAN = 0x07FF;
 static constexpr uint16_t COLOR_MAGENTA = 0xF81F;
-static constexpr uint16_t COLOR_GRAY = 0x8410;
+static constexpr uint16_t COLOR_DARKGREY = 0x7BEF;
 
-static uint8_t activeAddress = 0;
-static bool displayReady = false;
-static uint32_t lastIdlePrint = 0;
-static uint32_t lastScreenIdle = 0;
-static int lastX = -1;
-static int lastY = -1;
-static uint32_t touchCounter = 0;
-
-static bool i2cPresent(uint8_t address) {
-  Wire.beginTransmission(address);
-  return Wire.endTransmission() == 0;
+static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
+  return static_cast<uint16_t>(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
 }
 
-static bool gt911Read(uint8_t address, uint16_t reg, uint8_t *buffer, size_t length) {
-  Wire.beginTransmission(address);
-  Wire.write(static_cast<uint8_t>(reg >> 8));
-  Wire.write(static_cast<uint8_t>(reg & 0xFF));
-  if (Wire.endTransmission(false) != 0) {
-    return false;
-  }
+static Arduino_ESP32RGBPanel *rgbpanel = new Arduino_ESP32RGBPanel(
+  RGB_DE, RGB_VSYNC, RGB_HSYNC, RGB_PCLK,
+  RGB_R0, RGB_R1, RGB_R2, RGB_R3, RGB_R4,
+  RGB_G0, RGB_G1, RGB_G2, RGB_G3, RGB_G4, RGB_G5,
+  RGB_B0, RGB_B1, RGB_B2, RGB_B3, RGB_B4,
+  0 /* hsync_polarity */, 8 /* hsync_front_porch */,
+  4 /* hsync_pulse_width */, 16 /* hsync_back_porch */,
+  0 /* vsync_polarity */, 4 /* vsync_front_porch */,
+  4 /* vsync_pulse_width */, 4 /* vsync_back_porch */,
+  1 /* pclk_active_neg */, LCD_PCLK_HZ /* prefer_speed */, false /* useBigEndian */,
+  0 /* de_idle_high */, 1 /* pclk_idle_high */
+);
 
-  const int requested = static_cast<int>(length);
-  const int received = Wire.requestFrom(static_cast<int>(address), requested);
-  if (received != requested) {
-    while (Wire.available()) {
-      Wire.read();
-    }
-    return false;
-  }
+static Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
+  LCD_W, LCD_H, rgbpanel, 0 /* rotation */, true /* auto_flush */
+);
 
-  for (size_t i = 0; i < length; ++i) {
-    buffer[i] = static_cast<uint8_t>(Wire.read());
-  }
-  return true;
-}
-
-static bool gt911WriteByte(uint8_t address, uint16_t reg, uint8_t value) {
-  Wire.beginTransmission(address);
-  Wire.write(static_cast<uint8_t>(reg >> 8));
-  Wire.write(static_cast<uint8_t>(reg & 0xFF));
-  Wire.write(value);
-  return Wire.endTransmission() == 0;
-}
+static uint8_t touchAddr = 0;
+static int lastRawX = -1;
+static int lastRawY = -1;
+static int lastDrawX = -1;
+static int lastDrawY = -1;
+static uint32_t touchCount = 0;
 
 static uint16_t le16(const uint8_t *data) {
   return static_cast<uint16_t>(data[0]) | (static_cast<uint16_t>(data[1]) << 8);
-}
-
-static uint16_t be16(const uint8_t *data) {
-  return (static_cast<uint16_t>(data[0]) << 8) | static_cast<uint16_t>(data[1]);
-}
-
-static uint16_t decodeCoord(const uint8_t *data, uint16_t limit) {
-  const uint16_t be = be16(data);
-  const uint16_t le = le16(data);
-  if (be < limit) {
-    return be;
-  }
-  if (le < limit) {
-    return le;
-  }
-  return be;
 }
 
 static char printableOrDot(uint8_t value) {
   return (value >= 32 && value <= 126) ? static_cast<char>(value) : '.';
 }
 
-static void backlightOff() {
+static void setBacklight(bool on) {
   pinMode(BACKLIGHT, OUTPUT);
-  digitalWrite(BACKLIGHT, LOW);
+  digitalWrite(BACKLIGHT, on ? HIGH : LOW);
 }
 
-static void backlightDim() {
-  pinMode(BACKLIGHT, OUTPUT);
-  analogWrite(BACKLIGHT, BACKLIGHT_DIM_DUTY);
-}
-
-static bool initDisplayLowPower() {
-  if (!ENABLE_VISUAL_DISPLAY) {
-    Serial.println("Visual display: disabled at compile time");
+static bool i2cReadReg(uint8_t addr, uint16_t reg, uint8_t *buf, size_t len) {
+  Wire.beginTransmission(addr);
+  Wire.write(static_cast<uint8_t>(reg >> 8));
+  Wire.write(static_cast<uint8_t>(reg & 0xFF));
+  if (Wire.endTransmission(false) != 0) {
     return false;
   }
 
-  Serial.println("Display init: staged low-power start");
-  backlightOff();
-  delay(100);
-
-  bus = new Arduino_ESP32RGBPanel(
-    RGB_DE, RGB_VSYNC, RGB_HSYNC, RGB_PCLK,
-    RGB_R0, RGB_R1, RGB_R2, RGB_R3, RGB_R4,
-    RGB_G0, RGB_G1, RGB_G2, RGB_G3, RGB_G4, RGB_G5,
-    RGB_B0, RGB_B1, RGB_B2, RGB_B3, RGB_B4,
-    1 /* hsync polarity */, 40 /* hsync front porch */, 48 /* hsync pulse width */, 40 /* hsync back porch */,
-    1 /* vsync polarity */, 13 /* vsync front porch */, 3 /* vsync pulse width */, 29 /* vsync back porch */,
-    1 /* pclk active neg */, 12000000 /* safer lower pixel clock */
-  );
-
-  gfx = new Arduino_RGB_Display(
-    LCD_WIDTH,
-    LCD_HEIGHT,
-    bus,
-    0 /* rotation */,
-    true /* auto_flush */
-  );
-
-  if (!gfx->begin()) {
-    Serial.println("Display begin: FAIL");
-    backlightOff();
+  const int requested = static_cast<int>(len);
+  const int got = Wire.requestFrom(static_cast<int>(addr), requested, static_cast<int>(true));
+  if (got != requested) {
+    while (Wire.available()) {
+      Wire.read();
+    }
     return false;
   }
 
-  gfx->fillScreen(COLOR_BLACK);
-  delay(100);
-  backlightDim();
-  displayReady = true;
-  Serial.println("Display begin: OK, backlight dimmed");
+  for (size_t i = 0; i < len; ++i) {
+    buf[i] = static_cast<uint8_t>(Wire.read());
+  }
   return true;
 }
 
-static void screenText(int x, int y, uint16_t color, uint16_t bg, uint8_t size, const char *text) {
-  if (!displayReady || !gfx) {
-    return;
+static bool i2cWriteRegByte(uint8_t addr, uint16_t reg, uint8_t value) {
+  Wire.beginTransmission(addr);
+  Wire.write(static_cast<uint8_t>(reg >> 8));
+  Wire.write(static_cast<uint8_t>(reg & 0xFF));
+  Wire.write(value);
+  return Wire.endTransmission() == 0;
+}
+
+static void gt911ClearStatus() {
+  if (touchAddr != 0) {
+    i2cWriteRegByte(touchAddr, GT911_STATUS_REG, 0x00);
   }
-  gfx->setTextSize(size);
-  gfx->setTextColor(color, bg);
-  gfx->setCursor(x, y);
-  gfx->print(text);
 }
 
-static void drawTarget(int x, int y, const char *label) {
-  if (!displayReady || !gfx) {
-    return;
-  }
-  gfx->drawCircle(x, y, 18, COLOR_CYAN);
-  gfx->drawCircle(x, y, 19, COLOR_CYAN);
-  gfx->drawFastHLine(x - 26, y, 52, COLOR_CYAN);
-  gfx->drawFastVLine(x, y - 26, 52, COLOR_CYAN);
-  gfx->setTextSize(1);
-  gfx->setTextColor(COLOR_WHITE, COLOR_BLACK);
-  gfx->setCursor(x - 12, y + 24);
-  gfx->print(label);
+static void gt911Reset() {
+  // Do not depend on GPIO18 as an interrupt line. Use it only as a passive
+  // pull-up during reset, matching a conservative polling setup.
+  pinMode(TOUCH_INT, INPUT_PULLUP);
+  pinMode(TOUCH_RST, OUTPUT);
+  digitalWrite(TOUCH_RST, LOW);
+  delay(20);
+  digitalWrite(TOUCH_RST, HIGH);
+  delay(120);
 }
 
-static void drawTouchCanvas(const char *stateLine) {
-  if (!displayReady || !gfx) {
-    return;
-  }
-
-  gfx->fillScreen(COLOR_BLACK);
-  gfx->drawRect(0, 0, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE);
-  gfx->drawRect(1, 1, LCD_WIDTH - 2, LCD_HEIGHT - 2, COLOR_WHITE);
-
-  screenText(20, 18, COLOR_WHITE, COLOR_BLACK, 3, "03 Touch GT911 Safe Visual");
-  screenText(20, 58, COLOR_CYAN, COLOR_BLACK, 2, "Touch the panel: dots/trails should follow your finger");
-  screenText(20, 88, COLOR_GRAY, COLOR_BLACK, 2, stateLine);
-
-  drawTarget(45, 145, "TL");
-  drawTarget(LCD_WIDTH - 45, 145, "TR");
-  drawTarget(45, LCD_HEIGHT - 95, "BL");
-  drawTarget(LCD_WIDTH - 45, LCD_HEIGHT - 95, "BR");
-  drawTarget(LCD_WIDTH / 2, LCD_HEIGHT / 2, "CENTER");
-
-  gfx->drawFastHLine(0, LCD_HEIGHT - 58, LCD_WIDTH, COLOR_WHITE);
-  screenText(20, LCD_HEIGHT - 43, COLOR_YELLOW, COLOR_BLACK, 2, "Waiting for touch...");
-}
-
-static void drawStatusLine(const char *line, uint16_t color = COLOR_YELLOW) {
-  if (!displayReady || !gfx) {
-    return;
-  }
-  gfx->fillRect(2, LCD_HEIGHT - 56, LCD_WIDTH - 4, 54, COLOR_BLACK);
-  gfx->drawFastHLine(0, LCD_HEIGHT - 58, LCD_WIDTH, COLOR_WHITE);
-  screenText(20, LCD_HEIGHT - 43, color, COLOR_BLACK, 2, line);
-}
-
-static int clampX(uint16_t x) {
-  return (x >= LCD_WIDTH) ? (LCD_WIDTH - 1) : static_cast<int>(x);
-}
-
-static int clampY(uint16_t y) {
-  return (y >= LCD_HEIGHT) ? (LCD_HEIGHT - 1) : static_cast<int>(y);
-}
-
-static void drawTouchPoint(uint16_t rawX, uint16_t rawY, uint8_t id, uint8_t pointIndex) {
-  if (!displayReady || !gfx) {
-    return;
-  }
-
-  const int x = clampX(rawX);
-  const int y = clampY(rawY);
-
-  if (lastX >= 0 && lastY >= 0) {
-    gfx->drawLine(lastX, lastY, x, y, COLOR_GREEN);
-  }
-
-  const uint16_t color = (pointIndex == 0) ? COLOR_YELLOW : COLOR_MAGENTA;
-  gfx->fillCircle(x, y, 7, color);
-  gfx->drawCircle(x, y, 10, COLOR_WHITE);
-
-  lastX = x;
-  lastY = y;
-  ++touchCounter;
-
-  char line[96];
-  snprintf(line, sizeof(line), "touch#%lu id=%u raw=(%u,%u) screen=(%d,%d)",
-           static_cast<unsigned long>(touchCounter), id, rawX, rawY, x, y);
-  drawStatusLine(line, COLOR_YELLOW);
-}
-
-static void printI2CScan() {
-  Serial.println("[I2C SCAN]");
-  int found = 0;
-  for (uint8_t address = 1; address < 127; ++address) {
-    if (i2cPresent(address)) {
-      Serial.printf("I2C device found at 0x%02X\n", address);
-      ++found;
+static String scanI2C() {
+  String found;
+  for (uint8_t addr = 1; addr < 127; ++addr) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      char tmp[8];
+      snprintf(tmp, sizeof(tmp), "0x%02X ", addr);
+      found += tmp;
     }
   }
-  if (found == 0) {
-    Serial.println("No I2C devices found.");
+  if (found.length() == 0) {
+    found = "none";
   }
-  Serial.printf("I2C scan complete, devices=%d\n", found);
+  return found;
 }
 
-static void gt911ResetForAddress(uint8_t targetAddress) {
-  if (!ALLOW_GT911_RESET_STRAP) {
-    Serial.printf("GT911 reset/address strap skipped for 0x%02X (safe mode)\n", targetAddress);
-    return;
+static uint8_t findGT911() {
+  const uint8_t candidates[] = {TOUCH_GT911_ADDR, TOUCH_GT911_ADDR_ALT};
+  uint8_t id[4] = {};
+
+  for (uint8_t addr : candidates) {
+    if (i2cReadReg(addr, GT911_PRODUCT_ID_REG, id, sizeof(id))) {
+      Serial.printf("GT911 at 0x%02X, product id raw: %02X %02X %02X %02X\n",
+                    addr, id[0], id[1], id[2], id[3]);
+      Serial.printf("GT911 product id text: %c%c%c%c\n",
+                    printableOrDot(id[0]), printableOrDot(id[1]),
+                    printableOrDot(id[2]), printableOrDot(id[3]));
+      return addr;
+    }
   }
 
-  Serial.printf("GT911 reset/address strap attempt for 0x%02X\n", targetAddress);
-  pinMode(TOUCH_RST, OUTPUT);
-  pinMode(TOUCH_INT, OUTPUT);
-  digitalWrite(TOUCH_RST, LOW);
-  delay(10);
-  digitalWrite(TOUCH_INT, targetAddress == TOUCH_GT911_ADDR ? HIGH : LOW);
-  delay(5);
-  digitalWrite(TOUCH_RST, HIGH);
-  delay(60);
-  pinMode(TOUCH_INT, INPUT);
-  delay(80);
-}
-
-static uint8_t detectGt911() {
-  Serial.println("[GT911 PROBE]");
-  Serial.printf("Candidate primary address  : 0x%02X\n", TOUCH_GT911_ADDR);
-  Serial.printf("Candidate alternate address: 0x%02X\n", TOUCH_GT911_ADDR_ALT);
-  Serial.printf("Pins: SDA=%d SCL=%d RST=%d INT=%d\n", TOUCH_SDA, TOUCH_SCL, TOUCH_RST, TOUCH_INT);
-
-  if (i2cPresent(TOUCH_GT911_ADDR)) {
-    Serial.printf("GT911 candidate present without reset at 0x%02X\n", TOUCH_GT911_ADDR);
-    return TOUCH_GT911_ADDR;
-  }
-
-  if (i2cPresent(TOUCH_GT911_ADDR_ALT)) {
-    Serial.printf("GT911 candidate present without reset at 0x%02X\n", TOUCH_GT911_ADDR_ALT);
-    return TOUCH_GT911_ADDR_ALT;
-  }
-
-  Serial.println("GT911 not found before reset. Safe mode does not force reset strap by default.");
-  gt911ResetForAddress(TOUCH_GT911_ADDR);
-  gt911ResetForAddress(TOUCH_GT911_ADDR_ALT);
   return 0;
 }
 
-static void printGt911Info(uint8_t address) {
-  Serial.println("[GT911 INFO]");
-
-  uint8_t product[4] = {0};
-  if (gt911Read(address, GT911_REG_PRODUCT_ID, product, sizeof(product))) {
-    Serial.printf("Product ID raw : %02X %02X %02X %02X\n", product[0], product[1], product[2], product[3]);
-    Serial.printf("Product ID text: %c%c%c%c\n",
-                  printableOrDot(product[0]), printableOrDot(product[1]),
-                  printableOrDot(product[2]), printableOrDot(product[3]));
-  } else {
-    Serial.println("Product ID read: FAIL");
+static void printGt911Info() {
+  if (touchAddr == 0) {
+    Serial.println("GT911 info: no active address");
+    return;
   }
 
-  uint8_t fw[2] = {0};
-  if (gt911Read(address, GT911_REG_FW_VERSION, fw, sizeof(fw))) {
-    Serial.printf("FW version LE  : 0x%04X (%u)\n", le16(fw), le16(fw));
-    Serial.printf("FW version BE  : 0x%04X (%u)\n", be16(fw), be16(fw));
+  uint8_t fw[2] = {};
+  if (i2cReadReg(touchAddr, GT911_FW_VERSION_REG, fw, sizeof(fw))) {
+    Serial.printf("GT911 FW version: 0x%04X (%u)\n", le16(fw), le16(fw));
   } else {
-    Serial.println("FW version read: FAIL");
+    Serial.println("GT911 FW version: read failed");
   }
 
-  uint8_t xres[2] = {0};
-  uint8_t yres[2] = {0};
-  bool xOk = gt911Read(address, GT911_REG_X_RESOLUTION, xres, sizeof(xres));
-  bool yOk = gt911Read(address, GT911_REG_Y_RESOLUTION, yres, sizeof(yres));
-  if (xOk && yOk) {
-    Serial.printf("Touch resolution LE: X=%u Y=%u\n", le16(xres), le16(yres));
-    Serial.printf("Touch resolution BE: X=%u Y=%u\n", be16(xres), be16(yres));
+  uint8_t xres[2] = {};
+  uint8_t yres[2] = {};
+  if (i2cReadReg(touchAddr, GT911_X_RESOLUTION_REG, xres, sizeof(xres)) &&
+      i2cReadReg(touchAddr, GT911_Y_RESOLUTION_REG, yres, sizeof(yres))) {
+    Serial.printf("GT911 resolution registers: X=%u Y=%u\n", le16(xres), le16(yres));
   } else {
-    Serial.println("Touch resolution read: FAIL or unsupported");
+    Serial.println("GT911 resolution registers: read failed or unsupported");
   }
-
-  Serial.println("Touch polling started. Touch the screen and watch serial + visual coordinates.");
 }
 
-static void pollTouch(uint8_t address) {
+static int mapTouchX(int rawX, int rawY) {
+  if (!TOUCH_USE_CALIBRATION) {
+    return constrain(rawX, 0, LCD_W - 1);
+  }
+  const int mapped = static_cast<int>((TOUCH_CAL_X_RX * rawX) +
+                                      (TOUCH_CAL_X_RY * rawY) +
+                                      TOUCH_CAL_X_C + 0.5f);
+  return constrain(mapped, 0, LCD_W - 1);
+}
+
+static int mapTouchY(int rawX, int rawY) {
+  if (!TOUCH_USE_CALIBRATION) {
+    return constrain(rawY, 0, LCD_H - 1);
+  }
+  const int mapped = static_cast<int>((TOUCH_CAL_Y_RX * rawX) +
+                                      (TOUCH_CAL_Y_RY * rawY) +
+                                      TOUCH_CAL_Y_C + 0.5f);
+  return constrain(mapped, 0, LCD_H - 1);
+}
+
+static bool readTouch(int16_t &rawX, int16_t &rawY, uint8_t &trackId, uint16_t &size) {
+  if (touchAddr == 0) {
+    return false;
+  }
+
   uint8_t status = 0;
-  if (!gt911Read(address, GT911_REG_STATUS, &status, 1)) {
-    if (millis() - lastIdlePrint > 3000) {
-      lastIdlePrint = millis();
-      Serial.println("Touch status read: FAIL");
-      drawStatusLine("Touch status read: FAIL", COLOR_RED);
-    }
-    return;
+  if (!i2cReadReg(touchAddr, GT911_STATUS_REG, &status, 1)) {
+    return false;
   }
 
-  const bool dataReady = (status & 0x80) != 0;
-  const uint8_t pointCount = status & 0x0F;
-
-  if (!dataReady) {
-    lastX = -1;
-    lastY = -1;
-    if (millis() - lastIdlePrint > 3000) {
-      lastIdlePrint = millis();
-      Serial.println("Touch idle: no new point data");
-    }
-    if (millis() - lastScreenIdle > 3000) {
-      lastScreenIdle = millis();
-      drawStatusLine("Touch idle: draw on the panel", COLOR_GRAY);
-    }
-    return;
+  if ((status & 0x80) == 0) {
+    return false;
   }
 
-  if (pointCount == 0 || pointCount > MAX_TOUCH_POINTS) {
-    Serial.printf("Touch status: dataReady=1 unusual pointCount=%u status=0x%02X\n", pointCount, status);
-    gt911WriteByte(address, GT911_REG_STATUS, 0x00);
-    return;
+  const uint8_t points = status & 0x0F;
+  if (points == 0 || points > 5) {
+    Serial.printf("Touch status unusual: 0x%02X points=%u\n", status, points);
+    gt911ClearStatus();
+    return false;
   }
 
-  Serial.printf("Touch points=%u status=0x%02X\n", pointCount, status);
-
-  for (uint8_t i = 0; i < pointCount; ++i) {
-    uint8_t point[8] = {0};
-    const uint16_t reg = GT911_REG_POINT1 + static_cast<uint16_t>(i) * 8;
-    if (!gt911Read(address, reg, point, sizeof(point))) {
-      Serial.printf("  P%u read: FAIL\n", i + 1);
-      continue;
-    }
-
-    const uint8_t id = point[0];
-    const uint16_t x = decodeCoord(&point[1], LCD_WIDTH);
-    const uint16_t y = decodeCoord(&point[3], LCD_HEIGHT);
-    const uint16_t size = be16(&point[5]);
-
-    Serial.printf("  P%u id=%u x=%u y=%u size=%u raw=%02X %02X %02X %02X %02X %02X %02X %02X\n",
-                  i + 1,
-                  id,
-                  x,
-                  y,
-                  size,
-                  point[0], point[1], point[2], point[3], point[4], point[5], point[6], point[7]);
-
-    drawTouchPoint(x, y, id, i);
+  uint8_t data[8] = {};
+  const bool ok = i2cReadReg(touchAddr, GT911_POINT_REG, data, sizeof(data));
+  gt911ClearStatus();
+  if (!ok) {
+    return false;
   }
 
-  gt911WriteByte(address, GT911_REG_STATUS, 0x00);
+  // GT911 point data from 0x814F:
+  // data[0] = track id, data[1..2] = X little-endian,
+  // data[3..4] = Y little-endian, data[5..6] = touch size.
+  trackId = data[0];
+  rawX = static_cast<int16_t>(le16(&data[1]));
+  rawY = static_cast<int16_t>(le16(&data[3]));
+  size = le16(&data[5]);
+
+  Serial.printf("Touch raw packet: status=0x%02X points=%u data=%02X %02X %02X %02X %02X %02X %02X %02X\n",
+                status, points,
+                data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+  return true;
+}
+
+static void drawCornerTarget(int x, int y, const char *label) {
+  gfx->drawCircle(x, y, 22, COLOR_WHITE);
+  gfx->drawCircle(x, y, 10, COLOR_WHITE);
+  gfx->setTextColor(COLOR_WHITE, COLOR_BLACK);
+  gfx->setTextSize(1);
+
+  int textX = x < 100 ? x + 28 : x - 88;
+  int textY = y < 100 ? y + 12 : y - 22;
+  gfx->setCursor(textX, textY);
+  gfx->print(label);
+}
+
+static void drawStaticScreen() {
+  gfx->fillScreen(COLOR_BLACK);
+
+  const uint16_t header = rgb565(26, 33, 42);
+  gfx->fillRect(0, 0, LCD_W, 46, header);
+  gfx->setTextColor(COLOR_WHITE, header);
+  gfx->setTextSize(2);
+  gfx->setCursor(14, 12);
+  gfx->print("ESP32-8048S043 GT911 Display + Touch Test");
+
+  const int barY = 64;
+  const int barH = 76;
+  const int barW = LCD_W / 8;
+  const uint16_t colors[] = {
+    COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_CYAN,
+    COLOR_MAGENTA, COLOR_YELLOW, COLOR_WHITE, COLOR_BLACK
+  };
+  const char *names[] = {"RED", "GREEN", "BLUE", "CYAN", "MAG", "YELLOW", "WHITE", "BLACK"};
+
+  for (int i = 0; i < 8; ++i) {
+    gfx->fillRect(i * barW, barY, barW, barH, colors[i]);
+    gfx->drawRect(i * barW, barY, barW, barH, COLOR_DARKGREY);
+    gfx->setTextSize(1);
+    gfx->setTextColor(i == 6 ? COLOR_BLACK : COLOR_WHITE, colors[i]);
+    gfx->setCursor(i * barW + 10, barY + 10);
+    gfx->print(names[i]);
+  }
+
+  const uint16_t grid = rgb565(35, 50, 65);
+  for (int x = 0; x < LCD_W; x += 40) {
+    gfx->drawFastVLine(x, 160, LCD_H - 160, grid);
+  }
+  for (int y = 160; y < LCD_H; y += 40) {
+    gfx->drawFastHLine(0, y, LCD_W, grid);
+  }
+
+  gfx->drawRect(0, 0, LCD_W, LCD_H, COLOR_WHITE);
+  drawCornerTarget(34, 184, "top left");
+  drawCornerTarget(LCD_W - 35, 184, "top right");
+  drawCornerTarget(34, LCD_H - 35, "bottom left");
+  drawCornerTarget(LCD_W - 35, LCD_H - 35, "bottom right");
+
+  gfx->fillRect(170, 178, 460, 84, rgb565(12, 18, 24));
+  gfx->drawRect(170, 178, 460, 84, rgb565(100, 120, 140));
+  gfx->setTextSize(2);
+  gfx->setTextColor(COLOR_WHITE, rgb565(12, 18, 24));
+  gfx->setCursor(190, 196);
+  gfx->print("Touch the display");
+  gfx->setTextSize(1);
+  gfx->setCursor(190, 232);
+  gfx->print("Polling GT911: 0x814E status, 0x814F point data.");
+}
+
+static void drawStatus(const String &devices) {
+  gfx->fillRect(0, 144, LCD_W, 28, rgb565(18, 24, 31));
+  gfx->setTextColor(COLOR_WHITE, rgb565(18, 24, 31));
+  gfx->setTextSize(1);
+  gfx->setCursor(12, 153);
+  gfx->printf("Display: RGB 800x480, PCLK %dMHz, BL GPIO2", LCD_PCLK_HZ / 1000000);
+
+  gfx->setCursor(350, 153);
+  if (touchAddr != 0) {
+    gfx->printf("GT911: 0x%02X, SDA19/SCL20/RST38", touchAddr);
+  } else {
+    gfx->print("GT911 not found");
+  }
+
+  gfx->setTextColor(COLOR_WHITE, COLOR_BLACK);
+  gfx->setTextSize(1);
+  gfx->setCursor(190, 340);
+  gfx->print("I2C devices: ");
+  gfx->print(devices);
+
+  gfx->fillRect(170, 390, 460, 18, COLOR_BLACK);
+  gfx->drawRect(170, 390, 460, 18, COLOR_DARKGREY);
+  gfx->setCursor(190, 395);
+  gfx->print(TOUCH_DRAW_ENABLED ? "Touch drawing ON, Serial ON" : "Touch drawing OFF, Serial ON");
+}
+
+static void drawTouchPoint(int screenX, int screenY, int rawX, int rawY, uint32_t count) {
+  if (lastDrawX >= 0 && lastDrawY >= 0) {
+    gfx->drawCircle(lastDrawX, lastDrawY, 18, rgb565(80, 80, 80));
+  }
+
+  gfx->drawCircle(screenX, screenY, 18, COLOR_RED);
+  gfx->drawFastHLine(screenX - 24, screenY, 49, COLOR_RED);
+  gfx->drawFastVLine(screenX, screenY - 24, 49, COLOR_RED);
+
+  gfx->fillRect(170, 280, 460, 58, COLOR_BLACK);
+  gfx->drawRect(170, 280, 460, 58, COLOR_DARKGREY);
+  gfx->setTextColor(COLOR_GREEN, COLOR_BLACK);
+  gfx->setTextSize(2);
+  gfx->setCursor(190, 292);
+  gfx->printf("Touch #%lu  x=%d  y=%d", static_cast<unsigned long>(count), screenX, screenY);
+  gfx->setTextSize(1);
+  gfx->setCursor(190, 318);
+  gfx->printf("raw_x=%d raw_y=%d", rawX, rawY);
+
+  lastDrawX = screenX;
+  lastDrawY = screenY;
 }
 
 void setup() {
   Serial.begin(115200);
-  delay(800);
+  delay(300);
   board.begin();
 
   Serial.println();
   Serial.println("================================================================");
   Serial.println(" ESP32-8048S043 Lab / 03_TouchGT911Test");
-  Serial.println(" Safe low-power visual GT911 touch validation");
+  Serial.println(" Known-good-style Arduino_GFX + GT911 polling test");
   Serial.println("================================================================");
   Serial.println("Author : Alex Malachevsky");
   Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
-  Serial.println("Purpose: validate GT911 first, then enable dim visual touch canvas");
-  Serial.println("----------------------------------------------------------------");
-  Serial.println("Safe mode: I2C first, 100 kHz, no forced reset strap, dim backlight");
+  Serial.println("Point register: 0x814F, status register: 0x814E");
   Serial.println("----------------------------------------------------------------");
 
-  Wire.begin(TOUCH_SDA, TOUCH_SCL, I2C_SPEED_HZ);
-  delay(50);
+  pinMode(BACKLIGHT, OUTPUT);
+  setBacklight(true);
+  delay(300);
+
+  Serial.println("gfx->begin() start");
+  bool gfxOk = gfx->begin();
+  Serial.printf("gfx->begin(): %s\n", gfxOk ? "OK" : "FAIL");
+  if (!gfxOk) {
+    Serial.println("Display init failed; stopping before touch test.");
+    while (true) {
+      delay(1000);
+    }
+  }
+
+  drawStaticScreen();
 
   Serial.printf("Wire.begin(SDA=%d, SCL=%d, speed=%lu)\n",
-                TOUCH_SDA,
-                TOUCH_SCL,
-                static_cast<unsigned long>(I2C_SPEED_HZ));
+                TOUCH_SDA, TOUCH_SCL, static_cast<unsigned long>(I2C_SPEED_HZ));
+  Wire.begin(TOUCH_SDA, TOUCH_SCL, I2C_SPEED_HZ);
 
-  printI2CScan();
-  activeAddress = detectGt911();
+  Serial.println("GT911 reset: RST38 toggle, INT18 passive pull-up, polling mode");
+  gt911Reset();
+  touchAddr = findGT911();
 
-  if (activeAddress == 0) {
-    Serial.println("----------------------------------------------------------------");
-    Serial.println("GT911 TEST RESULT: NOT DETECTED");
-    Serial.println("Display not enabled because touch controller was not detected in safe mode.");
-    Serial.println("================================================================");
-    return;
-  }
+  Serial.print("I2C scan: ");
+  String devices = scanI2C();
+  Serial.println(devices);
 
-  Serial.println("----------------------------------------------------------------");
-  Serial.printf("Active GT911 address: 0x%02X\n", activeAddress);
-  printGt911Info(activeAddress);
-
-  if (initDisplayLowPower()) {
-    char stateLine[96];
-    snprintf(stateLine, sizeof(stateLine), "GT911 0x%02X active. Dim visual mode.", activeAddress);
-    drawTouchCanvas(stateLine);
+  if (touchAddr == 0) {
+    Serial.println("GT911 TEST RESULT: NOT DETECTED at 0x5D or 0x14");
   } else {
-    Serial.println("Visual display not available; serial touch polling continues.");
+    Serial.printf("Active GT911 address: 0x%02X\n", touchAddr);
+    printGt911Info();
   }
 
+  drawStatus(devices);
+
   Serial.println("----------------------------------------------------------------");
-  Serial.println("PASS candidate if touches print x/y and, if display is on, draw visible dots/trails.");
+  Serial.println("Touch the panel. PASS candidate when Serial x/y changes and red marker follows touch.");
   Serial.println("================================================================");
 }
 
 void loop() {
-  if (activeAddress == 0) {
-    delay(1000);
-    return;
+  static uint32_t lastTouchPoll = 0;
+  static uint32_t lastTouchLog = 0;
+  static uint32_t lastTouchDraw = 0;
+  static uint32_t lastAnim = 0;
+  static int animX = 0;
+
+  const uint32_t now = millis();
+
+  if (now - lastTouchPoll >= TOUCH_POLL_INTERVAL_MS) {
+    lastTouchPoll = now;
+
+    int16_t rawX = 0;
+    int16_t rawY = 0;
+    uint8_t trackId = 0;
+    uint16_t touchSize = 0;
+
+    if (readTouch(rawX, rawY, trackId, touchSize)) {
+      const int screenX = mapTouchX(rawX, rawY);
+      const int screenY = mapTouchY(rawX, rawY);
+      const int dx = abs(static_cast<int>(rawX) - lastRawX);
+      const int dy = abs(static_cast<int>(rawY) - lastRawY);
+      const bool movedEnough = lastRawX < 0 || dx > 2 || dy > 2;
+
+      if ((now - lastTouchLog >= TOUCH_LOG_INTERVAL_MS) && movedEnough) {
+        lastTouchLog = now;
+        ++touchCount;
+        Serial.printf("Touch #%lu: track=%u raw_x=%d raw_y=%d screen_x=%d screen_y=%d size=%u\n",
+                      static_cast<unsigned long>(touchCount),
+                      trackId,
+                      rawX,
+                      rawY,
+                      screenX,
+                      screenY,
+                      touchSize);
+      }
+
+      if (TOUCH_DRAW_ENABLED &&
+          (now - lastTouchDraw >= TOUCH_DRAW_INTERVAL_MS) &&
+          (lastDrawX < 0 || abs(screenX - lastDrawX) > 8 || abs(screenY - lastDrawY) > 8)) {
+        lastTouchDraw = now;
+        drawTouchPoint(screenX, screenY, rawX, rawY, touchCount);
+      }
+
+      lastRawX = rawX;
+      lastRawY = rawY;
+    }
   }
 
-  pollTouch(activeAddress);
-  delay(20);
+  if (ANIMATION_ENABLED && (now - lastAnim > 120)) {
+    lastAnim = now;
+    gfx->fillRect(170, 360, 460, 18, COLOR_BLACK);
+    gfx->drawRect(170, 360, 460, 18, COLOR_DARKGREY);
+    gfx->fillRect(171 + animX, 361, 28, 16, COLOR_CYAN);
+    animX += 5;
+    if (animX > 430) {
+      animX = 0;
+    }
+  }
+
+  delay(5);
 }
