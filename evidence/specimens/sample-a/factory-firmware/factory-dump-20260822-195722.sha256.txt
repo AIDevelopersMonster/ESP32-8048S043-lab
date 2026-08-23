@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C  C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\factory-flash-read1-16mb.bin
-3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C  C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\factory-flash-read2-16mb.bin
-MATCH: all reads are identical
-STABLE_COPY  C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab\evidence\specimens\sample-a\factory-firmware\factory-flash-16mb.bin
-=======
 ESP32-8048S043 Sample A factory firmware dump hash evidence
 
 Timestamp: 20260822-195722
@@ -24,4 +18,3 @@ Local binary dumps are intentionally not committed:
 
 Stable local dump path reported by script:
 evidence/specimens/sample-a/factory-firmware/factory-flash-16mb.bin
->>>>>>> 1370d1609f46ce0160add9dc57f73e17014259ab
