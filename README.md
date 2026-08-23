@@ -12,17 +12,17 @@ REFERENCE BOARD PASSPORT    OPEN
 CHIP / FLASH / PSRAM        PASS
 ARDUINO BOARDINFO           PASS
 SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
-PIN MAP                     SOURCE-BACKED / OWN BSP TESTS OPEN
+PIN MAP                     SOURCE-BACKED / RGB OWN TEST PASS
 FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
 FACTORY FIRMWARE ANALYSIS   FIRST-PASS DONE
 FACTORY SERIAL BOOT         PASS
 FACTORY LVGL DISPLAY        PASS
 TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS
-DISPLAY RGB PANEL           FACTORY RUNTIME PASS
+DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
 GT911 / GOODIX IDENTITY     SOURCE-BACKED / I2C SCAN OPEN
 BSP LIBRARY                 SKELETON
 WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO
+PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY
 ```
 
 ## Factory firmware baseline
@@ -85,6 +85,29 @@ Note:
 An earlier run reported PSRAM as 0 bytes. A later run, after changing the Arduino PSRAM type/profile and rebuilding, detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
 ```
 
+## Arduino RGB display baseline
+
+`02_DisplayRGBTest` is the first own minimal RGB display validation from the local `ESP32_8048S043` Arduino library.
+
+Current result:
+
+```text
+Display begin           : PASS, serial reports Display begin: OK
+RGB control/data pins   : PASS candidate, source-backed map exercised by own sketch
+Backlight               : PASS candidate, GPIO2 full ON used by own sketch
+Color sequence          : PASS, RED/GREEN/BLUE/WHITE/BLACK shown visually
+Orientation frame       : PASS, landscape 800x480 visual check passed
+RGB color bars          : PASS, visual color-bar check passed
+Stripe pattern          : PASS, data-line sanity pattern visible
+Overall 02_DisplayRGBTest: PHYSICAL VISUAL PASS / SAMPLE A
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
+```
+
 ## Source-backed hardware baseline
 
 Manufacturer/distributor documentation and a same-layout board reference now provide a source-backed reconstruction for the main hardware map:
@@ -92,7 +115,7 @@ Manufacturer/distributor documentation and a same-layout board reference now pro
 ```text
 USB-UART bridge : CH340C
 Touch           : GT911 capacitive touch, visual runtime PASS, dedicated I2C scan still open
-RGB LCD         : 800x480 RGB parallel panel, factory LVGL display runtime PASS
+RGB LCD         : 800x480 RGB parallel panel, factory LVGL display runtime PASS and own Arduino_GFX minimal test PASS
 SD / TF1        : SPI SD wiring recovered, own SD test still open
 ```
 
@@ -113,7 +136,7 @@ RGB G0..G5    5, 6, 7, 15, 16, 4
 RGB B0..B4    8, 3, 46, 9, 1
 ```
 
-This map is **source-backed**, not yet a complete BSP PASS. The next step is to validate it with our own minimal RGB, touch and SD examples.
+This map is now **source-backed** with **own RGB display runtime PASS**. Touch, SD and the final BSP still require separate validation.
 
 ## Target family
 
