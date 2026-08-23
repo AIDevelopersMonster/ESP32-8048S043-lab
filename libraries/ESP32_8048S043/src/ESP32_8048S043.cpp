@@ -80,6 +80,16 @@ void printDivider(Stream &out) {
     out.println("------------------------------------------------------------");
 }
 
+void printPsramDiagnostic(Stream &out) {
+    const uint32_t psramSize = ESP.getPsramSize();
+    out.printf("%-24s: %s\n", "PSRAM status", psramSize > 0 ? "DETECTED" : "NOT DETECTED");
+    if (psramSize == 0) {
+        out.println("PSRAM warning           : expected about 8 MB for N16R8-class board");
+        out.println("PSRAM next action       : retest Arduino IDE setting OPI PSRAM / Enabled");
+        out.println("PSRAM note              : QSPI PSRAM setting produced 0 bytes on first Sample A run");
+    }
+}
+
 }  // namespace
 
 bool ESP32_8048S043::begin() {
@@ -120,6 +130,7 @@ void ESP32_8048S043::printBoardInfo(Stream &out) const {
     printSize(out, "PSRAM size", ESP.getPsramSize());
     printSize(out, "Free PSRAM", ESP.getFreePsram());
     printSize(out, "Max alloc PSRAM", ESP.getMaxAllocPsram());
+    printPsramDiagnostic(out);
     printDivider(out);
 
     out.println("[FLASH / SKETCH]");
@@ -155,7 +166,7 @@ void ESP32_8048S043::printBoardInfo(Stream &out) const {
     out.println("[EXPECTED SAMPLE A BASELINE]");
     out.println("Chip        : ESP32-S3");
     out.println("Flash       : about 16 MB / 16777216 bytes");
-    out.println("PSRAM       : about 8 MB / 8388608 bytes");
+    out.println("PSRAM       : about 8 MB / 8388608 bytes; Arduino QSPI run currently shows 0, OPI retest needed");
     out.println("USB bridge  : CH340C USB-UART, Arduino upload through selected COM port");
     out.println("Display     : 800x480 RGB panel, already factory-runtime PASS");
     out.println("Touch       : GT911 source-backed + factory visual touch PASS; dedicated scan still pending");
