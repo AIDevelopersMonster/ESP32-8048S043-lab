@@ -2,6 +2,20 @@
 
 Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
 
+Author: **Alex Malachevsky**
+
+Project GitHub:
+
+```text
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+```
+
+Confirming video / visual board check:
+
+```text
+https://youtube.com/shorts/XVaWqrtXHE4
+```
+
 This is the first Arduino IDE smoke test for the ESP32-8048S043 / ESP32-8048S043C-I board family.
 
 It does not initialize the RGB display, GT911 touch, SD card or LVGL. It only confirms that the board can be flashed and that the ESP32-S3 runtime reports the expected chip, flash and PSRAM configuration.
@@ -75,6 +89,9 @@ The log should include:
 ```text
 ESP32-8048S043 Lab / 01_BoardInfo
 First Arduino IDE smoke test
+Author        : Alex Malachevsky
+GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+Evidence video: https://youtube.com/shorts/XVaWqrtXHE4
 Board         : ESP32S3 Dev Module
 Flash Size    : 16MB / 128Mb
 PSRAM         : OPI PSRAM / Enabled
