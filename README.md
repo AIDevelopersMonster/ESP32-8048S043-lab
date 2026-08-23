@@ -12,17 +12,17 @@ REFERENCE BOARD PASSPORT    OPEN
 CHIP / FLASH / PSRAM        PASS
 ARDUINO BOARDINFO           PASS
 SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
-PIN MAP                     SOURCE-BACKED / RGB OWN TEST PASS
+PIN MAP                     SOURCE-BACKED / RGB OWN TEST PASS / GT911 OWN TOUCH PASS
 FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
 FACTORY FIRMWARE ANALYSIS   FIRST-PASS DONE
 FACTORY SERIAL BOOT         PASS
 FACTORY LVGL DISPLAY        PASS
-TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS
+TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS + OWN GT911 VISUAL PASS
 DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
-GT911 / GOODIX IDENTITY     SOURCE-BACKED / I2C SCAN OPEN
-BSP LIBRARY                 SKELETON
+GT911 / GOODIX IDENTITY     OWN I2C POLLING TEST PASS / 0x5D / PRODUCT ID 911
+BSP LIBRARY                 SKELETON / 01-03 PHYSICAL PASS
 WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY
+PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH
 ```
 
 ## Factory firmware baseline
@@ -108,13 +108,49 @@ Commit-safe runtime record:
 evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
 ```
 
+## Arduino GT911 touch baseline
+
+`03_TouchGT911Test` is the first own GT911 touch validation from the local `ESP32_8048S043` Arduino library.
+
+Current result:
+
+```text
+Display init through Arduino_GFX : PASS, gfx->begin(): OK
+GT911 I2C address                : PASS, 0x5D
+GT911 Product ID                 : PASS, 911
+GT911 firmware register          : PASS, 0x1060
+GT911 point polling              : PASS, 0x814E status / 0x814F point data
+Raw coordinate changes           : PASS
+Mapped screen coordinates        : PASS candidate
+Visible red marker movement      : PASS by video evidence
+Overall 03_TouchGT911Test        : PHYSICAL VISUAL PASS / SAMPLE A
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/_zhtl-AWcCE
+```
+
+Boundary:
+
+```text
+This PASS confirms the own low-level GT911/I2C touch path and basic visual marker movement. Final LVGL touch integration, calibration, rotation and gestures remain separate tests.
+```
+
 ## Source-backed hardware baseline
 
 Manufacturer/distributor documentation and a same-layout board reference now provide a source-backed reconstruction for the main hardware map:
 
 ```text
 USB-UART bridge : CH340C
-Touch           : GT911 capacitive touch, visual runtime PASS, dedicated I2C scan still open
+Touch           : GT911 capacitive touch, factory visual runtime PASS and own I2C polling visual PASS
 RGB LCD         : 800x480 RGB parallel panel, factory LVGL display runtime PASS and own Arduino_GFX minimal test PASS
 SD / TF1        : SPI SD wiring recovered, own SD test still open
 ```
@@ -136,7 +172,7 @@ RGB G0..G5    5, 6, 7, 15, 16, 4
 RGB B0..B4    8, 3, 46, 9, 1
 ```
 
-This map is now **source-backed** with **own RGB display runtime PASS**. Touch, SD and the final BSP still require separate validation.
+This map is now **source-backed** with **own RGB display runtime PASS** and **own GT911 touch runtime PASS**. SD and the final BSP still require separate validation.
 
 ## Target family
 
