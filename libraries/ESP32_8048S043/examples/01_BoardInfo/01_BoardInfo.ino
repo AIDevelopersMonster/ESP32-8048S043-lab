@@ -28,19 +28,32 @@
     - Wi-Fi/BLE;
     - final BSP pinout.
 
-  Arduino IDE recommended settings:
-    Board package : esp32 by Espressif Systems
-    Board         : ESP32S3 Dev Module
-    Port          : CH340 / USB-SERIAL port of the board
-    Upload Speed  : 460800 recommended first, 921600 only if stable
-    CPU Frequency : 240MHz (WiFi)
-    Flash Size    : 16MB / 128Mb
-    Flash Mode    : DIO recommended first; QIO may also work on some setups
-    Partition     : any 16MB-compatible scheme for this smoke test
-    PSRAM         : OPI PSRAM / Enabled
-    USB CDC Boot  : Disabled when using the CH340C USB-UART port
-    Upload Mode   : UART0 / Hardware CDC, depending on Arduino menu wording
-    Core Debug    : None
+  Arduino IDE settings used for Sample A:
+    Board                                  : ESP32S3 Dev Module
+    Port                                   : COM12 / CH340 USB-SERIAL port
+    USB CDC On Boot                        : Disabled
+    CPU Frequency                          : 240MHz (WiFi)
+    Core Debug Level                       : None
+    USB DFU On Boot                        : Disabled
+    Erase All Flash Before Sketch Upload   : Disabled
+    Events Run On                          : Core 1
+    Flash Mode                             : QIO 80MHz
+    Flash Size                             : 16MB (128Mb)
+    JTAG Adapter                           : Disabled
+    Arduino Runs On                        : Core 1
+    USB Firmware MSC On Boot               : Disabled
+    Partition Scheme                       : 16M Flash (3MB APP/9.9MB FATFS)
+    PSRAM                                  : QSPI PSRAM
+    Upload Mode                            : UART0 / Hardware CDC
+    Upload Speed                           : 921600
+    USB Mode                               : Hardware CDC and JTAG
+    Zigbee Mode                            : Disabled
+    Serial Monitor                         : 115200 baud
+
+  Notes:
+    - COM12 is the local port observed on Sample A; choose your actual CH340 port.
+    - If upload is unstable at 921600, retry at 460800 before changing other settings.
+    - For factory flash readback/dump workflows, 460800 was more reliable than 921600.
 
   Expected serial result:
     - Chip model should be ESP32-S3;
@@ -70,13 +83,27 @@ void setup() {
     Serial.println("GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
     Serial.println("Evidence video: https://youtube.com/shorts/XVaWqrtXHE4");
     Serial.println("----------------------------------------------------------------");
-    Serial.println("Arduino IDE settings expected for Sample A:");
-    Serial.println("  Board         : ESP32S3 Dev Module");
-    Serial.println("  Upload Speed  : 460800 recommended first");
-    Serial.println("  Flash Size    : 16MB / 128Mb");
-    Serial.println("  PSRAM         : OPI PSRAM / Enabled");
-    Serial.println("  USB CDC Boot  : Disabled for CH340C USB-UART");
-    Serial.println("  Serial Monitor: 115200 baud");
+    Serial.println("Arduino IDE settings used for Sample A:");
+    Serial.println("  Board                                : ESP32S3 Dev Module");
+    Serial.println("  Port                                 : COM12 / CH340 USB-SERIAL port");
+    Serial.println("  USB CDC On Boot                      : Disabled");
+    Serial.println("  CPU Frequency                        : 240MHz (WiFi)");
+    Serial.println("  Core Debug Level                     : None");
+    Serial.println("  USB DFU On Boot                      : Disabled");
+    Serial.println("  Erase All Flash Before Sketch Upload : Disabled");
+    Serial.println("  Events Run On                        : Core 1");
+    Serial.println("  Flash Mode                           : QIO 80MHz");
+    Serial.println("  Flash Size                           : 16MB (128Mb)");
+    Serial.println("  JTAG Adapter                         : Disabled");
+    Serial.println("  Arduino Runs On                      : Core 1");
+    Serial.println("  USB Firmware MSC On Boot             : Disabled");
+    Serial.println("  Partition Scheme                     : 16M Flash (3MB APP/9.9MB FATFS)");
+    Serial.println("  PSRAM                                : QSPI PSRAM");
+    Serial.println("  Upload Mode                          : UART0 / Hardware CDC");
+    Serial.println("  Upload Speed                         : 921600");
+    Serial.println("  USB Mode                             : Hardware CDC and JTAG");
+    Serial.println("  Zigbee Mode                          : Disabled");
+    Serial.println("  Serial Monitor                       : 115200 baud");
     Serial.println("----------------------------------------------------------------");
 
     board.begin();
