@@ -1,6 +1,6 @@
 # 01_BoardInfo
 
-Status: `SOURCE IMPLEMENTED / PARTIAL PHYSICAL PASS`.
+Status: `PHYSICAL PASS / SAMPLE A`.
 
 Author: **Alex Malachevsky**
 
@@ -10,10 +10,14 @@ Project GitHub:
 https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
 ```
 
-Confirming video / visual board check:
+Confirming videos:
 
 ```text
+Factory LVGL display/touch visual check:
 https://youtube.com/shorts/XVaWqrtXHE4
+
+Arduino 01_BoardInfo first library test:
+https://youtube.com/shorts/wELRdRWqlnw
 ```
 
 This is the first Arduino IDE smoke test for the ESP32-8048S043 / ESP32-8048S043C-I board family.
@@ -22,16 +26,17 @@ It does not initialize the RGB display, GT911 touch, SD card or LVGL. It confirm
 
 ## Current Sample A result
 
-Observed result from the first extended `01_BoardInfo` run:
+Observed result from the current `01_BoardInfo` run:
 
 ```text
 Upload / serial monitor : PASS
+Chip                    : PASS, ESP32-S3 rev 2, 2 cores, 240 MHz
 Flash size              : PASS, 16777216 bytes / 16 MB
 Flash mode / speed      : QIO / 80 MHz
+PSRAM                   : PASS, 8388608 bytes / 8 MB
 Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : PASS, ALIVE lines observed through at least 100000 ms
-PSRAM                   : FAIL / RETEST, Arduino runtime reported 0 bytes with QSPI PSRAM selected
-Overall 01_BoardInfo    : PARTIAL PASS
+Runtime stability       : PASS, ALIVE lines observed with freePsram available
+Overall 01_BoardInfo    : PASS
 ```
 
 Commit-safe evidence:
@@ -49,11 +54,11 @@ Expected board family:
 ```text
 ESP32-S3
 16 MB flash
-8 MB PSRAM expected/source-backed
+8 MB PSRAM
 CH340C USB-UART bridge on the capacitive-touch Jingcai/TinyTronics variant
 ```
 
-## Arduino IDE setup used for Sample A first run
+## Arduino IDE setup used for Sample A
 
 Install the ESP32 board package:
 
@@ -61,7 +66,7 @@ Install the ESP32 board package:
 Boards Manager -> esp32 by Espressif Systems
 ```
 
-The following table mirrors the Arduino IDE Tools menu used for the first Sample A run.
+The following table mirrors the Arduino IDE Tools menu currently used for Sample A.
 
 | Arduino IDE menu | Value |
 |---|---|
@@ -79,36 +84,12 @@ The following table mirrors the Arduino IDE Tools menu used for the first Sample
 | Arduino Runs On | Core 1 |
 | USB Firmware MSC On Boot | Disabled |
 | Partition Scheme | 16M Flash (3MB APP/9.9MB FATFS) |
-| PSRAM | QSPI PSRAM — produced PSRAM size 0 in the first run |
+| PSRAM | OPI PSRAM |
 | Upload Mode | UART0 / Hardware CDC |
 | Upload Speed | 921600 |
 | USB Mode | Hardware CDC and JTAG |
 | Zigbee Mode | Disabled |
 | Serial Monitor | 115200 baud |
-
-## Required PSRAM retest
-
-The first run detected flash and stayed stable, but PSRAM was not detected:
-
-```text
-PSRAM size              : 0 bytes / 0 KB / 0 MB
-Free PSRAM              : 0 bytes / 0 KB / 0 MB
-Max alloc PSRAM         : 0 bytes / 0 KB / 0 MB
-```
-
-For the next run, keep all settings the same except PSRAM:
-
-```text
-Change PSRAM from QSPI PSRAM to OPI PSRAM / Enabled
-```
-
-Menu wording depends on the installed ESP32 Arduino core. The desired result is:
-
-```text
-PSRAM size              : about 8388608 bytes / 8192 KB / 8 MB
-Free PSRAM              : non-zero
-Max alloc PSRAM         : non-zero
-```
 
 Notes:
 
@@ -116,6 +97,7 @@ Notes:
 COM12 is the local port observed on Sample A. Choose your actual CH340 port.
 If upload is unstable at 921600, retry Upload Speed = 460800 before changing other settings.
 For factory flash readback/dump workflows, 460800 was more reliable than 921600.
+The printed settings are documentation strings; runtime evidence comes from ESP.* values.
 ```
 
 ## Running the test
@@ -134,7 +116,7 @@ Upload the sketch, then open Serial Monitor at:
 
 ## Extended report sections
 
-The sketch now prints a larger runtime passport:
+The sketch prints a runtime passport:
 
 ```text
 [BUILD / RUNTIME]
@@ -189,17 +171,17 @@ ESP32-8048S043 Lab / 01_BoardInfo
 First Arduino IDE smoke test
 Author        : Alex Malachevsky
 GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
-Evidence video: https://youtube.com/shorts/XVaWqrtXHE4
 Board                                : ESP32S3 Dev Module
 Flash Mode                           : QIO 80MHz
 Flash Size                           : 16MB (128Mb)
 Partition Scheme                     : 16M Flash (3MB APP/9.9MB FATFS)
+PSRAM                                : OPI PSRAM
 Upload Mode                          : UART0 / Hardware CDC
 Upload Speed                         : 921600
 USB Mode                             : Hardware CDC and JTAG
 ```
 
-The board information block should report approximately after the correct PSRAM mode is selected:
+The board information block should report approximately:
 
 ```text
 Chip model              : ESP32-S3
@@ -211,14 +193,6 @@ GT911 touch             : SDA=19 SCL=20 RST=38 INT=18 ADDR=0x5D/0x14
 microSD SPI             : CS=10 MOSI=11 CLK=12 MISO=13
 ```
 
-If PSRAM still reports zero, the sketch will print:
-
-```text
-PSRAM status            : NOT DETECTED
-PSRAM warning           : expected about 8 MB for N16R8-class board
-PSRAM next action       : retest Arduino IDE setting OPI PSRAM / Enabled
-```
-
 Then the sketch should continue printing:
 
 ```text
@@ -226,16 +200,6 @@ ALIVE uptime=... freeHeap=... freePsram=...
 ```
 
 every five seconds.
-
-## What to paste back into the project chat
-
-For validation, copy the full Serial Monitor output from the first boot, starting at:
-
-```text
-ESP32-8048S043 Lab / 01_BoardInfo
-```
-
-and ending after at least two `ALIVE` lines.
 
 ## PASS condition
 
@@ -250,8 +214,6 @@ PSRAM is reported as about 8 MB;
 running/boot partition data prints without crash;
 ALIVE messages continue without resets.
 ```
-
-Current Sample A status remains `PARTIAL PASS` until PSRAM is reported as about 8 MB by the Arduino runtime.
 
 ## Boundary
 
