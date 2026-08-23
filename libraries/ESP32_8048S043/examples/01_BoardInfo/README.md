@@ -18,11 +18,11 @@ https://youtube.com/shorts/XVaWqrtXHE4
 
 This is the first Arduino IDE smoke test for the ESP32-8048S043 / ESP32-8048S043C-I board family.
 
-It does not initialize the RGB display, GT911 touch, SD card or LVGL. It only confirms that the board can be flashed and that the ESP32-S3 runtime reports the expected chip, flash and PSRAM configuration.
+It does not initialize the RGB display, GT911 touch, SD card or LVGL. It confirms that the board can be flashed and prints an extended runtime passport for the ESP32-S3, flash, PSRAM, sketch, partitions and source-backed board pin profile.
 
 ## Why this test comes first
 
-Run this example before display or touch tests because it verifies the basic programming path and memory profile.
+Run this example before display or touch tests because it verifies the basic programming path, memory profile and Arduino runtime configuration.
 
 Expected board family:
 
@@ -98,7 +98,54 @@ Upload the sketch, then open Serial Monitor at:
 115200 baud
 ```
 
-## Expected output
+## Extended report sections
+
+The sketch now prints a larger runtime passport:
+
+```text
+[BUILD / RUNTIME]
+  sketch build date/time
+  ESP-IDF SDK version
+  reset reason
+
+[CHIP]
+  chip model
+  chip revision
+  chip cores
+  CPU frequency
+  eFuse MAC raw value and bytes
+
+[MEMORY]
+  heap size
+  free heap
+  min free heap
+  max alloc heap
+  PSRAM size
+  free PSRAM
+  max alloc PSRAM
+
+[FLASH / SKETCH]
+  flash chip size
+  flash chip speed
+  flash chip mode
+  sketch size
+  free sketch space
+  sketch MD5
+
+[PARTITIONS]
+  running app partition
+  boot app partition
+
+[SOURCE-BACKED DISPLAY / TOUCH / SD PROFILE]
+  RGB 800x480 pin map
+  GT911 SDA/SCL/RST/INT and 0x5D/0x14 addresses
+  microSD CS/MOSI/CLK/MISO pin map
+
+[EXPECTED SAMPLE A BASELINE]
+  expected chip, flash, PSRAM, USB bridge, display and touch status
+```
+
+## Expected output highlights
 
 The log should include:
 
@@ -121,9 +168,12 @@ USB Mode                             : Hardware CDC and JTAG
 The board information block should report approximately:
 
 ```text
-Chip model      : ESP32-S3
-Flash size      : 16777216 bytes
-PSRAM size      : 8388608 bytes
+Chip model              : ESP32-S3
+Flash chip size         : 16777216 bytes / 16384 KB / 16 MB
+PSRAM size              : 8388608 bytes / 8192 KB / 8 MB
+Display                 : 800x480 RGB/DPI
+GT911 touch             : SDA=19 SCL=20 RST=38 INT=18 ADDR=0x5D/0x14
+microSD SPI             : CS=10 MOSI=11 CLK=12 MISO=13
 ```
 
 Then the sketch should continue printing:
@@ -133,6 +183,16 @@ ALIVE uptime=... freeHeap=... freePsram=...
 ```
 
 every five seconds.
+
+## What to paste back into the project chat
+
+For validation, copy the full Serial Monitor output from the first boot, starting at:
+
+```text
+ESP32-8048S043 Lab / 01_BoardInfo
+```
+
+and ending after at least two `ALIVE` lines.
 
 ## PASS condition
 
@@ -144,6 +204,7 @@ serial monitor opens at 115200;
 chip model is ESP32-S3;
 flash is reported as about 16 MB;
 PSRAM is reported as about 8 MB;
+running/boot partition data prints without crash;
 ALIVE messages continue without resets.
 ```
 
