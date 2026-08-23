@@ -28,7 +28,7 @@
     - Wi-Fi/BLE;
     - final BSP pinout.
 
-  Arduino IDE settings used for Sample A:
+  Arduino IDE settings currently used for Sample A:
     Board                                  : ESP32S3 Dev Module
     Port                                   : COM12 / CH340 USB-SERIAL port
     USB CDC On Boot                        : Disabled
@@ -43,7 +43,7 @@
     Arduino Runs On                        : Core 1
     USB Firmware MSC On Boot               : Disabled
     Partition Scheme                       : 16M Flash (3MB APP/9.9MB FATFS)
-    PSRAM                                  : QSPI PSRAM
+    PSRAM                                  : OPI PSRAM
     Upload Mode                            : UART0 / Hardware CDC
     Upload Speed                           : 921600
     USB Mode                               : Hardware CDC and JTAG
@@ -54,6 +54,7 @@
     - COM12 is the local port observed on Sample A; choose your actual CH340 port.
     - If upload is unstable at 921600, retry at 460800 before changing other settings.
     - For factory flash readback/dump workflows, 460800 was more reliable than 921600.
+    - The printed settings are documentation strings; runtime evidence comes from ESP.* values.
 
   Expected serial result:
     - Chip model should be ESP32-S3;
@@ -83,7 +84,7 @@ void setup() {
     Serial.println("GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
     Serial.println("Evidence video: https://youtube.com/shorts/XVaWqrtXHE4");
     Serial.println("----------------------------------------------------------------");
-    Serial.println("Arduino IDE settings used for Sample A:");
+    Serial.println("Arduino IDE settings currently used for Sample A:");
     Serial.println("  Board                                : ESP32S3 Dev Module");
     Serial.println("  Port                                 : COM12 / CH340 USB-SERIAL port");
     Serial.println("  USB CDC On Boot                      : Disabled");
@@ -98,7 +99,7 @@ void setup() {
     Serial.println("  Arduino Runs On                      : Core 1");
     Serial.println("  USB Firmware MSC On Boot             : Disabled");
     Serial.println("  Partition Scheme                     : 16M Flash (3MB APP/9.9MB FATFS)");
-    Serial.println("  PSRAM                                : QSPI PSRAM");
+    Serial.println("  PSRAM                                : OPI PSRAM");
     Serial.println("  Upload Mode                          : UART0 / Hardware CDC");
     Serial.println("  Upload Speed                         : 921600");
     Serial.println("  USB Mode                             : Hardware CDC and JTAG");
