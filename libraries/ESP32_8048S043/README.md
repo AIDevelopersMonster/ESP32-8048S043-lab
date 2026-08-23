@@ -8,9 +8,9 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
-03_TouchGT911Test       SOURCE IMPLEMENTED / README ADDED / PHYSICAL VALIDATION OPEN
+03_TouchGT911Test       SOURCE IMPLEMENTED / VISUAL TEST ADDED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            FIRST GT911 SERIAL TEST ADDED
+Touch driver            FIRST GT911 VISUAL/SERIAL TEST ADDED
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -42,7 +42,7 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 ```text
 01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
-03_TouchGT911Test       GT911 I2C address/Product ID/raw coordinate test
+03_TouchGT911Test       visual GT911 touch dots/trails + serial diagnostics
 04_BacklightTest        future dedicated backlight/PWM test
 05_TestConsole          future combined diagnostic console
 09_LVGL_BasicUI        future
@@ -132,23 +132,26 @@ PHYSICAL VISUAL PASS
 Purpose:
 
 ```text
-validate the GT911 capacitive touch path with our own serial-first Arduino sketch
+validate the GT911 capacitive touch path with our own visual Arduino sketch
 ```
 
 What it tests:
 
+- display initializes through `Arduino_GFX_Library`;
 - I2C starts on SDA=19 / SCL=20;
 - I2C scan finds connected devices;
 - GT911 candidate address is detected at 0x5D or 0x14;
 - Product ID register at 0x8140 is readable;
 - firmware/resolution registers are read where available;
 - touch status register 0x814E is readable;
-- raw touch points print while touching the screen.
+- touch points print to Serial Monitor;
+- touch points draw as visible dots/trails on the 800x480 display.
 
-Dependency:
+Dependencies:
 
 ```text
-No external touch library; uses Arduino Wire directly.
+Arduino_GFX_Library by moononournation
+Arduino Wire for I2C
 ```
 
 Open:
@@ -166,13 +169,13 @@ libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
 PASS boundary:
 
 ```text
-PASS requires serial evidence that GT911 is found at 0x5D or 0x14, Product ID/registers are readable, and touching the panel prints changing raw x/y coordinates.
+PASS requires visual evidence that touching the panel draws plausible dots/trails on the display, plus serial evidence that GT911 is found at 0x5D or 0x14 and x/y coordinates change in an 800x480-class range.
 ```
 
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+SOURCE IMPLEMENTED / VISUAL TEST ADDED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
