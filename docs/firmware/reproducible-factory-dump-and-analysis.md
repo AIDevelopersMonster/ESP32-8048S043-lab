@@ -94,14 +94,43 @@ Sample A partition table:
 
 ```text
 table @ 0x00008000: 5 entries
-00 data/nvs   off=0x00009000 size=0x5000   label=nvs
-01 data/ota   off=0x0000E000 size=0x2000   label=otadata
-02 app/ota_0  off=0x00010000 size=0x140000 label=app0
-03 app/ota_1  off=0x00150000 size=0x140000 label=app1
+00 data/nvs    off=0x00009000 size=0x5000   label=nvs
+01 data/ota    off=0x0000E000 size=0x2000   label=otadata
+02 app/ota_0   off=0x00010000 size=0x140000 label=app0
+03 app/ota_1   off=0x00150000 size=0x140000 label=app1
 04 data/spiffs off=0x00290000 size=0x170000 label=spiffs
 ```
 
-## Step 5 — review strings before publishing
+## Step 5 — run partition-level image investigation
+
+Use the partition report tool to calculate per-partition hashes, compare app slots and summarize ESP image headers without committing binaries:
+
+```powershell
+py tools\analysis\firmware_partition_report.py `
+  evidence\specimens\sample-a\factory-firmware\factory-flash-16mb.bin `
+  --out evidence\specimens\sample-a\factory-firmware\analysis\partition-report
+```
+
+Expected outputs:
+
+```text
+evidence/specimens/sample-a/factory-firmware/analysis/partition-report/partition-report.md
+evidence/specimens/sample-a/factory-firmware/analysis/partition-report/partition-table.csv
+evidence/specimens/sample-a/factory-firmware/analysis/partition-report/partition-hashes.sha256.txt
+```
+
+Optional local-only binary extraction:
+
+```powershell
+py tools\analysis\firmware_partition_report.py `
+  evidence\specimens\sample-a\factory-firmware\factory-flash-16mb.bin `
+  --out evidence\specimens\sample-a\factory-firmware\analysis\partition-report `
+  --extract
+```
+
+The `--extract` mode writes `.bin` files under `partitions-local-only/`. These files are for local reverse engineering only and must not be committed unless redistribution is explicitly permitted.
+
+## Step 6 — review strings before publishing
 
 The scanner generates `strings.txt`. Review it before committing or publishing because it may contain:
 
@@ -121,6 +150,8 @@ A result is reproducible when another reader can run the same commands on a name
 - SHA-256;
 - image header candidates;
 - partition table;
+- per-partition SHA-256 values;
+- app-slot comparison;
 - scanner version / script commit;
 - command line used.
 
