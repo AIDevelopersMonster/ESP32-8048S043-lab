@@ -10,13 +10,15 @@ This repository is intentionally evidence-first. It is **not** a generic pinout 
 REPOSITORY STRUCTURE        CREATED
 REFERENCE BOARD PASSPORT    OPEN
 CHIP / FLASH / PSRAM        PARTIAL
+SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
+PIN MAP                     SOURCE-BACKED / OWN BSP TESTS OPEN
 FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
 FACTORY FIRMWARE ANALYSIS   FIRST-PASS DONE
 FACTORY SERIAL BOOT         PASS
 FACTORY LVGL DISPLAY        PASS
 TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS
 DISPLAY RGB PANEL           FACTORY RUNTIME PASS
-GT911 / GOODIX IDENTITY     OPEN
+GT911 / GOODIX IDENTITY     SOURCE-BACKED / I2C SCAN OPEN
 BSP LIBRARY                 SKELETON
 WEB FLASHER                 SKELETON
 PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL
@@ -32,8 +34,7 @@ Reads       : 2
 SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
 Result      : MATCH all reads are identical
 Analysis    : partition table found at 0x00008000, 5 entries
-Runtime     : serial boot PASS, factory LVGL Widgets Demo display PASS, touchscreen visual PASS
-Video       : https://youtube.com/shorts/XVaWqrtXHE4
+Runtime     : serial boot PASS, factory LVGL Widgets Demo display + touch visual PASS
 ```
 
 Factory partition layout:
@@ -47,6 +48,36 @@ spiffs   0x00290000  size 0x170000
 ```
 
 The factory `.bin` dump is intentionally not committed. Only metadata, hashes and reviewed analysis outputs are tracked.
+
+## Source-backed hardware baseline
+
+Manufacturer/distributor documentation and a same-layout board reference now provide a source-backed reconstruction for the main hardware map:
+
+```text
+USB-UART bridge : CH340C
+Touch           : GT911 capacitive touch, visual runtime PASS, dedicated I2C scan still open
+RGB LCD         : 800x480 RGB parallel panel, factory LVGL display runtime PASS
+SD / TF1        : SPI SD wiring recovered, own SD test still open
+```
+
+Recovered source-backed GPIO map:
+
+```text
+LCD DE        40
+LCD VSYNC     41
+LCD HSYNC     39
+LCD PCLK      42
+Backlight PWM 2
+GT911 SDA/SCL 19 / 20
+GT911 RESET   38
+GT911 INT     18, optional / link-dependent
+SD CS/MOSI/CLK/MISO 10 / 11 / 12 / 13
+RGB R0..R4    45, 48, 47, 21, 14
+RGB G0..G5    5, 6, 7, 15, 16, 4
+RGB B0..B4    8, 3, 46, 9, 1
+```
+
+This map is **source-backed**, not yet a complete BSP PASS. The next step is to validate it with our own minimal RGB, touch and SD examples.
 
 ## Target family
 
@@ -72,10 +103,11 @@ Important: board labels, sellers and OEM revisions may differ. Treat every new b
 ## Start here
 
 - [`docs/HARDWARE-ACCEPTANCE-START.md`](docs/HARDWARE-ACCEPTANCE-START.md) — first-board acceptance workflow.
+- [`hardware/SCHEMATIC_BOM_RESEARCH.md`](hardware/SCHEMATIC_BOM_RESEARCH.md) — source-backed schematic/BOM/pinout reconstruction.
 - [`docs/firmware/README.md`](docs/firmware/README.md) — factory and third-party firmware preservation/analysis rules.
 - [`docs/firmware/reproducible-factory-dump-and-analysis.md`](docs/firmware/reproducible-factory-dump-and-analysis.md) — reader-facing reproduction guide for factory dump and analysis.
-- [`docs/pinout.md`](docs/pinout.md) — reported and future verified pin map.
-- [`docs/videos.md`](docs/videos.md) — shooting plan and future evidence links.
+- [`docs/pinout.md`](docs/pinout.md) — source-backed and future verified pin map.
+- [`docs/videos.md`](docs/videos.md) — shooting plan and evidence links.
 - [`docs/third-party/README.md`](docs/third-party/README.md) — reference projects and firmware to study without copying blindly.
 - [`evidence/specimens/sample-a/README.md`](evidence/specimens/sample-a/README.md) — first specimen evidence folder.
 - [`libraries/ESP32_8048S043/README.md`](libraries/ESP32_8048S043/README.md) — Arduino BSP skeleton and example plan.
