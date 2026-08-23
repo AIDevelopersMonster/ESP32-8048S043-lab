@@ -20,7 +20,7 @@ Fill after the first physical board is inspected.
 - PSRAM: 8 MB embedded PSRAM reported by esptool
 - Crystal: 40 MHz
 - MAC: 84:fc:e6:6c:69:3c
-- USB bridge/native USB:
+- USB bridge/native USB: CH340C source-backed, local bridge identification still to be recorded
 
 ## Factory firmware preservation
 
@@ -56,14 +56,40 @@ Factory runtime evidence:
 ```text
 Serial boot       : PASS, LVGL Widgets Demo banner, Setup done
 Display runtime   : PASS, lv_demo_widgets visible on 800x480 panel
-Touchscreen       : VISUAL PASS in factory LVGL Widgets Demo
-Video             : https://youtube.com/shorts/XVaWqrtXHE4
+Touch visual      : PASS, touchscreen interaction visible in factory demo video
 Observed FPS      : about 66 FPS on demo screen
 Observed CPU load : about 16-18% on demo screen
-Boundary          : touch controller identity and exact pin map still open
+Boundary          : exact touch IC scan and exact pin-map validation still open
 ```
 
-Commit-safe records:
+## Source-backed hardware map
+
+Source-backed map recovered from `hardware/SCHEMATIC_BOM_RESEARCH.md` and now mirrored in `docs/pinout.md`:
+
+```text
+LCD DE        40
+LCD VSYNC     41
+LCD HSYNC     39
+LCD PCLK      42
+Backlight PWM 2
+GT911 SDA/SCL 19 / 20
+GT911 RESET   38
+GT911 INT     18, optional / link-dependent
+SD CS/MOSI/CLK/MISO 10 / 11 / 12 / 13
+RGB R0..R4    45, 48, 47, 21, 14
+RGB G0..G5    5, 6, 7, 15, 16, 4
+RGB B0..B4    8, 3, 46, 9, 1
+```
+
+Component identity leads:
+
+```text
+USB-UART bridge : CH340C, source-backed
+Touch controller: GT911, source-backed for capacitive panel
+Main module     : ESP32-S3-WROOM-1-N16R8 family, source-backed
+```
+
+## Commit-safe records
 
 ```text
 evidence/specimens/sample-a/factory-firmware/factory-dump-20260822-195722.sha256.txt
@@ -73,6 +99,8 @@ evidence/specimens/sample-a/factory-firmware/runtime-lvgl-widgets-touch-visual-p
 evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
+hardware/SCHEMATIC_BOM_RESEARCH.md
+docs/pinout.md
 ```
 
 Do not commit factory `.bin` dumps.
@@ -83,18 +111,19 @@ Do not commit factory `.bin` dumps.
 |---|---|---|
 | HW-00 | Photos and visible identity | PARTIAL |
 | HW-01 | Chip / flash / PSRAM | PARTIAL |
+| HW-01B | CH340C bridge identity | SOURCE-BACKED / LOCAL ID OPEN |
+| HW-01C | Schematic/BOM research | SOURCE-BACKED |
+| HW-01D | GPIO pin map | SOURCE-BACKED / OWN TESTS OPEN |
 | FW-00 | Factory flash double-read dump | CAPTURED |
 | FW-01 | Factory dump SHA-256 match | MATCH |
 | FW-02 | Factory partition/string analysis | FIRST-PASS DONE |
 | FW-03 | Possible factory-test leads | NOT PROVEN |
 | FW-04 | Factory serial boot | PASS |
 | FW-05 | Factory LVGL Widgets Demo display | PASS |
-| FW-06 | Factory LVGL Widgets Demo touch visual check | PASS |
-| HW-02 | RGB display | FACTORY RUNTIME PASS |
-| HW-03 | Touchscreen visual interaction | FACTORY DEMO PASS |
-| HW-03A | GT911 / Goodix identity | OPEN |
+| HW-02 | RGB display | FACTORY RUNTIME PASS / OWN MINIMAL TEST OPEN |
+| HW-03 | GT911 touch | SOURCE-BACKED / FACTORY TOUCH VISUAL PASS / I2C SCAN OPEN |
 | HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
-| HW-05 | SD card | OPEN |
+| HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
 | SW-01 | Arduino BSP BoardInfo | OPEN |
 | SW-02 | LVGL basic UI | OPEN |
