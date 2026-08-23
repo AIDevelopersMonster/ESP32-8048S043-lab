@@ -4,8 +4,10 @@
 
 namespace esp32_8048s043::pins {
 
-// Reported/community mapping for ESP32-8048S043C-I class boards.
-// Status: REPORTED ONLY until physically validated on a named specimen.
+// ESP32-8048S043 / Jingcai ESP32-8048S043C-I source-backed profile.
+// Status: SOURCE-BACKED / OWN MINIMAL TESTS STILL REQUIRED.
+// See docs/pinout.md and hardware/SCHEMATIC_BOM_RESEARCH.md.
+
 constexpr int LCD_WIDTH = 800;
 constexpr int LCD_HEIGHT = 480;
 
@@ -37,6 +39,14 @@ constexpr int RGB_B4 = 1;
 
 constexpr int TOUCH_SDA = 19;
 constexpr int TOUCH_SCL = 20;
+constexpr int TOUCH_RST = 38;
+constexpr int TOUCH_INT = 18;  // optional / board-link dependent
 constexpr uint8_t TOUCH_GT911_ADDR = 0x5D;
+constexpr uint8_t TOUCH_GT911_ADDR_ALT = 0x14;
+
+constexpr int SD_CS = 10;
+constexpr int SD_MOSI = 11;
+constexpr int SD_CLK = 12;
+constexpr int SD_MISO = 13;
 
 }  // namespace esp32_8048s043::pins
