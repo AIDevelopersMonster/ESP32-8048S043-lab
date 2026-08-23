@@ -73,10 +73,16 @@ Commit-safe runtime record:
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 ```
 
+Video evidence:
+
+```text
+https://youtube.com/shorts/wELRdRWqlnw
+```
+
 Note:
 
 ```text
-An earlier run reported PSRAM as 0 bytes. A later run detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
+An earlier run reported PSRAM as 0 bytes. A later run, after changing the Arduino PSRAM type/profile and rebuilding, detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
 ```
 
 ## Source-backed hardware baseline
