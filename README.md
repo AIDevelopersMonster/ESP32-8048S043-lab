@@ -9,8 +9,8 @@ This repository is intentionally evidence-first. It is **not** a generic pinout 
 ```text
 REPOSITORY STRUCTURE        CREATED
 REFERENCE BOARD PASSPORT    OPEN
-CHIP / FLASH / PSRAM        PARTIAL / ARDUINO PSRAM RETEST REQUIRED
-ARDUINO BOARDINFO           PARTIAL PASS / PSRAM NOT DETECTED WITH QSPI SETTING
+CHIP / FLASH / PSRAM        PASS
+ARDUINO BOARDINFO           PASS
 SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
 PIN MAP                     SOURCE-BACKED / OWN BSP TESTS OPEN
 FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
@@ -22,7 +22,7 @@ DISPLAY RGB PANEL           FACTORY RUNTIME PASS
 GT911 / GOODIX IDENTITY     SOURCE-BACKED / I2C SCAN OPEN
 BSP LIBRARY                 SKELETON
 WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL
+PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO
 ```
 
 ## Factory firmware baseline
@@ -52,18 +52,19 @@ The factory `.bin` dump is intentionally not committed. Only metadata, hashes an
 
 ## Arduino BoardInfo baseline
 
-`01_BoardInfo` now runs from the Arduino IDE examples menu and records a first Arduino runtime result for Sample A.
+`01_BoardInfo` now runs from the Arduino IDE examples menu and records the first Arduino runtime PASS for Sample A.
 
 Current result:
 
 ```text
 Upload / serial monitor : PASS
+Chip                    : PASS, ESP32-S3 rev 2, 2 cores, 240 MHz
 Flash size              : PASS, 16777216 bytes / 16 MB
 Flash mode / speed      : QIO / 80 MHz
+PSRAM                   : PASS, 8388608 bytes / 8 MB
 Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : PASS, ALIVE lines observed through at least 100000 ms
-PSRAM                   : FAIL / RETEST, Arduino runtime reported 0 bytes with QSPI PSRAM selected
-Overall 01_BoardInfo    : PARTIAL PASS
+Runtime stability       : PASS, ALIVE lines observed with PSRAM available
+Overall 01_BoardInfo    : PASS
 ```
 
 Commit-safe runtime record:
@@ -72,11 +73,10 @@ Commit-safe runtime record:
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 ```
 
-Next action:
+Note:
 
 ```text
-Retest 01_BoardInfo with PSRAM set to OPI PSRAM / Enabled instead of QSPI PSRAM.
-Keep other Arduino IDE settings unchanged for the first retest.
+An earlier run reported PSRAM as 0 bytes. A later run detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
 ```
 
 ## Source-backed hardware baseline
