@@ -8,11 +8,11 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
-03_TouchGT911Test       KNOWN-GOOD-STYLE REWRITE / PHYSICAL VALIDATION OPEN
+03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            GT911 POLLING VISUAL TEST ADDED
+Touch driver            OWN GT911 POLLING VISUAL TEST PASS
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -166,6 +166,9 @@ See also:
 
 ```text
 libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
+libraries/ESP32_8048S043/examples/03_TouchGT911Test/NOTICE.md
+docs/videos.md
+evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
 ```
 
 PASS boundary:
@@ -177,7 +180,13 @@ PASS requires visual evidence that touching the panel moves the red marker on th
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+PHYSICAL VISUAL PASS
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/_zhtl-AWcCE
 ```
 
 ## Rule
