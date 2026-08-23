@@ -1,6 +1,6 @@
 # 03_TouchGT911Test
 
-Status: `SOURCE IMPLEMENTED / SAFE VISUAL VERSION / PHYSICAL VALIDATION OPEN`.
+Status: `SOURCE IMPLEMENTED / KNOWN-GOOD-STYLE VISUAL VERSION / PHYSICAL VALIDATION OPEN`.
 
 Author: **Alex Malachevsky**
 
@@ -21,58 +21,47 @@ It comes after:
 02_DisplayRGBTest  PASS: own Arduino_GFX RGB display path
 ```
 
-The purpose of this test is to validate the capacitive touchscreen path with our own code:
+The purpose of this test is to validate the capacitive touchscreen path with our own code and a visible on-screen marker.
+
+## Why this version was rewritten
+
+The first visual version was too different from working ESP32-8048S043C examples and produced a black-screen/brownout loop on Sample A.
+
+The current version is rewritten in a closer known-good style:
 
 ```text
-GT911 controller detection;
-I2C pins SDA=19 and SCL=20;
-GT911 candidate addresses 0x5D and 0x14;
-Product ID register read;
-raw touch coordinate reporting;
-optional low-power on-screen touch visualization.
+static screen first;
+backlight GPIO2 HIGH, same simple path as 02_DisplayRGBTest;
+GT911 polling, no dependency on INT interrupt;
+GT911 status register 0x814E;
+GT911 point data starts at 0x814F, not 0x8150;
+point data is decoded as track_id + little-endian x/y/size;
+status 0x814E is cleared after each point read;
+visual marker update is throttled, no fast full-screen animation.
 ```
-
-## Important Sample A note
-
-A first combined visual version produced a black screen and repeated brownout resets on Sample A:
-
-```text
-E BOD: Brownout detector was triggered
-```
-
-The current version is therefore staged and safer:
-
-```text
-Serial starts first;
-I2C starts before display;
-I2C speed is reduced to 100 kHz;
-GT911 reset/address strap is not forced by default;
-Display is enabled only after GT911 is detected;
-Backlight is started dimmed instead of full ON.
-```
-
-This keeps the already useful serial GT911 evidence while still allowing a visual touch trail when the power path is stable enough.
 
 ## What this test checks
 
 ```text
-I2C bus starts on SDA=19 / SCL=20;
-I2C scan reports connected devices;
+RGB display starts through Arduino_GFX;
+static 800x480 test screen is drawn;
+backlight GPIO2 works in full ON mode;
+I2C starts on SDA=19 / SCL=20;
 GT911 is found at 0x5D or 0x14;
 GT911 Product ID can be read from 0x8140;
 firmware/config/resolution registers are read where available;
 touch status register 0x814E is readable;
-touching the panel prints x/y coordinates;
-coordinates change when the finger moves;
-if display init succeeds, touches draw dots/trails on screen.
+touch point data is read from 0x814F;
+touching the panel prints raw x/y coordinates;
+raw coordinates are mapped to screen coordinates with a calibration seed;
+if display mode works, touches move a red marker on the screen.
 ```
 
 ## What this test does not check
 
 ```text
 final LVGL touch integration;
-final coordinate rotation/mapping;
-calibration;
+final production calibration;
 gestures;
 SD card;
 Wi-Fi/BLE;
@@ -115,7 +104,7 @@ Required project library:
 ESP32_8048S043
 ```
 
-Required display dependency for visual mode:
+Required display dependency:
 
 ```text
 Arduino_GFX_Library by moononournation
@@ -144,72 +133,66 @@ The test should print a header similar to:
 ```text
 ================================================================
  ESP32-8048S043 Lab / 03_TouchGT911Test
- Safe low-power visual GT911 touch validation
+ Known-good-style Arduino_GFX + GT911 polling test
 ================================================================
-Author : Alex Malachevsky
-GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
-Purpose: validate GT911 first, then enable dim visual touch canvas
-----------------------------------------------------------------
-Safe mode: I2C first, 100 kHz, no forced reset strap, dim backlight
-----------------------------------------------------------------
-Wire.begin(SDA=19, SCL=20, speed=100000)
+Point register: 0x814F, status register: 0x814E
 ```
 
-Then it should scan I2C and probe the expected GT911 addresses:
+Then display and I2C/touch setup:
 
 ```text
-[I2C SCAN]
-I2C device found at 0x5D
-...
-[GT911 PROBE]
-Candidate primary address  : 0x5D
-Candidate alternate address: 0x14
-Pins: SDA=19 SCL=20 RST=38 INT=18
+gfx->begin() start
+gfx->begin(): OK
+Wire.begin(SDA=19, SCL=20, speed=400000)
+GT911 reset: RST38 toggle, INT18 passive pull-up, polling mode
+GT911 at 0x5D, product id raw: ...
+GT911 product id text: ...
+I2C scan: 0x5D
 Active GT911 address: 0x5D
 ```
 
-Depending on the board strap state, the active address may be:
-
-```text
-0x5D
-```
-
-or:
+The active address can also be:
 
 ```text
 0x14
 ```
 
-Both are acceptable for GT911 detection on this board family.
+Both are acceptable for this board family.
 
 ## Expected visual output
 
-After GT911 is detected, the display should start in low-power visual mode:
+The screen should show:
 
 ```text
-03 Touch GT911 Safe Visual
-Touch the panel: dots/trails should follow your finger
-GT911 0x5D active. Dim visual mode.
+ESP32-8048S043 GT911 Display + Touch Test
+color bars;
+grid;
+four corner target circles;
+a center instruction panel;
+I2C / GT911 status line.
 ```
 
-Touching the panel should draw:
-
-```text
-yellow touch dots;
-green movement trails;
-status line with raw/screen coordinates.
-```
+When touching the panel, a red marker/cross should appear and move with the finger. The lower status box should show both mapped screen coordinates and raw coordinates.
 
 ## Expected touch output
 
 When touching the panel, Serial Monitor should show lines similar to:
 
 ```text
-Touch points=1 status=0x81
-  P1 id=... x=155 y=57 size=... raw=...
+Touch raw packet: status=0x81 points=1 data=...
+Touch #1: track=... raw_x=... raw_y=... screen_x=... screen_y=... size=...
 ```
 
-The current parser auto-selects coordinate byte order that fits the 800x480 panel. This fixes the earlier impossible values such as `x=39680 y=14592` that came from reading Sample A point bytes in the wrong order.
+Important register layout used here:
+
+```text
+0x814E = status
+0x814F = point data start
+point[0] = track id
+point[1..2] = x, little-endian
+point[3..4] = y, little-endian
+point[5..6] = touch size, little-endian
+```
 
 ## PASS condition
 
@@ -218,12 +201,13 @@ Mark `03_TouchGT911Test` as PASS only when all of the following are true on a na
 ```text
 sketch uploads successfully;
 serial monitor opens at 115200;
+static display screen is visible;
 I2C starts on SDA=19 / SCL=20;
 GT911 candidate is detected at 0x5D or 0x14;
 Product ID or GT911 register block is readable;
-touching the panel prints point data;
-x/y coordinates change with finger movement;
-if display mode is enabled, touches draw dots/trails on the screen;
+touching the panel prints point packets;
+raw x/y coordinates change with finger movement;
+red marker moves on the display;
 no brownout loop or crash during the observed test.
 ```
 
@@ -232,7 +216,7 @@ Recommended evidence:
 ```text
 serial log from boot through Product ID read;
 serial log showing at least several touch coordinate lines;
-short video showing finger movement and dots/trails on the display.
+short video showing finger movement and marker movement on the display.
 ```
 
 ## FAIL / investigate cases
@@ -242,30 +226,30 @@ Investigate before marking PASS if:
 ```text
 brownout detector is triggered;
 black screen with repeated resets;
+static display screen does not appear;
 no I2C devices are found;
-only unrelated I2C addresses are found;
 0x5D and 0x14 both fail;
 Product ID read fails on the detected address;
 touch status never changes while touching;
 coordinates are always zero or frozen;
-board resets during touch polling.
+marker moves in the wrong direction or only in a small area.
 ```
 
 Possible causes:
 
 ```text
-USB power path too weak for display + backlight + RGB + touch together;
-wrong or marginal USB cable/hub;
-backlight current spike;
-wrong SDA/SCL pins;
-GT911 reset/address strap issue;
-FPC/panel cable issue;
+wrong point register offset;
+wrong coordinate decoding;
+wrong or missing GT911 reset sequence;
 wrong board variant;
-controller present but not GT911-compatible.
+GT911 INT line assumption, use polling instead;
+calibration constants need adjustment;
+RGB framebuffer update conflict if drawing too aggressively;
+USB power/cable issue if real brownout is still present.
 ```
 
 ## Boundary
 
-A PASS here confirms the low-level GT911/I2C touch path and optional on-screen touch visualization only.
+A PASS here confirms the low-level GT911/I2C touch path and basic on-screen visualization only.
 
 It does not prove final GUI touch behavior. LVGL coordinate mapping, rotation, calibration and UI event handling must be validated later in LVGL examples.
