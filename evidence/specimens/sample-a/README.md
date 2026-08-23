@@ -16,8 +16,8 @@ Fill after the first physical board is inspected.
 - Chip: ESP32-S3 QFN56
 - Revision: v0.2
 - Flash ID:
-- Flash size: 16 MB dump captured
-- PSRAM: 8 MB embedded PSRAM reported by esptool
+- Flash size: 16 MB dump captured; Arduino runtime also reports 16 MB
+- PSRAM: 8 MB expected/source-backed and reported by earlier identity evidence; **Arduino 01_BoardInfo with QSPI PSRAM currently reports 0 bytes, retest with OPI PSRAM required**
 - Crystal: 40 MHz
 - MAC: 84:fc:e6:6c:69:3c
 - USB bridge/native USB: CH340C source-backed, local bridge identification still to be recorded
@@ -62,6 +62,35 @@ Observed CPU load : about 16-18% on demo screen
 Boundary          : exact touch IC scan and exact pin-map validation still open
 ```
 
+## Arduino runtime evidence
+
+`01_BoardInfo` was run from Arduino IDE with the Sample A settings captured in the example README.
+
+Current result:
+
+```text
+Upload / serial monitor : PASS
+Flash size              : PASS, 16777216 bytes / 16 MB
+Flash mode / speed      : QIO / 80 MHz
+Running partition       : app0, address 0x010000, size 3145728
+Runtime stability       : PASS, ALIVE lines observed through at least 100000 ms
+PSRAM                   : FAIL / RETEST, Arduino runtime reported 0 bytes with QSPI PSRAM selected
+Overall 01_BoardInfo    : PARTIAL PASS
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+```
+
+Next action:
+
+```text
+Retest 01_BoardInfo with PSRAM set to OPI PSRAM / Enabled instead of QSPI PSRAM.
+Keep other Arduino IDE settings unchanged for the first retest.
+```
+
 ## Source-backed hardware map
 
 Source-backed map recovered from `hardware/SCHEMATIC_BOM_RESEARCH.md` and now mirrored in `docs/pinout.md`:
@@ -99,6 +128,7 @@ evidence/specimens/sample-a/factory-firmware/runtime-lvgl-widgets-touch-visual-p
 evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
+evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 hardware/SCHEMATIC_BOM_RESEARCH.md
 docs/pinout.md
 ```
@@ -110,7 +140,7 @@ Do not commit factory `.bin` dumps.
 | Stage | Target | Status |
 |---|---|---|
 | HW-00 | Photos and visible identity | PARTIAL |
-| HW-01 | Chip / flash / PSRAM | PARTIAL |
+| HW-01 | Chip / flash / PSRAM | PARTIAL / ARDUINO PSRAM RETEST REQUIRED |
 | HW-01B | CH340C bridge identity | SOURCE-BACKED / LOCAL ID OPEN |
 | HW-01C | Schematic/BOM research | SOURCE-BACKED |
 | HW-01D | GPIO pin map | SOURCE-BACKED / OWN TESTS OPEN |
@@ -125,7 +155,7 @@ Do not commit factory `.bin` dumps.
 | HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
 | HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
-| SW-01 | Arduino BSP BoardInfo | OPEN |
+| SW-01 | Arduino BSP BoardInfo | PARTIAL PASS / PSRAM RETEST REQUIRED |
 | SW-02 | LVGL basic UI | OPEN |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
