@@ -5,32 +5,32 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 ## Status
 
 ```text
-BSP API                 SKELETON
+BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
+03_TouchGT911Test       SOURCE IMPLEMENTED / README ADDED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            OPEN
+Touch driver            FIRST GT911 SERIAL TEST ADDED
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + FACTORY LVGL DISPLAY + TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
 
-Recommended starting profile for the examples in this library:
+Recommended working profile for the examples in this library on Sample A:
 
 ```text
 Board package : esp32 by Espressif Systems
 Board         : ESP32S3 Dev Module
 Port          : CH340 / USB-SERIAL port of the board
-Upload Speed  : 921600 used successfully; 460800 if upload is unstable
+Upload Speed  : 921600 if stable; 460800 fallback
 CPU Frequency : 240MHz (WiFi)
 Flash Size    : 16MB / 128Mb
 Flash Mode    : QIO 80MHz
 Partition     : 16M Flash (3MB APP/9.9MB FATFS)
 PSRAM         : OPI PSRAM
 USB CDC Boot  : Disabled when using CH340C USB-UART
-Upload Mode   : UART0 / Hardware CDC
-USB Mode      : Hardware CDC and JTAG
+Upload Mode   : UART0 / Hardware CDC, depending on Arduino menu wording
 Core Debug    : None
 Serial Monitor: 115200 baud
 ```
@@ -42,9 +42,9 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 ```text
 01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
-03_TouchGT911Test       future GT911 scan/coordinate test
-04_BacklightTest
-05_TestConsole
+03_TouchGT911Test       GT911 I2C address/Product ID/raw coordinate test
+04_BacklightTest        future dedicated backlight/PWM test
+05_TestConsole          future combined diagnostic console
 09_LVGL_BasicUI        future
 10_LVGL_Dashboard      future
 13_RetroClock_800x480  future
@@ -70,18 +70,19 @@ See also:
 
 ```text
 libraries/ESP32_8048S043/examples/01_BoardInfo/README.md
-```
-
-Current Sample A result:
-
-```text
-PHYSICAL PASS / SAMPLE A
+evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 ```
 
 PASS boundary:
 
 ```text
 PASS requires successful upload, serial output at 115200, ESP32-S3 identity, about 16 MB flash, about 8 MB PSRAM and stable ALIVE messages.
+```
+
+Current Sample A status:
+
+```text
+PHYSICAL PASS
 ```
 
 ## 02_DisplayRGBTest
@@ -101,10 +102,10 @@ What it tests:
 - RGB color-bar pattern;
 - stripe pattern for data-line sanity.
 
-Open:
+Dependency:
 
 ```text
-libraries/ESP32_8048S043/examples/02_DisplayRGBTest/02_DisplayRGBTest.ino
+Arduino_GFX_Library by moononournation
 ```
 
 See also:
@@ -114,22 +115,64 @@ libraries/ESP32_8048S043/examples/02_DisplayRGBTest/README.md
 evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
 ```
 
+PASS boundary:
+
+```text
+PASS requires physical photo/video evidence from a named specimen showing correct colors, orientation, color bars, stripe pattern and stable serial sequence.
+```
+
+Current Sample A status:
+
+```text
+PHYSICAL VISUAL PASS
+```
+
+## 03_TouchGT911Test
+
+Purpose:
+
+```text
+validate the GT911 capacitive touch path with our own serial-first Arduino sketch
+```
+
+What it tests:
+
+- I2C starts on SDA=19 / SCL=20;
+- I2C scan finds connected devices;
+- GT911 candidate address is detected at 0x5D or 0x14;
+- Product ID register at 0x8140 is readable;
+- firmware/resolution registers are read where available;
+- touch status register 0x814E is readable;
+- raw touch points print while touching the screen.
+
 Dependency:
 
 ```text
-Arduino_GFX_Library by moononournation
+No external touch library; uses Arduino Wire directly.
 ```
 
-Current Sample A result:
+Open:
 
 ```text
-PHYSICAL VISUAL PASS / SAMPLE A
+libraries/ESP32_8048S043/examples/03_TouchGT911Test/03_TouchGT911Test.ino
+```
+
+See also:
+
+```text
+libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
 ```
 
 PASS boundary:
 
 ```text
-PASS requires serial Display begin: OK, the full planned screen sequence, and physical photo/video evidence from a named specimen.
+PASS requires serial evidence that GT911 is found at 0x5D or 0x14, Product ID/registers are readable, and touching the panel prints changing raw x/y coordinates.
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
