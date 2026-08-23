@@ -51,11 +51,25 @@ SPIFFS          : 0x00290000 size 0x170000
 Strings         : 2689 printable strings >=5 chars
 ```
 
+Factory runtime evidence:
+
+```text
+Serial boot       : PASS, LVGL Widgets Demo banner, Setup done
+Display runtime   : PASS, lv_demo_widgets visible on 800x480 panel
+Observed FPS      : about 66 FPS on demo screen
+Observed CPU load : about 16-18% on demo screen
+Boundary          : touch and exact pin map still open
+```
+
 Commit-safe records:
 
 ```text
 evidence/specimens/sample-a/factory-firmware/factory-dump-20260822-195722.sha256.txt
+evidence/specimens/sample-a/factory-firmware/runtime-serial-boot-log.md
+evidence/specimens/sample-a/factory-firmware/runtime-lvgl-widgets-display-pass.md
 evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-summary.md
+evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
+evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
 ```
 
 Do not commit factory `.bin` dumps.
@@ -64,15 +78,17 @@ Do not commit factory `.bin` dumps.
 
 | Stage | Target | Status |
 |---|---|---|
-| HW-00 | Photos and visible identity | OPEN |
+| HW-00 | Photos and visible identity | PARTIAL |
 | HW-01 | Chip / flash / PSRAM | PARTIAL |
 | FW-00 | Factory flash double-read dump | CAPTURED |
 | FW-01 | Factory dump SHA-256 match | MATCH |
 | FW-02 | Factory partition/string analysis | FIRST-PASS DONE |
-| FW-03 | Possible factory-test leads | OPEN |
-| HW-02 | RGB display | OPEN |
+| FW-03 | Possible factory-test leads | NOT PROVEN |
+| FW-04 | Factory serial boot | PASS |
+| FW-05 | Factory LVGL Widgets Demo display | PASS |
+| HW-02 | RGB display | FACTORY RUNTIME PASS |
 | HW-03 | GT911 touch | OPEN |
-| HW-04 | Backlight | OPEN |
+| HW-04 | Backlight | IMPLIED BY DISPLAY, DEDICATED TEST OPEN |
 | HW-05 | SD card | OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
 | SW-01 | Arduino BSP BoardInfo | OPEN |
