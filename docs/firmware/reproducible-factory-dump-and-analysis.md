@@ -130,7 +130,37 @@ py tools\analysis\firmware_partition_report.py `
 
 The `--extract` mode writes `.bin` files under `partitions-local-only/`. These files are for local reverse engineering only and must not be committed unless redistribution is explicitly permitted.
 
-## Step 6 — review strings before publishing
+## Step 6 — create a sanitized keyword summary
+
+The first-pass scanner writes raw strings to:
+
+```text
+evidence/specimens/sample-a/factory-firmware/analysis/strings.txt
+```
+
+Do not publish raw strings without review. Instead generate a sanitized grouped summary:
+
+```powershell
+py tools\analysis\firmware_keyword_summary.py `
+  evidence\specimens\sample-a\factory-firmware\analysis\strings.txt `
+  --out evidence\specimens\sample-a\factory-firmware\analysis\keyword-summary.md
+```
+
+This report groups likely application, display, touch/I2C, UART/USB, GPIO/backlight/PWM, OTA/storage and factory-test words. It also sanitizes Windows paths before publishing.
+
+The Sample A raw string review produced strong preliminary leads:
+
+```text
+LVGL Widgets Demo
+LVGL v8
+Arduino_GFX / Arduino_ESP32RGBPanel
+ESP32 Arduino core 2.0.3 path fragments
+esp_lcd_new_rgb_panel / esp_lcd_panel_init / esp_lcd_panel_reset
+```
+
+These are static leads only. They suggest an Arduino/LVGL/RGB-panel demo application in `app0`, not a confirmed factory-test entry path.
+
+## Step 7 — review strings before publishing
 
 The scanner generates `strings.txt`. Review it before committing or publishing because it may contain:
 
@@ -152,6 +182,7 @@ A result is reproducible when another reader can run the same commands on a name
 - partition table;
 - per-partition SHA-256 values;
 - app-slot comparison;
+- keyword-summary generation command;
 - scanner version / script commit;
 - command line used.
 
