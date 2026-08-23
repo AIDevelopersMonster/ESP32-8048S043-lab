@@ -1,6 +1,6 @@
 # 03_TouchGT911Test
 
-Status: `SOURCE IMPLEMENTED / KNOWN-GOOD-STYLE VISUAL VERSION / PHYSICAL VALIDATION OPEN`.
+Status: `PHYSICAL VISUAL PASS / SAMPLE A`.
 
 Author: **Alex Malachevsky**
 
@@ -8,6 +8,37 @@ Project GitHub:
 
 ```text
 https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/_zhtl-AWcCE
+```
+
+## Sample A result
+
+`03_TouchGT911Test` has now passed on Sample A as the third incremental Arduino-library test.
+
+Confirmed result:
+
+```text
+gfx->begin()                 PASS
+GT911 I2C address             PASS, 0x5D
+GT911 Product ID              PASS, 911
+GT911 FW version              PASS, 0x1060
+Touch polling                 PASS
+Raw touch coordinates          PASS
+Mapped screen coordinates      PASS candidate
+Visible red touch marker       PASS by video evidence
+Overall 03_TouchGT911Test     PHYSICAL VISUAL PASS / SAMPLE A
+```
+
+Boundary:
+
+```text
+This PASS confirms the low-level GT911/I2C path and basic on-screen touch visualization.
+It does not yet prove final LVGL calibration, rotation handling, gestures or full GUI event integration.
 ```
 
 ## Purpose
@@ -196,32 +227,31 @@ point[5..6] = touch size, little-endian
 
 ## PASS condition
 
-Mark `03_TouchGT911Test` as PASS only when all of the following are true on a named specimen:
+`03_TouchGT911Test` can be marked PASS on Sample A because the following evidence exists:
 
 ```text
 sketch uploads successfully;
 serial monitor opens at 115200;
 static display screen is visible;
 I2C starts on SDA=19 / SCL=20;
-GT911 candidate is detected at 0x5D or 0x14;
-Product ID or GT911 register block is readable;
+GT911 is detected at 0x5D;
+Product ID is readable as 911;
+GT911 firmware/version data is readable;
 touching the panel prints point packets;
 raw x/y coordinates change with finger movement;
-red marker moves on the display;
-no brownout loop or crash during the observed test.
+red marker movement is shown on video;
+no brownout loop or crash during the observed successful test.
 ```
 
-Recommended evidence:
+Evidence:
 
 ```text
-serial log from boot through Product ID read;
-serial log showing at least several touch coordinate lines;
-short video showing finger movement and marker movement on the display.
+https://youtube.com/shorts/_zhtl-AWcCE
 ```
 
 ## FAIL / investigate cases
 
-Investigate before marking PASS if:
+Investigate before marking PASS on any other specimen if:
 
 ```text
 brownout detector is triggered;
