@@ -25,6 +25,29 @@ It comes after the individual hardware blocks have already been tested separatel
 
 The purpose of this test is to run the already validated parts together in a single local diagnostic console before moving to LVGL.
 
+## Arduino IDE preprocessing note
+
+The first implementation used local C++ structs such as `TouchSample` and `Button` in function signatures.
+
+Arduino IDE can generate hidden `.ino` function prototypes before those local struct declarations. On some builds this produced errors like:
+
+```text
+'TouchSample' was not declared in this scope
+'Button' does not name a type
+'readTouch' cannot be used as a function
+```
+
+The current version is rewritten in an Arduino-preprocessor-safe style:
+
+```text
+no user-defined struct types in function signatures;
+touch sample fields are stored in simple globals;
+button hit tests use primitive rectangle arguments;
+all public helper signatures use primitive Arduino/C++ types.
+```
+
+This is not a hardware failure. It is a `.ino` preprocessing compatibility fix.
+
 ## What this test checks
 
 ```text
@@ -120,9 +143,9 @@ The test should print a header similar to:
 ```text
 ================================================================
  ESP32-8048S043 Lab / 05_TestConsole
- Combined RGB + GT911 + Backlight diagnostic console
+ Combined RGB + GT911 + backlight diagnostic console
 ================================================================
-Serial : 115200 baud
+Build  : Arduino IDE preprocessor-safe version, no struct function signatures
 ```
 
 Then display and touch setup:
@@ -131,6 +154,7 @@ Then display and touch setup:
 gfx->begin() start
 gfx->begin(): OK
 Wire.begin(SDA=19, SCL=20, speed=400000)
+GT911 reset: RST38 toggle, INT18 passive pull-up, polling mode
 GT911 at 0x5D, product id raw: ...
 GT911 product id text: 911.
 I2C scan: 0x5D
@@ -142,19 +166,16 @@ GT911 resolution registers: ...
 Touching the screen should print lines similar to:
 
 ```text
-Touch #1: track=0 raw_x=... raw_y=... screen_x=... screen_y=... size=...
+Touch #1: status=0x81 points=1 track=0 raw=(...) screen=(...) size=...
 ```
 
 Tapping the buttons should print:
 
 ```text
-Button: BACKLIGHT -> OFF
-Button: BACKLIGHT -> ON
-Button: CLEAR -> touch counter reset
-Button: REPORT
-[TEST CONSOLE REPORT]
-...
-[/TEST CONSOLE REPORT]
+Button BACKLIGHT -> OFF
+Button BACKLIGHT -> ON
+Button CLEAR -> touch counter cleared
+05_TestConsole REPORT
 ```
 
 ## Expected visual output
