@@ -27,13 +27,12 @@
     - basic ESP32-S3/flash/PSRAM/heap information;
     - serial diagnostics while the UI remains alive.
 
-  What this example does NOT check:
-    - LVGL;
-    - gestures;
-    - SD card;
-    - Wi-Fi/BLE;
-    - final production UI framework;
-    - final calibration quality.
+  Arduino IDE note:
+    This file intentionally avoids user-defined struct types in function
+    signatures. Arduino IDE generates hidden prototypes for .ino files and can
+    place them before local struct declarations. Keeping signatures primitive
+    avoids the 'TouchSample was not declared' / 'Button does not name a type'
+    preprocessing failure.
 
   PASS boundary:
     PASS here means display, GT911 touch polling, visible marker, serial report
@@ -54,10 +53,13 @@ ESP32_8048S043 board;
 static constexpr int LCD_W = LCD_WIDTH;
 static constexpr int LCD_H = LCD_HEIGHT;
 static constexpr int LCD_PCLK_HZ = 16000000;
+
 static constexpr uint32_t I2C_SPEED_HZ = 400000;
 static constexpr uint32_t TOUCH_POLL_INTERVAL_MS = 15;
 static constexpr uint32_t TOUCH_LOG_INTERVAL_MS = 100;
+static constexpr uint32_t TOUCH_DRAW_INTERVAL_MS = 80;
 static constexpr uint32_t UI_STATUS_INTERVAL_MS = 1000;
+static constexpr uint32_t BUTTON_DEBOUNCE_MS = 350;
 
 static constexpr uint16_t GT911_STATUS_REG = 0x814E;
 static constexpr uint16_t GT911_POINT_REG = 0x814F;
@@ -85,6 +87,21 @@ static constexpr uint16_t COLOR_MAGENTA = 0xF81F;
 static constexpr uint16_t COLOR_GRAY = 0x8410;
 static constexpr uint16_t COLOR_DARKGREY = 0x7BEF;
 
+static constexpr int BTN_BACKLIGHT_X = 40;
+static constexpr int BTN_BACKLIGHT_Y = 390;
+static constexpr int BTN_BACKLIGHT_W = 190;
+static constexpr int BTN_BACKLIGHT_H = 54;
+
+static constexpr int BTN_CLEAR_X = 260;
+static constexpr int BTN_CLEAR_Y = 390;
+static constexpr int BTN_CLEAR_W = 190;
+static constexpr int BTN_CLEAR_H = 54;
+
+static constexpr int BTN_REPORT_X = 480;
+static constexpr int BTN_REPORT_Y = 390;
+static constexpr int BTN_REPORT_W = 190;
+static constexpr int BTN_REPORT_H = 54;
+
 static uint16_t rgb565(uint8_t r, uint8_t g, uint8_t b) {
   return static_cast<uint16_t>(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
 }
@@ -110,40 +127,27 @@ static Arduino_RGB_Display *gfx = new Arduino_RGB_Display(
   true /* auto_flush */
 );
 
-struct TouchSample {
-  uint8_t status;
-  uint8_t points;
-  uint8_t trackId;
-  uint16_t rawX;
-  uint16_t rawY;
-  uint16_t size;
-  int screenX;
-  int screenY;
-};
-
-struct Button {
-  int x;
-  int y;
-  int w;
-  int h;
-  const char *label;
-};
-
-static const Button BTN_BACKLIGHT = {40, 390, 190, 54, "BACKLIGHT"};
-static const Button BTN_CLEAR = {260, 390, 190, 54, "CLEAR"};
-static const Button BTN_REPORT = {480, 390, 190, 54, "REPORT"};
-
 static uint8_t touchAddr = 0;
 static bool backlightOn = true;
+static bool lastTouchDown = false;
 static uint32_t touchEvents = 0;
 static uint32_t lastTouchPoll = 0;
 static uint32_t lastTouchLog = 0;
+static uint32_t lastTouchDraw = 0;
 static uint32_t lastStatusUpdate = 0;
+static uint32_t lastButtonMs = 0;
 static int lastMarkerX = -1;
 static int lastMarkerY = -1;
-static bool lastTouchDown = false;
-static uint32_t lastButtonMs = 0;
-static char lastAction[64] = "Console started";
+static char lastAction[80] = "Console started";
+
+static uint8_t curStatus = 0;
+static uint8_t curPoints = 0;
+static uint8_t curTrackId = 0;
+static uint16_t curRawX = 0;
+static uint16_t curRawY = 0;
+static uint16_t curSize = 0;
+static int curScreenX = 0;
+static int curScreenY = 0;
 
 static uint16_t le16(const uint8_t *data) {
   return static_cast<uint16_t>(data[0]) | (static_cast<uint16_t>(data[1]) << 8);
@@ -205,6 +209,19 @@ static void gt911Reset() {
   delay(120);
 }
 
+static String scanI2C() {
+  String found;
+  for (uint8_t addr = 1; addr < 127; ++addr) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      char tmp[8];
+      snprintf(tmp, sizeof(tmp), "0x%02X ", addr);
+      found += tmp;
+    }
+  }
+  return found.length() ? found : String("none");
+}
+
 static uint8_t findGT911() {
   const uint8_t candidates[] = {TOUCH_GT911_ADDR, TOUCH_GT911_ADDR_ALT};
   uint8_t id[4] = {};
@@ -220,19 +237,6 @@ static uint8_t findGT911() {
     }
   }
   return 0;
-}
-
-static String scanI2C() {
-  String found;
-  for (uint8_t addr = 1; addr < 127; ++addr) {
-    Wire.beginTransmission(addr);
-    if (Wire.endTransmission() == 0) {
-      char tmp[8];
-      snprintf(tmp, sizeof(tmp), "0x%02X ", addr);
-      found += tmp;
-    }
-  }
-  return found.length() ? found : String("none");
 }
 
 static void printGt911Info() {
@@ -268,7 +272,7 @@ static int mapTouchY(int rawX, int rawY) {
   return constrain(mapped, 0, LCD_H - 1);
 }
 
-static bool readTouch(TouchSample &touch) {
+static bool readTouchCurrent() {
   if (touchAddr == 0) {
     return false;
   }
@@ -300,34 +304,43 @@ static bool readTouch(TouchSample &touch) {
     return false;
   }
 
-  touch.status = status;
-  touch.points = points;
-  touch.trackId = data[0];
-  touch.rawX = le16(&data[1]);
-  touch.rawY = le16(&data[3]);
-  touch.size = le16(&data[5]);
-  touch.screenX = mapTouchX(touch.rawX, touch.rawY);
-  touch.screenY = mapTouchY(touch.rawX, touch.rawY);
+  curStatus = status;
+  curPoints = points;
+  curTrackId = data[0];
+  curRawX = le16(&data[1]);
+  curRawY = le16(&data[3]);
+  curSize = le16(&data[5]);
+  curScreenX = mapTouchX(curRawX, curRawY);
+  curScreenY = mapTouchY(curRawX, curRawY);
   return true;
 }
 
-static bool insideButton(const Button &button, int x, int y) {
-  return (x >= button.x) && (x < button.x + button.w) &&
-         (y >= button.y) && (y < button.y + button.h);
+static bool insideRect(int bx, int by, int bw, int bh, int x, int y) {
+  return (x >= bx) && (x < bx + bw) && (y >= by) && (y < by + bh);
 }
 
-static void drawButton(const Button &button, uint16_t color, const char *value) {
-  gfx->fillRect(button.x, button.y, button.w, button.h, rgb565(20, 26, 34));
-  gfx->drawRect(button.x, button.y, button.w, button.h, color);
-  gfx->drawRect(button.x + 1, button.y + 1, button.w - 2, button.h - 2, color);
+static void drawButtonRect(int x, int y, int w, int h, const char *label, uint16_t color, const char *value) {
+  const uint16_t bg = rgb565(20, 26, 34);
+  gfx->fillRect(x, y, w, h, bg);
+  gfx->drawRect(x, y, w, h, color);
+  gfx->drawRect(x + 1, y + 1, w - 2, h - 2, color);
   gfx->setTextSize(2);
-  gfx->setTextColor(color, rgb565(20, 26, 34));
-  gfx->setCursor(button.x + 14, button.y + 10);
-  gfx->print(button.label);
+  gfx->setTextColor(color, bg);
+  gfx->setCursor(x + 14, y + 10);
+  gfx->print(label);
   gfx->setTextSize(1);
-  gfx->setTextColor(COLOR_WHITE, rgb565(20, 26, 34));
-  gfx->setCursor(button.x + 14, button.y + 36);
+  gfx->setTextColor(COLOR_WHITE, bg);
+  gfx->setCursor(x + 14, y + 36);
   gfx->print(value);
+}
+
+static void drawButtons() {
+  drawButtonRect(BTN_BACKLIGHT_X, BTN_BACKLIGHT_Y, BTN_BACKLIGHT_W, BTN_BACKLIGHT_H,
+                 "BACKLIGHT", backlightOn ? COLOR_GREEN : COLOR_RED, backlightOn ? "ON" : "OFF");
+  drawButtonRect(BTN_CLEAR_X, BTN_CLEAR_Y, BTN_CLEAR_W, BTN_CLEAR_H,
+                 "CLEAR", COLOR_YELLOW, "reset touch count");
+  drawButtonRect(BTN_REPORT_X, BTN_REPORT_Y, BTN_REPORT_W, BTN_REPORT_H,
+                 "REPORT", COLOR_CYAN, "print serial report");
 }
 
 static void drawStaticConsole() {
@@ -375,123 +388,138 @@ static void drawStaticConsole() {
   gfx->setCursor(440, 128);
   gfx->printf("I2C SDA/SCL: %d/%d", TOUCH_SDA, TOUCH_SCL);
   gfx->setCursor(440, 150);
-  gfx->printf("GT911 addr: %s", touchAddr ? "active" : "not found");
+  gfx->printf("GT911 addr: %s", touchAddr ? "detected" : "not found");
   gfx->setCursor(440, 172);
-  gfx->print("Point register: 0x814F");
+  if (touchAddr) {
+    gfx->printf("Active: 0x%02X, point reg 0x814F", touchAddr);
+  } else {
+    gfx->print("Active: none");
+  }
   gfx->setCursor(440, 194);
-  gfx->print("Touch screen to test marker/buttons");
+  gfx->print("Touch area below, buttons at bottom");
 
-  gfx->fillRect(20, 252, 750, 118, rgb565(8, 13, 18));
+  gfx->fillRect(20, 252, 750, 118, rgb565(5, 10, 16));
   gfx->drawRect(20, 252, 750, 118, COLOR_DARKGREY);
+  gfx->setTextColor(COLOR_GRAY, rgb565(5, 10, 16));
   gfx->setTextSize(1);
-  gfx->setTextColor(COLOR_GRAY, rgb565(8, 13, 18));
-  for (int x = 40; x < 760; x += 40) {
-    gfx->drawFastVLine(x, 253, 116, rgb565(30, 42, 52));
-  }
-  for (int y = 272; y < 368; y += 24) {
-    gfx->drawFastHLine(21, y, 748, rgb565(30, 42, 52));
-  }
-  gfx->setCursor(34, 262);
-  gfx->print("touch area / live marker");
+  gfx->setCursor(34, 266);
+  gfx->print("Live touch zone. Red marker follows mapped GT911 coordinates.");
 
-  drawButton(BTN_BACKLIGHT, COLOR_YELLOW, backlightOn ? "tap: turn OFF" : "tap: turn ON");
-  drawButton(BTN_CLEAR, COLOR_CYAN, "tap: reset counter");
-  drawButton(BTN_REPORT, COLOR_GREEN, "tap: print serial");
+  for (int x = 40; x < 760; x += 40) {
+    gfx->drawFastVLine(x, 292, 64, rgb565(25, 35, 48));
+  }
+  for (int y = 292; y < 360; y += 20) {
+    gfx->drawFastHLine(32, y, 720, rgb565(25, 35, 48));
+  }
+
+  drawButtons();
 }
 
-static void drawStatusLine(const TouchSample *touch) {
-  gfx->fillRect(20, 454, 760, 22, COLOR_BLACK);
-  gfx->setTextColor(COLOR_WHITE, COLOR_BLACK);
+static void drawStatusLine(bool haveTouch) {
+  gfx->fillRect(0, 456, LCD_W, 24, rgb565(18, 24, 31));
   gfx->setTextSize(1);
-  gfx->setCursor(24, 461);
+  gfx->setTextColor(COLOR_WHITE, rgb565(18, 24, 31));
+  gfx->setCursor(12, 464);
 
-  if (touch) {
-    gfx->printf("touch#%lu raw=(%u,%u) screen=(%d,%d) size=%u bl=%s heap=%lu action=%s",
+  if (haveTouch) {
+    gfx->printf("touch=%lu raw=(%u,%u) screen=(%d,%d) bl=%s action=%s",
                 static_cast<unsigned long>(touchEvents),
-                touch->rawX,
-                touch->rawY,
-                touch->screenX,
-                touch->screenY,
-                touch->size,
+                curRawX,
+                curRawY,
+                curScreenX,
+                curScreenY,
                 backlightOn ? "ON" : "OFF",
-                static_cast<unsigned long>(ESP.getFreeHeap()),
                 lastAction);
   } else {
-    gfx->printf("touch#%lu gt911=%s bl=%s heap=%lu psram_free=%lu action=%s",
+    gfx->printf("touch=%lu waiting... bl=%s action=%s heap=%lu",
                 static_cast<unsigned long>(touchEvents),
-                touchAddr ? "OK" : "NO",
                 backlightOn ? "ON" : "OFF",
-                static_cast<unsigned long>(ESP.getFreeHeap()),
-                static_cast<unsigned long>(ESP.getFreePsram()),
-                lastAction);
+                lastAction,
+                static_cast<unsigned long>(ESP.getFreeHeap()));
   }
 }
 
-static void drawTouchMarker(int x, int y) {
-  // Keep the marker mostly in the live touch area to avoid destroying buttons.
-  const int drawX = constrain(x, 24, LCD_W - 25);
-  const int drawY = constrain(y, 56, LCD_H - 30);
-
+static void drawTouchMarker() {
   if (lastMarkerX >= 0 && lastMarkerY >= 0) {
-    gfx->drawCircle(lastMarkerX, lastMarkerY, 15, COLOR_GRAY);
-    gfx->drawFastHLine(lastMarkerX - 20, lastMarkerY, 41, COLOR_GRAY);
-    gfx->drawFastVLine(lastMarkerX, lastMarkerY - 20, 41, COLOR_GRAY);
+    gfx->drawCircle(lastMarkerX, lastMarkerY, 14, COLOR_GRAY);
+    gfx->drawFastHLine(lastMarkerX - 18, lastMarkerY, 37, COLOR_GRAY);
+    gfx->drawFastVLine(lastMarkerX, lastMarkerY - 18, 37, COLOR_GRAY);
   }
 
-  gfx->drawCircle(drawX, drawY, 16, COLOR_RED);
-  gfx->drawFastHLine(drawX - 22, drawY, 45, COLOR_RED);
-  gfx->drawFastVLine(drawX, drawY - 22, 45, COLOR_RED);
-  lastMarkerX = drawX;
-  lastMarkerY = drawY;
+  gfx->drawCircle(curScreenX, curScreenY, 16, COLOR_RED);
+  gfx->drawCircle(curScreenX, curScreenY, 17, COLOR_RED);
+  gfx->drawFastHLine(curScreenX - 24, curScreenY, 49, COLOR_RED);
+  gfx->drawFastVLine(curScreenX, curScreenY - 24, 49, COLOR_RED);
+
+  lastMarkerX = curScreenX;
+  lastMarkerY = curScreenY;
 }
 
-static void printReport(const TouchSample *touch) {
-  Serial.println("[TEST CONSOLE REPORT]");
-  Serial.printf("Uptime ms        : %lu\n", static_cast<unsigned long>(millis()));
-  Serial.printf("Chip             : %s rev %d\n", ESP.getChipModel(), ESP.getChipRevision());
-  Serial.printf("CPU MHz          : %u\n", ESP.getCpuFreqMHz());
-  Serial.printf("Flash bytes      : %lu\n", static_cast<unsigned long>(ESP.getFlashChipSize()));
-  Serial.printf("PSRAM bytes      : %lu\n", static_cast<unsigned long>(ESP.getPsramSize()));
-  Serial.printf("Free heap        : %lu\n", static_cast<unsigned long>(ESP.getFreeHeap()));
-  Serial.printf("Free PSRAM       : %lu\n", static_cast<unsigned long>(ESP.getFreePsram()));
-  Serial.printf("Backlight GPIO2  : %s\n", backlightOn ? "ON" : "OFF");
-  Serial.printf("GT911 address    : %s\n", touchAddr ? "active" : "not found");
+static void clearTouchCounter() {
+  touchEvents = 0;
+  lastMarkerX = -1;
+  lastMarkerY = -1;
+  snprintf(lastAction, sizeof(lastAction), "touch counter cleared");
+
+  gfx->fillRect(20, 252, 750, 118, rgb565(5, 10, 16));
+  gfx->drawRect(20, 252, 750, 118, COLOR_DARKGREY);
+  gfx->setTextColor(COLOR_GRAY, rgb565(5, 10, 16));
+  gfx->setTextSize(1);
+  gfx->setCursor(34, 266);
+  gfx->print("Live touch zone cleared.");
+}
+
+static void printReport(bool haveTouch) {
+  Serial.println("----------------------------------------------------------------");
+  Serial.println("05_TestConsole REPORT");
+  Serial.printf("Chip              : %s rev %d, %u MHz\n", ESP.getChipModel(), ESP.getChipRevision(), ESP.getCpuFreqMHz());
+  Serial.printf("Flash             : %lu bytes\n", static_cast<unsigned long>(ESP.getFlashChipSize()));
+  Serial.printf("PSRAM             : %lu bytes\n", static_cast<unsigned long>(ESP.getPsramSize()));
+  Serial.printf("Free heap         : %lu bytes\n", static_cast<unsigned long>(ESP.getFreeHeap()));
+  Serial.printf("Backlight         : GPIO%d %s\n", BACKLIGHT, backlightOn ? "ON" : "OFF");
+  Serial.printf("GT911             : %s", touchAddr ? "DETECTED" : "NOT DETECTED");
   if (touchAddr) {
-    Serial.printf("GT911 address hex: 0x%02X\n", touchAddr);
+    Serial.printf(" at 0x%02X", touchAddr);
   }
-  Serial.printf("Touch events     : %lu\n", static_cast<unsigned long>(touchEvents));
-  if (touch) {
-    Serial.printf("Last touch       : raw=(%u,%u) screen=(%d,%d) size=%u track=%u\n",
-                  touch->rawX, touch->rawY, touch->screenX, touch->screenY, touch->size, touch->trackId);
+  Serial.println();
+  Serial.printf("Touch events      : %lu\n", static_cast<unsigned long>(touchEvents));
+  if (haveTouch) {
+    Serial.printf("Last touch        : status=0x%02X points=%u track=%u raw=(%u,%u) screen=(%d,%d) size=%u\n",
+                  curStatus,
+                  curPoints,
+                  curTrackId,
+                  curRawX,
+                  curRawY,
+                  curScreenX,
+                  curScreenY,
+                  curSize);
   }
-  Serial.println("[/TEST CONSOLE REPORT]");
+  Serial.printf("Last action       : %s\n", lastAction);
+  Serial.println("----------------------------------------------------------------");
 }
 
-static void handleButtons(const TouchSample &touch) {
+static void handleButtons() {
   const uint32_t now = millis();
-  if (now - lastButtonMs < 450) {
+  if (now - lastButtonMs < BUTTON_DEBOUNCE_MS) {
     return;
   }
 
-  if (insideButton(BTN_BACKLIGHT, touch.screenX, touch.screenY)) {
-    lastButtonMs = now;
+  if (insideRect(BTN_BACKLIGHT_X, BTN_BACKLIGHT_Y, BTN_BACKLIGHT_W, BTN_BACKLIGHT_H, curScreenX, curScreenY)) {
     setBacklight(!backlightOn);
-    snprintf(lastAction, sizeof(lastAction), "Backlight %s", backlightOn ? "ON" : "OFF");
-    Serial.printf("Button: BACKLIGHT -> %s\n", backlightOn ? "ON" : "OFF");
-    drawButton(BTN_BACKLIGHT, COLOR_YELLOW, backlightOn ? "tap: turn OFF" : "tap: turn ON");
-  } else if (insideButton(BTN_CLEAR, touch.screenX, touch.screenY)) {
+    snprintf(lastAction, sizeof(lastAction), "backlight %s", backlightOn ? "ON" : "OFF");
+    Serial.printf("Button BACKLIGHT -> %s\n", backlightOn ? "ON" : "OFF");
+    drawButtons();
     lastButtonMs = now;
-    touchEvents = 0;
-    lastMarkerX = -1;
-    lastMarkerY = -1;
-    snprintf(lastAction, sizeof(lastAction), "Touch counter cleared");
-    Serial.println("Button: CLEAR -> touch counter reset");
-    drawStaticConsole();
-  } else if (insideButton(BTN_REPORT, touch.screenX, touch.screenY)) {
+  } else if (insideRect(BTN_CLEAR_X, BTN_CLEAR_Y, BTN_CLEAR_W, BTN_CLEAR_H, curScreenX, curScreenY)) {
+    clearTouchCounter();
+    Serial.println("Button CLEAR -> touch counter cleared");
+    drawButtons();
     lastButtonMs = now;
-    snprintf(lastAction, sizeof(lastAction), "Report printed");
-    Serial.println("Button: REPORT");
-    printReport(&touch);
+  } else if (insideRect(BTN_REPORT_X, BTN_REPORT_Y, BTN_REPORT_W, BTN_REPORT_H, curScreenX, curScreenY)) {
+    snprintf(lastAction, sizeof(lastAction), "serial report printed");
+    printReport(true);
+    drawButtons();
+    lastButtonMs = now;
   }
 }
 
@@ -503,15 +531,14 @@ void setup() {
   Serial.println();
   Serial.println("================================================================");
   Serial.println(" ESP32-8048S043 Lab / 05_TestConsole");
-  Serial.println(" Combined RGB + GT911 + Backlight diagnostic console");
+  Serial.println(" Combined RGB + GT911 + backlight diagnostic console");
   Serial.println("================================================================");
   Serial.println("Author : Alex Malachevsky");
   Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
-  Serial.println("Serial : 115200 baud");
+  Serial.println("Build  : Arduino IDE preprocessor-safe version, no struct function signatures");
   Serial.println("----------------------------------------------------------------");
 
   setBacklight(true);
-  delay(200);
 
   Serial.println("gfx->begin() start");
   const bool gfxOk = gfx->begin();
@@ -526,26 +553,30 @@ void setup() {
   Serial.printf("Wire.begin(SDA=%d, SCL=%d, speed=%lu)\n",
                 TOUCH_SDA, TOUCH_SCL, static_cast<unsigned long>(I2C_SPEED_HZ));
   Wire.begin(TOUCH_SDA, TOUCH_SCL, I2C_SPEED_HZ);
+
+  Serial.println("GT911 reset: RST38 toggle, INT18 passive pull-up, polling mode");
   gt911Reset();
   touchAddr = findGT911();
 
   Serial.print("I2C scan: ");
-  Serial.println(scanI2C());
-  if (touchAddr) {
+  const String devices = scanI2C();
+  Serial.println(devices);
+
+  if (touchAddr == 0) {
+    Serial.println("GT911: NOT DETECTED at 0x5D or 0x14");
+    snprintf(lastAction, sizeof(lastAction), "GT911 not detected");
+  } else {
     Serial.printf("Active GT911 address: 0x%02X\n", touchAddr);
     printGt911Info();
-    snprintf(lastAction, sizeof(lastAction), "GT911 0x%02X active", touchAddr);
-  } else {
-    Serial.println("GT911 not detected at 0x5D or 0x14");
-    snprintf(lastAction, sizeof(lastAction), "GT911 not detected");
+    snprintf(lastAction, sizeof(lastAction), "GT911 ready at 0x%02X", touchAddr);
   }
 
   drawStaticConsole();
-  drawStatusLine(nullptr);
+  drawStatusLine(false);
+  printReport(false);
 
   Serial.println("----------------------------------------------------------------");
-  Serial.println("Touch screen to move marker. Use buttons: BACKLIGHT / CLEAR / REPORT.");
-  Serial.println("PASS candidate when display + touch + backlight button work together.");
+  Serial.println("Touch the screen. Buttons: BACKLIGHT, CLEAR, REPORT.");
   Serial.println("================================================================");
 }
 
@@ -554,30 +585,37 @@ void loop() {
 
   if (now - lastTouchPoll >= TOUCH_POLL_INTERVAL_MS) {
     lastTouchPoll = now;
+    const bool haveTouch = readTouchCurrent();
 
-    TouchSample touch = {};
-    if (readTouch(touch)) {
-      const bool firstDown = !lastTouchDown;
+    if (haveTouch) {
+      const bool newPress = !lastTouchDown;
       lastTouchDown = true;
-      ++touchEvents;
+
+      if (newPress) {
+        ++touchEvents;
+      }
 
       if (now - lastTouchLog >= TOUCH_LOG_INTERVAL_MS) {
         lastTouchLog = now;
-        Serial.printf("Touch #%lu: track=%u raw_x=%u raw_y=%u screen_x=%d screen_y=%d size=%u\n",
+        Serial.printf("Touch #%lu: status=0x%02X points=%u track=%u raw=(%u,%u) screen=(%d,%d) size=%u\n",
                       static_cast<unsigned long>(touchEvents),
-                      touch.trackId,
-                      touch.rawX,
-                      touch.rawY,
-                      touch.screenX,
-                      touch.screenY,
-                      touch.size);
+                      curStatus,
+                      curPoints,
+                      curTrackId,
+                      curRawX,
+                      curRawY,
+                      curScreenX,
+                      curScreenY,
+                      curSize);
       }
 
-      if (firstDown || now - lastButtonMs > 450) {
-        handleButtons(touch);
+      handleButtons();
+
+      if (now - lastTouchDraw >= TOUCH_DRAW_INTERVAL_MS) {
+        lastTouchDraw = now;
+        drawTouchMarker();
+        drawStatusLine(true);
       }
-      drawTouchMarker(touch.screenX, touch.screenY);
-      drawStatusLine(&touch);
     } else {
       lastTouchDown = false;
     }
@@ -585,8 +623,8 @@ void loop() {
 
   if (now - lastStatusUpdate >= UI_STATUS_INTERVAL_MS) {
     lastStatusUpdate = now;
-    drawStatusLine(nullptr);
+    drawStatusLine(false);
   }
 
-  delay(4);
+  delay(3);
 }
