@@ -10,9 +10,11 @@ BSP API                 SKELETON / GROWING
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 04_BacklightTest        SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+05_TestConsole          SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST ADDED / PHYSICAL VALIDATION OPEN
+Combined console        RGB + GT911 + BACKLIGHT TEST ADDED / PHYSICAL VALIDATION OPEN
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -46,7 +48,7 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
-05_TestConsole          future combined diagnostic console
+05_TestConsole          combined RGB + GT911 + backlight diagnostic console
 09_LVGL_BasicUI        future
 10_LVGL_Dashboard      future
 13_RetroClock_800x480  future
@@ -224,6 +226,58 @@ PASS boundary:
 
 ```text
 PASS requires physical evidence that GPIO2 HIGH turns the backlight on, GPIO2 LOW turns it off, blink is visible, and no brownout/crash occurs. PWM dimming is a separate stronger PASS only if intermediate duty steps visibly change brightness.
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+```
+
+## 05_TestConsole
+
+Purpose:
+
+```text
+run RGB display, GT911 polling touch, backlight GPIO2 control and serial diagnostics together in one direct Arduino_GFX diagnostic console before LVGL
+```
+
+What it tests:
+
+- display initializes through `Arduino_GFX_Library`;
+- static 800x480 diagnostic console is drawn;
+- chip/flash/PSRAM/heap information is displayed;
+- I2C starts on SDA=19 / SCL=20;
+- GT911 candidate address is detected at 0x5D or 0x14;
+- touch point data from 0x814F is mapped to screen coordinates;
+- red marker follows touch input;
+- BACKLIGHT touch button toggles GPIO2;
+- CLEAR button resets the touch counter;
+- REPORT button prints a serial diagnostic report.
+
+Dependencies:
+
+```text
+Arduino_GFX_Library by moononournation
+Arduino Wire for I2C
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/05_TestConsole/05_TestConsole.ino
+```
+
+See also:
+
+```text
+libraries/ESP32_8048S043/examples/05_TestConsole/README.md
+```
+
+PASS boundary:
+
+```text
+PASS requires physical evidence that the diagnostic console is visible, GT911 touch moves the marker, the backlight button toggles GPIO2, CLEAR and REPORT work, and no brownout/crash occurs during observation.
 ```
 
 Current Sample A status:
