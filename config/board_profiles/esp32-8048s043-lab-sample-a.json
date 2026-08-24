@@ -1,0 +1,129 @@
+{
+  "schema": 2,
+  "profile_id": "esp32-8048s043-lab-sample-a",
+  "display_name": "ESP32-8048S043 Lab / Sample A / ESP32-S3 N16R8 / RGB 800x480 / GT911",
+  "status": "experimental-sample-a-profile",
+  "boundary": "Machine-readable lab profile. It documents the verified Sample A build assumptions, memory layout, display/touch/backlight/SD pin map and external-interface boundary. It is not yet a published Arduino Boards Manager package.",
+  "specimen": {
+    "id": "sample-a",
+    "project_status": "physical tests in progress",
+    "factory_dump_sha256": "3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C"
+  },
+  "soc": {
+    "family": "ESP32-S3",
+    "arduino_base_board": "ESP32S3 Dev Module",
+    "chip_revision_observed": "rev 2",
+    "cpu_frequency_mhz": 240,
+    "cores": 2,
+    "wireless": ["Wi-Fi", "BLE"],
+    "status": "observed by BoardInfo"
+  },
+  "memory": {
+    "flash": {
+      "size_bytes": 16777216,
+      "size_label": "16 MB / 128 Mb",
+      "mode": "QIO",
+      "speed": "80 MHz",
+      "status": "BoardInfo PASS and full factory dump captured"
+    },
+    "psram": {
+      "size_bytes": 8388608,
+      "size_label": "8 MB / 64 Mb",
+      "mode": "OPI PSRAM",
+      "status": "BoardInfo PASS after Arduino profile correction"
+    },
+    "factory_partition_table": {
+      "status": "factory dump analysis",
+      "offset": "0x00008000",
+      "entries": [
+        {"name": "nvs", "type": "data", "subtype": "nvs", "offset": "0x00009000", "size": "0x00005000"},
+        {"name": "otadata", "type": "data", "subtype": "ota", "offset": "0x0000E000", "size": "0x00002000"},
+        {"name": "app0", "type": "app", "subtype": "ota_0", "offset": "0x00010000", "size": "0x00140000"},
+        {"name": "app1", "type": "app", "subtype": "ota_1", "offset": "0x00150000", "size": "0x00140000"},
+        {"name": "spiffs", "type": "data", "subtype": "spiffs", "offset": "0x00290000", "size": "0x00170000"}
+      ]
+    },
+    "arduino_lab_profile": {
+      "board": "ESP32S3 Dev Module until custom board package is promoted",
+      "flash_size_menu": "16MB (128Mb)",
+      "flash_mode_menu": "QIO 80MHz",
+      "psram_menu": "OPI PSRAM",
+      "partition_menu": "16M Flash (3MB APP/9.9MB FATFS)",
+      "upload_speed_preferred": 921600,
+      "upload_speed_fallback": 460800,
+      "serial_monitor_baud": 115200,
+      "usb_cdc_on_boot": "Disabled for CH340/USB-UART workflow",
+      "usb_mode": "Hardware CDC and JTAG"
+    }
+  },
+  "display": {
+    "interface": "RGB/DPI parallel",
+    "resolution": {"width": 800, "height": 480},
+    "timing_known_good": {
+      "pclk_hz": 16000000,
+      "hsync": {"polarity": 0, "front_porch": 8, "pulse_width": 4, "back_porch": 16},
+      "vsync": {"polarity": 0, "front_porch": 4, "pulse_width": 4, "back_porch": 4},
+      "pclk_active_neg": 1,
+      "de_idle_high": 0,
+      "pclk_idle_high": 1
+    },
+    "pins": {
+      "de": 40,
+      "vsync": 41,
+      "hsync": 39,
+      "pclk": 42,
+      "r": [45, 48, 47, 21, 14],
+      "g": [5, 6, 7, 15, 16, 4],
+      "b": [8, 3, 46, 9, 1]
+    },
+    "status": "own Arduino_GFX RGB display visual PASS on Sample A"
+  },
+  "backlight": {
+    "pin": 2,
+    "default_state": "HIGH = ON",
+    "control": ["digital ON/OFF", "PWM/analogWrite characterization in progress"],
+    "status": "reported by user as working; evidence record pending"
+  },
+  "touch": {
+    "controller": "Goodix GT911",
+    "bus": "I2C",
+    "pins": {"sda": 19, "scl": 20, "reset": 38, "int": 18},
+    "addresses": ["0x5D", "0x14"],
+    "sample_a_active_address": "0x5D",
+    "registers": {"product_id": "0x8140", "status": "0x814E", "point_data": "0x814F"},
+    "product_id_observed": "911",
+    "status": "own GT911 polling visual PASS on Sample A"
+  },
+  "storage": {
+    "tf1_microsd": {
+      "bus": "SPI",
+      "pins": {"cs": 10, "mosi": 11, "clk": 12, "miso": 13},
+      "status": "source-backed pin map, physical SD test open"
+    }
+  },
+  "external_interface_contour": {
+    "status": "first-pass lab boundary; connector-by-connector continuity still open",
+    "known_user_visible_interfaces": [
+      {"name": "USB-UART", "device": "CH340C", "purpose": "upload and serial monitor", "status": "source-backed / workflow used"},
+      {"name": "TF1 / microSD", "bus": "SPI", "pins": [10, 11, 12, 13], "status": "source-backed / physical test open"},
+      {"name": "RGB LCD FPC", "bus": "RGB/DPI", "purpose": "built-in 800x480 display", "status": "own display PASS"},
+      {"name": "Capacitive touch FPC", "bus": "I2C GT911", "pins": [19, 20, 38, 18], "status": "own touch PASS"}
+    ],
+    "not_yet_mapped": [
+      "all exposed solder pads / side connectors",
+      "optional UART/I2C/GPIO breakout pins if present on this PCB revision",
+      "power-domain limits for external loads"
+    ]
+  },
+  "compile_macros_target": {
+    "intended": [
+      "ARDUINO_ESP32_8048S043_LAB",
+      "ESP32_8048S043_HAS_RGB_PANEL=1",
+      "ESP32_8048S043_HAS_GT911=1",
+      "ESP32_8048S043_LCD_WIDTH=800",
+      "ESP32_8048S043_LCD_HEIGHT=480",
+      "ESP32_8048S043_TOUCH_GT911=1"
+    ],
+    "status": "to be wired into experimental Arduino board profile later"
+  }
+}
