@@ -20,7 +20,8 @@ FACTORY LVGL DISPLAY        PASS
 TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS + OWN GT911 VISUAL PASS
 DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
 GT911 / GOODIX IDENTITY     OWN I2C POLLING TEST PASS / 0x5D / PRODUCT ID 911
-BSP LIBRARY                 SKELETON / 01-03 PHYSICAL PASS
+ARDUINO BOARD PROFILE       DESIGN / SAMPLE A METADATA ADDED / INSTALLER OPEN
+BSP LIBRARY                 SKELETON / 01-05 IMPLEMENTED / 01-03 PHYSICAL PASS
 WEB FLASHER                 SKELETON
 PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH
 ```
@@ -144,6 +145,36 @@ Boundary:
 This PASS confirms the own low-level GT911/I2C touch path and basic visual marker movement. Final LVGL touch integration, calibration, rotation and gestures remain separate tests.
 ```
 
+## Experimental Arduino board profile baseline
+
+The project now has a separate board-profile layer in addition to the runtime Arduino library.
+
+Machine-readable Sample A profile:
+
+```text
+config/board_profiles/esp32-8048s043-lab-sample-a.json
+```
+
+Human-readable design note:
+
+```text
+docs/arduino-board-profile.md
+```
+
+Experimental Arduino IDE kit staging area:
+
+```text
+boards/arduino-ide/esp32-8048s043-lab/
+```
+
+Current boundary:
+
+```text
+The board-profile layer documents ESP32-S3 core assumptions, 16 MB flash, 8 MB OPI PSRAM, the factory partition layout, the working Arduino IDE menu profile, compile-time macro targets and the external interface contour.
+
+It is not yet a supported Arduino Boards Manager package. Until compile/upload evidence exists for the custom target, continue using ESP32S3 Dev Module with the documented Sample A settings.
+```
+
 ## Source-backed hardware baseline
 
 Manufacturer/distributor documentation and a same-layout board reference now provide a source-backed reconstruction for the main hardware map:
@@ -191,7 +222,7 @@ Important: board labels, sellers and OEM revisions may differ. Treat every new b
 
 1. **Identify before flashing.** First capture photos, chip identity, flash size, PSRAM and the factory firmware dump.
 2. **Separate reported from verified.** Vendor/community pin maps live in docs until tested.
-3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> LVGL -> Web/OTA.
+3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> console -> board profile -> LVGL -> Web/OTA.
 4. **No hidden negative branches.** Failed experiments may be kept as history, but current README status must reflect the current validated result.
 5. **No PASS without evidence.** A working video/log/photo must name the specimen and firmware.
 
@@ -202,10 +233,12 @@ Important: board labels, sellers and OEM revisions may differ. Treat every new b
 - [`docs/firmware/README.md`](docs/firmware/README.md) — factory and third-party firmware preservation/analysis rules.
 - [`docs/firmware/reproducible-factory-dump-and-analysis.md`](docs/firmware/reproducible-factory-dump-and-analysis.md) — reader-facing reproduction guide for factory dump and analysis.
 - [`docs/pinout.md`](docs/pinout.md) — source-backed and future verified pin map.
+- [`docs/arduino-board-profile.md`](docs/arduino-board-profile.md) — experimental Arduino board-profile layer.
 - [`docs/videos.md`](docs/videos.md) — shooting plan and evidence links.
 - [`docs/third-party/README.md`](docs/third-party/README.md) — reference projects and firmware to study without copying blindly.
 - [`evidence/specimens/sample-a/README.md`](evidence/specimens/sample-a/README.md) — first specimen evidence folder.
 - [`libraries/ESP32_8048S043/README.md`](libraries/ESP32_8048S043/README.md) — Arduino BSP skeleton and example plan.
+- [`config/board_profiles/esp32-8048s043-lab-sample-a.json`](config/board_profiles/esp32-8048s043-lab-sample-a.json) — machine-readable Sample A board profile.
 
 ## Planned architecture
 
@@ -217,6 +250,8 @@ USB / browser first lab install
 Arduino BSP for verified board profile
         ↓
 RGB display + GT911 touch + backlight
+        ↓
+Experimental Arduino board profile
         ↓
 LVGL local HMI shell
         ↓
@@ -230,6 +265,7 @@ Widget runtime and GitHub OTA only after stable partition layout
 ```text
 ESP32-8048S043-lab/
 ├── .github/                 # issue templates and CI workflows
+├── boards/                  # experimental Arduino IDE / future board package files
 ├── config/board_profiles/   # machine-readable board/specimen profiles
 ├── docs/                    # hardware, software, firmware, variants, research, videos
 ├── evidence/                # named specimen evidence only
