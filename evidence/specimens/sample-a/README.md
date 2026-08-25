@@ -161,6 +161,38 @@ Video evidence:
 https://youtube.com/shorts/_zhtl-AWcCE
 ```
 
+## Arduino Wi-Fi scan evidence
+
+`06_WiFiTest` was run in scan-only mode without `wifi_secrets.h`.
+
+Current result:
+
+```text
+Mode                 : scan-only, no local credentials loaded
+STA MAC              : PASS, 84:FC:E6:6C:69:3C
+Active scan          : PASS, 3 network(s) found
+Infrastructure tests : PENDING, no association/DHCP/DNS/TCP/reconnect yet
+Overall 06_WiFiTest  : WIFI RADIO SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/DOus0uNBBZI
+```
+
+Boundary:
+
+```text
+This PASS candidate confirms Wi-Fi radio scan only. Full Wi-Fi PASS requires a later run with local wifi_secrets.h and successful association, DHCP, DNS, TCP/HTTP and reconnect cycles.
+```
+
 ## Source-backed hardware map
 
 Source-backed map recovered from `hardware/SCHEMATIC_BOM_RESEARCH.md` and now mirrored in `docs/pinout.md`:
@@ -202,6 +234,7 @@ evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
 evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
 evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
+evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
 hardware/SCHEMATIC_BOM_RESEARCH.md
 docs/pinout.md
 docs/videos.md
@@ -228,7 +261,7 @@ Do not commit factory `.bin` dumps.
 | HW-03 | GT911 touch | PHYSICAL VISUAL PASS / 0x5D / PRODUCT ID 911 / OWN POLLING TEST PASS |
 | HW-04 | Backlight | BASIC ON PASS VIA DISPLAY TEST / DEDICATED PWM TEST OPEN |
 | HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
-| HW-06 | Wi-Fi / BLE | OPEN |
+| HW-06 | Wi-Fi / BLE | WIFI SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING / BLE OPEN |
 | SW-01 | Arduino BSP BoardInfo | PASS |
 | SW-01A | Local Arduino board profile | PASS CANDIDATE / SAMPLE A / 01_BOARDINFO |
 | SW-02 | LVGL basic UI | OPEN |
