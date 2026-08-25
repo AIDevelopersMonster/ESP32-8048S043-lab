@@ -69,15 +69,25 @@ The sketch now prints:
 
 ## Current Sample A known-good result
 
-A known-good reference run has already shown:
+A known-good ESP32S3 Dev Module + OPI PSRAM reference run has shown:
 
 ```text
-Chip                    : ESP32-S3 rev 2, 2 cores, 240 MHz
-Flash size              : 16777216 bytes / 16 MB
-Flash mode / speed      : QIO / 80 MHz
-PSRAM                   : 8388608 bytes / 8 MB
-Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : ALIVE lines observed with freePsram available
+ARDUINO_BOARD               : "ESP32S3_DEV"
+ARDUINO_VARIANT             : "esp32s3"
+CONFIG_IDF_TARGET_ESP32S3   : 1
+BOARD_HAS_PSRAM             : defined
+CONFIG_SPIRAM               : 1
+CONFIG_SPIRAM_MODE_OCT      : 1
+CONFIG_SPIRAM_MODE_QUAD     : not defined
+
+Chip                        : ESP32-S3 rev 2, 2 cores, 240 MHz
+Flash size                  : 16777216 bytes / 16 MB
+Flash mode / speed          : QIO / 80 MHz
+PSRAM                       : 8388608 bytes / 8 MB
+psramFound()                : true
+IDF SPIRAM total            : 8388608 bytes / 8 MB
+Running partition           : app0, address 0x010000, size 3145728
+Runtime stability           : ALIVE lines observed with freePsram available up to at least 840 seconds
 ```
 
 Commit-safe evidence:
@@ -85,6 +95,7 @@ Commit-safe evidence:
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
+evidence/specimens/sample-a/arduino/01-boardinfo-esp32s3-devmodule-opi-reference-20260825.md
 ```
 
 ## Debug workflow for PSRAM/profile parity
