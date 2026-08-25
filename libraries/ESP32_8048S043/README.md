@@ -9,14 +9,16 @@ BSP API                 SKELETON / GROWING
 01_BoardInfo            PHYSICAL PASS / SAMPLE A
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
-04_BacklightTest        SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
-05_TestConsole          SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
+05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
+06_WiFiTest             SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
-Backlight driver        DIGITAL/PWM TEST ADDED / PHYSICAL VALIDATION OPEN
-Combined console        RGB + GT911 + BACKLIGHT TEST ADDED / PHYSICAL VALIDATION OPEN
+Backlight driver        DIGITAL/PWM TEST REPORTED PASS
+Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
+Wi-Fi radio             SERIAL SCAN/INFRASTRUCTURE TEST ADDED / PHYSICAL VALIDATION OPEN
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -24,8 +26,9 @@ Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH +
 Recommended working profile for the examples in this library on Sample A:
 
 ```text
-Board package : esp32 by Espressif Systems
-Board         : ESP32S3 Dev Module
+Board package : local sketchbook hardware profile
+Board         : ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+FQBN          : AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
 Port          : CH340 / USB-SERIAL port of the board
 Upload Speed  : 921600 if stable; 460800 fallback
 CPU Frequency : 240MHz (WiFi)
@@ -39,7 +42,13 @@ Core Debug    : None
 Serial Monitor: 115200 baud
 ```
 
-Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3 target, 16 MB flash, 8 MB/OPI PSRAM enabled, external UART upload through CH340C, serial monitor at 115200.
+Local platform setup guide:
+
+```text
+boards/arduino-ide/esp32-8048s043-lab/LOCAL_PLATFORM_SETUP.md
+```
+
+Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB flash / OPI PSRAM / 3 MB app profile.
 
 ## Example plan
 
@@ -49,11 +58,14 @@ Menu names differ between ESP32 Arduino core versions. Keep the intent: ESP32-S3
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          combined RGB + GT911 + backlight diagnostic console
-09_LVGL_BasicUI        future
-10_LVGL_Dashboard      future
-13_RetroClock_800x480  future
-14_WidgetLoader        future
-15_GitHubOTA           future
+06_WiFiTest             Wi-Fi scan + optional association/DHCP/DNS/TCP/reconnect test
+07_BLETest              future
+08_SDCardTest           future
+09_LVGL_BasicUI         future
+10_LVGL_Dashboard       future
+13_RetroClock_800x480   future
+20_LVGL_GitHubOTA       future
+21_LVGL_WidgetLoader    future
 ```
 
 ## 01_BoardInfo
@@ -62,19 +74,6 @@ Purpose:
 
 ```text
 verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash and 8 MB PSRAM
-```
-
-Open:
-
-```text
-libraries/ESP32_8048S043/examples/01_BoardInfo/01_BoardInfo.ino
-```
-
-See also:
-
-```text
-libraries/ESP32_8048S043/examples/01_BoardInfo/README.md
-evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
 ```
 
 PASS boundary:
@@ -99,30 +98,13 @@ validate the source-backed ESP32-8048S043 RGB GPIO map with our own minimal Ardu
 
 What it tests:
 
-- RGB panel bring-up through `Arduino_GFX_Library`;
-- backlight GPIO 2 full ON;
-- full-screen red/green/blue/white/black;
-- orientation frame with corner markers;
-- RGB color-bar pattern;
-- stripe pattern for data-line sanity.
-
-Dependency:
-
 ```text
-Arduino_GFX_Library by moononournation
-```
-
-See also:
-
-```text
-libraries/ESP32_8048S043/examples/02_DisplayRGBTest/README.md
-evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
-```
-
-PASS boundary:
-
-```text
-PASS requires physical photo/video evidence from a named specimen showing correct colors, orientation, color bars, stripe pattern and stable serial sequence.
+Arduino_GFX RGB panel bring-up;
+backlight GPIO2 full ON;
+red / green / blue / white / black screens;
+landscape 800x480 orientation frame;
+RGB color bars;
+stripe/data-line sanity pattern.
 ```
 
 Current Sample A status:
@@ -141,42 +123,16 @@ validate the GT911 capacitive touch path with our own visual Arduino sketch usin
 
 What it tests:
 
-- display initializes through `Arduino_GFX_Library`;
-- static 800x480 test screen is drawn;
-- I2C starts on SDA=19 / SCL=20;
-- I2C scan finds connected devices;
-- GT911 candidate address is detected at 0x5D or 0x14;
-- Product ID register at 0x8140 is readable;
-- firmware/resolution registers are read where available;
-- touch status register 0x814E is readable;
-- touch point data starts at 0x814F;
-- touch points print to Serial Monitor;
-- touch points draw as a visible red marker on the 800x480 display.
-
-Dependencies:
-
 ```text
-Arduino_GFX_Library by moononournation
-Arduino Wire for I2C
-```
-
-Open:
-
-```text
-libraries/ESP32_8048S043/examples/03_TouchGT911Test/03_TouchGT911Test.ino
-```
-
-See also:
-
-```text
-libraries/ESP32_8048S043/examples/03_TouchGT911Test/README.md
-evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
-```
-
-PASS boundary:
-
-```text
-PASS requires visual evidence that touching the panel moves the red marker on the display, plus serial evidence that GT911 is found at 0x5D or 0x14 and raw/screen x/y coordinates change.
+Arduino_GFX display init;
+I2C on SDA=19 / SCL=20;
+GT911 address 0x5D or 0x14;
+Product ID register 0x8140;
+firmware/resolution registers;
+status register 0x814E;
+point data from 0x814F;
+serial raw/screen coordinates;
+visible red touch marker.
 ```
 
 Current Sample A status:
@@ -195,43 +151,19 @@ validate the ESP32-8048S043 backlight control path separately from RGB display a
 
 What it tests:
 
-- display initializes through `Arduino_GFX_Library`;
-- static 800x480 reference screen is drawn;
-- source-backed backlight pin GPIO2 is used;
-- GPIO2 HIGH / LOW behavior is tested;
-- visible blink sequence is tested;
-- PWM / `analogWrite()` duty steps are attempted;
-- serial output records every backlight stage.
-
-Dependencies:
-
 ```text
-Arduino_GFX_Library by moononournation
-Arduino analogWrite / LEDC backend
-```
-
-Open:
-
-```text
-libraries/ESP32_8048S043/examples/04_BacklightTest/04_BacklightTest.ino
-```
-
-See also:
-
-```text
-libraries/ESP32_8048S043/examples/04_BacklightTest/README.md
-```
-
-PASS boundary:
-
-```text
-PASS requires physical evidence that GPIO2 HIGH turns the backlight on, GPIO2 LOW turns it off, blink is visible, and no brownout/crash occurs. PWM dimming is a separate stronger PASS only if intermediate duty steps visibly change brightness.
+Arduino_GFX reference screen;
+source-backed backlight GPIO2;
+GPIO2 HIGH / LOW behavior;
+visible blink sequence;
+PWM / analogWrite duty steps;
+serial output for every backlight stage.
 ```
 
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+PHYSICAL PASS REPORTED / SAMPLE A
 ```
 
 ## 05_TestConsole
@@ -244,40 +176,67 @@ run RGB display, GT911 polling touch, backlight GPIO2 control and serial diagnos
 
 What it tests:
 
-- display initializes through `Arduino_GFX_Library`;
-- static 800x480 diagnostic console is drawn;
-- chip/flash/PSRAM/heap information is displayed;
-- I2C starts on SDA=19 / SCL=20;
-- GT911 candidate address is detected at 0x5D or 0x14;
-- touch point data from 0x814F is mapped to screen coordinates;
-- red marker follows touch input;
-- BACKLIGHT touch button toggles GPIO2;
-- CLEAR button resets the touch counter;
-- REPORT button prints a serial diagnostic report.
+```text
+Arduino_GFX diagnostic console;
+GT911 detection and touch point mapping;
+red marker follows touch;
+BACKLIGHT button toggles GPIO2;
+CLEAR button resets touch counter;
+REPORT button prints serial diagnostics;
+combined no-brownout/no-crash observation.
+```
 
-Dependencies:
+Current Sample A status:
 
 ```text
-Arduino_GFX_Library by moononournation
-Arduino Wire for I2C
+PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A
+```
+
+Boundary note:
+
+```text
+In one observed 05_TestConsole run, the console report printed PSRAM as 0 bytes while 01_BoardInfo under the same local board profile reported 8 MB PSRAM. Treat 01_BoardInfo as the current PSRAM acceptance test and 05_TestConsole as the combined RGB + GT911 + backlight integration test until the console memory report is rechecked.
+```
+
+## 06_WiFiTest
+
+Purpose:
+
+```text
+validate the ESP32-S3 Wi-Fi radio/network path before Web setup, GitHub OTA and Widget Runtime work
+```
+
+Lineage:
+
+```text
+adapted from WT32-SC01-PLUS-Lab / 08_WiFiTest pattern
+```
+
+What it tests:
+
+```text
+Wi-Fi STA mode;
+STA MAC readout;
+active scan;
+optional association;
+optional DHCP;
+optional DNS;
+optional TCP/HTTP HEAD request;
+optional disconnect/reconnect cycles.
 ```
 
 Open:
 
 ```text
-libraries/ESP32_8048S043/examples/05_TestConsole/05_TestConsole.ino
+libraries/ESP32_8048S043/examples/06_WiFiTest/06_WiFiTest.ino
 ```
 
-See also:
+Secrets workflow:
 
 ```text
-libraries/ESP32_8048S043/examples/05_TestConsole/README.md
-```
-
-PASS boundary:
-
-```text
-PASS requires physical evidence that the diagnostic console is visible, GT911 touch moves the marker, the backlight button toggles GPIO2, CLEAR and REPORT work, and no brownout/crash occurs during observation.
+copy wifi_secrets.example.h to wifi_secrets.h locally;
+fill WIFI_TEST_SSID / WIFI_TEST_PASSWORD;
+do not commit wifi_secrets.h.
 ```
 
 Current Sample A status:
