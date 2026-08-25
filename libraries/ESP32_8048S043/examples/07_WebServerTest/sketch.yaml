@@ -1,0 +1,10 @@
+profiles:
+  esp32_8048s043_lab_n16r8:
+    fqbn: AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+    notes: Local sketchbook hardware profile validated on Sample A.
+
+default_profile: esp32_8048s043_lab_n16r8
+
+requires:
+  - esp32 Arduino core WiFi
+  - esp32 Arduino core WebServer
