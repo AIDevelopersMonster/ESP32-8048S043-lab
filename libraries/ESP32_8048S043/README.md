@@ -6,21 +6,23 @@ Experimental Arduino BSP skeleton for ESP32-8048S043 / ESP32-8048S043C-I boards.
 
 ```text
 BSP API                 SKELETON / GROWING
-01_BoardInfo            PHYSICAL PASS / SAMPLE A
+01_BoardInfo            PHYSICAL PASS / SAMPLE A / PROFILE DIAGNOSTIC V2
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
 05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
 06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
-07_WebServerTest        SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT
+08_SDCardTest           SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
-HTTP server             SOURCE IMPLEMENTED / BROWSER VALIDATION OPEN
+HTTP server             BROWSER VALIDATION PASS CANDIDATE
+SD card                 SOURCE-BACKED PIN MAP / READ-ONLY TEST IMPLEMENTED
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FULL WIFI CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FULL WIFI CANDIDATE + WEB SERVER CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -55,15 +57,15 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 ## Example plan
 
 ```text
-01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE
+01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE/profile diagnostics
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          combined RGB + GT911 + backlight diagnostic console
 06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
-08_BLETest              future
-09_SDCardTest           future
+08_SDCardTest           read-only microSD / TF SPI mount + metadata + root listing
+09_BLETest              future
 10_LVGL_BasicUI         future
 11_LVGL_Dashboard       future
 13_RetroClock_800x480   future
@@ -76,13 +78,13 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 Purpose:
 
 ```text
-verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash and 8 MB PSRAM
+verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash, 8 MB PSRAM and compile-time build profile macros
 ```
 
 Current Sample A status:
 
 ```text
-PHYSICAL PASS
+PHYSICAL PASS / PROFILE DIAGNOSTIC V2
 ```
 
 ## 02_DisplayRGBTest
@@ -144,7 +146,7 @@ PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A
 Boundary note:
 
 ```text
-In one observed 05_TestConsole run, the console report printed PSRAM as 0 bytes while 01_BoardInfo under the same local board profile reported 8 MB PSRAM. Treat 01_BoardInfo as the current PSRAM acceptance test and 05_TestConsole as the combined RGB + GT911 + backlight integration test until the console memory report is rechecked.
+One earlier 05_TestConsole run reported PSRAM as 0 bytes. Later BoardInfo and WebServer diagnostics isolated this as a board/profile configuration issue rather than a hardware failure. Use 01_BoardInfo V2 as the current profile/PSRAM acceptance test before memory-heavy examples.
 ```
 
 ## 06_WiFiTest
@@ -237,6 +239,43 @@ Open:
 
 ```text
 libraries/ESP32_8048S043/examples/07_WebServerTest/07_WebServerTest.ino
+```
+
+Current Sample A status:
+
+```text
+WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT
+```
+
+## 08_SDCardTest
+
+Purpose:
+
+```text
+validate the source-backed microSD / TF SPI pin map with a read-only Arduino SD.h mount, metadata report and root directory listing
+```
+
+Pin map:
+
+```text
+CS=10 MOSI=11 CLK=12 MISO=13
+```
+
+What it tests:
+
+```text
+SD card mount;
+card type and size;
+filesystem total/used/free;
+root directory listing;
+optional first-file read-only HEX preview;
+continued ALIVE output after the test.
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/08_SDCardTest/08_SDCardTest.ino
 ```
 
 Current Sample A status:
