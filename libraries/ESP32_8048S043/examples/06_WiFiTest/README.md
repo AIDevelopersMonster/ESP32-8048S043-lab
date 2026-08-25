@@ -1,8 +1,8 @@
 # 06_WiFiTest
 
-Status: `SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / FULL INFRASTRUCTURE PENDING`.
+Status: `FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A`.
 
-This example validates the ESP32-8048S043 Wi-Fi radio path before porting the Web, OTA and Widget Runtime work from WT32-SC01-PLUS-Lab.
+This example validates the ESP32-8048S043 Wi-Fi radio and basic infrastructure network path before porting the Web, OTA and Widget Runtime work from WT32-SC01-PLUS-Lab.
 
 It is intentionally serial-only. It does not initialize RGB display, GT911 touch, backlight, LVGL or SD.
 
@@ -22,11 +22,11 @@ The logic is portable because it uses the standard Arduino `WiFi.h` API and does
 Wi-Fi STA mode starts;
 STA MAC is readable;
 active scan completes;
-optional association to an access point;
-optional DHCP network configuration;
-optional DNS resolution;
-optional TCP/HTTP HEAD request;
-optional reconnect cycles.
+association to a configured access point;
+DHCP network configuration;
+DNS resolution;
+TCP/HTTP HEAD request;
+disconnect/reconnect cycles.
 ```
 
 ## Sample A scan-only evidence
@@ -54,21 +54,28 @@ WIFI RADIO / SCAN PHYSICAL PASS CANDIDATE
 Full association/DHCP/DNS/TCP/reconnect validation: PENDING
 ```
 
-Observed networks:
+## Sample A full infrastructure evidence
+
+Commit-safe runtime record:
 
 ```text
-01  RSSI= -29 dBm  CH=13  AUTH=3  SSID=TECNO CAMON 50
-02  RSSI= -32 dBm  CH= 1  AUTH=3  SSID=ASUS_38_2G
-03  RSSI= -91 dBm  CH= 6  AUTH=3  SSID= [hidden]
+evidence/specimens/sample-a/arduino/06-wifi-full-infrastructure-20260825.md
 ```
 
-A non-fatal startup note was observed before scan:
+Observed full result:
 
 ```text
-[E][STA.cpp:556] disconnect(): STA not started! You must call begin first.
+[PASS] Wi-Fi scan completed: 2 network(s) found
+[CONNECT] Connecting to SSID: TECNO CAMON 50
+[PASS] Associated and DHCP configuration acquired
+[PASS] DNS example.com -> 8.6.112.1
+[PASS] TCP connection established
+[PASS] HTTP response: HTTP/1.1 200 OK
+[PASS] reconnect cycle 1/3  RSSI=-46 dBm  IP=10.113.29.119
+[PASS] reconnect cycle 2/3  RSSI=-45 dBm  IP=10.113.29.119
+[PASS] reconnect cycle 3/3  RSSI=-46 dBm  IP=10.113.29.119
+WIFI TEST PHYSICAL PASS CANDIDATE
 ```
-
-It did not prevent STA MAC readout or active scan.
 
 ## Scan-only mode
 
@@ -108,15 +115,6 @@ static const char *WIFI_TEST_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 ## Expected serial output
 
-Scan-only success:
-
-```text
-[INFO] STA MAC: ...
-[SCAN] Starting active Wi-Fi scan...
-[PASS] Wi-Fi scan completed: N network(s) found
-WIFI RADIO / SCAN PHYSICAL PASS CANDIDATE
-```
-
 Full infrastructure success:
 
 ```text
@@ -144,10 +142,20 @@ FULL WIFI PASS:
 Current Sample A claim:
 
 ```text
-SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
-FULL INFRASTRUCTURE VALIDATION PENDING
+FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
 ```
 
 ## Why this comes before Web/OTA
 
 Web setup, GitHub OTA and Widget Runtime all depend on a stable Wi-Fi baseline. This example isolates the radio/network stack from RGB display, touch and LVGL so failures are easier to interpret.
+
+## Remaining Wi-Fi-related work
+
+```text
+long-duration Wi-Fi stability;
+Wi-Fi while RGB/LVGL rendering is active;
+on-device Web setup UI;
+HTTPS/TLS download;
+GitHub OTA manifest/download/SHA validation;
+Widget Runtime network workflow.
+```
