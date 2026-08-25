@@ -11,14 +11,14 @@ BSP API                 SKELETON / GROWING
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
 05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
-06_WiFiTest             SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+06_WiFiTest             SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / INFRASTRUCTURE PENDING
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
-Wi-Fi radio             SERIAL SCAN/INFRASTRUCTURE TEST ADDED / PHYSICAL VALIDATION OPEN
+Wi-Fi radio             SERIAL SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + WIFI SCAN CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -231,6 +231,21 @@ Open:
 libraries/ESP32_8048S043/examples/06_WiFiTest/06_WiFiTest.ino
 ```
 
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+https://youtube.com/shorts/DOus0uNBBZI
+```
+
+Current Sample A scan-only result:
+
+```text
+STA MAC            : 84:FC:E6:6C:69:3C
+Active scan        : PASS, 3 network(s) found
+Infrastructure     : PENDING, no wifi_secrets.h present
+```
+
 Secrets workflow:
 
 ```text
@@ -242,7 +257,7 @@ do not commit wifi_secrets.h.
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / FULL INFRASTRUCTURE PENDING
 ```
 
 ## Rule
