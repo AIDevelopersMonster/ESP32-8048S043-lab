@@ -1,12 +1,22 @@
 # ESP32-8048S043 Lab Arduino IDE board kit
 
-Status: `LOCAL SKETCHBOOK HARDWARE PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN`.
+Status: `LOCAL SKETCHBOOK HARDWARE PROFILE 01-05 PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN`.
 
 This folder stages the Arduino IDE board-profile work for:
 
 ```text
 ESP32-8048S043 Lab / ESP32-S3 N16R8 / RGB 800x480 / GT911
 ```
+
+## Reader-facing setup guide
+
+The standalone setup guide is:
+
+```text
+boards/arduino-ide/esp32-8048s043-lab/LOCAL_PLATFORM_SETUP.md
+```
+
+Use that file as the primary reference for reproducing the local Arduino hardware platform.
 
 ## Current validated local profile
 
@@ -23,21 +33,27 @@ AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
 ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
 ```
 
-Validated by `01_BoardInfo` on Sample A:
+Validated by the local 01-05 example chain on Sample A:
 
 ```text
-Chip                    : ESP32-S3 rev 2
-Flash                   : 16777216 bytes / 16 MB / QIO 80 MHz
-PSRAM                   : 8388608 bytes / 8 MB / OPI PSRAM
-Running app partition   : app0, address 0x010000, size 3145728
-Upload path             : COM12 / CH340 / UART0 workflow
-Runtime stability       : ALIVE lines observed with freePsram available
+01_BoardInfo       PASS, ESP32-S3 / 16 MB flash / 8 MB PSRAM / 3 MB app partition
+02_DisplayRGBTest  PASS, Arduino_GFX RGB display path and visual pattern sequence
+03_TouchGT911Test  PASS, GT911 detected at 0x5D / Product ID 911 / firmware 0x1060
+04_BacklightTest   PASS reported, GPIO2 blink and PWM duty stepping observed
+05_TestConsole     PASS, combined RGB + GT911 + backlight console and touch events
 ```
 
-Commit-safe runtime record:
+Important memory boundary:
+
+```text
+01_BoardInfo is the current PSRAM acceptance test. The 05_TestConsole run validated RGB/touch/backlight integration but printed PSRAM as 0 bytes in its report, so the console memory line must be rechecked separately.
+```
+
+Commit-safe runtime records:
 
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
+evidence/specimens/sample-a/arduino/local-board-profile-01-05-validation-20260825.md
 ```
 
 ## Working Arduino IDE menu profile
@@ -53,6 +69,19 @@ Upload Mode       : UART0 / Hardware CDC
 Upload Speed      : 921600, fallback 460800
 Serial Monitor    : 115200 baud
 ```
+
+## Required local override
+
+The local profile needs `platform.local.txt` next to `platform.txt` so ESP32-S3 target macros are visible to sketches and third-party library `.cpp` files.
+
+Without it, Arduino_GFX RGB classes failed in two ways:
+
+```text
+Arduino_ESP32RGBPanel does not name a type
+undefined reference to Arduino_ESP32RGBPanel::Arduino_ESP32RGBPanel(...)
+```
+
+The detailed setup guide contains the validated `platform.local.txt` creation step.
 
 ## Obsolete local profile
 
@@ -106,6 +135,7 @@ rename the copy to esp32_8048s043_lab_n16r8;
 keep the original Espressif package untouched;
 use a project variant;
 use 16MB flash / OPI PSRAM / 3MB app partition;
+use platform.local.txt for Arduino_GFX ESP32-S3 RGB target macros;
 validate 01_BoardInfo before running higher-level examples.
 ```
 
@@ -144,9 +174,11 @@ The local board profile can be promoted from PASS candidate to project default o
 
 ```text
 01_BoardInfo passes under the custom target;
-02_DisplayRGBTest still passes under the custom target;
-03_TouchGT911Test still passes under the custom target;
-05_TestConsole still runs under the custom target;
+02_DisplayRGBTest passes under the custom target;
+03_TouchGT911Test passes under the custom target;
+04_BacklightTest passes under the custom target;
+05_TestConsole runs under the custom target;
+PSRAM reporting is rechecked after the 05_TestConsole PSRAM=0 observation;
 the original ESP32S3 Dev Module remains visible and usable.
 ```
 
