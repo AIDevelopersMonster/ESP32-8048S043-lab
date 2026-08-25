@@ -20,7 +20,7 @@ FACTORY LVGL DISPLAY        PASS
 TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS + OWN GT911 VISUAL PASS
 DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
 GT911 / GOODIX IDENTITY     OWN I2C POLLING TEST PASS / 0x5D / PRODUCT ID 911
-ARDUINO BOARD PROFILE       DESIGN / SAMPLE A METADATA ADDED / INSTALLER OPEN
+ARDUINO BOARD PROFILE       LOCAL SKETCHBOOK PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN
 BSP LIBRARY                 SKELETON / 01-05 IMPLEMENTED / 01-03 PHYSICAL PASS
 WEB FLASHER                 SKELETON
 PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH
@@ -68,10 +68,11 @@ Runtime stability       : PASS, ALIVE lines observed with PSRAM available
 Overall 01_BoardInfo    : PASS
 ```
 
-Commit-safe runtime record:
+Commit-safe runtime records:
 
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
 ```
 
 Video evidence:
@@ -149,6 +150,19 @@ This PASS confirms the own low-level GT911/I2C touch path and basic visual marke
 
 The project now has a separate board-profile layer in addition to the runtime Arduino library.
 
+Validated local sketchbook hardware platform:
+
+```text
+Documents/Arduino/hardware/AIDevelopersMonster/esp32
+```
+
+Working board target:
+
+```text
+AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+```
+
 Machine-readable Sample A profile:
 
 ```text
@@ -170,9 +184,9 @@ boards/arduino-ide/esp32-8048s043-lab/
 Current boundary:
 
 ```text
-The board-profile layer documents ESP32-S3 core assumptions, 16 MB flash, 8 MB OPI PSRAM, the factory partition layout, the working Arduino IDE menu profile, compile-time macro targets and the external interface contour.
+The local sketchbook board profile validates 01_BoardInfo on Sample A with ESP32-S3, 16 MB flash, 8 MB OPI PSRAM and a 3 MB app0 partition.
 
-It is not yet a supported Arduino Boards Manager package. Until compile/upload evidence exists for the custom target, continue using ESP32S3 Dev Module with the documented Sample A settings.
+It is not yet a supported Arduino Boards Manager package and it does not yet replace the generic ESP32S3 Dev Module fallback for all examples.
 ```
 
 ## Source-backed hardware baseline
