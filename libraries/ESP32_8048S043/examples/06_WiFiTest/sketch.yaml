@@ -1,0 +1,8 @@
+profiles:
+  esp32-8048s043-lab:
+    fqbn: AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+    platforms:
+      - platform: AIDevelopersMonster:esp32
+    libraries:
+      - WiFi
+    notes: Local sketchbook hardware profile validated on Sample A.
