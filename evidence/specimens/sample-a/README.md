@@ -17,7 +17,7 @@ Fill after the first physical board is inspected.
 - Revision: v0.2
 - Flash ID:
 - Flash size: 16 MB dump captured; Arduino runtime also reports 16 MB
-- PSRAM: 8 MB detected by Arduino `01_BoardInfo` runtime report
+- PSRAM: 8 MB detected by Arduino `01_BoardInfo` runtime report and local board-profile run
 - Crystal: 40 MHz
 - MAC: 84:fc:e6:6c:69:3c
 - USB bridge/native USB: CH340C source-backed, local bridge identification still to be recorded
@@ -83,6 +83,23 @@ Commit-safe runtime record:
 
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+```
+
+Local board-profile runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
+```
+
+Local board-profile result:
+
+```text
+Board target            : AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+Chip                    : PASS, ESP32-S3 rev 2
+Flash                   : PASS, 16777216 bytes / 16 MB / QIO 80 MHz
+PSRAM                   : PASS, 8388608 bytes / 8 MB / OPI PSRAM
+Running partition       : PASS, app0 size 3145728 bytes
+Runtime stability       : PASS candidate, ALIVE lines observed with freePsram available
 ```
 
 Note:
@@ -182,6 +199,7 @@ evidence/specimens/sample-a/factory-firmware/analysis/factory-firmware-analysis-
 evidence/specimens/sample-a/factory-firmware/analysis/app-identity-summary.md
 evidence/specimens/sample-a/factory-firmware/analysis/hardware-leads-summary.md
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
 evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
 evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
 hardware/SCHEMATIC_BOM_RESEARCH.md
@@ -212,6 +230,7 @@ Do not commit factory `.bin` dumps.
 | HW-05 | SD card | SOURCE-BACKED PIN MAP / PHYSICAL TEST OPEN |
 | HW-06 | Wi-Fi / BLE | OPEN |
 | SW-01 | Arduino BSP BoardInfo | PASS |
+| SW-01A | Local Arduino board profile | PASS CANDIDATE / SAMPLE A / 01_BOARDINFO |
 | SW-02 | LVGL basic UI | OPEN |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
