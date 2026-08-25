@@ -20,10 +20,11 @@ FACTORY LVGL DISPLAY        PASS
 TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS + OWN GT911 VISUAL PASS
 DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
 GT911 / GOODIX IDENTITY     OWN I2C POLLING TEST PASS / 0x5D / PRODUCT ID 911
+WIFI RADIO                  SCAN PASS CANDIDATE / SAMPLE A / INFRASTRUCTURE PENDING
 ARDUINO BOARD PROFILE       LOCAL SKETCHBOOK PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN
-BSP LIBRARY                 SKELETON / 01-05 IMPLEMENTED / 01-03 PHYSICAL PASS
+BSP LIBRARY                 SKELETON / 01-06 IMPLEMENTED / 01-03 PHYSICAL PASS / 06 WIFI SCAN CANDIDATE
 WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH
+PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH + WIFI SCAN CANDIDATE
 ```
 
 ## Factory firmware baseline
@@ -146,6 +147,38 @@ Boundary:
 This PASS confirms the own low-level GT911/I2C touch path and basic visual marker movement. Final LVGL touch integration, calibration, rotation and gestures remain separate tests.
 ```
 
+## Arduino Wi-Fi scan baseline
+
+`06_WiFiTest` is the first Wi-Fi radio validation from the local `ESP32_8048S043` Arduino library.
+
+Current scan-only result:
+
+```text
+Mode                   : scan-only, no wifi_secrets.h present
+STA MAC                : PASS, 84:FC:E6:6C:69:3C
+Active Wi-Fi scan      : PASS, 3 network(s) found
+Infrastructure tests   : PENDING, no association/DHCP/DNS/TCP/reconnect yet
+Overall 06_WiFiTest    : WIFI RADIO SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/DOus0uNBBZI
+```
+
+Boundary:
+
+```text
+This evidence confirms Wi-Fi radio scan only. Full Wi-Fi PASS requires a later run with local wifi_secrets.h and successful association, DHCP, DNS, TCP/HTTP and reconnect cycles.
+```
+
 ## Experimental Arduino board profile baseline
 
 The project now has a separate board-profile layer in addition to the runtime Arduino library.
@@ -236,7 +269,7 @@ Important: board labels, sellers and OEM revisions may differ. Treat every new b
 
 1. **Identify before flashing.** First capture photos, chip identity, flash size, PSRAM and the factory firmware dump.
 2. **Separate reported from verified.** Vendor/community pin maps live in docs until tested.
-3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> console -> board profile -> LVGL -> Web/OTA.
+3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> console -> board profile -> Wi-Fi -> LVGL -> Web/OTA.
 4. **No hidden negative branches.** Failed experiments may be kept as history, but current README status must reflect the current validated result.
 5. **No PASS without evidence.** A working video/log/photo must name the specimen and firmware.
 
@@ -266,6 +299,8 @@ Arduino BSP for verified board profile
 RGB display + GT911 touch + backlight
         ↓
 Experimental Arduino board profile
+        ↓
+Wi-Fi baseline
         ↓
 LVGL local HMI shell
         ↓
