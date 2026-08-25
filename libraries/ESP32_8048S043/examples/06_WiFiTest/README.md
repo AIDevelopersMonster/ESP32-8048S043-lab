@@ -1,6 +1,6 @@
 # 06_WiFiTest
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / FULL INFRASTRUCTURE PENDING`.
 
 This example validates the ESP32-8048S043 Wi-Fi radio path before porting the Web, OTA and Widget Runtime work from WT32-SC01-PLUS-Lab.
 
@@ -28,6 +28,47 @@ optional DNS resolution;
 optional TCP/HTTP HEAD request;
 optional reconnect cycles.
 ```
+
+## Sample A scan-only evidence
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/DOus0uNBBZI
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+```
+
+Observed scan-only result:
+
+```text
+[INFO] Local secrets header: not present (scan-only mode)
+[INFO] STA MAC: 84:FC:E6:6C:69:3C
+[SCAN] Starting active Wi-Fi scan...
+[PASS] Wi-Fi scan completed: 3 network(s) found
+WIFI RADIO / SCAN PHYSICAL PASS CANDIDATE
+Full association/DHCP/DNS/TCP/reconnect validation: PENDING
+```
+
+Observed networks:
+
+```text
+01  RSSI= -29 dBm  CH=13  AUTH=3  SSID=TECNO CAMON 50
+02  RSSI= -32 dBm  CH= 1  AUTH=3  SSID=ASUS_38_2G
+03  RSSI= -91 dBm  CH= 6  AUTH=3  SSID= [hidden]
+```
+
+A non-fatal startup note was observed before scan:
+
+```text
+[E][STA.cpp:556] disconnect(): STA not started! You must call begin first.
+```
+
+It did not prevent STA MAC readout or active scan.
 
 ## Scan-only mode
 
@@ -98,6 +139,13 @@ SCAN PASS:
 
 FULL WIFI PASS:
   scan + association + DHCP + DNS + TCP/HTTP + reconnect cycles passed on a named physical specimen.
+```
+
+Current Sample A claim:
+
+```text
+SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+FULL INFRASTRUCTURE VALIDATION PENDING
 ```
 
 ## Why this comes before Web/OTA
