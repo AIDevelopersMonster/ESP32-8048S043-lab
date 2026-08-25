@@ -1,8 +1,8 @@
 # Experimental Arduino board profile layer
 
-Status: `DESIGN / SAMPLE A METADATA ADDED / INSTALLER OPEN`.
+Status: `LOCAL SKETCHBOOK PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN`.
 
-This document describes the next BSP layer for the ESP32-8048S043 Lab project.
+This document describes the board-profile BSP layer for the ESP32-8048S043 Lab project.
 
 The existing `ESP32_8048S043` Arduino library validates and exposes board functions:
 
@@ -15,7 +15,7 @@ examples;
 evidence workflow.
 ```
 
-The proposed board-profile layer describes how Arduino IDE / Arduino CLI should build for this exact board family:
+The board-profile layer describes how Arduino IDE / Arduino CLI should build for this exact board family:
 
 ```text
 ESP32-S3 target;
@@ -28,6 +28,40 @@ serial monitor defaults;
 compile-time macros for board-aware examples;
 variant-level aliases for standard buses;
 external interface contour.
+```
+
+## Current local implementation
+
+The validated local implementation is a separate Arduino sketchbook hardware platform:
+
+```text
+Documents/Arduino/hardware/AIDevelopersMonster/esp32
+```
+
+Working board profile:
+
+```text
+AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+```
+
+This approach does not modify the installed Espressif Arduino-ESP32 package under `Arduino15`.
+
+Validated `01_BoardInfo` result on Sample A:
+
+```text
+Chip                    : ESP32-S3 rev 2
+Flash                   : 16777216 bytes / 16 MB / QIO 80 MHz
+PSRAM                   : 8388608 bytes / 8 MB / OPI PSRAM
+Running app partition   : app0, address 0x010000, size 3145728
+Upload path             : COM12 / CH340 / UART0 workflow
+Runtime stability       : ALIVE lines observed with freePsram available
+```
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
 ```
 
 ## Why this layer exists
@@ -59,7 +93,7 @@ ESP32-8048S043 Lab / ESP32-S3 N16R8 / RGB 800x480 / GT911
 
 ## Boundary between board profile and library
 
-The board profile should not replace the library.
+The board profile does not replace the library.
 
 ```text
 Board profile:
@@ -105,9 +139,9 @@ TF1/microSD SPI map;
 external visible interface contour.
 ```
 
-## Memory and build information to expose
+## Memory and build information exposed by the profile
 
-The board profile should eventually expose build-time macros such as:
+The local board profile target is expected to expose board-aware macros such as:
 
 ```cpp
 ARDUINO_ESP32_8048S043_LAB
@@ -118,7 +152,7 @@ ESP32_8048S043_LCD_HEIGHT=480
 ESP32_8048S043_TOUCH_GT911=1
 ```
 
-The board profile should also preserve the observed memory model:
+The observed working memory model is:
 
 ```text
 Flash: 16 MB / 128 Mb
@@ -126,6 +160,7 @@ PSRAM: 8 MB / OPI PSRAM
 CPU:   ESP32-S3, 240 MHz
 Upload: CH340 / UART workflow, 921600 preferred, 460800 fallback
 Serial monitor: 115200 baud
+App slot: 3 MB
 ```
 
 ## External interface contour
@@ -137,7 +172,7 @@ For Sample A, the first-pass known contour is:
 | USB-UART / CH340C | upload and serial monitor | UART upload path | source-backed / used in workflow |
 | RGB LCD FPC | built-in 800x480 display | RGB parallel GPIO map | own display PASS |
 | GT911 capacitive touch | built-in touch panel | SDA19, SCL20, RST38, INT18 | own touch PASS |
-| Backlight | display backlight | GPIO2 | working, evidence pending |
+| Backlight | display backlight | GPIO2 | reported working / evidence record pending |
 | TF1 / microSD | external storage socket | CS10, MOSI11, CLK12, MISO13 | source-backed / physical test open |
 
 Still open:
@@ -151,23 +186,15 @@ continuity map from ESP32-S3 GPIO to every external pad.
 
 ## Why not publish a Board Manager package immediately
 
-The first step is metadata and documentation. A full Arduino Boards Manager package requires a stable package index, archive, versioning and compatibility tracking across Arduino-ESP32 core versions.
+The local sketchbook hardware profile is validated only as a local development profile. A full Arduino Boards Manager package requires a stable package index, archive, versioning and compatibility tracking across Arduino-ESP32 core versions.
 
-Until then, the project should keep using:
+Until then, the project should keep two supported paths:
 
 ```text
-ESP32S3 Dev Module + documented Sample A settings
+1. safe fallback: ESP32S3 Dev Module + documented Sample A settings;
+2. local experimental: AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8.
 ```
-
-and use the board-profile files as the source of truth for future automation.
-
-## Next implementation steps
-
-1. Add an experimental `boards/arduino-ide/` kit with a README, variant skeleton and partition CSV.
-2. Add a Windows installer script that copies the experimental profile into a local Arduino hardware folder, not into the Espressif package installation directly.
-3. Add a small `00_ProfileCheck` example that prints compile-time macros and runtime memory information.
-4. Promote the profile only after a clean compile/upload cycle is proven from Arduino IDE.
 
 ## Rule
 
-Do not claim that a custom board package is supported until it compiles, uploads and runs on Sample A. Until then, the board profile is a controlled design artifact and a future installation target.
+Do not claim that a public custom board package is supported until it compiles, uploads and runs the full validation chain on Sample A and at least one additional specimen. The current claim is narrower: local sketchbook board profile PASS candidate for `01_BoardInfo` on Sample A.
