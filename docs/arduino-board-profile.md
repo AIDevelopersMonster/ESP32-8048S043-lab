@@ -1,6 +1,6 @@
 # Experimental Arduino board profile layer
 
-Status: `LOCAL SKETCHBOOK PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN`.
+Status: `LOCAL SKETCHBOOK PROFILE 01-05 PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN`.
 
 This document describes the board-profile BSP layer for the ESP32-8048S043 Lab project.
 
@@ -30,6 +30,16 @@ variant-level aliases for standard buses;
 external interface contour.
 ```
 
+## Reader-facing setup guide
+
+The standalone local setup guide is:
+
+```text
+boards/arduino-ide/esp32-8048s043-lab/LOCAL_PLATFORM_SETUP.md
+```
+
+Use it as the primary reference for reproducing the local Arduino hardware platform.
+
 ## Current local implementation
 
 The validated local implementation is a separate Arduino sketchbook hardware platform:
@@ -47,21 +57,27 @@ ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
 
 This approach does not modify the installed Espressif Arduino-ESP32 package under `Arduino15`.
 
-Validated `01_BoardInfo` result on Sample A:
+Validated 01-05 result on Sample A:
 
 ```text
-Chip                    : ESP32-S3 rev 2
-Flash                   : 16777216 bytes / 16 MB / QIO 80 MHz
-PSRAM                   : 8388608 bytes / 8 MB / OPI PSRAM
-Running app partition   : app0, address 0x010000, size 3145728
-Upload path             : COM12 / CH340 / UART0 workflow
-Runtime stability       : ALIVE lines observed with freePsram available
+01_BoardInfo       PASS, ESP32-S3 / 16 MB flash / 8 MB PSRAM / 3 MB app partition
+02_DisplayRGBTest  PASS, Arduino_GFX RGB display path
+03_TouchGT911Test  PASS, GT911 at 0x5D / Product ID 911 / firmware 0x1060
+04_BacklightTest   PASS reported, GPIO2 blink and PWM duty stepping observed
+05_TestConsole     PASS, combined RGB + GT911 + backlight console and touch events
 ```
 
-Commit-safe runtime record:
+Important memory boundary:
+
+```text
+01_BoardInfo is the current PSRAM acceptance test. The 05_TestConsole run validated RGB/touch/backlight integration but printed PSRAM as 0 bytes, so the console memory line must be rechecked separately.
+```
+
+Commit-safe runtime records:
 
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
+evidence/specimens/sample-a/arduino/local-board-profile-01-05-validation-20260825.md
 ```
 
 ## Why this layer exists
@@ -103,7 +119,8 @@ Board profile:
   partition assumptions;
   variant-level standard bus aliases;
   board macros;
-  external-interface map.
+  external-interface map;
+  platform.local.txt overrides needed by third-party libraries.
 
 ESP32_8048S043 library:
   RGB panel initialization;
@@ -152,7 +169,7 @@ ESP32_8048S043_LCD_HEIGHT=480
 ESP32_8048S043_TOUCH_GT911=1
 ```
 
-The observed working memory model is:
+The observed working memory model from `01_BoardInfo` is:
 
 ```text
 Flash: 16 MB / 128 Mb
@@ -163,6 +180,28 @@ Serial monitor: 115200 baud
 App slot: 3 MB
 ```
 
+## Arduino_GFX target macro issue
+
+The local profile required a `platform.local.txt` override because Arduino_GFX RGB classes must see ESP32-S3 target macros not only in the sketch but also while compiling the library `.cpp` files.
+
+Observed failures before the fix:
+
+```text
+Arduino_ESP32RGBPanel does not name a type
+undefined reference to Arduino_ESP32RGBPanel::Arduino_ESP32RGBPanel(...)
+undefined reference to Arduino_RGB_Display::begin(long)
+```
+
+Validated direction:
+
+```text
+compiler.cpp.extra_flags includes CONFIG_IDF_TARGET_ESP32S3=1 and board macros;
+compiler.c.extra_flags includes the same target macros;
+compiler.S.extra_flags includes the same target macros.
+```
+
+The exact reproduction steps are in `LOCAL_PLATFORM_SETUP.md`.
+
 ## External interface contour
 
 For Sample A, the first-pass known contour is:
@@ -172,7 +211,7 @@ For Sample A, the first-pass known contour is:
 | USB-UART / CH340C | upload and serial monitor | UART upload path | source-backed / used in workflow |
 | RGB LCD FPC | built-in 800x480 display | RGB parallel GPIO map | own display PASS |
 | GT911 capacitive touch | built-in touch panel | SDA19, SCL20, RST38, INT18 | own touch PASS |
-| Backlight | display backlight | GPIO2 | reported working / evidence record pending |
+| Backlight | display backlight | GPIO2 | blink/PWM test PASS reported |
 | TF1 / microSD | external storage socket | CS10, MOSI11, CLK12, MISO13 | source-backed / physical test open |
 
 Still open:
@@ -181,7 +220,8 @@ Still open:
 all exposed side pads / solder pads;
 optional UART/I2C/GPIO breakout pins if present;
 power-domain limits for external loads;
-continuity map from ESP32-S3 GPIO to every external pad.
+continuity map from ESP32-S3 GPIO to every external pad;
+PSRAM line in 05_TestConsole report after PSRAM=0 observation.
 ```
 
 ## Why not publish a Board Manager package immediately
@@ -197,4 +237,4 @@ Until then, the project should keep two supported paths:
 
 ## Rule
 
-Do not claim that a public custom board package is supported until it compiles, uploads and runs the full validation chain on Sample A and at least one additional specimen. The current claim is narrower: local sketchbook board profile PASS candidate for `01_BoardInfo` on Sample A.
+Do not claim that a public custom board package is supported until it compiles, uploads and runs the full validation chain on Sample A and at least one additional specimen. The current claim is narrower: local sketchbook board profile 01-05 PASS candidate on Sample A, with PSRAM acceptance still tied to `01_BoardInfo`.
