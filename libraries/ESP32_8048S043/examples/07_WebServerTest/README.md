@@ -1,6 +1,6 @@
 # 07_WebServerTest
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT`.
 
 This example validates the first browser-accessible HTTP server for ESP32-8048S043 after `06_WiFiTest` has proven the Wi-Fi infrastructure path.
 
@@ -28,6 +28,69 @@ file upload;
 browser diagnostics;
 GitHub OTA dashboard;
 Widget Runtime upload/control.
+```
+
+## Sample A evidence
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/07-webserver-sta-20260825.md
+```
+
+Observed STA/network result:
+
+```text
+[INFO] Local secrets header: wifi_secrets.h loaded
+[STA] Connecting to SSID: TECNO CAMON 50
+[PASS] STA connected and DHCP acquired
+[INFO] IPv4    : 10.113.29.119
+[INFO] Gateway : 10.113.29.215
+[INFO] DNS 0   : 10.113.29.215
+```
+
+Observed HTTP server result:
+
+```text
+[PASS] HTTP server started on port 80
+[INFO] Mode : STA
+[INFO] URL  : http://10.113.29.119/
+WEB SERVER TEST READY
+```
+
+Observed browser/request result:
+
+```text
+[HTTP] #1 /status.json from 10.113.29.1
+[HTTP] #2 /ping from 10.113.29.1
+```
+
+Long enough ALIVE observation was also present past 180 seconds with no reboot/brownout/crash reported.
+
+## PSRAM caveat from Sample A web-server run
+
+The browser page and runtime JSON reported:
+
+```text
+PSRAM      : 0 B
+Free PSRAM : 0 B
+```
+
+This is not treated as a browser formatting issue. It reflects what the current `07_WebServerTest` firmware reported through:
+
+```cpp
+ESP.getPsramSize()
+ESP.getFreePsram()
+```
+
+At the same time, `01_BoardInfo` remains the current PSRAM acceptance test and previously reported 8 MB OPI PSRAM under the local board profile. Therefore the current `07_WebServerTest` claim is limited to WebServer reachability and does not promote PSRAM availability for this build.
+
+Follow-up rule:
+
+```text
+Re-run 01_BoardInfo without changing Arduino IDE Tools settings.
+If 01_BoardInfo also reports PSRAM 0 B, the current selected profile/menu/build is not enabling PSRAM.
+If 01_BoardInfo reports 8 MB but 07_WebServerTest reports 0 B, instrument 07_WebServerTest with explicit psramFound/build-flag diagnostics.
 ```
 
 ## Modes
@@ -131,7 +194,8 @@ LittleFS persistence;
 HTTPS/TLS;
 GitHub OTA manifest/download/SHA;
 Widget Runtime;
-long-duration Wi-Fi + display rendering stability.
+long-duration Wi-Fi + display rendering stability;
+PSRAM availability in this specific web-server build.
 ```
 
 Those remain separate tests.
