@@ -1,6 +1,6 @@
 # 01_BoardInfo
 
-Status: `PHYSICAL PASS / SAMPLE A`.
+Status: `PHYSICAL PASS / SAMPLE A / PROFILE DIAGNOSTIC V2`.
 
 Author: **Alex Malachevsky**
 
@@ -20,89 +20,115 @@ Arduino 01_BoardInfo first library test:
 https://youtube.com/shorts/wELRdRWqlnw
 ```
 
-This is the first Arduino IDE smoke test for the ESP32-8048S043 / ESP32-8048S043C-I board family.
+This is the first Arduino IDE smoke test and profile diagnostic for the ESP32-8048S043 / ESP32-8048S043C-I board family.
 
-It does not initialize the RGB display, GT911 touch, SD card or LVGL. It confirms that the board can be flashed and prints an extended runtime passport for the ESP32-S3, flash, PSRAM, sketch, partitions and source-backed board pin profile.
+It does not initialize the RGB display, GT911 touch, SD card, Wi-Fi, WebServer or LVGL. It confirms that the board can be flashed and prints an extended runtime passport for the ESP32-S3, flash, PSRAM, sketch, partitions and source-backed board pin profile.
 
-## Current Sample A result
+## Why V2 exists
 
-Observed result from the current `01_BoardInfo` run:
+Arduino IDE Tools menu text is not directly readable from a sketch. Earlier documentation-style strings could be confused with real runtime state.
+
+V2 changes the rule:
 
 ```text
-Upload / serial monitor : PASS
-Chip                    : PASS, ESP32-S3 rev 2, 2 cores, 240 MHz
-Flash size              : PASS, 16777216 bytes / 16 MB
+Do not trust a hard-coded Tools table.
+Trust compile-time macros + ESP/IDF runtime values.
+```
+
+The sketch now prints:
+
+```text
+[ARDUINO BUILD PROFILE]
+  ARDUINO_BOARD
+  ARDUINO_VARIANT
+  ARDUINO_ARCH_ESP32
+  Arduino-ESP32 version macros, when exposed
+  CONFIG_IDF_TARGET / CONFIG_IDF_TARGET_ESP32S3
+  ARDUINO_USB_MODE
+  ARDUINO_USB_CDC_ON_BOOT
+  BOARD_HAS_PSRAM
+  CONFIG_SPIRAM / BOOT_INIT / USE_MALLOC
+  CONFIG_SPIRAM_MODE_OCT / CONFIG_SPIRAM_MODE_QUAD
+
+[MEMORY]
+  ESP.getPsramSize()
+  ESP.getFreePsram()
+  ESP.getMaxAllocPsram()
+  psramFound()
+  IDF heap_caps_get_total_size(MALLOC_CAP_SPIRAM)
+  IDF heap_caps_get_free_size(MALLOC_CAP_SPIRAM)
+  IDF largest SPIRAM block
+
+[ACCEPTANCE CHECK]
+  Chip is ESP32-S3
+  Flash is about 16 MB
+  PSRAM is about 8 MB
+  App partition about 3 MB
+  Overall BoardInfo
+```
+
+## Current Sample A known-good result
+
+A known-good reference run has already shown:
+
+```text
+Chip                    : ESP32-S3 rev 2, 2 cores, 240 MHz
+Flash size              : 16777216 bytes / 16 MB
 Flash mode / speed      : QIO / 80 MHz
-PSRAM                   : PASS, 8388608 bytes / 8 MB
+PSRAM                   : 8388608 bytes / 8 MB
 Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : PASS, ALIVE lines observed with freePsram available
-Overall 01_BoardInfo    : PASS
+Runtime stability       : ALIVE lines observed with freePsram available
 ```
 
 Commit-safe evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
+evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
 ```
 
-## Why this test comes first
+## Debug workflow for PSRAM/profile parity
 
-Run this example before display or touch tests because it verifies the basic programming path, memory profile and Arduino runtime configuration.
+Use this test before moving to LVGL/Web/OTA memory-heavy work.
 
-Expected board family:
+Run the same `01_BoardInfo` sketch under two profiles:
 
 ```text
-ESP32-S3
-16 MB flash
-8 MB PSRAM
-CH340C USB-UART bridge on the capacitive-touch Jingcai/TinyTronics variant
+A. ESP32S3 Dev Module
+   Flash Size       : 16MB (128Mb)
+   Flash Mode       : QIO 80MHz
+   Partition Scheme : 16M Flash (3MB APP/9.9MB FATFS)
+   PSRAM            : OPI PSRAM
+
+B. ESP32-8048S043 Lab N16R8 FIXED
+   Flash Size       : 16MB (128Mb)
+   Flash Mode       : QIO 80MHz
+   Partition Scheme : 16M Flash (3MB APP/9.9MB FATFS)
+   PSRAM            : OPI PSRAM
 ```
 
-## Arduino IDE setup used for Sample A
-
-Install the ESP32 board package:
+Expected result for both:
 
 ```text
-Boards Manager -> esp32 by Espressif Systems
+PSRAM size              : 8388608 bytes / 8192 KB / 8 MB
+Free PSRAM              : greater than 0
+psramFound()            : true
+IDF SPIRAM total        : about 8388608 bytes
+Overall BoardInfo       : PASS CANDIDATE
+ALIVE ... psramSize=8388608 freePsram=...
 ```
 
-The following table mirrors the Arduino IDE Tools menu currently used for Sample A.
-
-| Arduino IDE menu | Value |
-|---|---|
-| Board | ESP32S3 Dev Module |
-| Port | COM12 / CH340 USB-SERIAL port of the board |
-| USB CDC On Boot | Disabled |
-| CPU Frequency | 240MHz (WiFi) |
-| Core Debug Level | None |
-| USB DFU On Boot | Disabled |
-| Erase All Flash Before Sketch Upload | Disabled |
-| Events Run On | Core 1 |
-| Flash Mode | QIO 80MHz |
-| Flash Size | 16MB (128Mb) |
-| JTAG Adapter | Disabled |
-| Arduino Runs On | Core 1 |
-| USB Firmware MSC On Boot | Disabled |
-| Partition Scheme | 16M Flash (3MB APP/9.9MB FATFS) |
-| PSRAM | OPI PSRAM |
-| Upload Mode | UART0 / Hardware CDC |
-| Upload Speed | 921600 |
-| USB Mode | Hardware CDC and JTAG |
-| Zigbee Mode | Disabled |
-| Serial Monitor | 115200 baud |
-
-Notes:
-
-```text
-COM12 is the local port observed on Sample A. Choose your actual CH340 port.
-If upload is unstable at 921600, retry Upload Speed = 460800 before changing other settings.
-For factory flash readback/dump workflows, 460800 was more reliable than 921600.
-The printed settings are documentation strings; runtime evidence comes from ESP.* values.
-```
+If the custom profile differs from the classic ESP32S3 Dev Module profile, compare the `[ARDUINO BUILD PROFILE]` blocks line by line.
 
 ## Running the test
 
 Open:
+
+```text
+File -> Examples -> ESP32_8048S043 -> 01_BoardInfo
+```
+
+or directly:
 
 ```text
 libraries/ESP32_8048S043/examples/01_BoardInfo/01_BoardInfo.ino
@@ -114,89 +140,46 @@ Upload the sketch, then open Serial Monitor at:
 115200 baud
 ```
 
-## Extended report sections
-
-The sketch prints a runtime passport:
-
-```text
-[BUILD / RUNTIME]
-  sketch build date/time
-  ESP-IDF SDK version
-  reset reason
-
-[CHIP]
-  chip model
-  chip revision
-  chip cores
-  CPU frequency
-  eFuse MAC raw value and bytes
-
-[MEMORY]
-  heap size
-  free heap
-  min free heap
-  max alloc heap
-  PSRAM size
-  free PSRAM
-  max alloc PSRAM
-  PSRAM status and warning if not detected
-
-[FLASH / SKETCH]
-  flash chip size
-  flash chip speed
-  flash chip mode
-  sketch size
-  free sketch space
-  sketch MD5
-
-[PARTITIONS]
-  running app partition
-  boot app partition
-
-[SOURCE-BACKED DISPLAY / TOUCH / SD PROFILE]
-  RGB 800x480 pin map
-  GT911 SDA/SCL/RST/INT and 0x5D/0x14 addresses
-  microSD CS/MOSI/CLK/MISO pin map
-
-[EXPECTED SAMPLE A BASELINE]
-  expected chip, flash, PSRAM, USB bridge, display and touch status
-```
-
 ## Expected output highlights
 
-The log should include:
+The header should say:
 
 ```text
 ESP32-8048S043 Lab / 01_BoardInfo
-First Arduino IDE smoke test
-Author        : Alex Malachevsky
-GitHub        : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
-Board                                : ESP32S3 Dev Module
-Flash Mode                           : QIO 80MHz
-Flash Size                           : 16MB (128Mb)
-Partition Scheme                     : 16M Flash (3MB APP/9.9MB FATFS)
-PSRAM                                : OPI PSRAM
-Upload Mode                          : UART0 / Hardware CDC
-Upload Speed                         : 921600
-USB Mode                             : Hardware CDC and JTAG
+First Arduino IDE smoke test + board/profile diagnostic
+This sketch does not trust a hard-coded Tools menu table.
+```
+
+The runtime block should include:
+
+```text
+[ARDUINO BUILD PROFILE]
+ARDUINO_BOARD
+ARDUINO_VARIANT
+BOARD_HAS_PSRAM
+CONFIG_SPIRAM_MODE_OCT
+CONFIG_SPIRAM_MODE_QUAD
 ```
 
 The board information block should report approximately:
 
 ```text
-Chip model              : ESP32-S3
-Flash chip size         : 16777216 bytes / 16384 KB / 16 MB
-PSRAM size              : 8388608 bytes / 8192 KB / 8 MB
-PSRAM status            : DETECTED
-Display                 : 800x480 RGB/DPI
-GT911 touch             : SDA=19 SCL=20 RST=38 INT=18 ADDR=0x5D/0x14
-microSD SPI             : CS=10 MOSI=11 CLK=12 MISO=13
+Chip model                  : ESP32-S3
+Flash chip size             : 16777216 bytes / 16384 KB / 16 MB
+PSRAM size                  : 8388608 bytes / 8192 KB / 8 MB
+Free PSRAM                  : greater than 0
+psramFound()                : true
+IDF SPIRAM total            : about 8388608 bytes
+Display                     : 800x480 RGB/DPI
+GT911 touch                 : SDA=19 SCL=20 RST=38 INT=18 ADDR=0x5D/0x14
+microSD SPI                 : CS=10 MOSI=11 CLK=12 MISO=13
+Overall BoardInfo           : PASS CANDIDATE
 ```
 
 Then the sketch should continue printing:
 
 ```text
-ALIVE uptime=... freeHeap=... freePsram=...
+ALIVE uptime=... freeHeap=... psramSize=... freePsram=...
 ```
 
 every five seconds.
@@ -211,8 +194,28 @@ serial monitor opens at 115200;
 chip model is ESP32-S3;
 flash is reported as about 16 MB;
 PSRAM is reported as about 8 MB;
+psramFound() is true;
+IDF SPIRAM total is about 8 MB;
 running/boot partition data prints without crash;
 ALIVE messages continue without resets.
+```
+
+## Failure interpretation
+
+If PSRAM is `0 B`:
+
+```text
+The board may still be fine.
+First assume the selected Arduino build profile or Tools menu is not enabling OPI PSRAM.
+Compare [ARDUINO BUILD PROFILE] between ESP32S3 Dev Module and the local ESP32-8048S043 board profile.
+Do not continue to LVGL/Web/OTA memory-heavy tests until PSRAM is detected.
+```
+
+If flash is `4 MB` or the app partition does not match about `3 MB`:
+
+```text
+The selected Tools Flash Size / Partition Scheme is wrong.
+Use 16MB flash and 16M Flash (3MB APP/9.9MB FATFS).
 ```
 
 ## Boundary
@@ -225,6 +228,8 @@ GT911 touch operation;
 SD card operation;
 Wi-Fi/BLE operation;
 backlight PWM behavior;
+Web server behavior;
+LVGL integration;
 final BSP pinout.
 ```
 
