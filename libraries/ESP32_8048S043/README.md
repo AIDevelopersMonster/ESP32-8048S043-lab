@@ -12,11 +12,13 @@ BSP API                 SKELETON / GROWING
 04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
 05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
 06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
+07_WebServerTest        SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
+HTTP server             SOURCE IMPLEMENTED / BROWSER VALIDATION OPEN
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FULL WIFI CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -59,10 +61,11 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          combined RGB + GT911 + backlight diagnostic console
 06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
-07_BLETest              future
-08_SDCardTest           future
-09_LVGL_BasicUI         future
-10_LVGL_Dashboard       future
+07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
+08_BLETest              future
+09_SDCardTest           future
+10_LVGL_BasicUI         future
+11_LVGL_Dashboard       future
 13_RetroClock_800x480   future
 20_LVGL_GitHubOTA       future
 21_LVGL_WidgetLoader    future
@@ -209,6 +212,37 @@ Current Sample A status:
 
 ```text
 FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
+```
+
+## 07_WebServerTest
+
+Purpose:
+
+```text
+validate the first browser-accessible HTTP server layer before Web setup, GitHub OTA dashboard and Widget Runtime upload/control
+```
+
+What it tests:
+
+```text
+STA connection with local wifi_secrets.h or SoftAP fallback;
+WebServer starts on port 80;
+root HTML page is reachable from a browser;
+/status.json returns machine-readable board/network status;
+/ping returns a minimal text response;
+serial log records browser requests.
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/07_WebServerTest/07_WebServerTest.ino
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
