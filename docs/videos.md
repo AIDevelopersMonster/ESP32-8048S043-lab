@@ -9,6 +9,7 @@
 | 03 | ESP32-8048S043 — first test from our Arduino library: BoardInfo | https://youtube.com/shorts/wELRdRWqlnw | Show `01_BoardInfo` from the `ESP32_8048S043` Arduino library, using the current Sample A Arduino IDE profile and confirming ESP32-S3, 16 MB flash, 8 MB PSRAM and stable serial ALIVE output. | SAMPLE A ARDUINO BOARDINFO PASS |
 | 04 | ESP32-8048S043 — second test from our Arduino library: RGB display | https://youtube.com/shorts/sKGejpLF3ZA | Show `02_DisplayRGBTest` from the `ESP32_8048S043` Arduino library, validating our own Arduino_GFX RGB display path with full-screen colors, orientation frame, RGB color bars and stripe/data-line pattern. | SAMPLE A OWN MINIMAL RGB DISPLAY VISUAL PASS |
 | 05 | ESP32-8048S043 — third test from our Arduino library: GT911 touchscreen | https://youtube.com/shorts/_zhtl-AWcCE | Show `03_TouchGT911Test` from the `ESP32_8048S043` Arduino library, validating the GT911 touch controller at I2C address 0x5D, Product ID `911`, raw coordinate polling and visible touch marker movement on the 800x480 screen. | SAMPLE A OWN GT911 TOUCH VISUAL PASS |
+| 06 | ESP32-8048S043 — Wi-Fi scan from our Arduino library | https://youtube.com/shorts/DOus0uNBBZI | Show `06_WiFiTest` in scan-only mode under the local Arduino board profile, confirming STA MAC readout and active Wi-Fi scan with nearby networks found. | SAMPLE A WIFI RADIO SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING |
 
 ## Planned shooting sequence
 
@@ -21,14 +22,18 @@
 | 05 RGB display first light | 800x480 color/timing/backlight | DONE / OWN MINIMAL RGB DISPLAY PASS |
 | 06 Touchscreen visual check | factory LVGL Widgets Demo responds to touch | PUBLISHED / FACTORY DEMO VISUAL PASS |
 | 07 Dedicated touch scan | identify controller address and coordinate behavior | DONE / OWN GT911 TOUCH VISUAL PASS |
-| 08 LVGL basic UI | button, slider, touch using lab firmware | OPEN |
-| 09 Web setup | AP/browser setup path | OPEN |
-| 10 Web Flasher | browser firmware install | OPEN |
-| 11 Widget Runtime | JSON UI without reflashing | OPEN |
-| 12 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
+| 08 Wi-Fi radio scan | run `06_WiFiTest` scan-only mode, read STA MAC and list nearby networks | PUBLISHED / WIFI RADIO SCAN PASS CANDIDATE |
+| 09 Wi-Fi infrastructure | association, DHCP, DNS, TCP/HTTP and reconnect using local `wifi_secrets.h` | OPEN |
+| 10 LVGL basic UI | button, slider, touch using lab firmware | OPEN |
+| 11 Web setup | AP/browser setup path | OPEN |
+| 12 Web Flasher | browser firmware install | OPEN |
+| 13 Widget Runtime | JSON UI without reflashing | OPEN |
+| 14 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
 
 ## Rule
 
 A video can support PHYSICAL PASS only when it clearly identifies the specimen and the firmware/example being demonstrated. Overview videos may document intent, repository structure and project direction, but they do not create hardware PASS status by themselves.
 
 Visual touch evidence can support a touchscreen runtime PASS, but it does not identify the controller model or replace a dedicated I2C scan and coordinate-target test.
+
+Wi-Fi scan evidence supports only radio/scan status. Full Wi-Fi PASS requires association, DHCP, DNS, TCP/HTTP and reconnect validation with local credentials that are not committed to the repository.
