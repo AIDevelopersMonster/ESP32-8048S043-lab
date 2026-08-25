@@ -29,7 +29,8 @@
     - final BSP pinout.
 
   Arduino IDE settings currently used for Sample A:
-    Board                                  : ESP32S3 Dev Module
+    Board                                  : ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+    FQBN                                   : AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
     Port                                   : COM12 / CH340 USB-SERIAL port
     USB CDC On Boot                        : Disabled
     CPU Frequency                          : 240MHz (WiFi)
@@ -55,11 +56,13 @@
     - If upload is unstable at 921600, retry at 460800 before changing other settings.
     - For factory flash readback/dump workflows, 460800 was more reliable than 921600.
     - The printed settings are documentation strings; runtime evidence comes from ESP.* values.
+    - The generic ESP32S3 Dev Module remains the safe fallback profile.
 
   Expected serial result:
     - Chip model should be ESP32-S3;
     - Flash should be about 16 MB;
     - PSRAM should be about 8 MB;
+    - app0 partition should be about 3 MB;
     - ALIVE lines should continue every 5 seconds.
 
   Evidence boundary:
@@ -85,7 +88,8 @@ void setup() {
     Serial.println("Evidence video: https://youtube.com/shorts/XVaWqrtXHE4");
     Serial.println("----------------------------------------------------------------");
     Serial.println("Arduino IDE settings currently used for Sample A:");
-    Serial.println("  Board                                : ESP32S3 Dev Module");
+    Serial.println("  Board                                : ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)");
+    Serial.println("  FQBN                                 : AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8");
     Serial.println("  Port                                 : COM12 / CH340 USB-SERIAL port");
     Serial.println("  USB CDC On Boot                      : Disabled");
     Serial.println("  CPU Frequency                        : 240MHz (WiFi)");
@@ -111,7 +115,7 @@ void setup() {
     board.printBoardInfo(Serial);
 
     Serial.println("----------------------------------------------------------------");
-    Serial.println("PASS candidate if chip=ESP32-S3, flash~16MB, PSRAM~8MB, ALIVE continues.");
+    Serial.println("PASS candidate if chip=ESP32-S3, flash~16MB, PSRAM~8MB, app0~3MB, ALIVE continues.");
     Serial.println("================================================================");
 }
 
