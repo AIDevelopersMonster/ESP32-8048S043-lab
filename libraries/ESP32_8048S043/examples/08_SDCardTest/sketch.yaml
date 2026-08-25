@@ -1,0 +1,8 @@
+profiles:
+  esp32_8048s043_lab:
+    fqbn: AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+    platforms:
+      - platform: AIDevelopersMonster:esp32
+    libraries:
+      - ESP32_8048S043
+    notes: "Read-only SD card validation on source-backed SPI pins CS10 MOSI11 CLK12 MISO13."
