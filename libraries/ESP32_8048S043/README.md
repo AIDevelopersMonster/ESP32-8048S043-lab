@@ -11,14 +11,14 @@ BSP API                 SKELETON / GROWING
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
 05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
-06_WiFiTest             SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / INFRASTRUCTURE PENDING
+06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
-Wi-Fi radio             SERIAL SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING
+Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + WIFI SCAN CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FULL WIFI CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -58,7 +58,7 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          combined RGB + GT911 + backlight diagnostic console
-06_WiFiTest             Wi-Fi scan + optional association/DHCP/DNS/TCP/reconnect test
+06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
 07_BLETest              future
 08_SDCardTest           future
 09_LVGL_BasicUI         future
@@ -76,12 +76,6 @@ Purpose:
 verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash and 8 MB PSRAM
 ```
 
-PASS boundary:
-
-```text
-PASS requires successful upload, serial output at 115200, ESP32-S3 identity, about 16 MB flash, about 8 MB PSRAM and stable ALIVE messages.
-```
-
 Current Sample A status:
 
 ```text
@@ -94,17 +88,6 @@ Purpose:
 
 ```text
 validate the source-backed ESP32-8048S043 RGB GPIO map with our own minimal Arduino sketch
-```
-
-What it tests:
-
-```text
-Arduino_GFX RGB panel bring-up;
-backlight GPIO2 full ON;
-red / green / blue / white / black screens;
-landscape 800x480 orientation frame;
-RGB color bars;
-stripe/data-line sanity pattern.
 ```
 
 Current Sample A status:
@@ -121,20 +104,6 @@ Purpose:
 validate the GT911 capacitive touch path with our own visual Arduino sketch using a known-good-style polling pattern
 ```
 
-What it tests:
-
-```text
-Arduino_GFX display init;
-I2C on SDA=19 / SCL=20;
-GT911 address 0x5D or 0x14;
-Product ID register 0x8140;
-firmware/resolution registers;
-status register 0x814E;
-point data from 0x814F;
-serial raw/screen coordinates;
-visible red touch marker.
-```
-
 Current Sample A status:
 
 ```text
@@ -149,17 +118,6 @@ Purpose:
 validate the ESP32-8048S043 backlight control path separately from RGB display and touch
 ```
 
-What it tests:
-
-```text
-Arduino_GFX reference screen;
-source-backed backlight GPIO2;
-GPIO2 HIGH / LOW behavior;
-visible blink sequence;
-PWM / analogWrite duty steps;
-serial output for every backlight stage.
-```
-
 Current Sample A status:
 
 ```text
@@ -172,18 +130,6 @@ Purpose:
 
 ```text
 run RGB display, GT911 polling touch, backlight GPIO2 control and serial diagnostics together in one direct Arduino_GFX diagnostic console before LVGL
-```
-
-What it tests:
-
-```text
-Arduino_GFX diagnostic console;
-GT911 detection and touch point mapping;
-red marker follows touch;
-BACKLIGHT button toggles GPIO2;
-CLEAR button resets touch counter;
-REPORT button prints serial diagnostics;
-combined no-brownout/no-crash observation.
 ```
 
 Current Sample A status:
@@ -218,11 +164,11 @@ What it tests:
 Wi-Fi STA mode;
 STA MAC readout;
 active scan;
-optional association;
-optional DHCP;
-optional DNS;
-optional TCP/HTTP HEAD request;
-optional disconnect/reconnect cycles.
+association;
+DHCP;
+DNS;
+TCP/HTTP HEAD request;
+disconnect/reconnect cycles.
 ```
 
 Open:
@@ -235,15 +181,20 @@ Evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+evidence/specimens/sample-a/arduino/06-wifi-full-infrastructure-20260825.md
 https://youtube.com/shorts/DOus0uNBBZI
 ```
 
-Current Sample A scan-only result:
+Current Sample A full infrastructure result:
 
 ```text
 STA MAC            : 84:FC:E6:6C:69:3C
-Active scan        : PASS, 3 network(s) found
-Infrastructure     : PENDING, no wifi_secrets.h present
+Active scan        : PASS, 2 network(s) found
+Association        : PASS, connected to configured AP
+DHCP               : PASS, IPv4/gateway/DNS received
+DNS                : PASS, example.com resolved
+TCP/HTTP           : PASS, HTTP/1.1 200 OK
+Reconnect          : PASS, 3/3 cycles completed
 ```
 
 Secrets workflow:
@@ -257,7 +208,7 @@ do not commit wifi_secrets.h.
 Current Sample A status:
 
 ```text
-SCAN PHYSICAL PASS CANDIDATE / SAMPLE A / FULL INFRASTRUCTURE PENDING
+FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
 ```
 
 ## Rule
