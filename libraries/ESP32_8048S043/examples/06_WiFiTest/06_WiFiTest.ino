@@ -256,10 +256,18 @@ void setup() {
                 ESP32_8048S043_WIFI_LOCAL_SECRETS ? "wifi_secrets.h loaded" : "not present (scan-only mode)");
 
   WiFi.persistent(false);
+
+  // Start from a clean Wi-Fi state without calling disconnect() before STA is up.
+  // Some Arduino-ESP32 versions print a non-fatal "STA not started" error when
+  // disconnect() is called before begin()/STA startup.
+  WiFi.mode(WIFI_OFF);
+  delay(200);
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect(false, true);
+  WiFi.setSleep(false);
   delay(300);
 
+  Serial.println("[INFO] Wi-Fi mode: STA");
+  Serial.println("[INFO] Wi-Fi sleep: disabled for validation");
   Serial.printf("[INFO] STA MAC: %s\n", WiFi.macAddress().c_str());
   printDivider();
 
