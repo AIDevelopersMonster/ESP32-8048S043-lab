@@ -24,7 +24,7 @@
     - Arduino_GFX RGB display driver under LVGL;
     - LVGL draw buffer allocation, preferably in PSRAM;
     - LVGL flush callback to the 800x480 RGB panel;
-    - GT911 touch as an LVGL input device;
+    - direct GT911 polling bridged into LVGL pointer input;
     - interactive button + counter;
     - slider-controlled backlight PWM;
     - runtime ALIVE lines while LVGL is active.
@@ -48,6 +48,7 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <math.h>
 #include <lvgl.h>
 #include <Arduino_GFX_Library.h>
 #include <ESP32_8048S043_Pins.h>
@@ -69,11 +70,16 @@ static constexpr uint32_t LVGL_BUFFER_LINES = 40;
 static constexpr uint32_t LVGL_TICK_PERIOD_MS = 5;
 static constexpr uint32_t ALIVE_INTERVAL_MS = 5000;
 static constexpr uint32_t I2C_SPEED_HZ = 400000;
+static constexpr uint32_t TOUCH_POLL_INTERVAL_MS = 15;
+static constexpr uint32_t TOUCH_LOG_INTERVAL_MS = 80;
+static constexpr uint32_t TOUCH_HOLD_MS = 140;
 
 static constexpr uint16_t GT911_STATUS_REG = 0x814E;
 static constexpr uint16_t GT911_POINT_REG = 0x814F;
 static constexpr uint16_t GT911_PRODUCT_ID_REG = 0x8140;
 static constexpr uint16_t GT911_FW_VERSION_REG = 0x8144;
+static constexpr uint16_t GT911_X_RESOLUTION_REG = 0x8146;
+static constexpr uint16_t GT911_Y_RESOLUTION_REG = 0x8148;
 
 // Calibration seed proven useful in the lower-level 03_TouchGT911Test path.
 // It maps GT911 raw coordinates into the current 800x480 display orientation.
@@ -102,13 +108,29 @@ static bool uiOk = false;
 
 static uint32_t buttonClicks = 0;
 static uint32_t touchReports = 0;
+static uint32_t touchStatusReads = 0;
+static uint32_t touchStatusReady = 0;
+static uint32_t touchStatusReadFails = 0;
+static uint32_t touchPointReadFails = 0;
 static uint32_t lvglLoops = 0;
 static uint32_t lastAliveMs = 0;
 static uint32_t lastLvTickMs = 0;
+static uint32_t lastTouchPollMs = 0;
+static uint32_t lastTouchLogMs = 0;
+static uint32_t lastTouchSeenMs = 0;
+static uint8_t lastTouchStatus = 0;
+static int lastRawX = -1;
+static int lastRawY = -1;
+static int cachedTouchX = 0;
+static int cachedTouchY = 0;
+static bool cachedTouchPressed = false;
+static bool markerVisible = false;
 
 static lv_obj_t *counterLabel = nullptr;
 static lv_obj_t *statusLabel = nullptr;
 static lv_obj_t *sliderLabel = nullptr;
+static lv_obj_t *touchLabel = nullptr;
+static lv_obj_t *touchMarker = nullptr;
 
 static void printDivider() {
   Serial.println("------------------------------------------------------------");
@@ -201,6 +223,12 @@ static bool i2cWriteRegByte(uint8_t addr, uint16_t reg, uint8_t value) {
   return Wire.endTransmission() == 0;
 }
 
+static void gt911ClearStatus() {
+  if (touchAddr != 0) {
+    i2cWriteRegByte(touchAddr, GT911_STATUS_REG, 0x00);
+  }
+}
+
 static void gt911Reset() {
   pinMode(TOUCH_INT, INPUT_PULLUP);
   pinMode(TOUCH_RST, OUTPUT);
@@ -208,6 +236,22 @@ static void gt911Reset() {
   delay(20);
   digitalWrite(TOUCH_RST, HIGH);
   delay(120);
+}
+
+static String scanI2C() {
+  String found;
+  for (uint8_t addr = 1; addr < 127; ++addr) {
+    Wire.beginTransmission(addr);
+    if (Wire.endTransmission() == 0) {
+      char tmp[8];
+      snprintf(tmp, sizeof(tmp), "0x%02X ", addr);
+      found += tmp;
+    }
+  }
+  if (found.length() == 0) {
+    found = "none";
+  }
+  return found;
 }
 
 static uint8_t findGT911() {
@@ -236,6 +280,15 @@ static void printGt911Info() {
   uint8_t fw[2] = {};
   if (i2cReadReg(touchAddr, GT911_FW_VERSION_REG, fw, sizeof(fw))) {
     Serial.printf("[INFO] GT911 FW version: 0x%04X (%u)\n", le16(fw), le16(fw));
+  }
+
+  uint8_t xres[2] = {};
+  uint8_t yres[2] = {};
+  if (i2cReadReg(touchAddr, GT911_X_RESOLUTION_REG, xres, sizeof(xres)) &&
+      i2cReadReg(touchAddr, GT911_Y_RESOLUTION_REG, yres, sizeof(yres))) {
+    Serial.printf("[INFO] GT911 resolution registers: X=%u Y=%u\n", le16(xres), le16(yres));
+  } else {
+    Serial.println("[INFO] GT911 resolution registers: read failed or unsupported");
   }
 }
 
@@ -301,19 +354,27 @@ static bool initDisplay() {
 
 static bool initTouch() {
   Serial.println("[TOUCH INIT]");
-  gt911Reset();
+
+  // Match the proven low-level 03_TouchGT911Test sequence:
+  // Wire first, then GT911 reset, then product-id probe.
   Wire.begin(TOUCH_SDA, TOUCH_SCL, I2C_SPEED_HZ);
   Serial.printf("[INFO] Wire.begin(SDA=%d, SCL=%d, %lu Hz)\n",
                 TOUCH_SDA, TOUCH_SCL, static_cast<unsigned long>(I2C_SPEED_HZ));
 
+  Serial.println("[INFO] GT911 reset: RST38 toggle, INT18 passive pull-up, polling mode");
+  gt911Reset();
+
   touchAddr = findGT911();
+  Serial.print("[INFO] I2C scan: ");
+  Serial.println(scanI2C());
+
   if (touchAddr == 0) {
     Serial.println("[FAIL] GT911 not detected at 0x5D or 0x14");
     return false;
   }
 
   printGt911Info();
-  i2cWriteRegByte(touchAddr, GT911_STATUS_REG, 0x00);
+  gt911ClearStatus();
   return true;
 }
 
@@ -339,34 +400,50 @@ static void mapTouchToScreen(uint16_t rawX, uint16_t rawY, int &screenX, int &sc
   }
 }
 
-static bool readTouchPoint(int &screenX, int &screenY) {
+static bool readTouchRaw(int16_t &rawX, int16_t &rawY, uint8_t &trackId, uint16_t &touchSize, uint8_t &statusOut) {
+  statusOut = 0;
+
   if (touchAddr == 0) {
     return false;
   }
 
   uint8_t status = 0;
   if (!i2cReadReg(touchAddr, GT911_STATUS_REG, &status, 1)) {
+    ++touchStatusReadFails;
     return false;
   }
 
-  const bool dataReady = (status & 0x80) != 0;
+  ++touchStatusReads;
+  lastTouchStatus = status;
+  statusOut = status;
+
+  if ((status & 0x80) == 0) {
+    return false;
+  }
+
+  ++touchStatusReady;
+
   const uint8_t points = status & 0x0F;
-  if (!dataReady || points == 0) {
+  if (points == 0 || points > 5) {
+    Serial.printf("[TOUCH] status unusual: 0x%02X points=%u, clearing\n", status, points);
+    gt911ClearStatus();
     return false;
   }
 
-  uint8_t point[8] = {};
-  const bool ok = i2cReadReg(touchAddr, GT911_POINT_REG, point, sizeof(point));
-  i2cWriteRegByte(touchAddr, GT911_STATUS_REG, 0x00);
+  uint8_t data[8] = {};
+  const bool ok = i2cReadReg(touchAddr, GT911_POINT_REG, data, sizeof(data));
+  gt911ClearStatus();
 
   if (!ok) {
+    ++touchPointReadFails;
     return false;
   }
 
-  const uint16_t rawX = le16(&point[1]);
-  const uint16_t rawY = le16(&point[3]);
-  mapTouchToScreen(rawX, rawY, screenX, screenY);
-  ++touchReports;
+  trackId = data[0];
+  rawX = static_cast<int16_t>(le16(&data[1]));
+  rawY = static_cast<int16_t>(le16(&data[3]));
+  touchSize = le16(&data[5]);
+
   return true;
 }
 
@@ -385,14 +462,15 @@ static void lvglFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *co
 static void lvglTouchRead(lv_indev_drv_t *drv, lv_indev_data_t *data) {
   (void)drv;
 
-  int x = 0;
-  int y = 0;
-  if (readTouchPoint(x, y)) {
+  const uint32_t age = millis() - lastTouchSeenMs;
+  if (cachedTouchPressed && age <= TOUCH_HOLD_MS) {
     data->state = LV_INDEV_STATE_PR;
-    data->point.x = x;
-    data->point.y = y;
+    data->point.x = cachedTouchX;
+    data->point.y = cachedTouchY;
   } else {
     data->state = LV_INDEV_STATE_REL;
+    data->point.x = cachedTouchX;
+    data->point.y = cachedTouchY;
   }
 }
 
@@ -539,13 +617,120 @@ static void createUi() {
   lv_obj_set_style_text_color(sliderLabel, lv_color_hex(0xFFFFFF), 0);
   lv_obj_align(sliderLabel, LV_ALIGN_TOP_MID, 0, 245);
 
+  touchLabel = lv_label_create(screen);
+  lv_label_set_text(touchLabel, "Touch raw bridge: waiting for GT911 packets");
+  lv_obj_set_style_text_color(touchLabel, lv_color_hex(0x8DA9C4), 0);
+  lv_obj_align(touchLabel, LV_ALIGN_BOTTOM_MID, 0, -32);
+
   lv_obj_t *footer = lv_label_create(screen);
   lv_label_set_text(footer, "10_LVGL_BasicUI: first local HMI shell, not Widget Runtime yet");
   lv_obj_set_style_text_color(footer, lv_color_hex(0x8DA9C4), 0);
   lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, -12);
 
+  touchMarker = lv_obj_create(screen);
+  lv_obj_set_size(touchMarker, 26, 26);
+  lv_obj_set_style_radius(touchMarker, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(touchMarker, lv_color_hex(0xFF3366), 0);
+  lv_obj_set_style_bg_opa(touchMarker, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(touchMarker, 2, 0);
+  lv_obj_set_style_border_color(touchMarker, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_clear_flag(touchMarker, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_clear_flag(touchMarker, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(touchMarker, LV_OBJ_FLAG_HIDDEN);
+
   uiOk = true;
   Serial.println("[PASS] LVGL UI objects created");
+}
+
+static void updateTouchUi(int screenX, int screenY, int rawX, int rawY, uint8_t trackId, uint16_t touchSize) {
+  if (!uiOk) {
+    return;
+  }
+
+  if (touchLabel) {
+    lv_label_set_text_fmt(touchLabel,
+                          "Touch #%lu raw=%d,%d screen=%d,%d track=%u size=%u",
+                          static_cast<unsigned long>(touchReports),
+                          rawX,
+                          rawY,
+                          screenX,
+                          screenY,
+                          static_cast<unsigned int>(trackId),
+                          static_cast<unsigned int>(touchSize));
+  }
+
+  if (touchMarker) {
+    lv_obj_clear_flag(touchMarker, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_pos(touchMarker, screenX - 13, screenY - 13);
+    markerVisible = true;
+  }
+}
+
+static void hideTouchMarkerIfReleased(uint32_t now) {
+  if (!markerVisible || !touchMarker) {
+    return;
+  }
+
+  if (now - lastTouchSeenMs > 600) {
+    lv_obj_add_flag(touchMarker, LV_OBJ_FLAG_HIDDEN);
+    markerVisible = false;
+  }
+}
+
+static void pollTouchHardware() {
+  if (!touchOk) {
+    return;
+  }
+
+  const uint32_t now = millis();
+  if (now - lastTouchPollMs < TOUCH_POLL_INTERVAL_MS) {
+    return;
+  }
+  lastTouchPollMs = now;
+
+  int16_t rawX = 0;
+  int16_t rawY = 0;
+  uint8_t trackId = 0;
+  uint16_t touchSize = 0;
+  uint8_t status = 0;
+
+  if (readTouchRaw(rawX, rawY, trackId, touchSize, status)) {
+    int screenX = 0;
+    int screenY = 0;
+    mapTouchToScreen(static_cast<uint16_t>(rawX), static_cast<uint16_t>(rawY), screenX, screenY);
+
+    cachedTouchX = screenX;
+    cachedTouchY = screenY;
+    cachedTouchPressed = true;
+    lastTouchSeenMs = now;
+    ++touchReports;
+
+    const int dx = lastRawX < 0 ? 999 : abs(static_cast<int>(rawX) - lastRawX);
+    const int dy = lastRawY < 0 ? 999 : abs(static_cast<int>(rawY) - lastRawY);
+    const bool movedEnough = dx > 2 || dy > 2;
+
+    if ((now - lastTouchLogMs >= TOUCH_LOG_INTERVAL_MS) || movedEnough) {
+      lastTouchLogMs = now;
+      Serial.printf("[TOUCH] #%lu status=0x%02X track=%u raw_x=%d raw_y=%d screen_x=%d screen_y=%d size=%u\n",
+                    static_cast<unsigned long>(touchReports),
+                    status,
+                    static_cast<unsigned int>(trackId),
+                    rawX,
+                    rawY,
+                    screenX,
+                    screenY,
+                    static_cast<unsigned int>(touchSize));
+    }
+
+    updateTouchUi(screenX, screenY, rawX, rawY, trackId, touchSize);
+    lastRawX = rawX;
+    lastRawY = rawY;
+  } else {
+    if (cachedTouchPressed && (now - lastTouchSeenMs > TOUCH_HOLD_MS)) {
+      cachedTouchPressed = false;
+    }
+    hideTouchMarkerIfReleased(now);
+  }
 }
 
 void setup() {
@@ -560,7 +745,7 @@ void setup() {
   Serial.println("Author : Alex Malachevsky");
   Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
   Serial.println("----------------------------------------------------------------");
-  Serial.println("Mode   : RGB display + GT911 touch + LVGL button/slider");
+  Serial.println("Mode   : RGB display + direct GT911 poll bridge + LVGL button/slider");
   Serial.println("Target : first local HMI shell after low-level hardware tests");
   Serial.println("Serial : 115200 baud");
   Serial.println("----------------------------------------------------------------");
@@ -591,7 +776,8 @@ void setup() {
   Serial.println();
   Serial.println("============================================================");
   Serial.println(" LVGL BASIC UI READY");
-  Serial.println(" Touch the button and move the backlight slider.");
+  Serial.println(" Touch the screen. Serial should print [TOUCH] lines first.");
+  Serial.println(" Then try the Tap me button and backlight slider.");
   Serial.println("============================================================");
 }
 
@@ -599,6 +785,8 @@ void loop() {
   const uint32_t now = millis();
 
   if (lvglOk) {
+    pollTouchHardware();
+
     const uint32_t elapsed = now - lastLvTickMs;
     if (elapsed >= LVGL_TICK_PERIOD_MS) {
       lv_tick_inc(elapsed);
@@ -611,7 +799,7 @@ void loop() {
 
   if (now - lastAliveMs >= ALIVE_INTERVAL_MS) {
     lastAliveMs = now;
-    Serial.printf("[ALIVE] uptime=%lus display=%s touch=%s lvgl=%s ui=%s clicks=%lu touchReports=%lu lvglLoops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
+    Serial.printf("[ALIVE] uptime=%lus display=%s touch=%s lvgl=%s ui=%s clicks=%lu touchReports=%lu statusReads=%lu ready=%lu lastStatus=0x%02X i2cFail=%lu pointFail=%lu lvglLoops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
                   static_cast<unsigned long>(now / 1000),
                   displayOk ? "OK" : "FAIL",
                   touchOk ? "OK" : "OPEN",
@@ -619,6 +807,11 @@ void loop() {
                   uiOk ? "OK" : "FAIL",
                   static_cast<unsigned long>(buttonClicks),
                   static_cast<unsigned long>(touchReports),
+                  static_cast<unsigned long>(touchStatusReads),
+                  static_cast<unsigned long>(touchStatusReady),
+                  static_cast<unsigned int>(lastTouchStatus),
+                  static_cast<unsigned long>(touchStatusReadFails),
+                  static_cast<unsigned long>(touchPointReadFails),
                   static_cast<unsigned long>(lvglLoops),
                   static_cast<unsigned long>(ESP.getFreeHeap()),
                   static_cast<unsigned long>(ESP.getPsramSize()),
