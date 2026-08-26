@@ -14,6 +14,7 @@ BSP API                 SKELETON / GROWING
 06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
 07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
 08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
+09_BLETest              SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
@@ -21,6 +22,7 @@ Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
+BLE radio/stack         SOURCE IMPLEMENTED / ACTIVE SCAN VALIDATION OPEN
 LVGL port               OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
@@ -65,7 +67,7 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
 08_SDCardTest           read-only SD mount + metadata + directory listing
-09_BLETest              future
+09_BLETest              BLE controller/Bluedroid init + active advertisement scan
 10_LVGL_BasicUI         future
 11_LVGL_Dashboard       future
 13_RetroClock_800x480   future
@@ -203,6 +205,7 @@ Evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
+https://youtube.com/shorts/vACvK85U0Lw
 ```
 
 Current Sample A result:
@@ -220,6 +223,38 @@ Current Sample A status:
 
 ```text
 READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
+```
+
+## 09_BLETest
+
+Purpose:
+
+```text
+validate the ESP32-S3 BLE controller, Bluedroid host and active advertisement receive path before LVGL/Web/OTA application work
+```
+
+What it tests:
+
+```text
+BT controller initialization in BLE mode;
+Bluedroid initialization and enable;
+local BLE address readout;
+active BLE scan start;
+advertisement report receive;
+scan completion;
+continued ALIVE output after scan completion.
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/09_BLETest/09_BLETest.ino
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 ```
 
 ## Rule
