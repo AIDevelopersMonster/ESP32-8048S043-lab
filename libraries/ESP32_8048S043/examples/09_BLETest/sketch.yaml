@@ -1,0 +1,9 @@
+name: ESP32-8048S043 09 BLE Test
+version: 0.1.0
+author: Alex Malachevsky
+maintainer: Alex Malachevsky
+sentence: Read-only BLE active scan validation for ESP32-8048S043 / ESP32-S3 boards.
+paragraph: Initializes the ESP32-S3 BLE controller and Bluedroid host, starts an active BLE scan, prints advertisement reports, and keeps ALIVE diagnostics after scan completion. No pairing, connection, GATT or write operation is performed.
+category: Communication
+architectures:
+  - esp32
