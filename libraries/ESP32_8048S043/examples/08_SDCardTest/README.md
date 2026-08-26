@@ -30,6 +30,12 @@ Commit-safe runtime record:
 evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 ```
 
+Video evidence:
+
+```text
+https://youtube.com/shorts/vACvK85U0Lw
+```
+
 Observed runtime baseline:
 
 ```text
