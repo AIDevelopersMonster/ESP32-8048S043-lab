@@ -1,6 +1,6 @@
 # 11_LVGL_Dashboard
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / STATIC REFRESH TEST`.
 
 First dashboard-style LVGL 8 example for the ESP32-8048S043 Arduino library.
 
@@ -21,10 +21,10 @@ backlight slider interaction.
 The screen contains:
 
 ```text
-firmware ID / uptime line;
+firmware ID / uptime snapshot line;
 memory card with heap and PSRAM bars;
 GT911 touch BSP status card;
-refresh button;
+manual refresh button;
 backlight PWM slider;
 continued ALIVE output in Serial.
 ```
@@ -34,8 +34,16 @@ continued ALIVE output in Serial.
 Expected current firmware ID:
 
 ```text
-11DASH-SRC1-240826A
+11DASH-ST1-240826B
 ```
+
+## Refresh mode
+
+This revision intentionally uses static refresh mode.
+
+The dashboard does not rewrite labels once per second. On the RGB panel, large periodic LVGL invalidations can visibly look like a horizontal jump or tear while the panel is scanning. Runtime telemetry still goes to Serial every five seconds.
+
+Manual UI refresh is available through the on-screen `Refresh` button. The backlight slider updates only its own label.
 
 ## Dependencies
 
@@ -118,7 +126,8 @@ Expected serial output:
 ```text
 ESP32-8048S043 Lab / 11_LVGL_Dashboard
 LVGL 8 dashboard validation
-Firmware ID: 11DASH-SRC1-240826A
+Firmware ID: 11DASH-ST1-240826B
+Refresh: static screen, manual dashboard refresh only
 
 [DISPLAY INIT]
 [PASS] gfx->begin()
@@ -133,24 +142,25 @@ Firmware ID: 11DASH-SRC1-240826A
 
 [PASS] LVGL dashboard UI objects created
 LVGL DASHBOARD READY
+Static refresh mode: no 1 Hz dashboard redraw.
 ```
 
-ALIVE lines should continue:
+ALIVE lines should continue without forcing screen updates:
 
 ```text
-[ALIVE] fw=11DASH-SRC1-240826A uptime=... display=OK touch=OK lvgl=OK ui=OK refresh=... accepted=... filtered=... loops=... freeHeap=... psram=8388608 freePsram=...
+[ALIVE] fw=11DASH-ST1-240826B uptime=... display=OK touch=OK lvgl=OK ui=OK refresh=... accepted=... filtered=... loops=... freeHeap=... psram=8388608 freePsram=...
 ```
 
 ## PASS boundary
 
 ```text
-DASHBOARD PASS CANDIDATE:
+DASHBOARD STATIC-REFRESH PASS CANDIDATE:
   display initializes;
   GT911 BSP initializes;
   LVGL draw buffers allocate;
   dashboard appears on screen;
-  heap/PSRAM values update;
-  Refresh button works;
+  no visible periodic 1 Hz full-screen redraw while idle;
+  Refresh button manually updates dashboard values;
   backlight slider works;
   ALIVE continues without reset/brownout/crash.
 ```
