@@ -1,0 +1,10 @@
+profiles:
+  esp32_8048s043_lab_n16r8:
+    fqbn: AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+    platforms:
+      - platform: AIDevelopersMonster:esp32
+    libraries:
+      - Arduino_GFX_Library
+      - lvgl
+
+default_profile: esp32_8048s043_lab_n16r8
