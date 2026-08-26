@@ -14,7 +14,7 @@ BSP API                 SKELETON / GROWING
 06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
 07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
 08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
-09_BLETest              SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+09_BLETest              BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
@@ -22,9 +22,9 @@ Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
-BLE radio/stack         SOURCE IMPLEMENTED / ACTIVE SCAN VALIDATION OPEN
+BLE radio/stack         ARDUINO BLE INIT + ACTIVE SCAN + ADV RECEIVE PASS CANDIDATE
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -67,7 +67,7 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
 08_SDCardTest           read-only SD mount + metadata + directory listing
-09_BLETest              BLE controller/Bluedroid init + active advertisement scan
+09_BLETest              Arduino BLE init + active advertisement scan
 10_LVGL_BasicUI         future
 11_LVGL_Dashboard       future
 13_RetroClock_800x480   future
@@ -195,28 +195,11 @@ Purpose:
 validate the source-backed microSD / TF SPI pin map before SD-backed logs, file upload, Widget Runtime storage or offline asset loading
 ```
 
-Pin map:
-
-```text
-CS=10 MOSI=11 CLK=12 MISO=13
-```
-
 Evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 https://youtube.com/shorts/vACvK85U0Lw
-```
-
-Current Sample A result:
-
-```text
-Card type          : SDHC/SDXC
-Mounted frequency  : 10000000 Hz
-Card size          : 32220119040 bytes / 30.01 GB
-Filesystem total   : 32211599360 bytes / 30.00 GB
-Directory listing  : PASS, root and System Volume Information listed
-No write operations: PASS, read-only test
 ```
 
 Current Sample A status:
@@ -230,31 +213,47 @@ READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 Purpose:
 
 ```text
-validate the ESP32-S3 BLE controller, Bluedroid host and active advertisement receive path before LVGL/Web/OTA application work
+validate the ESP32-S3 Arduino BLE initialization and advertisement receive path before LVGL/Web/OTA application work
 ```
 
 What it tests:
 
 ```text
-BT controller initialization in BLE mode;
-Bluedroid initialization and enable;
+Arduino BLE library availability;
+BLEDevice initialization;
 local BLE address readout;
-active BLE scan start;
+active BLE scan;
 advertisement report receive;
-scan completion;
-continued ALIVE output after scan completion.
+repeated scan cycles;
+continued ALIVE output after scans.
 ```
 
-Open:
+Evidence:
 
 ```text
-libraries/ESP32_8048S043/examples/09_BLETest/09_BLETest.ino
+evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
+```
+
+Current Sample A result:
+
+```text
+Local BLE address : 84:fc:e6:6c:69:3d
+Scan cycles       : PASS, at least 26 cycles observed
+Advertisement RX  : PASS, 30 total reports by cycle 26
+Stability         : PASS candidate, ALIVE to at least 772 seconds
+PSRAM             : PASS, 8388608 bytes visible during BLE test
 ```
 
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+```
+
+Boundary:
+
+```text
+This validates Arduino-level BLE init and advertising receive only. Pairing, connections, GATT, HID, provisioning and Wi-Fi/BLE coexistence remain separate tests.
 ```
 
 ## Rule
