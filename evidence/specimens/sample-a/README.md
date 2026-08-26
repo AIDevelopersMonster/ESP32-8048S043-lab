@@ -63,6 +63,7 @@ Observed CPU load : about 16-18% on demo screen
 | 07_WebServerTest | browser HTTP server, status JSON and ping | WEB SERVER PHYSICAL PASS CANDIDATE |
 | 08_SDCardTest | read-only SD mount, metadata and directory listing | READ-ONLY SD PHYSICAL PASS CANDIDATE |
 | 09_BLETest | Arduino BLE init, active scan and advertisement receive | BLE SCAN PHYSICAL PASS CANDIDATE |
+| 10_LVGL_BasicUI | LVGL UI, GT911 BSP pointer input, button and backlight slider | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
 
 ## Commit-safe Arduino records
 
@@ -77,6 +78,7 @@ evidence/specimens/sample-a/arduino/06-wifi-full-infrastructure-20260825.md
 evidence/specimens/sample-a/arduino/07-webserver-sta-20260825.md
 evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
+evidence/specimens/sample-a/arduino/10-lvgl-basic-ui-bsp-touch-20260826.md
 ```
 
 ## Source-backed and tested hardware map
@@ -100,11 +102,12 @@ Current validation boundary:
 
 ```text
 RGB display      : own Arduino_GFX runtime PASS
-GT911 touch      : own I2C/Product ID/polling/visual marker PASS
-Backlight        : reported dedicated pass and exercised by display tests
+GT911 touch      : own I2C/Product ID/polling/visual marker PASS + BSP LVGL functional pass candidate
+Backlight        : reported dedicated pass and exercised by display/LVGL slider tests
 SD / TF          : read-only mount + metadata + listing PASS candidate
 Wi-Fi            : scan + infrastructure PASS candidate
 BLE              : Arduino BLE active scan + advertisement receive PASS candidate
+LVGL BasicUI     : functional button/slider pass candidate, touch quality open
 ```
 
 ## Acceptance status
@@ -129,7 +132,7 @@ BLE              : Arduino BLE active scan + advertisement receive PASS candidat
 | HW-07 | BLE | BLE SCAN PHYSICAL PASS CANDIDATE |
 | SW-01 | Arduino BSP BoardInfo | PASS |
 | SW-01A | Local Arduino board profile | PASS CANDIDATE / SAMPLE A |
-| SW-02 | LVGL basic UI | OPEN |
+| SW-02 | LVGL basic UI | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
 | SW-05 | GitHub OTA | OPEN |
@@ -144,4 +147,5 @@ Do not promote beyond the exact evidence boundary:
 BLE scan evidence does not prove pairing, GATT, HID, provisioning or Wi-Fi/BLE coexistence.
 SD read-only evidence does not prove write safety, formatting, SD stress or SD-backed Web/Widget storage.
 WebServer evidence does not yet prove Web setup, OTA or Widget Runtime.
+LVGL BasicUI evidence proves functional button/slider interaction, but not polished touch UX, long-duration HMI stability, SD-backed assets, Web upload/control, Widget Runtime or GitHub OTA.
 ```
