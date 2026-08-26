@@ -64,6 +64,7 @@ Observed CPU load : about 16-18% on demo screen
 | 08_SDCardTest | read-only SD mount, metadata and directory listing | READ-ONLY SD PHYSICAL PASS CANDIDATE |
 | 09_BLETest | Arduino BLE init, active scan and advertisement receive | BLE SCAN PHYSICAL PASS CANDIDATE |
 | 10_LVGL_BasicUI | LVGL UI, GT911 BSP pointer input, button and backlight slider | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
+| 11_LVGL_Dashboard | LVGL dashboard, static/manual touch experiment | DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE |
 
 ## Commit-safe Arduino records
 
@@ -79,6 +80,7 @@ evidence/specimens/sample-a/arduino/07-webserver-sta-20260825.md
 evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
 evidence/specimens/sample-a/arduino/10-lvgl-basic-ui-bsp-touch-20260826.md
+evidence/specimens/sample-a/arduino/11-lvgl-dashboard-manual-touch-20260826.md
 ```
 
 ## Source-backed and tested hardware map
@@ -108,6 +110,7 @@ SD / TF          : read-only mount + metadata + listing PASS candidate
 Wi-Fi            : scan + infrastructure PASS candidate
 BLE              : Arduino BLE active scan + advertisement receive PASS candidate
 LVGL BasicUI     : functional button/slider pass candidate, touch quality open
+LVGL Dashboard   : stable diagnostic dashboard, dynamic UX not acceptable
 ```
 
 ## Acceptance status
@@ -133,6 +136,7 @@ LVGL BasicUI     : functional button/slider pass candidate, touch quality open
 | SW-01 | Arduino BSP BoardInfo | PASS |
 | SW-01A | Local Arduino board profile | PASS CANDIDATE / SAMPLE A |
 | SW-02 | LVGL basic UI | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
+| SW-02B | LVGL dashboard | DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
 | SW-05 | GitHub OTA | OPEN |
@@ -148,4 +152,5 @@ BLE scan evidence does not prove pairing, GATT, HID, provisioning or Wi-Fi/BLE c
 SD read-only evidence does not prove write safety, formatting, SD stress or SD-backed Web/Widget storage.
 WebServer evidence does not yet prove Web setup, OTA or Widget Runtime.
 LVGL BasicUI evidence proves functional button/slider interaction, but not polished touch UX, long-duration HMI stability, SD-backed assets, Web upload/control, Widget Runtime or GitHub OTA.
+LVGL Dashboard evidence proves static diagnostic stability and manual control intent, but explicitly rejects the current dynamic touch behavior for user-facing applications.
 ```
