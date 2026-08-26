@@ -1,6 +1,6 @@
 # 08_SDCardTest
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A`.
 
 This example validates the source-backed microSD / TF SPI pin map on ESP32-8048S043 boards.
 
@@ -21,6 +21,60 @@ The verified stack now has:
 ```
 
 `08_SDCardTest` validates the next hardware subsystem before SD-backed logs, file upload, Widget Runtime storage or offline asset loading.
+
+## Sample A evidence
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
+```
+
+Observed runtime baseline:
+
+```text
+Runtime: chip=ESP32-S3 rev=2 flash=16777216 psram=8388608 freePsram=8384788
+```
+
+Observed mount result:
+
+```text
+[MOUNT] Trying SD.begin(CS=10, CLK=12, MISO=13, MOSI=11, freq=10000000 Hz)
+[PASS] SD mounted
+```
+
+Observed card/filesystem result:
+
+```text
+Card type          : SDHC/SDXC (3)
+Mounted frequency  : 10000000 Hz
+Card size          : 32220119040 bytes / 30.01 GB
+Filesystem total   : 32211599360 bytes / 30.00 GB
+Filesystem used    : 98304 bytes / 96.00 KB
+Filesystem free    : 32211501056 bytes / 30.00 GB
+```
+
+Observed directory listing:
+
+```text
+[LIST] Directory: /
+  DIR   System Volume Information
+[LIST] Directory: /System Volume Information
+  FILE  IndexerVolumeGuid                        76 bytes / 76 B
+```
+
+Observed PASS candidate banner:
+
+```text
+SD CARD READ-ONLY PHYSICAL PASS CANDIDATE
+Mount + metadata + root listing completed. No writes performed.
+```
+
+Observed stability:
+
+```text
+[ALIVE] uptime=140s sd=PASS_CANDIDATE freq=10000000Hz freeHeap=343948 psram=8388608 freePsram=8355012
+```
 
 ## Pin map under test
 
@@ -64,16 +118,18 @@ serving files from SD over HTTP.
 
 ## Arduino IDE setup
 
-Use the same profile that passed `01_BoardInfo`:
+Use the same local profile that passed `01_BoardInfo`:
 
 ```text
-Board             : ESP32-8048S043 Lab N16R8 FIXED or ESP32S3 Dev Module fallback
+Board             : ESP32-8048S043 Lab N16R8 FIXED
 Flash Size        : 16MB (128Mb)
 Flash Mode        : QIO 80MHz
 Partition Scheme  : 16M Flash (3MB APP/9.9MB FATFS)
 PSRAM             : OPI PSRAM
 Serial Monitor    : 115200 baud
 ```
+
+`ESP32S3 Dev Module` remains a safe fallback profile while debugging.
 
 ## Running the test
 
@@ -84,35 +140,6 @@ File -> Examples -> ESP32_8048S043 -> 08_SDCardTest
 ```
 
 Insert a microSD card before boot or before reset. FAT/FAT32/exFAT support depends on the Arduino-ESP32 SD stack and card formatting.
-
-## Expected serial output
-
-A good run should look like:
-
-```text
-ESP32-8048S043 Lab / 08_SDCardTest
-Read-only microSD / TF SPI validation
-Pin map: CS=10 MOSI=11 CLK=12 MISO=13
-Mode   : read-only, no write/format/delete/rename operations
-
-[MOUNT] Trying SD.begin(... freq=10000000 Hz)
-[PASS] SD mounted
-
-[CARD]
-Card type          : SDHC/SDXC
-Mounted frequency  : ... Hz
-Card size          : ...
-Filesystem total   : ...
-Filesystem used    : ...
-Filesystem free    : ...
-
-[LIST] Directory: /
-  FILE ...
-  DIR  ...
-
-SD CARD READ-ONLY PHYSICAL PASS CANDIDATE
-Mount + metadata + root listing completed. No writes performed.
-```
 
 The sketch retries several SPI frequencies:
 
@@ -155,4 +182,4 @@ filesystem format or root directory handling needs separate investigation.
 
 ## Boundary
 
-Do not promote this test to PHYSICAL PASS until a named specimen log or video exists.
+This test validates read-only SD mount, metadata and listing only. Write tests, SD stress, SD-backed Web upload and SD-backed Widget Runtime storage remain separate stages.
