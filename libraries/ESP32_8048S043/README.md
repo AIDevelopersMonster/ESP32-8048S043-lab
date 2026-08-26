@@ -16,6 +16,7 @@ BSP API                 SKELETON / GROWING
 08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 09_BLETest              BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
 10_LVGL_BasicUI         FUNCTIONAL PASS CANDIDATE / SAMPLE A / TOUCH QUALITY OPEN
+11_LVGL_Dashboard       DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 BSP API IMPLEMENTED / LVGL FUNCTIONAL PASS CANDIDATE
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS / LVGL SLIDER EXERCISED
@@ -24,9 +25,24 @@ Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT P
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
 BLE radio/stack         ARDUINO BLE INIT + ACTIVE SCAN + ADV RECEIVE PASS CANDIDATE
-LVGL port               BASIC UI FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + LVGL BASIC UI FUNCTIONAL + FACTORY LVGL DISPLAY/TOUCH VISUAL
+LVGL port               FUNCTIONAL LAB TESTS ONLY / POLISHED DYNAMIC UX OPEN
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + LVGL BASIC UI FUNCTIONAL + LVGL DASHBOARD STABILITY + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
+
+## LVGL decision boundary
+
+The local LVGL examples prove that the board can render LVGL screens, allocate PSRAM draw buffers, initialize GT911 and handle simple control intent. They do not yet prove a polished user-facing HMI path.
+
+Current decision:
+
+```text
+10_LVGL_BasicUI    : functional button/slider proof, touch quality open
+11_LVGL_Dashboard  : stable diagnostic dashboard, dynamic touch UX not acceptable
+```
+
+The manual-touch dashboard experiment reduced the area of the touch-time artifact but did not remove the visual problem. The current local approach must not be used as a final user-application template.
+
+Further LVGL work should study and port better-organized third-party / WT32-style patterns instead of continuing to polish this workaround.
 
 ## Arduino IDE board setup
 
@@ -110,8 +126,8 @@ False
 08_SDCardTest           read-only SD mount + metadata + directory listing
 09_BLETest              Arduino BLE init + active advertisement scan
 10_LVGL_BasicUI         LVGL 8 basic UI: button, counter, slider, GT911 BSP input
-11_LVGL_Dashboard       next local HMI/dashboard layer
-13_RetroClock_800x480   future
+11_LVGL_Dashboard       diagnostic HMI/dashboard layer, dynamic UX not accepted
+13_RetroClock_800x480   future / third-party or WT32-style reference preferred
 20_LVGL_GitHubOTA       future
 21_LVGL_WidgetLoader    future
 ```
@@ -318,6 +334,38 @@ Boundary:
 
 ```text
 This is the first local LVGL UI layer. It proves functional button/slider interaction, but final touch smoothness remains open. SD-backed assets, Web upload/control, Widget Runtime and GitHub OTA remain separate stages.
+```
+
+## 11_LVGL_Dashboard
+
+Purpose:
+
+```text
+record the first dashboard-style LVGL screen and test whether static/manual touch handling can avoid visible dynamic redraw artifacts on the RGB panel
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/11-lvgl-dashboard-manual-touch-20260826.md
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/11_LVGL_Dashboard/11_LVGL_Dashboard.ino
+```
+
+Current Sample A status:
+
+```text
+DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE
+```
+
+Boundary:
+
+```text
+This example proves stable static dashboard rendering and manual control intent, but the touch-time visual dynamics remain unacceptable for normal user-facing applications. It is frozen as a diagnostic record.
 ```
 
 ## Rule
