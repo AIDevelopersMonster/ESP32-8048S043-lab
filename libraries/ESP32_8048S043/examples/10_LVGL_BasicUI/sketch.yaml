@@ -1,0 +1,20 @@
+name: 10_LVGL_BasicUI
+version: 0.1.0
+status: source-implemented-physical-validation-open
+board: ESP32-8048S043 Lab N16R8 FIXED
+serial_baud: 115200
+requires:
+  - Arduino_GFX_Library
+  - lvgl
+checks:
+  - rgb-display-lvgl-flush
+  - gt911-lvgl-pointer-input
+  - psram-lvgl-draw-buffers
+  - button-click-counter
+  - backlight-pwm-slider
+  - alive-runtime
+boundary:
+  - no-sd-assets
+  - no-web-control
+  - no-widget-runtime
+  - no-github-ota
