@@ -1,6 +1,6 @@
 # 09_BLETest
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A`.
 
 This example validates the ESP32-S3 BLE radio/stack with an active BLE scan.
 
@@ -23,16 +23,77 @@ The verified stack now has:
 
 `09_BLETest` validates the final simple radio layer before moving to LVGL and browser-controlled workflows.
 
+## Sample A evidence
+
+Commit-safe runtime record:
+
+```text
+evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
+```
+
+Observed build profile:
+
+```text
+ARDUINO_BOARD               : "ESP32_8048S043_LAB"
+ARDUINO_VARIANT             : "esp32_8048s043_lab"
+CONFIG_IDF_TARGET           : "esp32s3"
+CONFIG_IDF_TARGET_ESP32S3   : 1
+CONFIG_BT_ENABLED           : 1
+BOARD_HAS_PSRAM             : defined
+```
+
+Observed runtime baseline:
+
+```text
+ESP-IDF SDK                 : v5.5.5
+Chip                        : ESP32-S3 rev 2
+CPU frequency               : 240 MHz
+Flash                       : 16777216 bytes
+PSRAM                       : 8388608 bytes
+Free PSRAM                  : 8384064 bytes
+```
+
+Observed BLE initialization:
+
+```text
+[PASS] BLEDevice initialized
+[INFO] Local BLE address: 84:fc:e6:6c:69:3d
+[PASS] BLE active scan configured
+```
+
+Observed scan result:
+
+```text
+BLE SCAN PHYSICAL PASS CANDIDATE
+Arduino BLE init + active scan + advertisement receive passed.
+```
+
+Final observed summary in the supplied log:
+
+```text
+Cycle results        : 3
+Callback reports     : 3
+Named reports        : 0
+Total reports        : 30
+Total named reports  : 0
+```
+
+Final observed ALIVE line:
+
+```text
+[ALIVE] uptime=772s bleInit=OK scans=26 lastScan=PASS_CANDIDATE reports=30 freeHeap=251124 psram=8388608 freePsram=8384064
+```
+
 ## What it checks
 
 ```text
-Bluetooth controller initializes in BLE mode;
-Bluedroid host initializes and enables;
-local BLE controller address can be read;
+Arduino BLE library is available;
+BLEDevice initializes;
+local BLE address can be printed;
 BLE active scan starts;
 advertising reports are received and printed;
-scan completes without reset/brownout/crash;
-ALIVE output continues after scan completion.
+scan cycles complete without reset/brownout/crash;
+ALIVE output continues after scan cycles.
 ```
 
 ## What it does not check
@@ -42,6 +103,7 @@ Bluetooth Classic;
 pairing;
 GATT service discovery;
 connecting to a BLE peripheral;
+BLE characteristic reads/writes;
 BLE HID;
 BLE provisioning;
 Wi-Fi/BLE coexistence under load;
@@ -81,7 +143,7 @@ BLE beacon;
 Bluetooth keyboard/mouse in advertising mode.
 ```
 
-The test requests a 15 second active BLE scan.
+The test repeats 15 second active BLE scan cycles.
 
 ## Expected serial output
 
@@ -92,47 +154,40 @@ ESP32-8048S043 Lab / 09_BLETest
 BLE active scan validation
 
 [BUILD PROFILE]
-ARDUINO_BOARD
-ARDUINO_VARIANT
-CONFIG_IDF_TARGET
-CONFIG_BT_ENABLED
-CONFIG_BLUEDROID_ENABLED
-CONFIG_BT_BLE_ENABLED
+ARDUINO_BOARD               : "ESP32_8048S043_LAB"
+ARDUINO_VARIANT             : "esp32_8048s043_lab"
+CONFIG_IDF_TARGET           : "esp32s3"
+CONFIG_BT_ENABLED           : 1
+BOARD_HAS_PSRAM             : defined
 
 [BLE INIT]
-[PASS] BT controller initialized
-[PASS] BT controller enabled in BLE mode
-[PASS] Bluedroid initialized
-[PASS] Bluedroid enabled
+[PASS] BLEDevice initialized
 [INFO] Local BLE address: ...
-[PASS] BLE GAP callback registered
-[PASS] BLE scan parameter request sent
-[PASS] BLE scan started
+[PASS] BLE active scan configured
 
-[ADV] #1 addr=... rssi=... name=...
-...
+[BLE SCAN] Cycle 1, active scan for 15 second(s)
+[ADV] #1 addr=... rssi=... name="..."
 
 BLE SCAN PHYSICAL PASS CANDIDATE
-Controller + Bluedroid + active scan + advertisement receive passed.
+Arduino BLE init + active scan + advertisement receive passed.
 ```
 
 Then the sketch should continue printing:
 
 ```text
-[ALIVE] uptime=... bleInit=OK scanStarted=YES scanDone=YES advReports=... freeHeap=... psram=... freePsram=...
+[ALIVE] uptime=... bleInit=OK scans=... lastScan=PASS_CANDIDATE reports=... freeHeap=... psram=... freePsram=...
 ```
 
 ## PASS boundary
 
 ```text
 BLE SCAN PASS CANDIDATE:
-  BT controller initializes;
-  controller enables in BLE mode;
-  Bluedroid initializes and enables;
+  Arduino BLE library is available;
+  BLEDevice initializes;
   local BLE address is available;
   BLE scan starts;
   one or more advertisement reports are received;
-  scan completes;
+  scan cycles complete;
   ALIVE continues without reset/brownout/crash.
 ```
 
@@ -148,6 +203,6 @@ place a BLE advertiser nearby and rerun before claiming BLE physical PASS.
 
 ## Boundary
 
-This test validates only BLE controller/host initialization and advertisement receive.
+This test validates only Arduino-level BLE initialization and advertisement receive.
 
-It does not validate pairing, GATT, HID, provisioning or Wi-Fi/BLE coexistence.
+It does not validate pairing, GATT, HID, provisioning, Wi-Fi/BLE coexistence or display/LVGL integration.
