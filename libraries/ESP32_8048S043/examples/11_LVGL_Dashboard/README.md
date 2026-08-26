@@ -1,6 +1,6 @@
 # 11_LVGL_Dashboard
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / STATIC REFRESH TEST`.
+Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / MANUAL TOUCH TEST`.
 
 First dashboard-style LVGL 8 example for the ESP32-8048S043 Arduino library.
 
@@ -23,9 +23,9 @@ The screen contains:
 ```text
 firmware ID / uptime snapshot line;
 memory card with heap and PSRAM bars;
-GT911 touch BSP status card;
+GT911/manual touch status card;
 manual refresh button;
-backlight PWM slider;
+backlight PWM axis bar;
 continued ALIVE output in Serial.
 ```
 
@@ -34,16 +34,24 @@ continued ALIVE output in Serial.
 Expected current firmware ID:
 
 ```text
-11DASH-ST1-240826B
+11DASH-MT1-240826C
 ```
 
-## Refresh mode
+## Refresh and touch mode
 
-This revision intentionally uses static refresh mode.
+This revision intentionally uses static/manual-touch mode.
 
-The dashboard does not rewrite labels once per second. On the RGB panel, large periodic LVGL invalidations can visibly look like a horizontal jump or tear while the panel is scanning. Runtime telemetry still goes to Serial every five seconds.
+The dashboard does not rewrite labels once per second. Runtime telemetry still goes to Serial every five seconds.
 
-Manual UI refresh is available through the on-screen `Refresh` button. The backlight slider updates only its own label.
+GT911 is not registered as a normal LVGL pointer device in this example. The sketch polls GT911 through `ESP32_8048S043_Touch` and interprets touches through fixed hitboxes:
+
+```text
+Refresh button       : debounced hitbox, single action per press
+Backlight control    : broad horizontal touch band, X-axis projection only
+Backlight update     : deadband + rate limit, not literal drawing under the finger
+```
+
+This avoids LVGL pressed/drag state redraws across the dashboard when the finger touches the panel.
 
 ## Dependencies
 
@@ -126,8 +134,9 @@ Expected serial output:
 ```text
 ESP32-8048S043 Lab / 11_LVGL_Dashboard
 LVGL 8 dashboard validation
-Firmware ID: 11DASH-ST1-240826B
-Refresh: static screen, manual dashboard refresh only
+Firmware ID: 11DASH-MT1-240826C
+Mode   : RGB display + manual GT911 hitboxes + LVGL dashboard
+Touch  : LVGL pointer disabled; button/axis handled by sketch
 
 [DISPLAY INIT]
 [PASS] gfx->begin()
@@ -138,30 +147,33 @@ Refresh: static screen, manual dashboard refresh only
 [LVGL INIT]
 [PASS] lvBuf1 allocated in PSRAM
 [PASS] lvBuf2 allocated in PSRAM
-[PASS] LVGL display + input drivers registered
+[PASS] LVGL display driver registered
+[PASS] GT911 touch handled manually, LVGL pointer driver disabled
 
 [PASS] LVGL dashboard UI objects created
 LVGL DASHBOARD READY
-Static refresh mode: no 1 Hz dashboard redraw.
+Manual touch mode: no LVGL pressed/drag redraw under finger.
 ```
 
 ALIVE lines should continue without forcing screen updates:
 
 ```text
-[ALIVE] fw=11DASH-ST1-240826B uptime=... display=OK touch=OK lvgl=OK ui=OK refresh=... accepted=... filtered=... loops=... freeHeap=... psram=8388608 freePsram=...
+[ALIVE] fw=11DASH-MT1-240826C uptime=... display=OK touch=OK lvgl=OK ui=OK refresh=... manualTouch=... slider=... accepted=... filtered=... loops=... freeHeap=... psram=8388608 freePsram=...
 ```
 
 ## PASS boundary
 
 ```text
-DASHBOARD STATIC-REFRESH PASS CANDIDATE:
+DASHBOARD MANUAL-TOUCH PASS CANDIDATE:
   display initializes;
   GT911 BSP initializes;
   LVGL draw buffers allocate;
   dashboard appears on screen;
   no visible periodic 1 Hz full-screen redraw while idle;
-  Refresh button manually updates dashboard values;
-  backlight slider works;
+  touching non-control areas does not redraw the screen;
+  Refresh hitbox works with debounce;
+  Backlight axis band changes brightness with X-axis projection;
+  backlight control redraw is limited to the bar/label area;
   ALIVE continues without reset/brownout/crash.
 ```
 
