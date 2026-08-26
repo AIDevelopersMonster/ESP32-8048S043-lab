@@ -1,6 +1,6 @@
 # 10_LVGL_BasicUI
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `FUNCTIONAL PASS CANDIDATE / SAMPLE A / TOUCH QUALITY OPEN`.
 
 This example is the first LVGL-based local HMI shell for the ESP32-8048S043 Arduino library.
 
@@ -12,6 +12,40 @@ GT911 touch;
 backlight PWM;
 PSRAM-backed LVGL draw buffers;
 interactive LVGL widgets.
+```
+
+## Current physical result
+
+Sample A was tested with firmware ID:
+
+```text
+10LVGL-BSP1-240826C
+```
+
+Observed functional result:
+
+```text
+display initializes under LVGL;
+GT911 initializes through ESP32_8048S043_Touch BSP;
+LVGL draw buffers allocate in PSRAM;
+LVGL touch input registers through BSP;
+UI appears on screen;
+Tap me button increments the counter;
+backlight slider generates LVGL events and changes the physical backlight path;
+ALIVE output continues without reset, brownout or crash.
+```
+
+Operator observation:
+
+```text
+Works as a test, but touch/drag interaction is still not clean or stable enough for a polished UI.
+Keep this result as functional pass candidate with touch quality open.
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/10-lvgl-basic-ui-bsp-touch-20260826.md
 ```
 
 ## Why this test exists
@@ -39,7 +73,7 @@ Arduino_GFX RGB display under LVGL;
 LVGL 8.x initialization;
 LVGL draw buffers allocated in PSRAM where possible;
 LVGL flush callback to the 800x480 RGB panel;
-GT911 touch registered as an LVGL pointer input device;
+GT911 touch registered as an LVGL pointer input device through ESP32_8048S043_Touch BSP;
 interactive button click event;
 live click counter;
 slider-controlled backlight PWM;
@@ -49,6 +83,7 @@ continued ALIVE output while LVGL is running.
 ## What it does not check
 
 ```text
+final touch UX quality;
 SD-backed assets;
 Web upload/control;
 Widget Runtime;
@@ -159,18 +194,19 @@ A good run should include:
 
 ```text
 ESP32-8048S043 Lab / 10_LVGL_BasicUI
-LVGL 8 basic UI validation
+LVGL 8 BSP-touch basic UI validation
+Firmware ID: 10LVGL-BSP1-240826C
 
 [DISPLAY INIT]
 [PASS] gfx->begin()
 
-[TOUCH INIT]
-[PASS] GT911 at 0x5D
+[TOUCH BSP INIT]
+[PASS] ESP32_8048S043_Touch::begin() addr=0x5D fw=0x1060 res=480x272
 
 [LVGL INIT]
 [PASS] lvBuf1 allocated in PSRAM
 [PASS] lvBuf2 allocated in PSRAM
-[PASS] LVGL touch input registered
+[PASS] LVGL touch input registered through BSP
 [PASS] LVGL display driver registered
 
 [UI INIT]
@@ -182,22 +218,27 @@ LVGL BASIC UI READY
 ALIVE lines should continue:
 
 ```text
-[ALIVE] uptime=... display=OK touch=OK lvgl=OK ui=OK clicks=... touchReports=... lvglLoops=... freeHeap=... psram=... freePsram=...
+[ALIVE] fw=10LVGL-BSP1-240826C uptime=... display=OK touch=OK lvgl=OK ui=OK clicks=... accepted=... filtered=... statusReads=... ready=... zeroReady=... readFail=0 pointFail=0 lvglLoops=... freeHeap=... psram=8388608 freePsram=...
 ```
 
 ## PASS boundary
 
 ```text
-LVGL BASIC UI PASS CANDIDATE:
+LVGL BASIC UI FUNCTIONAL PASS CANDIDATE:
   display initializes;
-  GT911 initializes;
-  LVGL draw buffers allocate;
+  GT911 initializes through BSP;
+  LVGL draw buffers allocate in PSRAM;
   LVGL display driver registers;
   LVGL touch input registers;
   UI appears on screen;
   button press changes counter;
   slider changes backlight;
   ALIVE continues without reset/brownout/crash.
+
+TOUCH QUALITY OPEN:
+  finger hold and drag can still feel rough;
+  this is acceptable for the current test boundary;
+  polished UI touch behavior remains a later refinement.
 ```
 
 ## Boundary
