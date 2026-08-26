@@ -8,6 +8,13 @@ Evidence source:
 
 ```text
 Serial Monitor runtime log supplied by operator.
+Video evidence supplied by operator.
+```
+
+Video evidence:
+
+```text
+https://youtube.com/shorts/vACvK85U0Lw
 ```
 
 ## Test target
@@ -116,6 +123,7 @@ Root directory listing     : PASS
 Nested directory listing   : PASS
 Write operations           : NOT PERFORMED
 Runtime stability          : PASS candidate, ALIVE lines continue to at least 140 seconds
+Video evidence             : PRESENT, https://youtube.com/shorts/vACvK85U0Lw
 Overall 08_SDCardTest      : READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 ```
 
