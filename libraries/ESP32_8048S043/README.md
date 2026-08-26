@@ -10,19 +10,19 @@ BSP API                 SKELETON / GROWING
 02_DisplayRGBTest       PHYSICAL VISUAL PASS / SAMPLE A
 03_TouchGT911Test       PHYSICAL VISUAL PASS / SAMPLE A
 04_BacklightTest        PHYSICAL PASS REPORTED / SAMPLE A
-05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A / PSRAM REPORT CAVEAT
+05_TestConsole          PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A
 06_WiFiTest             FULL WIFI PHYSICAL PASS CANDIDATE / SAMPLE A
-07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT
-08_SDCardTest           SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
+08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
-HTTP server             BROWSER VALIDATION PASS CANDIDATE
-SD card                 SOURCE-BACKED PIN MAP / READ-ONLY TEST IMPLEMENTED
+HTTP server             BROWSER + JSON + PING PASS CANDIDATE
+SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
 LVGL port               OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + OWN RGB DISPLAY + OWN GT911 TOUCH + BACKLIGHT REPORTED + TEST CONSOLE REPORTED + FULL WIFI CANDIDATE + WEB SERVER CANDIDATE + FACTORY LVGL DISPLAY/TOUCH VISUAL
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -57,14 +57,14 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 ## Example plan
 
 ```text
-01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/ALIVE/profile diagnostics
+01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/profile/ALIVE
 02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
 03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
 04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
 05_TestConsole          combined RGB + GT911 + backlight diagnostic console
 06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
-08_SDCardTest           read-only microSD / TF SPI mount + metadata + root listing
+08_SDCardTest           read-only SD mount + metadata + directory listing
 09_BLETest              future
 10_LVGL_BasicUI         future
 11_LVGL_Dashboard       future
@@ -78,7 +78,7 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 Purpose:
 
 ```text
-verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash, 8 MB PSRAM and compile-time build profile macros
+verify basic Arduino IDE upload, serial monitor, ESP32-S3 identity, 16 MB flash, 8 MB PSRAM, profile macros and ALIVE stability
 ```
 
 Current Sample A status:
@@ -143,12 +143,6 @@ Current Sample A status:
 PHYSICAL INTEGRATION PASS REPORTED / SAMPLE A
 ```
 
-Boundary note:
-
-```text
-One earlier 05_TestConsole run reported PSRAM as 0 bytes. Later BoardInfo and WebServer diagnostics isolated this as a board/profile configuration issue rather than a hardware failure. Use 01_BoardInfo V2 as the current profile/PSRAM acceptance test before memory-heavy examples.
-```
-
 ## 06_WiFiTest
 
 Purpose:
@@ -157,57 +151,12 @@ Purpose:
 validate the ESP32-S3 Wi-Fi radio/network path before Web setup, GitHub OTA and Widget Runtime work
 ```
 
-Lineage:
-
-```text
-adapted from WT32-SC01-PLUS-Lab / 08_WiFiTest pattern
-```
-
-What it tests:
-
-```text
-Wi-Fi STA mode;
-STA MAC readout;
-active scan;
-association;
-DHCP;
-DNS;
-TCP/HTTP HEAD request;
-disconnect/reconnect cycles.
-```
-
-Open:
-
-```text
-libraries/ESP32_8048S043/examples/06_WiFiTest/06_WiFiTest.ino
-```
-
 Evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
 evidence/specimens/sample-a/arduino/06-wifi-full-infrastructure-20260825.md
 https://youtube.com/shorts/DOus0uNBBZI
-```
-
-Current Sample A full infrastructure result:
-
-```text
-STA MAC            : 84:FC:E6:6C:69:3C
-Active scan        : PASS, 2 network(s) found
-Association        : PASS, connected to configured AP
-DHCP               : PASS, IPv4/gateway/DNS received
-DNS                : PASS, example.com resolved
-TCP/HTTP           : PASS, HTTP/1.1 200 OK
-Reconnect          : PASS, 3/3 cycles completed
-```
-
-Secrets workflow:
-
-```text
-copy wifi_secrets.example.h to wifi_secrets.h locally;
-fill WIFI_TEST_SSID / WIFI_TEST_PASSWORD;
-do not commit wifi_secrets.h.
 ```
 
 Current Sample A status:
@@ -224,27 +173,16 @@ Purpose:
 validate the first browser-accessible HTTP server layer before Web setup, GitHub OTA dashboard and Widget Runtime upload/control
 ```
 
-What it tests:
+Evidence:
 
 ```text
-STA connection with local wifi_secrets.h or SoftAP fallback;
-WebServer starts on port 80;
-root HTML page is reachable from a browser;
-/status.json returns machine-readable board/network status;
-/ping returns a minimal text response;
-serial log records browser requests.
-```
-
-Open:
-
-```text
-libraries/ESP32_8048S043/examples/07_WebServerTest/07_WebServerTest.ino
+evidence/specimens/sample-a/arduino/07-webserver-sta-20260825.md
 ```
 
 Current Sample A status:
 
 ```text
-WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT
+WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
 ```
 
 ## 08_SDCardTest
@@ -252,7 +190,7 @@ WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A / PSRAM REPORT CAVEAT
 Purpose:
 
 ```text
-validate the source-backed microSD / TF SPI pin map with a read-only Arduino SD.h mount, metadata report and root directory listing
+validate the source-backed microSD / TF SPI pin map before SD-backed logs, file upload, Widget Runtime storage or offline asset loading
 ```
 
 Pin map:
@@ -261,27 +199,27 @@ Pin map:
 CS=10 MOSI=11 CLK=12 MISO=13
 ```
 
-What it tests:
+Evidence:
 
 ```text
-SD card mount;
-card type and size;
-filesystem total/used/free;
-root directory listing;
-optional first-file read-only HEX preview;
-continued ALIVE output after the test.
+evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 ```
 
-Open:
+Current Sample A result:
 
 ```text
-libraries/ESP32_8048S043/examples/08_SDCardTest/08_SDCardTest.ino
+Card type          : SDHC/SDXC
+Mounted frequency  : 10000000 Hz
+Card size          : 32220119040 bytes / 30.01 GB
+Filesystem total   : 32211599360 bytes / 30.00 GB
+Directory listing  : PASS, root and System Volume Information listed
+No write operations: PASS, read-only test
 ```
 
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 ```
 
 ## Rule
