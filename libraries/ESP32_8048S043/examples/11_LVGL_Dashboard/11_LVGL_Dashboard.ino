@@ -26,7 +26,7 @@ using namespace esp32_8048s043::pins;
 #error "11_LVGL_Dashboard expects LV_COLOR_DEPTH == 16 for Arduino_GFX RGB565 flush."
 #endif
 
-static const char *const SKETCH_ID = "11DASH-SRC1-240826A";
+static const char *const SKETCH_ID = "11DASH-ST1-240826B";
 
 static constexpr int LCD_W = LCD_WIDTH;
 static constexpr int LCD_H = LCD_HEIGHT;
@@ -34,7 +34,11 @@ static constexpr int LCD_PCLK_HZ = 16000000;
 static constexpr uint32_t SERIAL_BAUD = 115200;
 static constexpr uint32_t LVGL_BUFFER_LINES = 40;
 static constexpr uint32_t ALIVE_INTERVAL_MS = 5000;
-static constexpr uint32_t DASHBOARD_UPDATE_MS = 1000;
+
+// Static refresh mode: the dashboard does not rewrite labels every second.
+// On RGB panels, large periodic LVGL invalidations can look like a horizontal
+// jump/tear while the panel is scanning. Runtime telemetry still goes to Serial.
+static constexpr bool DASHBOARD_STATIC_REFRESH = true;
 
 static Arduino_ESP32RGBPanel *rgbPanel = nullptr;
 static Arduino_RGB_Display *gfx = nullptr;
@@ -52,7 +56,6 @@ static bool lvglOk = false;
 static bool uiOk = false;
 
 static uint32_t lastAliveMs = 0;
-static uint32_t lastDashboardMs = 0;
 static uint32_t lastLvTickMs = 0;
 static uint32_t lvglLoops = 0;
 static uint32_t refreshClicks = 0;
@@ -215,13 +218,13 @@ static void updateDashboard() {
   const int heapUsedPercent = heapSize ? static_cast<int>((100UL * (heapSize - freeHeap)) / heapSize) : 0;
   const int psramUsedPercent = psramSize ? static_cast<int>((100UL * (psramSize - freePsram)) / psramSize) : 0;
 
-  lv_label_set_text_fmt(uptimeLabel, "Uptime: %lu s | FW %s", static_cast<unsigned long>(now / 1000), SKETCH_ID);
+  lv_label_set_text_fmt(uptimeLabel, "Uptime snapshot: %lu s | FW %s", static_cast<unsigned long>(now / 1000), SKETCH_ID);
   lv_label_set_text_fmt(heapLabel, "Heap free: %lu KB / used %d%%", static_cast<unsigned long>(freeHeap / 1024UL), heapUsedPercent);
   lv_label_set_text_fmt(psramLabel, "PSRAM free: %lu KB / used %d%%", static_cast<unsigned long>(freePsram / 1024UL), psramUsedPercent);
   lv_label_set_text_fmt(touchLabel, "GT911: addr=0x%02X fw=0x%04X res=%ux%u accepted=%lu",
                         touch.address(), touch.firmwareVersion(), touch.resolutionX(), touch.resolutionY(),
                         static_cast<unsigned long>(touch.acceptedPoints()));
-  lv_label_set_text_fmt(eventLabel, "Refresh clicks: %lu | LVGL loops: %lu",
+  lv_label_set_text_fmt(eventLabel, "Manual refresh: %lu | LVGL loops snapshot: %lu",
                         static_cast<unsigned long>(refreshClicks), static_cast<unsigned long>(lvglLoops));
   lv_label_set_text_fmt(backlightLabel, "Backlight PWM: %u / 255", static_cast<unsigned int>(backlightDuty));
 
@@ -229,10 +232,16 @@ static void updateDashboard() {
   lv_bar_set_value(psramBar, psramUsedPercent, LV_ANIM_OFF);
 }
 
+static void updateBacklightLabelOnly() {
+  if (backlightLabel) {
+    lv_label_set_text_fmt(backlightLabel, "Backlight PWM: %u / 255", static_cast<unsigned int>(backlightDuty));
+  }
+}
+
 static void refreshEvent(lv_event_t *event) {
   if (lv_event_get_code(event) == LV_EVENT_CLICKED) {
     ++refreshClicks;
-    Serial.printf("[LVGL] fw=%s Refresh clicked: %lu\n", SKETCH_ID, static_cast<unsigned long>(refreshClicks));
+    Serial.printf("[LVGL] fw=%s Manual refresh clicked: %lu\n", SKETCH_ID, static_cast<unsigned long>(refreshClicks));
     updateDashboard();
   }
 }
@@ -244,7 +253,7 @@ static void backlightEvent(lv_event_t *event) {
   if (lv_event_get_code(event) == LV_EVENT_VALUE_CHANGED) {
     Serial.printf("[LVGL] fw=%s Backlight slider: %d\n", SKETCH_ID, value);
   }
-  updateDashboard();
+  updateBacklightLabelOnly();
 }
 
 static void createDashboardUi() {
@@ -323,6 +332,7 @@ void setup() {
   Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
   Serial.println("============================================================");
   Serial.println("Mode   : RGB display + ESP32_8048S043_Touch BSP + LVGL dashboard");
+  Serial.println("Refresh: static screen, manual dashboard refresh only");
   Serial.println("Serial : 115200 baud");
   Serial.println("------------------------------------------------------------");
 
@@ -332,6 +342,7 @@ void setup() {
   Serial.printf("%-28s: %s rev %u\n", "Chip", ESP.getChipModel(), ESP.getChipRevision());
   Serial.printf("%-28s: %lu bytes\n", "Flash", static_cast<unsigned long>(ESP.getFlashChipSize()));
   Serial.printf("%-28s: %lu bytes\n", "PSRAM", static_cast<unsigned long>(ESP.getPsramSize()));
+  Serial.printf("%-28s: %s\n", "Static refresh", DASHBOARD_STATIC_REFRESH ? "enabled" : "disabled");
   Serial.println("------------------------------------------------------------");
 
   displayOk = initDisplay();
@@ -361,6 +372,7 @@ void setup() {
   Serial.println("============================================================");
   Serial.println(" LVGL DASHBOARD READY");
   Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
+  Serial.println(" Static refresh mode: no 1 Hz dashboard redraw.");
   Serial.println("============================================================");
 }
 
@@ -375,11 +387,6 @@ void loop() {
     }
     lv_timer_handler();
     ++lvglLoops;
-  }
-
-  if (uiOk && now - lastDashboardMs >= DASHBOARD_UPDATE_MS) {
-    lastDashboardMs = now;
-    updateDashboard();
   }
 
   if (now - lastAliveMs >= ALIVE_INTERVAL_MS) {
