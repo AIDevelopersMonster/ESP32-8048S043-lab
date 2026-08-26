@@ -489,7 +489,7 @@ static void createUi() {
   lv_obj_t *title = lv_label_create(screen);
   lv_label_set_text(title, "ESP32-8048S043 / LVGL BasicUI");
   lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_set_style_text_font(title, &lv_font_montserrat_24, 0);
+  lv_obj_set_style_text_font(title, LV_FONT_DEFAULT, 0);
   lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 18);
 
   statusLabel = lv_label_create(screen);
