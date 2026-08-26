@@ -15,17 +15,17 @@ BSP API                 SKELETON / GROWING
 07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
 08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 09_BLETest              BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
-10_LVGL_BasicUI         SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+10_LVGL_BasicUI         FUNCTIONAL PASS CANDIDATE / SAMPLE A / TOUCH QUALITY OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            GT911 POLLING VISUAL TEST PASS
-Backlight driver        DIGITAL/PWM TEST REPORTED PASS
+Touch driver            GT911 BSP API IMPLEMENTED / LVGL FUNCTIONAL PASS CANDIDATE
+Backlight driver        DIGITAL/PWM TEST REPORTED PASS / LVGL SLIDER EXERCISED
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
 BLE radio/stack         ARDUINO BLE INIT + ACTIVE SCAN + ADV RECEIVE PASS CANDIDATE
-LVGL port               BASIC UI SOURCE IMPLEMENTED / VALIDATION OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + FACTORY LVGL DISPLAY/TOUCH VISUAL
+LVGL port               BASIC UI FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + LVGL BASIC UI FUNCTIONAL + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## Arduino IDE board setup
@@ -109,8 +109,8 @@ False
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
 08_SDCardTest           read-only SD mount + metadata + directory listing
 09_BLETest              Arduino BLE init + active advertisement scan
-10_LVGL_BasicUI         LVGL 8 basic UI: button, counter, slider, GT911 input
-11_LVGL_Dashboard       future
+10_LVGL_BasicUI         LVGL 8 basic UI: button, counter, slider, GT911 BSP input
+11_LVGL_Dashboard       next local HMI/dashboard layer
 13_RetroClock_800x480   future
 20_LVGL_GitHubOTA       future
 21_LVGL_WidgetLoader    future
@@ -290,10 +290,16 @@ Arduino_GFX RGB display under LVGL;
 LVGL 8.x initialization;
 PSRAM-backed LVGL draw buffers;
 LVGL flush callback to 800x480 RGB panel;
-GT911 as LVGL pointer input;
+GT911 through ESP32_8048S043_Touch BSP as LVGL pointer input;
 button click event and live counter;
 slider-controlled backlight PWM;
 continued ALIVE output while LVGL runs.
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/10-lvgl-basic-ui-bsp-touch-20260826.md
 ```
 
 Open:
@@ -305,13 +311,13 @@ libraries/ESP32_8048S043/examples/10_LVGL_BasicUI/10_LVGL_BasicUI.ino
 Current Sample A status:
 
 ```text
-SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+FUNCTIONAL PASS CANDIDATE / SAMPLE A / TOUCH QUALITY OPEN
 ```
 
 Boundary:
 
 ```text
-This is the first local LVGL UI layer. SD-backed assets, Web upload/control, Widget Runtime and GitHub OTA remain separate stages.
+This is the first local LVGL UI layer. It proves functional button/slider interaction, but final touch smoothness remains open. SD-backed assets, Web upload/control, Widget Runtime and GitHub OTA remain separate stages.
 ```
 
 ## Rule
