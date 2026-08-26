@@ -61,6 +61,8 @@ using namespace esp32_8048s043::pins;
 #error "10_LVGL_BasicUI expects LV_COLOR_DEPTH == 16 for Arduino_GFX RGB565 flush. Set LVGL color depth to 16."
 #endif
 
+static const char *const SKETCH_ID = "10LVGL-TB4-240826A";
+
 static constexpr int LCD_W = LCD_WIDTH;
 static constexpr int LCD_H = LCD_HEIGHT;
 static constexpr int LCD_PCLK_HZ = 16000000;
@@ -138,6 +140,7 @@ static void printDivider() {
 
 static void printBuildProfile() {
   Serial.println("[BUILD PROFILE]");
+  Serial.printf("%-28s: %s\n", "SKETCH_ID", SKETCH_ID);
 
 #ifdef ARDUINO_BOARD
   Serial.printf("%-28s: \"%s\"\n", "ARDUINO_BOARD", ARDUINO_BOARD);
@@ -572,7 +575,8 @@ static void createUi() {
 
   statusLabel = lv_label_create(screen);
   lv_label_set_text_fmt(statusLabel,
-                        "RGB + GT911 + LVGL | PSRAM: %lu MB | Touch: %s",
+                        "FW %s | RGB + GT911 + LVGL | PSRAM: %lu MB | Touch: %s",
+                        SKETCH_ID,
                         static_cast<unsigned long>(ESP.getPsramSize() / (1024UL * 1024UL)),
                         touchOk ? "OK" : "OPEN");
   lv_obj_set_style_text_color(statusLabel, lv_color_hex(0xC8D8E4), 0);
@@ -618,7 +622,7 @@ static void createUi() {
   lv_obj_align(sliderLabel, LV_ALIGN_TOP_MID, 0, 245);
 
   touchLabel = lv_label_create(screen);
-  lv_label_set_text(touchLabel, "Touch raw bridge: waiting for GT911 packets");
+  lv_label_set_text_fmt(touchLabel, "FW %s | Touch raw bridge: waiting for GT911 packets", SKETCH_ID);
   lv_obj_set_style_text_color(touchLabel, lv_color_hex(0x8DA9C4), 0);
   lv_obj_align(touchLabel, LV_ALIGN_BOTTOM_MID, 0, -32);
 
@@ -649,7 +653,8 @@ static void updateTouchUi(int screenX, int screenY, int rawX, int rawY, uint8_t 
 
   if (touchLabel) {
     lv_label_set_text_fmt(touchLabel,
-                          "Touch #%lu raw=%d,%d screen=%d,%d track=%u size=%u",
+                          "FW %s | Touch #%lu raw=%d,%d screen=%d,%d track=%u size=%u",
+                          SKETCH_ID,
                           static_cast<unsigned long>(touchReports),
                           rawX,
                           rawY,
@@ -711,7 +716,8 @@ static void pollTouchHardware() {
 
     if ((now - lastTouchLogMs >= TOUCH_LOG_INTERVAL_MS) || movedEnough) {
       lastTouchLogMs = now;
-      Serial.printf("[TOUCH] #%lu status=0x%02X track=%u raw_x=%d raw_y=%d screen_x=%d screen_y=%d size=%u\n",
+      Serial.printf("[TOUCH] fw=%s #%lu status=0x%02X track=%u raw_x=%d raw_y=%d screen_x=%d screen_y=%d size=%u\n",
+                    SKETCH_ID,
                     static_cast<unsigned long>(touchReports),
                     status,
                     static_cast<unsigned int>(trackId),
@@ -741,6 +747,7 @@ void setup() {
   Serial.println("============================================================");
   Serial.println(" ESP32-8048S043 Lab / 10_LVGL_BasicUI");
   Serial.println(" LVGL 8 basic UI validation");
+  Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
   Serial.println("============================================================");
   Serial.println("Author : Alex Malachevsky");
   Serial.println("GitHub : https://github.com/AIDevelopersMonster/ESP32-8048S043-lab");
@@ -776,6 +783,7 @@ void setup() {
   Serial.println();
   Serial.println("============================================================");
   Serial.println(" LVGL BASIC UI READY");
+  Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
   Serial.println(" Touch the screen. Serial should print [TOUCH] lines first.");
   Serial.println(" Then try the Tap me button and backlight slider.");
   Serial.println("============================================================");
@@ -799,7 +807,8 @@ void loop() {
 
   if (now - lastAliveMs >= ALIVE_INTERVAL_MS) {
     lastAliveMs = now;
-    Serial.printf("[ALIVE] uptime=%lus display=%s touch=%s lvgl=%s ui=%s clicks=%lu touchReports=%lu statusReads=%lu ready=%lu lastStatus=0x%02X i2cFail=%lu pointFail=%lu lvglLoops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
+    Serial.printf("[ALIVE] fw=%s uptime=%lus display=%s touch=%s lvgl=%s ui=%s clicks=%lu touchReports=%lu statusReads=%lu ready=%lu lastStatus=0x%02X i2cFail=%lu pointFail=%lu lvglLoops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
+                  SKETCH_ID,
                   static_cast<unsigned long>(now / 1000),
                   displayOk ? "OK" : "FAIL",
                   touchOk ? "OK" : "OPEN",
