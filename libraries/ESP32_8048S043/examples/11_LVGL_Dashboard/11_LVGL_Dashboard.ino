@@ -26,7 +26,7 @@ using namespace esp32_8048s043::pins;
 #error "11_LVGL_Dashboard expects LV_COLOR_DEPTH == 16 for Arduino_GFX RGB565 flush."
 #endif
 
-static const char *const SKETCH_ID = "11DASH-ST1-240826B";
+static const char *const SKETCH_ID = "11DASH-MT1-240826C";
 
 static constexpr int LCD_W = LCD_WIDTH;
 static constexpr int LCD_H = LCD_HEIGHT;
@@ -35,10 +35,30 @@ static constexpr uint32_t SERIAL_BAUD = 115200;
 static constexpr uint32_t LVGL_BUFFER_LINES = 40;
 static constexpr uint32_t ALIVE_INTERVAL_MS = 5000;
 
-// Static refresh mode: the dashboard does not rewrite labels every second.
-// On RGB panels, large periodic LVGL invalidations can look like a horizontal
-// jump/tear while the panel is scanning. Runtime telemetry still goes to Serial.
+// Static/manual touch mode:
+// - no LVGL pointer driver is registered;
+// - GT911 is polled by this sketch;
+// - touches are interpreted as coarse hitboxes and X-axis projection;
+// - LVGL does not repaint widget pressed/drag states under the finger.
 static constexpr bool DASHBOARD_STATIC_REFRESH = true;
+static constexpr bool DASHBOARD_MANUAL_TOUCH = true;
+static constexpr uint32_t MANUAL_TOUCH_POLL_MS = 25;
+static constexpr uint32_t MANUAL_BUTTON_DEBOUNCE_MS = 280;
+static constexpr uint32_t MANUAL_SLIDER_UPDATE_MS = 70;
+static constexpr int MANUAL_SLIDER_DEADBAND = 4;
+
+// Absolute screen hitboxes for the dashboard layout.
+static constexpr int REFRESH_BUTTON_X = 44;
+static constexpr int REFRESH_BUTTON_Y = 324;
+static constexpr int REFRESH_BUTTON_W = 180;
+static constexpr int REFRESH_BUTTON_H = 58;
+
+static constexpr int BACKLIGHT_AXIS_X1 = 288;
+static constexpr int BACKLIGHT_AXIS_X2 = 718;
+static constexpr int BACKLIGHT_AXIS_Y1 = 300;
+static constexpr int BACKLIGHT_AXIS_Y2 = 400;
+static constexpr int BACKLIGHT_MIN = 16;
+static constexpr int BACKLIGHT_MAX = 255;
 
 static Arduino_ESP32RGBPanel *rgbPanel = nullptr;
 static Arduino_RGB_Display *gfx = nullptr;
@@ -46,7 +66,6 @@ static ESP32_8048S043_Touch touch;
 
 static lv_disp_draw_buf_t drawBuf;
 static lv_disp_drv_t dispDrv;
-static lv_indev_drv_t indevDrv;
 static lv_color_t *lvBuf1 = nullptr;
 static lv_color_t *lvBuf2 = nullptr;
 
@@ -57,9 +76,17 @@ static bool uiOk = false;
 
 static uint32_t lastAliveMs = 0;
 static uint32_t lastLvTickMs = 0;
+static uint32_t lastManualTouchPollMs = 0;
+static uint32_t lastManualButtonMs = 0;
+static uint32_t lastManualSliderMs = 0;
 static uint32_t lvglLoops = 0;
 static uint32_t refreshClicks = 0;
+static uint32_t manualTouchEvents = 0;
+static uint32_t manualSliderEvents = 0;
 static uint8_t backlightDuty = 220;
+static bool buttonTouchHeld = false;
+static bool sliderTouchHeld = false;
+static float projectedDuty = static_cast<float>(backlightDuty);
 
 static lv_obj_t *uptimeLabel = nullptr;
 static lv_obj_t *heapLabel = nullptr;
@@ -69,6 +96,26 @@ static lv_obj_t *eventLabel = nullptr;
 static lv_obj_t *backlightLabel = nullptr;
 static lv_obj_t *heapBar = nullptr;
 static lv_obj_t *psramBar = nullptr;
+static lv_obj_t *backlightBar = nullptr;
+static lv_obj_t *refreshButton = nullptr;
+static lv_obj_t *refreshButtonLabel = nullptr;
+
+static int clampInt(int value, int lo, int hi) {
+  if (value < lo) return lo;
+  if (value > hi) return hi;
+  return value;
+}
+
+static bool inBox(uint16_t x, uint16_t y, int boxX, int boxY, int boxW, int boxH) {
+  return x >= boxX && x < boxX + boxW && y >= boxY && y < boxY + boxH;
+}
+
+static int projectBacklightDuty(uint16_t x) {
+  const int clampedX = clampInt(static_cast<int>(x), BACKLIGHT_AXIS_X1, BACKLIGHT_AXIS_X2);
+  const int span = BACKLIGHT_AXIS_X2 - BACKLIGHT_AXIS_X1;
+  const int range = BACKLIGHT_MAX - BACKLIGHT_MIN;
+  return BACKLIGHT_MIN + ((clampedX - BACKLIGHT_AXIS_X1) * range) / span;
+}
 
 static void setBacklightDuty(uint8_t duty) {
   backlightDuty = duty;
@@ -130,18 +177,6 @@ static void lvglFlush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *co
   lv_disp_flush_ready(disp);
 }
 
-static void lvglTouchRead(lv_indev_drv_t *drv, lv_indev_data_t *data) {
-  (void)drv;
-  ESP32_8048S043_TouchPoint point;
-  if (touchOk && touch.read(point) && point.touched) {
-    data->state = LV_INDEV_STATE_PR;
-    data->point.x = point.x;
-    data->point.y = point.y;
-  } else {
-    data->state = LV_INDEV_STATE_REL;
-  }
-}
-
 static void *allocDrawBuffer(size_t bytes, const char *name) {
   void *ptr = heap_caps_malloc(bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   if (ptr) {
@@ -178,13 +213,9 @@ static bool initLvgl() {
   dispDrv.draw_buf = &drawBuf;
   lv_disp_drv_register(&dispDrv);
 
-  lv_indev_drv_init(&indevDrv);
-  indevDrv.type = LV_INDEV_TYPE_POINTER;
-  indevDrv.read_cb = lvglTouchRead;
-  lv_indev_drv_register(&indevDrv);
-
   lastLvTickMs = millis();
-  Serial.println("[PASS] LVGL display + input drivers registered");
+  Serial.println("[PASS] LVGL display driver registered");
+  Serial.println("[PASS] GT911 touch handled manually, LVGL pointer driver disabled");
   return true;
 }
 
@@ -204,6 +235,21 @@ static lv_obj_t *makeCard(lv_obj_t *parent, const char *titleText, int x, int y,
   return card;
 }
 
+static void updateBacklightLabelOnly() {
+  if (backlightLabel) {
+    lv_label_set_text_fmt(backlightLabel, "Backlight PWM: %u / 255", static_cast<unsigned int>(backlightDuty));
+  }
+  if (backlightBar) {
+    lv_bar_set_value(backlightBar, backlightDuty, LV_ANIM_OFF);
+  }
+}
+
+static void updateRefreshButtonOnly() {
+  if (refreshButtonLabel) {
+    lv_label_set_text_fmt(refreshButtonLabel, "Refresh %lu", static_cast<unsigned long>(refreshClicks));
+  }
+}
+
 static void updateDashboard() {
   if (!uiOk) {
     return;
@@ -221,39 +267,80 @@ static void updateDashboard() {
   lv_label_set_text_fmt(uptimeLabel, "Uptime snapshot: %lu s | FW %s", static_cast<unsigned long>(now / 1000), SKETCH_ID);
   lv_label_set_text_fmt(heapLabel, "Heap free: %lu KB / used %d%%", static_cast<unsigned long>(freeHeap / 1024UL), heapUsedPercent);
   lv_label_set_text_fmt(psramLabel, "PSRAM free: %lu KB / used %d%%", static_cast<unsigned long>(freePsram / 1024UL), psramUsedPercent);
-  lv_label_set_text_fmt(touchLabel, "GT911: addr=0x%02X fw=0x%04X res=%ux%u accepted=%lu",
-                        touch.address(), touch.firmwareVersion(), touch.resolutionX(), touch.resolutionY(),
-                        static_cast<unsigned long>(touch.acceptedPoints()));
-  lv_label_set_text_fmt(eventLabel, "Manual refresh: %lu | LVGL loops snapshot: %lu",
-                        static_cast<unsigned long>(refreshClicks), static_cast<unsigned long>(lvglLoops));
-  lv_label_set_text_fmt(backlightLabel, "Backlight PWM: %u / 255", static_cast<unsigned int>(backlightDuty));
-
+  lv_label_set_text_fmt(touchLabel, "GT911 manual: addr=0x%02X fw=0x%04X accepted=%lu",
+                        touch.address(), touch.firmwareVersion(), static_cast<unsigned long>(touch.acceptedPoints()));
+  lv_label_set_text_fmt(eventLabel, "Refresh: %lu | manual touch: %lu | loops: %lu",
+                        static_cast<unsigned long>(refreshClicks),
+                        static_cast<unsigned long>(manualTouchEvents),
+                        static_cast<unsigned long>(lvglLoops));
   lv_bar_set_value(heapBar, heapUsedPercent, LV_ANIM_OFF);
   lv_bar_set_value(psramBar, psramUsedPercent, LV_ANIM_OFF);
-}
-
-static void updateBacklightLabelOnly() {
-  if (backlightLabel) {
-    lv_label_set_text_fmt(backlightLabel, "Backlight PWM: %u / 255", static_cast<unsigned int>(backlightDuty));
-  }
-}
-
-static void refreshEvent(lv_event_t *event) {
-  if (lv_event_get_code(event) == LV_EVENT_CLICKED) {
-    ++refreshClicks;
-    Serial.printf("[LVGL] fw=%s Manual refresh clicked: %lu\n", SKETCH_ID, static_cast<unsigned long>(refreshClicks));
-    updateDashboard();
-  }
-}
-
-static void backlightEvent(lv_event_t *event) {
-  lv_obj_t *slider = lv_event_get_target(event);
-  const int value = static_cast<int>(lv_slider_get_value(slider));
-  setBacklightDuty(static_cast<uint8_t>(value));
-  if (lv_event_get_code(event) == LV_EVENT_VALUE_CHANGED) {
-    Serial.printf("[LVGL] fw=%s Backlight slider: %d\n", SKETCH_ID, value);
-  }
   updateBacklightLabelOnly();
+  updateRefreshButtonOnly();
+}
+
+static void manualRefreshAction() {
+  ++refreshClicks;
+  Serial.printf("[MANUAL] fw=%s Refresh hitbox: %lu\n", SKETCH_ID, static_cast<unsigned long>(refreshClicks));
+  updateRefreshButtonOnly();
+  updateDashboard();
+}
+
+static void manualBacklightAction(uint16_t x) {
+  const int target = projectBacklightDuty(x);
+  projectedDuty = projectedDuty * 0.70f + static_cast<float>(target) * 0.30f;
+  const int filteredDuty = clampInt(static_cast<int>(projectedDuty + 0.5f), BACKLIGHT_MIN, BACKLIGHT_MAX);
+
+  if (abs(filteredDuty - static_cast<int>(backlightDuty)) < MANUAL_SLIDER_DEADBAND) {
+    return;
+  }
+
+  setBacklightDuty(static_cast<uint8_t>(filteredDuty));
+  ++manualSliderEvents;
+  Serial.printf("[MANUAL] fw=%s Backlight axis: x=%u duty=%d\n", SKETCH_ID, static_cast<unsigned int>(x), filteredDuty);
+  updateBacklightLabelOnly();
+}
+
+static void pollManualTouch() {
+  const uint32_t now = millis();
+  if (!touchOk || now - lastManualTouchPollMs < MANUAL_TOUCH_POLL_MS) {
+    return;
+  }
+  lastManualTouchPollMs = now;
+
+  ESP32_8048S043_TouchPoint point;
+  if (!touch.read(point) || !point.touched) {
+    buttonTouchHeld = false;
+    sliderTouchHeld = false;
+    projectedDuty = static_cast<float>(backlightDuty);
+    return;
+  }
+
+  ++manualTouchEvents;
+
+  if (inBox(point.x, point.y, BACKLIGHT_AXIS_X1, BACKLIGHT_AXIS_Y1,
+            BACKLIGHT_AXIS_X2 - BACKLIGHT_AXIS_X1, BACKLIGHT_AXIS_Y2 - BACKLIGHT_AXIS_Y1)) {
+    buttonTouchHeld = false;
+    sliderTouchHeld = true;
+    if (now - lastManualSliderMs >= MANUAL_SLIDER_UPDATE_MS) {
+      lastManualSliderMs = now;
+      manualBacklightAction(point.x);
+    }
+    return;
+  }
+
+  sliderTouchHeld = false;
+
+  if (inBox(point.x, point.y, REFRESH_BUTTON_X, REFRESH_BUTTON_Y, REFRESH_BUTTON_W, REFRESH_BUTTON_H)) {
+    if (!buttonTouchHeld && now - lastManualButtonMs >= MANUAL_BUTTON_DEBOUNCE_MS) {
+      buttonTouchHeld = true;
+      lastManualButtonMs = now;
+      manualRefreshAction();
+    }
+    return;
+  }
+
+  buttonTouchHeld = false;
 }
 
 static void createDashboardUi() {
@@ -285,7 +372,7 @@ static void createDashboardUi() {
   lv_obj_align(psramBar, LV_ALIGN_TOP_LEFT, 4, 124);
   lv_bar_set_range(psramBar, 0, 100);
 
-  lv_obj_t *touchCard = makeCard(screen, "Touch BSP", 422, 88, 350, 150);
+  lv_obj_t *touchCard = makeCard(screen, "Manual Touch", 422, 88, 350, 150);
   touchLabel = lv_label_create(touchCard);
   lv_obj_set_style_text_color(touchLabel, lv_color_hex(0xFFFFFF), 0);
   lv_obj_set_width(touchLabel, 310);
@@ -296,21 +383,25 @@ static void createDashboardUi() {
   lv_obj_align(eventLabel, LV_ALIGN_TOP_LEFT, 4, 88);
 
   lv_obj_t *controlCard = makeCard(screen, "Controls", 28, 270, 744, 160);
-  lv_obj_t *button = lv_btn_create(controlCard);
-  lv_obj_set_size(button, 180, 58);
-  lv_obj_align(button, LV_ALIGN_TOP_LEFT, 16, 54);
-  lv_obj_add_event_cb(button, refreshEvent, LV_EVENT_CLICKED, nullptr);
+  refreshButton = lv_btn_create(controlCard);
+  lv_obj_set_size(refreshButton, 180, 58);
+  lv_obj_align(refreshButton, LV_ALIGN_TOP_LEFT, 16, 54);
+  lv_obj_clear_flag(refreshButton, LV_OBJ_FLAG_CLICKABLE);
 
-  lv_obj_t *buttonLabel = lv_label_create(button);
-  lv_label_set_text(buttonLabel, "Refresh");
-  lv_obj_center(buttonLabel);
+  refreshButtonLabel = lv_label_create(refreshButton);
+  lv_label_set_text(refreshButtonLabel, "Refresh");
+  lv_obj_center(refreshButtonLabel);
 
-  lv_obj_t *slider = lv_slider_create(controlCard);
-  lv_obj_set_width(slider, 430);
-  lv_obj_align(slider, LV_ALIGN_TOP_LEFT, 260, 62);
-  lv_slider_set_range(slider, 16, 255);
-  lv_slider_set_value(slider, backlightDuty, LV_ANIM_OFF);
-  lv_obj_add_event_cb(slider, backlightEvent, LV_EVENT_VALUE_CHANGED, nullptr);
+  lv_obj_t *axisLabel = lv_label_create(controlCard);
+  lv_label_set_text(axisLabel, "Backlight axis touch band");
+  lv_obj_set_style_text_color(axisLabel, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_align(axisLabel, LV_ALIGN_TOP_LEFT, 260, 34);
+
+  backlightBar = lv_bar_create(controlCard);
+  lv_obj_set_width(backlightBar, 430);
+  lv_obj_align(backlightBar, LV_ALIGN_TOP_LEFT, 260, 66);
+  lv_bar_set_range(backlightBar, BACKLIGHT_MIN, BACKLIGHT_MAX);
+  lv_bar_set_value(backlightBar, backlightDuty, LV_ANIM_OFF);
 
   backlightLabel = lv_label_create(controlCard);
   lv_obj_set_style_text_color(backlightLabel, lv_color_hex(0xFFFFFF), 0);
@@ -331,8 +422,9 @@ void setup() {
   Serial.println(" LVGL 8 dashboard validation");
   Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
   Serial.println("============================================================");
-  Serial.println("Mode   : RGB display + ESP32_8048S043_Touch BSP + LVGL dashboard");
+  Serial.println("Mode   : RGB display + manual GT911 hitboxes + LVGL dashboard");
   Serial.println("Refresh: static screen, manual dashboard refresh only");
+  Serial.println("Touch  : LVGL pointer disabled; button/axis handled by sketch");
   Serial.println("Serial : 115200 baud");
   Serial.println("------------------------------------------------------------");
 
@@ -343,6 +435,7 @@ void setup() {
   Serial.printf("%-28s: %lu bytes\n", "Flash", static_cast<unsigned long>(ESP.getFlashChipSize()));
   Serial.printf("%-28s: %lu bytes\n", "PSRAM", static_cast<unsigned long>(ESP.getPsramSize()));
   Serial.printf("%-28s: %s\n", "Static refresh", DASHBOARD_STATIC_REFRESH ? "enabled" : "disabled");
+  Serial.printf("%-28s: %s\n", "Manual touch", DASHBOARD_MANUAL_TOUCH ? "enabled" : "disabled");
   Serial.println("------------------------------------------------------------");
 
   displayOk = initDisplay();
@@ -373,11 +466,14 @@ void setup() {
   Serial.println(" LVGL DASHBOARD READY");
   Serial.printf(" Firmware ID: %s\n", SKETCH_ID);
   Serial.println(" Static refresh mode: no 1 Hz dashboard redraw.");
+  Serial.println(" Manual touch mode: no LVGL pressed/drag redraw under finger.");
   Serial.println("============================================================");
 }
 
 void loop() {
   const uint32_t now = millis();
+
+  pollManualTouch();
 
   if (lvglOk) {
     const uint32_t elapsed = now - lastLvTickMs;
@@ -391,7 +487,7 @@ void loop() {
 
   if (now - lastAliveMs >= ALIVE_INTERVAL_MS) {
     lastAliveMs = now;
-    Serial.printf("[ALIVE] fw=%s uptime=%lus display=%s touch=%s lvgl=%s ui=%s refresh=%lu accepted=%lu filtered=%lu loops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
+    Serial.printf("[ALIVE] fw=%s uptime=%lus display=%s touch=%s lvgl=%s ui=%s refresh=%lu manualTouch=%lu slider=%lu accepted=%lu filtered=%lu loops=%lu freeHeap=%lu psram=%lu freePsram=%lu\n",
                   SKETCH_ID,
                   static_cast<unsigned long>(now / 1000),
                   displayOk ? "OK" : "FAIL",
@@ -399,6 +495,8 @@ void loop() {
                   lvglOk ? "OK" : "FAIL",
                   uiOk ? "OK" : "FAIL",
                   static_cast<unsigned long>(refreshClicks),
+                  static_cast<unsigned long>(manualTouchEvents),
+                  static_cast<unsigned long>(manualSliderEvents),
                   static_cast<unsigned long>(touch.acceptedPoints()),
                   static_cast<unsigned long>(touch.filteredUpdates()),
                   static_cast<unsigned long>(lvglLoops),
