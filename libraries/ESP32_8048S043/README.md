@@ -15,6 +15,7 @@ BSP API                 SKELETON / GROWING
 07_WebServerTest        WEB SERVER PHYSICAL PASS CANDIDATE / SAMPLE A
 08_SDCardTest           READ-ONLY SD PHYSICAL PASS CANDIDATE / SAMPLE A
 09_BLETest              BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+10_LVGL_BasicUI         SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
 Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
 Touch driver            GT911 POLLING VISUAL TEST PASS
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS
@@ -23,7 +24,7 @@ Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT P
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
 BLE radio/stack         ARDUINO BLE INIT + ACTIVE SCAN + ADV RECEIVE PASS CANDIDATE
-LVGL port               OPEN
+LVGL port               BASIC UI SOURCE IMPLEMENTED / VALIDATION OPEN
 Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
@@ -56,6 +57,46 @@ boards/arduino-ide/esp32-8048s043-lab/LOCAL_PLATFORM_SETUP.md
 
 Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB flash / OPI PSRAM / 3 MB app profile.
 
+## Correct Arduino library folder
+
+When copying the library into Arduino, the local folder must be:
+
+```text
+C:\Users\CHUWI\Documents\Arduino\libraries\ESP32_8048S043\src
+C:\Users\CHUWI\Documents\Arduino\libraries\ESP32_8048S043\examples
+C:\Users\CHUWI\Documents\Arduino\libraries\ESP32_8048S043\README.md
+```
+
+It must not be nested as:
+
+```text
+C:\Users\CHUWI\Documents\Arduino\libraries\ESP32_8048S043\ESP32_8048S043\examples
+```
+
+Safe update command:
+
+```powershell
+cd C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab
+git pull
+
+$Src = "$HOME\Documents\GitHub\ESP32-8048S043-lab\libraries\ESP32_8048S043"
+$Dst = "$HOME\Documents\Arduino\libraries\ESP32_8048S043"
+
+Remove-Item $Dst -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $Dst -Force | Out-Null
+Copy-Item "$Src\*" $Dst -Recurse -Force
+
+Test-Path "$Dst\examples\10_LVGL_BasicUI\10_LVGL_BasicUI.ino"
+Test-Path "$Dst\ESP32_8048S043"
+```
+
+Expected result:
+
+```text
+True
+False
+```
+
 ## Example plan
 
 ```text
@@ -68,7 +109,7 @@ Safe fallback while debugging remains `ESP32S3 Dev Module` with the same 16 MB f
 07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
 08_SDCardTest           read-only SD mount + metadata + directory listing
 09_BLETest              Arduino BLE init + active advertisement scan
-10_LVGL_BasicUI         future
+10_LVGL_BasicUI         LVGL 8 basic UI: button, counter, slider, GT911 input
 11_LVGL_Dashboard       future
 13_RetroClock_800x480   future
 20_LVGL_GitHubOTA       future
@@ -216,32 +257,10 @@ Purpose:
 validate the ESP32-S3 Arduino BLE initialization and advertisement receive path before LVGL/Web/OTA application work
 ```
 
-What it tests:
-
-```text
-Arduino BLE library availability;
-BLEDevice initialization;
-local BLE address readout;
-active BLE scan;
-advertisement report receive;
-repeated scan cycles;
-continued ALIVE output after scans.
-```
-
 Evidence:
 
 ```text
 evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
-```
-
-Current Sample A result:
-
-```text
-Local BLE address : 84:fc:e6:6c:69:3d
-Scan cycles       : PASS, at least 26 cycles observed
-Advertisement RX  : PASS, 30 total reports by cycle 26
-Stability         : PASS candidate, ALIVE to at least 772 seconds
-PSRAM             : PASS, 8388608 bytes visible during BLE test
 ```
 
 Current Sample A status:
@@ -254,6 +273,45 @@ Boundary:
 
 ```text
 This validates Arduino-level BLE init and advertising receive only. Pairing, connections, GATT, HID, provisioning and Wi-Fi/BLE coexistence remain separate tests.
+```
+
+## 10_LVGL_BasicUI
+
+Purpose:
+
+```text
+validate the first LVGL local HMI shell using the already-tested RGB display, GT911 touch path, backlight control and 8 MB PSRAM profile
+```
+
+What it tests:
+
+```text
+Arduino_GFX RGB display under LVGL;
+LVGL 8.x initialization;
+PSRAM-backed LVGL draw buffers;
+LVGL flush callback to 800x480 RGB panel;
+GT911 as LVGL pointer input;
+button click event and live counter;
+slider-controlled backlight PWM;
+continued ALIVE output while LVGL runs.
+```
+
+Open:
+
+```text
+libraries/ESP32_8048S043/examples/10_LVGL_BasicUI/10_LVGL_BasicUI.ino
+```
+
+Current Sample A status:
+
+```text
+SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN
+```
+
+Boundary:
+
+```text
+This is the first local LVGL UI layer. SD-backed assets, Web upload/control, Widget Runtime and GitHub OTA remain separate stages.
 ```
 
 ## Rule
