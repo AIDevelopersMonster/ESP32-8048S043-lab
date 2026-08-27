@@ -1,6 +1,6 @@
 # 13_LVGL_EspLcdStatic
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / DEFAULT FONT PATCH`.
+Status: `PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED`.
 
 Firmware ID:
 
@@ -14,7 +14,21 @@ Previous firmware ID:
 13LVGL-ELCDS1-240827A
 ```
 
-## Current patch
+## Physical result
+
+After the default-font patch, the operator reported:
+
+```text
+Все работает.
+```
+
+Evidence record:
+
+```text
+evidence/specimens/sample-a/arduino/13-lvgl-esp-lcd-static-20260827.md
+```
+
+## Default-font patch
 
 The first compile attempt failed because the local Arduino LVGL configuration exposed `lv_font_montserrat_14`, but did not expose larger optional fonts:
 
@@ -26,7 +40,7 @@ lv_font_montserrat_22
 
 Revision `13LVGL-ELCDS2-240827B` removes all explicit references to those optional fonts and uses LVGL default font behavior only.
 
-This keeps the test focused on the display transport path rather than on optional LVGL font configuration.
+This keeps the test focused on the display transport path rather than optional LVGL font configuration.
 
 ## Purpose
 
@@ -110,8 +124,8 @@ Mode                     : LVGL static UI over esp_lcd RGB panel
 Arduino_GFX              : not used
 GT911 touch              : not used
 Moving animation         : not used
-PCLK                     : 12500000 Hz
 Font mode                : LV_FONT_DEFAULT only
+PCLK                     : 12500000 Hz
 [PASS] esp_lcd_new_rgb_panel()
 [PASS] esp_lcd_panel_reset()
 [PASS] esp_lcd_panel_init()
@@ -120,13 +134,7 @@ Font mode                : LV_FONT_DEFAULT only
 [PASS] LVGL display driver registered
 [PASS] LVGL static UI objects created
 [PASS] Backlight ON after LVGL first draw
-```
-
-Runtime lines:
-
-```text
-[LABEL] update=...
-[ALIVE] fw=13LVGL-ELCDS2-240827B ...
+[READY] Watch idle screen and 5-second label updates. No touch and no animation are active.
 ```
 
 ## Expected visual output
@@ -152,23 +160,6 @@ no fast animation;
 no intentional full-screen periodic redraw.
 ```
 
-## What to report
-
-For the physical run, record:
-
-```text
-Does it compile now?
-Does Serial show 13LVGL-ELCDS2-240827B?
-Does esp_lcd_new_rgb_panel() pass?
-Do both LVGL PSRAM buffers allocate?
-Does the first screen appear cleanly after backlight-on?
-Are colors still correct?
-Is the idle screen stable?
-Does the 5-second label update cause visible flicker/tear?
-Does the white border/frame remain stable?
-Any reset, brownout, panic, Guru Meditation, or PSRAM allocation failure?
-```
-
 ## Acceptance boundary
 
 A pass here means:
@@ -189,28 +180,12 @@ LVGL 9 migration;
 Widget Runtime.
 ```
 
-## Interpretation
+## Next step
 
-If idle screen is stable and label updates are acceptable:
-
-```text
-Proceed to 14_GT911_NormalizedTouch without LVGL widgets.
-```
-
-If idle screen is stable but label updates flicker:
+After this pass candidate, the next isolated subsystem test is:
 
 ```text
-The next display step needs VSYNC/panel event synchronization or a stricter LVGL flush strategy.
+14_GT911_NormalizedTouch
 ```
 
-If idle screen itself flickers:
-
-```text
-The esp_lcd/LVGL panel configuration is not stable enough; test timing and framebuffer settings before touch.
-```
-
-If this works at 12.5 MHz:
-
-```text
-Do not immediately switch to 18 MHz. Keep 12.5 MHz as the conservative baseline until the full display-touch path is stable.
-```
+That test validates BSP touch normalization without LVGL widgets and without display redraw.
