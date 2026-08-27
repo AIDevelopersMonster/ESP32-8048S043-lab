@@ -17,16 +17,19 @@ BSP API                 SKELETON / GROWING
 09_BLETest              BLE SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
 10_LVGL_BasicUI         FUNCTIONAL PASS CANDIDATE / SAMPLE A / TOUCH QUALITY OPEN
 11_LVGL_Dashboard       DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE
-Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS
-Touch driver            GT911 BSP API IMPLEMENTED / LVGL FUNCTIONAL PASS CANDIDATE
+12_DisplayEspLcdRGB     STATIC TRANSPORT PASS CANDIDATE / RAW DYNAMIC DRAW NOT ACCEPTABLE
+13_LVGL_EspLcdStatic    PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED
+14_GT911_NormalizedTouch PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS
+Display driver          OWN MINIMAL ARDUINO_GFX TEST PASS + NATIVE ESP_LCD STATIC TRANSPORT PASS CANDIDATE
+Touch driver            GT911 BSP API IMPLEMENTED / 9-ZONE NORMALIZATION PASS CANDIDATE
 Backlight driver        DIGITAL/PWM TEST REPORTED PASS / LVGL SLIDER EXERCISED
 Combined console        RGB + GT911 + BACKLIGHT TEST REPORTED PASS
 Wi-Fi radio/network     SCAN + ASSOCIATION + DHCP + DNS + TCP/HTTP + RECONNECT PASS CANDIDATE
 HTTP server             BROWSER + JSON + PING PASS CANDIDATE
 SD / TF                 READ-ONLY MOUNT + METADATA + LIST PASS CANDIDATE
 BLE radio/stack         ARDUINO BLE INIT + ACTIVE SCAN + ADV RECEIVE PASS CANDIDATE
-LVGL port               FUNCTIONAL LAB TESTS ONLY / POLISHED DYNAMIC UX OPEN
-Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + LVGL BASIC UI FUNCTIONAL + LVGL DASHBOARD STABILITY + FACTORY LVGL DISPLAY/TOUCH VISUAL
+LVGL port               STATIC ESP_LCD PATH PASS CANDIDATE / POLISHED DYNAMIC UX OPEN
+Physical PASS claims    SAMPLE A BOARDINFO + RGB DISPLAY + GT911 TOUCH + BACKLIGHT + CONSOLE + WIFI + WEB + READ-ONLY SD + BLE SCAN + LVGL BASIC UI FUNCTIONAL + LVGL DASHBOARD STABILITY + ESP_LCD STATIC + LVGL ESP_LCD STATIC + GT911 9-ZONE NORMALIZATION + FACTORY LVGL DISPLAY/TOUCH VISUAL
 ```
 
 ## LVGL decision boundary
@@ -38,11 +41,14 @@ Current decision:
 ```text
 10_LVGL_BasicUI    : functional button/slider proof, touch quality open
 11_LVGL_Dashboard  : stable diagnostic dashboard, dynamic touch UX not acceptable
+12_DisplayEspLcd   : native esp_lcd static transport works; raw dynamic draw not acceptable
+13_LVGL_EspLcdStatic: LVGL 8 static UI over native esp_lcd works at 12.5 MHz
+14_GT911_NormalizedTouch: GT911 BSP normalization covers all 9 physical zones
 ```
 
-The manual-touch dashboard experiment reduced the area of the touch-time artifact but did not remove the visual problem. The current local approach must not be used as a final user-application template.
+The manual-touch dashboard experiment reduced the area of the touch-time artifact but did not remove the visual problem. The raw moving-block esp_lcd probe also showed that unsynchronized raw dynamic drawing is not a product UI path.
 
-Further LVGL work should study and port better-organized third-party / WT32-style patterns instead of continuing to polish this workaround.
+Further LVGL work should combine the validated native esp_lcd static display path with the validated GT911 normalized touch path in a minimal widget test before any dashboard, slider, animation or Widget Runtime work.
 
 ## Arduino IDE board setup
 
@@ -102,7 +108,7 @@ Remove-Item $Dst -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $Dst -Force | Out-Null
 Copy-Item "$Src\*" $Dst -Recurse -Force
 
-Test-Path "$Dst\examples\10_LVGL_BasicUI\10_LVGL_BasicUI.ino"
+Test-Path "$Dst\examples\14_GT911_NormalizedTouch\14_GT911_NormalizedTouch.ino"
 Test-Path "$Dst\ESP32_8048S043"
 ```
 
@@ -116,20 +122,23 @@ False
 ## Example plan
 
 ```text
-01_BoardInfo            first Arduino IDE smoke test, chip/flash/PSRAM/profile/ALIVE
-02_DisplayRGBTest       minimal Arduino_GFX RGB/backlight/color/orientation test
-03_TouchGT911Test       GT911 polling visual marker + serial diagnostics
-04_BacklightTest        dedicated backlight GPIO2 ON/OFF/blink/PWM test
-05_TestConsole          combined RGB + GT911 + backlight diagnostic console
-06_WiFiTest             Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
-07_WebServerTest        Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
-08_SDCardTest           read-only SD mount + metadata + directory listing
-09_BLETest              Arduino BLE init + active advertisement scan
-10_LVGL_BasicUI         LVGL 8 basic UI: button, counter, slider, GT911 BSP input
-11_LVGL_Dashboard       diagnostic HMI/dashboard layer, dynamic UX not accepted
-13_RetroClock_800x480   future / third-party or WT32-style reference preferred
-20_LVGL_GitHubOTA       future
-21_LVGL_WidgetLoader    future
+01_BoardInfo                 first Arduino IDE smoke test, chip/flash/PSRAM/profile/ALIVE
+02_DisplayRGBTest            minimal Arduino_GFX RGB/backlight/color/orientation test
+03_TouchGT911Test            GT911 polling visual marker + serial diagnostics
+04_BacklightTest             dedicated backlight GPIO2 ON/OFF/blink/PWM test
+05_TestConsole               combined RGB + GT911 + backlight diagnostic console
+06_WiFiTest                  Wi-Fi scan + association/DHCP/DNS/TCP/reconnect test
+07_WebServerTest             Wi-Fi/SoftAP + browser HTTP server + JSON status + ping
+08_SDCardTest                read-only SD mount + metadata + directory listing
+09_BLETest                   Arduino BLE init + active advertisement scan
+10_LVGL_BasicUI              LVGL 8 basic UI: button, counter, slider, GT911 BSP input
+11_LVGL_Dashboard            diagnostic HMI/dashboard layer, dynamic UX not accepted
+12_DisplayEspLcdRgbPanel_Probe native esp_lcd RGB transport probe, raw dynamic draw boundary
+13_LVGL_EspLcdStatic         LVGL 8 static UI over native esp_lcd RGB path
+14_GT911_NormalizedTouch     serial-only GT911 BSP 9-zone normalization diagnostic
+15_LVGL_EspLcdBasicUI        next: minimal LVGL button over esp_lcd + GT911 BSP input
+20_LVGL_GitHubOTA            future
+21_LVGL_WidgetLoader         future
 ```
 
 ## 01_BoardInfo
@@ -366,6 +375,84 @@ Boundary:
 
 ```text
 This example proves stable static dashboard rendering and manual control intent, but the touch-time visual dynamics remain unacceptable for normal user-facing applications. It is frozen as a diagnostic record.
+```
+
+## 12_DisplayEspLcdRgbPanel_Probe
+
+Purpose:
+
+```text
+validate native ESP-IDF esp_lcd RGB panel transport independently from Arduino_GFX, LVGL and GT911
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/12-esp-lcd-rgb-panel-probe-20260827.md
+```
+
+Current Sample A status:
+
+```text
+STATIC TRANSPORT PASS CANDIDATE / RAW DYNAMIC DRAW NOT ACCEPTABLE
+```
+
+Boundary:
+
+```text
+Static native esp_lcd output works with correct colors, but raw dynamic draw_bitmap motion is not acceptable as a product UI path.
+```
+
+## 13_LVGL_EspLcdStatic
+
+Purpose:
+
+```text
+validate LVGL 8 static UI over native esp_lcd RGB panel transport, without touch and without animation
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/13-lvgl-esp-lcd-static-20260827.md
+```
+
+Current Sample A status:
+
+```text
+PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED
+```
+
+Boundary:
+
+```text
+This proves the LVGL 8 static esp_lcd path after the default-font patch. It does not prove touch integration or interactive widget quality.
+```
+
+## 14_GT911_NormalizedTouch
+
+Purpose:
+
+```text
+validate the ESP32_8048S043_Touch BSP normalization layer as a serial-only GT911 diagnostic, without display rendering or LVGL widgets
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/14-gt911-normalized-touch-20260827.md
+```
+
+Current Sample A status:
+
+```text
+PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS
+```
+
+Boundary:
+
+```text
+This proves GT911 detection at 0x5D, raw resolution 480x272, 800x480 coordinate normalization and all 9 physical zones. It does not prove LVGL pointer integration.
 ```
 
 ## Rule
