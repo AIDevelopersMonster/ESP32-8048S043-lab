@@ -62,8 +62,8 @@ This style is the preferred direction for the ESP32-8048S043 library.
 1. rzeldent/platformio-espressif32-sunton      AUDITED FIRST-PASS
 2. rzeldent/esp32-smartdisplay                AUDITED FIRST-PASS
 3. limpens/esp32-8048S043                     AUDITED FIRST-PASS
-4. limpens/esp32-8048S043-lvgl9               NEXT
-5. pixelwave/Sunton-ESP32-8048S043            OPEN
+4. limpens/esp32-8048S043-lvgl9               AUDITED FIRST-PASS
+5. pixelwave/Sunton-ESP32-8048S043            NEXT
 6. clumsyCoder00/Sunton-ESP32-8048S043        PARTIAL PRIOR INSPECTION
 7. wegi1/ESP32-8048S043-4INCH-LCD             OPEN
 8. ffodGit/esp32-8048s043-getting-started-00  OPEN
@@ -75,6 +75,7 @@ Detailed audits:
 docs/third-party/rzeldent-platformio-espressif32-sunton.md
 docs/third-party/rzeldent-esp32-smartdisplay.md
 docs/third-party/limpens-esp32-8048S043.md
+docs/third-party/limpens-esp32-8048S043-lvgl9.md
 ```
 
 ## First audit result: rzeldent/platformio-espressif32-sunton
@@ -169,11 +170,64 @@ This is the closest practical reference so far because it uses LVGL 8.3.11, the 
 It strongly supports creating an esp_lcd-only display probe before doing any more LVGL UX work.
 ```
 
-Timing candidates now captured:
+## Fourth audit result: limpens/esp32-8048S043-lvgl9
+
+Useful findings:
+
+```text
+project is the same author's LVGL 9.x variant for the same ESP32-8048S043C family;
+README names ESP-IDF 5.1, esp_lcd_touch_gt911 and LVGL 9.x;
+idf_component.yml uses esp_lcd_touch_gt911 >=1.1.0 and lvgl/lvgl ^9.4.0;
+sdkconfig defaults target ESP32-S3 and keep the same 16 MB flash / OPI PSRAM assumptions;
+hardware.h preserves the same pin map, raw touch bounds and 18 MHz warning;
+LVGL 9 code is consolidated in lvgl9.c;
+new I2C master API is used through driver/i2c_master.h;
+display transport remains esp_lcd_new_rgb_panel();
+RGB panel still uses fb_in_psram=true and double_fb=true;
+LVGL 9 uses lv_display_t/lv_indev_t APIs instead of LVGL 8 driver structs;
+LVGL tick is driven by an esp_timer every 2 ms;
+main LVGL loop is pinned to core 1 and calls lv_timer_handler() every 20 ms;
+GT911 process_coordinates still maps measured 0..477 / 0..269 raw coordinates to 800x480;
+backlight is still enabled only after display/LVGL/touch setup;
+performance monitor is intentionally enabled.
+```
+
+Most important direct lesson:
+
+```text
+Moving to LVGL 9 did not change the successful lower-level architecture.
+The stable board strategy remains: esp_lcd RGB panel + PSRAM double framebuffer + GT911 driver-level coordinate normalization.
+```
+
+Migration conclusion:
+
+```text
+Do not jump to LVGL 9 yet.
+Use this project as a future migration reference after the LVGL 8 / esp_lcd transport path is physically validated.
+```
+
+## Consolidated technical conclusions so far
+
+Timing candidates:
 
 ```text
 rzeldent candidate : 12.5 MHz, 8/4/8 porches
 limpens candidate  : 18.0 MHz, 8/4/8 porches, with warning not to exceed 18 MHz
+```
+
+Display transport conclusion:
+
+```text
+The repeated serious references use esp_lcd RGB panel, not Arduino_GFX, for this 800x480 RGB panel family.
+The decisive experiment is therefore esp_lcd transport validation, isolated from LVGL and touch.
+```
+
+Touch conclusion:
+
+```text
+GT911 raw coordinate space is about 480x272.
+Display coordinate space is 800x480.
+Normalization belongs in the touch/BSP layer below LVGL widgets.
 ```
 
 Recommended future experiment after the audit round:
@@ -190,6 +244,7 @@ Recommended future experiment after the audit round:
 13_LVGL_EspLcdStatic
 14_GT911_NormalizedTouch
 15_LVGL_EspLcdBasicUI
+16_LVGL9_EspLcdProbe later, only after LVGL8 path is stable.
 ```
 
 ## Third-party study goals
@@ -227,7 +282,7 @@ Freeze the current local dashboard path as evidence and diagnostic work.
 Continue the third-party audit in order. Next target:
 
 ```text
-limpens/esp32-8048S043-lvgl9
+pixelwave/Sunton-ESP32-8048S043
 ```
 
 Port only independently reimplemented architectural parts into this repository.
