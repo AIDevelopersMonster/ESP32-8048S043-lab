@@ -1,12 +1,32 @@
 # 13_LVGL_EspLcdStatic
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / DEFAULT FONT PATCH`.
 
 Firmware ID:
 
 ```text
+13LVGL-ELCDS2-240827B
+```
+
+Previous firmware ID:
+
+```text
 13LVGL-ELCDS1-240827A
 ```
+
+## Current patch
+
+The first compile attempt failed because the local Arduino LVGL configuration exposed `lv_font_montserrat_14`, but did not expose larger optional fonts:
+
+```text
+lv_font_montserrat_18
+lv_font_montserrat_20
+lv_font_montserrat_22
+```
+
+Revision `13LVGL-ELCDS2-240827B` removes all explicit references to those optional fonts and uses LVGL default font behavior only.
+
+This keeps the test focused on the display transport path rather than on optional LVGL font configuration.
 
 ## Purpose
 
@@ -42,6 +62,7 @@ RGB panel 800x480
 Backlight GPIO2
 PSRAM panel framebuffer
 2x LVGL PSRAM draw buffers
+LV_FONT_DEFAULT only
 ```
 
 ## What it intentionally does not use
@@ -68,6 +89,7 @@ Panel double framebuffer   : true
 LVGL buffers               : 2x 100 lines in PSRAM
 Data order                 : ESP-IDF RGB565 bus-bit order
 Label update interval      : 5 seconds
+Font mode                  : LV_FONT_DEFAULT only
 ```
 
 The ESP-IDF RGB565 bus-bit order is:
@@ -83,12 +105,13 @@ DATA11..DATA15  = R0..R4
 ```text
 ESP32-8048S043 Lab / 13_LVGL_EspLcdStatic
 LVGL 8 static UI over native esp_lcd RGB panel
-Firmware ID              : 13LVGL-ELCDS1-240827A
+Firmware ID              : 13LVGL-ELCDS2-240827B
 Mode                     : LVGL static UI over esp_lcd RGB panel
 Arduino_GFX              : not used
 GT911 touch              : not used
 Moving animation         : not used
 PCLK                     : 12500000 Hz
+Font mode                : LV_FONT_DEFAULT only
 [PASS] esp_lcd_new_rgb_panel()
 [PASS] esp_lcd_panel_reset()
 [PASS] esp_lcd_panel_init()
@@ -97,15 +120,13 @@ PCLK                     : 12500000 Hz
 [PASS] LVGL display driver registered
 [PASS] LVGL static UI objects created
 [PASS] Backlight ON after LVGL first draw
-[READY] Watch idle screen and 5-second label updates. No touch and no animation are active.
 ```
 
 Runtime lines:
 
 ```text
-[FLUSH] ...
 [LABEL] update=...
-[ALIVE] fw=13LVGL-ELCDS1-240827A ...
+[ALIVE] fw=13LVGL-ELCDS2-240827B ...
 ```
 
 ## Expected visual output
@@ -133,11 +154,11 @@ no intentional full-screen periodic redraw.
 
 ## What to report
 
-For the first physical run, record:
+For the physical run, record:
 
 ```text
-Does it compile?
-Does Serial show 13LVGL-ELCDS1-240827A?
+Does it compile now?
+Does Serial show 13LVGL-ELCDS2-240827B?
 Does esp_lcd_new_rgb_panel() pass?
 Do both LVGL PSRAM buffers allocate?
 Does the first screen appear cleanly after backlight-on?
