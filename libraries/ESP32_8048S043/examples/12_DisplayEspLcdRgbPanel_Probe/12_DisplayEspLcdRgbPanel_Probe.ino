@@ -4,44 +4,30 @@
   Purpose:
     Isolated ESP-IDF esp_lcd RGB-panel transport probe for ESP32-8048S043.
 
-  Why this exists:
-    10_LVGL_BasicUI and 11_LVGL_Dashboard proved that LVGL can run on the
-    board, but dynamic touch/UI behavior through the current Arduino_GFX path
-    is not acceptable for user-facing applications.
+  Result from first physical run:
+    - esp_lcd transport initialized;
+    - colors were correct;
+    - row-by-row rectangle updates produced flicker and temporary geometry breaks.
 
-    Third-party references for this board family repeatedly use the native
-    ESP-IDF esp_lcd RGB panel path with PSRAM framebuffer support. This sketch
-    tests that transport layer before we involve LVGL or GT911 again.
+  This revision changes the dynamic probe from row-by-row draw_bitmap calls to
+  bulk buffer updates:
+    - full-screen patterns are drawn from one full PSRAM frame buffer;
+    - moving block band is drawn from one full-width band buffer;
+    - no LVGL, no Arduino_GFX, no GT911.
 
-  What this example checks:
-    - esp_lcd_new_rgb_panel() can initialize the 800x480 RGB panel;
-    - ESP-IDF RGB565 data bit order through data_gpio_nums[0..15];
-    - PSRAM framebuffer allocation through fb_in_psram=true;
-    - double framebuffer mode through num_fbs=2 and double_fb=true;
-    - candidate RGB timing: 12.5 MHz or 18 MHz with 8/4/8 porches;
-    - backlight GPIO2 after panel initialization;
-    - stable static color bars, quadrants and grid patterns.
-
-  What this example intentionally does NOT use:
-    - Arduino_GFX;
-    - LVGL;
-    - GT911 touch;
-    - SD/Wi-Fi/BLE;
-    - user-facing UI widgets.
-
-  First-run default:
-    PCLK 12.5 MHz, 8/4/8 porches, RGB565 bus-bit order.
-
-  If first-run display is stable and colors are correct, the next probe is
-  changing ESP_LCD_PROBE_PCLK_HZ from 12500000 to 18000000.
+  This separates two effects:
+    1. panel transport and color order;
+    2. update granularity / tearing behavior.
 */
 
 #include <Arduino.h>
 #include <ESP32_8048S043_Pins.h>
 
 extern "C" {
+#include "driver/gpio.h"
 #include "esp_err.h"
 #include "esp_heap_caps.h"
+#include "esp_idf_version.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_rgb.h"
 #include "esp_system.h"
@@ -49,7 +35,7 @@ extern "C" {
 
 using namespace esp32_8048s043::pins;
 
-#define SKETCH_ID "12ELCD-PROBE1-240827A"
+#define SKETCH_ID "12ELCD-BULK1-240827B"
 
 #ifndef ESP_LCD_PROBE_PCLK_HZ
 #define ESP_LCD_PROBE_PCLK_HZ 12500000
@@ -73,8 +59,15 @@ static constexpr uint16_t COLOR_CYAN    = 0x07FF;
 static constexpr uint16_t COLOR_MAGENTA = 0xF81F;
 static constexpr uint16_t COLOR_GRAY    = 0x8410;
 
+static constexpr int BAND_H = 96;
+static constexpr int BAND_Y = (LCD_HEIGHT - BAND_H) / 2;
+static constexpr int BLOCK_W = 120;
+static constexpr int BLOCK_H = 80;
+static constexpr int BLOCK_Y = (BAND_H - BLOCK_H) / 2;
+
 static esp_lcd_panel_handle_t panel = nullptr;
-static uint16_t *lineBuffer = nullptr;
+static uint16_t *frameBuffer = nullptr;
+static uint16_t *bandBuffer = nullptr;
 static uint32_t frameCounter = 0;
 static uint32_t lastAliveMs = 0;
 
@@ -122,6 +115,7 @@ static void printBanner() {
   Serial.printf("Resolution               : %dx%d\n", LCD_WIDTH, LCD_HEIGHT);
   Serial.printf("PCLK                     : %u Hz\n", (unsigned)ESP_LCD_PROBE_PCLK_HZ);
   Serial.println("Porches                  : HSYNC 8/4/8, VSYNC 8/4/8");
+  Serial.println("Update mode              : bulk full-frame / bulk band draw_bitmap calls");
   Serial.printf("Framebuffer in PSRAM     : true\n");
   Serial.printf("Double framebuffer       : %s\n", ESP_LCD_PROBE_DOUBLE_FB ? "true" : "false");
 #if ESP_LCD_PROBE_USE_RGB565_BUS_ORDER
@@ -141,19 +135,23 @@ static void printPinMap() {
   Serial.printf("Touch pins present but unused here: SDA=%d SCL=%d RST=%d INT=%d\n", TOUCH_SDA, TOUCH_SCL, TOUCH_RST, TOUCH_INT);
 }
 
-static bool allocateLineBuffer() {
-  lineBuffer = static_cast<uint16_t *>(heap_caps_malloc(LCD_WIDTH * sizeof(uint16_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA | MALLOC_CAP_8BIT));
-  if (lineBuffer == nullptr) {
-    Serial.println("[WARN] Internal DMA line buffer allocation failed, trying generic 8-bit heap");
-    lineBuffer = static_cast<uint16_t *>(heap_caps_malloc(LCD_WIDTH * sizeof(uint16_t), MALLOC_CAP_8BIT));
-  }
+static bool allocateDrawBuffers() {
+  const size_t frameBytes = (size_t)LCD_WIDTH * LCD_HEIGHT * sizeof(uint16_t);
+  const size_t bandBytes = (size_t)LCD_WIDTH * BAND_H * sizeof(uint16_t);
 
-  if (lineBuffer == nullptr) {
-    Serial.println("[FAIL] line buffer allocation failed");
+  frameBuffer = static_cast<uint16_t *>(heap_caps_malloc(frameBytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+  if (frameBuffer == nullptr) {
+    Serial.printf("[FAIL] full frame PSRAM buffer allocation failed: %u bytes\n", (unsigned)frameBytes);
     return false;
   }
+  Serial.printf("[PASS] full frame buffer allocated in PSRAM: %u bytes at %p\n", (unsigned)frameBytes, frameBuffer);
 
-  Serial.printf("[PASS] line buffer allocated: %u bytes at %p\n", (unsigned)(LCD_WIDTH * sizeof(uint16_t)), lineBuffer);
+  bandBuffer = static_cast<uint16_t *>(heap_caps_malloc(bandBytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT));
+  if (bandBuffer == nullptr) {
+    Serial.printf("[FAIL] band PSRAM buffer allocation failed: %u bytes\n", (unsigned)bandBytes);
+    return false;
+  }
+  Serial.printf("[PASS] band buffer allocated in PSRAM: %u bytes at %p\n", (unsigned)bandBytes, bandBuffer);
   return true;
 }
 
@@ -267,35 +265,49 @@ static bool initEspLcdPanel() {
   return true;
 }
 
-static void fillRect(int x, int y, int w, int h, uint16_t color) {
-  if (panel == nullptr || lineBuffer == nullptr) {
-    return;
-  }
-
-  if (x < 0) { w += x; x = 0; }
-  if (y < 0) { h += y; y = 0; }
-  if (x + w > LCD_WIDTH) { w = LCD_WIDTH - x; }
-  if (y + h > LCD_HEIGHT) { h = LCD_HEIGHT - y; }
-  if (w <= 0 || h <= 0) { return; }
-
-  for (int i = 0; i < w; ++i) {
-    lineBuffer[i] = color;
-  }
-
-  for (int row = 0; row < h; ++row) {
-    esp_lcd_panel_draw_bitmap(panel, x, y + row, x + w, y + row + 1, lineBuffer);
+static void fillPixels(uint16_t *buf, size_t count, uint16_t color) {
+  for (size_t i = 0; i < count; ++i) {
+    buf[i] = color;
   }
 }
 
-static void drawFrame(uint16_t color, int thickness) {
-  fillRect(0, 0, LCD_WIDTH, thickness, color);
-  fillRect(0, LCD_HEIGHT - thickness, LCD_WIDTH, thickness, color);
-  fillRect(0, 0, thickness, LCD_HEIGHT, color);
-  fillRect(LCD_WIDTH - thickness, 0, thickness, LCD_HEIGHT, color);
+static bool drawBitmap(int x, int y, int w, int h, const uint16_t *buf, const char *tag) {
+  esp_err_t err = esp_lcd_panel_draw_bitmap(panel, x, y, x + w, y + h, buf);
+  if (err != ESP_OK) {
+    Serial.printf("[FAIL] draw_bitmap %s: %s\n", tag, esp_err_to_name(err));
+    return false;
+  }
+  return true;
+}
+
+static void putPixel(uint16_t *buf, int width, int x, int y, uint16_t color) {
+  buf[y * width + x] = color;
+}
+
+static void fillRectInBuffer(uint16_t *buf, int bufW, int bufH, int x, int y, int w, int h, uint16_t color) {
+  if (x < 0) { w += x; x = 0; }
+  if (y < 0) { h += y; y = 0; }
+  if (x + w > bufW) { w = bufW - x; }
+  if (y + h > bufH) { h = bufH - y; }
+  if (w <= 0 || h <= 0) { return; }
+
+  for (int yy = y; yy < y + h; ++yy) {
+    uint16_t *row = buf + yy * bufW + x;
+    for (int xx = 0; xx < w; ++xx) {
+      row[xx] = color;
+    }
+  }
+}
+
+static void drawFrameInBuffer(uint16_t *buf, int bufW, int bufH, uint16_t color, int thickness) {
+  fillRectInBuffer(buf, bufW, bufH, 0, 0, bufW, thickness, color);
+  fillRectInBuffer(buf, bufW, bufH, 0, bufH - thickness, bufW, thickness, color);
+  fillRectInBuffer(buf, bufW, bufH, 0, 0, thickness, bufH, color);
+  fillRectInBuffer(buf, bufW, bufH, bufW - thickness, 0, thickness, bufH, color);
 }
 
 static void drawColorBars() {
-  Serial.println("[SCREEN] RGB color bars");
+  Serial.println("[SCREEN] RGB color bars / one full-frame draw");
   const uint16_t colors[] = {
     COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_WHITE,
     COLOR_BLACK, COLOR_YELLOW, COLOR_CYAN, COLOR_MAGENTA
@@ -303,30 +315,34 @@ static void drawColorBars() {
   const int count = sizeof(colors) / sizeof(colors[0]);
   const int barW = LCD_WIDTH / count;
 
+  fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, COLOR_BLACK);
   for (int i = 0; i < count; ++i) {
     const int x = i * barW;
     const int w = (i == count - 1) ? (LCD_WIDTH - x) : barW;
-    fillRect(x, 0, w, LCD_HEIGHT, colors[i]);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, x, 0, w, LCD_HEIGHT, colors[i]);
   }
-  drawFrame(COLOR_WHITE, 2);
+  drawFrameInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE, 2);
+  drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, "colorbars");
   frameCounter++;
 }
 
 static void drawQuadrants() {
-  Serial.println("[SCREEN] orientation quadrants");
-  fillRect(0, 0, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_RED);
-  fillRect(LCD_WIDTH / 2, 0, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_GREEN);
-  fillRect(0, LCD_HEIGHT / 2, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_BLUE);
-  fillRect(LCD_WIDTH / 2, LCD_HEIGHT / 2, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_WHITE);
-
-  fillRect(LCD_WIDTH / 2 - 2, 0, 4, LCD_HEIGHT, COLOR_BLACK);
-  fillRect(0, LCD_HEIGHT / 2 - 2, LCD_WIDTH, 4, COLOR_BLACK);
-  drawFrame(COLOR_BLACK, 4);
+  Serial.println("[SCREEN] orientation quadrants / one full-frame draw");
+  fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, COLOR_BLACK);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, 0, 0, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_RED);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, LCD_WIDTH / 2, 0, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_GREEN);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, 0, LCD_HEIGHT / 2, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_BLUE);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, LCD_WIDTH / 2, LCD_HEIGHT / 2, LCD_WIDTH / 2, LCD_HEIGHT / 2, COLOR_WHITE);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, LCD_WIDTH / 2 - 2, 0, 4, LCD_HEIGHT, COLOR_BLACK);
+  fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, 0, LCD_HEIGHT / 2 - 2, LCD_WIDTH, 4, COLOR_BLACK);
+  drawFrameInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, COLOR_BLACK, 4);
+  drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, "quadrants");
   frameCounter++;
 }
 
 static void drawStripeGrid() {
-  Serial.println("[SCREEN] stripe/grid data-line pattern");
+  Serial.println("[SCREEN] stripe/grid data-line pattern / one full-frame draw");
+  fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, COLOR_BLACK);
   for (int y = 0; y < LCD_HEIGHT; y += 16) {
     uint16_t c;
     switch ((y / 16) % 8) {
@@ -339,37 +355,54 @@ static void drawStripeGrid() {
       case 6: c = COLOR_GRAY; break;
       default: c = COLOR_BLACK; break;
     }
-    fillRect(0, y, LCD_WIDTH, min(16, LCD_HEIGHT - y), c);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, 0, y, LCD_WIDTH, min(16, LCD_HEIGHT - y), c);
   }
 
   for (int x = 0; x < LCD_WIDTH; x += 40) {
-    fillRect(x, 0, 2, LCD_HEIGHT, COLOR_WHITE);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, x, 0, 2, LCD_HEIGHT, COLOR_WHITE);
   }
   for (int y = 0; y < LCD_HEIGHT; y += 40) {
-    fillRect(0, y, LCD_WIDTH, 2, COLOR_WHITE);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, 0, y, LCD_WIDTH, 2, COLOR_WHITE);
   }
-  drawFrame(COLOR_WHITE, 2);
+  drawFrameInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE, 2);
+  drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, "stripe-grid");
   frameCounter++;
 }
 
-static void drawMovingBlockProbe() {
-  Serial.println("[SCREEN] small update probe");
-  fillRect(0, 0, LCD_WIDTH, LCD_HEIGHT, COLOR_BLACK);
-  drawFrame(COLOR_WHITE, 2);
+static void drawMovingBandProbe() {
+  Serial.println("[SCREEN] moving block / one band draw per step");
+  fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, COLOR_BLACK);
+  drawFrameInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE, 2);
+  drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, "moving-band background");
 
-  for (int x = 0; x <= LCD_WIDTH - 120; x += 20) {
-    fillRect(2, LCD_HEIGHT / 2 - 45, LCD_WIDTH - 4, 90, COLOR_BLACK);
-    fillRect(x, LCD_HEIGHT / 2 - 40, 120, 80, COLOR_CYAN);
-    fillRect(x + 10, LCD_HEIGHT / 2 - 30, 100, 60, COLOR_BLUE);
-    delay(35);
+  for (int x = 0; x <= LCD_WIDTH - BLOCK_W; x += 20) {
+    fillPixels(bandBuffer, (size_t)LCD_WIDTH * BAND_H, COLOR_BLACK);
+    fillRectInBuffer(bandBuffer, LCD_WIDTH, BAND_H, x, BLOCK_Y, BLOCK_W, BLOCK_H, COLOR_CYAN);
+    fillRectInBuffer(bandBuffer, LCD_WIDTH, BAND_H, x + 10, BLOCK_Y + 10, BLOCK_W - 20, BLOCK_H - 20, COLOR_BLUE);
+    drawBitmap(0, BAND_Y, LCD_WIDTH, BAND_H, bandBuffer, "moving-band");
+    delay(45);
+  }
+  frameCounter++;
+}
+
+static void drawMovingFullFrameProbe() {
+  Serial.println("[SCREEN] moving block / one full-frame draw per step");
+  for (int x = 0; x <= LCD_WIDTH - BLOCK_W; x += 40) {
+    fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, COLOR_BLACK);
+    drawFrameInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, COLOR_WHITE, 2);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, x, (LCD_HEIGHT - BLOCK_H) / 2, BLOCK_W, BLOCK_H, COLOR_CYAN);
+    fillRectInBuffer(frameBuffer, LCD_WIDTH, LCD_HEIGHT, x + 10, (LCD_HEIGHT - BLOCK_H) / 2 + 10, BLOCK_W - 20, BLOCK_H - 20, COLOR_BLUE);
+    drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, "moving-full-frame");
+    delay(70);
   }
   frameCounter++;
 }
 
 static void drawSolid(uint16_t color, const char *name) {
-  Serial.print("[SCREEN] solid ");
+  Serial.print("[SCREEN] solid / one full-frame draw: ");
   Serial.println(name);
-  fillRect(0, 0, LCD_WIDTH, LCD_HEIGHT, color);
+  fillPixels(frameBuffer, (size_t)LCD_WIDTH * LCD_HEIGHT, color);
+  drawBitmap(0, 0, LCD_WIDTH, LCD_HEIGHT, frameBuffer, name);
   frameCounter++;
 }
 
@@ -397,7 +430,7 @@ void setup() {
   printBanner();
   printPinMap();
 
-  if (!allocateLineBuffer()) {
+  if (!allocateDrawBuffers()) {
     while (true) {
       delay(1000);
     }
@@ -414,7 +447,7 @@ void setup() {
   drawSolid(COLOR_BLACK, "BLACK before backlight-on");
   backlightOn();
   Serial.println("[PASS] Backlight ON after panel init");
-  Serial.println("[READY] Watch screen: correct colors, stable image, no random tearing/noise.");
+  Serial.println("[READY] Watch screen: compare moving band vs moving full-frame behavior.");
 }
 
 void loop() {
@@ -427,7 +460,10 @@ void loop() {
   drawStripeGrid();
   for (int i = 0; i < 30; ++i) { alive(); delay(100); }
 
-  drawMovingBlockProbe();
+  drawMovingBandProbe();
+  for (int i = 0; i < 20; ++i) { alive(); delay(100); }
+
+  drawMovingFullFrameProbe();
   for (int i = 0; i < 20; ++i) { alive(); delay(100); }
 
   drawSolid(COLOR_RED, "RED");
