@@ -1,11 +1,45 @@
 # 14_GT911_NormalizedTouch
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS`.
 
 Firmware ID:
 
 ```text
 14TOUCH-NORM1-240827A
+```
+
+## Physical result
+
+Sample A physical validation on 2026-08-27 passed the intended diagnostic boundary.
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/14-gt911-normalized-touch-20260827.md
+```
+
+Observed controller initialization:
+
+```text
+[PASS] ESP32_8048S043_Touch::begin() addr=0x5D fw=0x1060 res=480x272 int=1
+```
+
+Observed final zone coverage:
+
+```text
+[ZONES] seen=9/9 mask=0b111111111 -> TOP_LEFT TOP_CENTER TOP_RIGHT CENTER_LEFT CENTER CENTER_RIGHT BOTTOM_LEFT BOTTOM_CENTER BOTTOM_RIGHT
+```
+
+Observed final counters:
+
+```text
+zones=9/9
+readFail=0
+drvReadFail=0
+drvPointFail=0
+releases=3
+accepted=280
+filtered=262
 ```
 
 ## Purpose
@@ -157,7 +191,7 @@ user-facing HMI quality.
 
 ## Next step after pass
 
-If this test passes, the next step is:
+The next step is:
 
 ```text
 15_LVGL_EspLcdBasicUI
