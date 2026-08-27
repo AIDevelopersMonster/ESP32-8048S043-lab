@@ -65,6 +65,9 @@ Observed CPU load : about 16-18% on demo screen
 | 09_BLETest | Arduino BLE init, active scan and advertisement receive | BLE SCAN PHYSICAL PASS CANDIDATE |
 | 10_LVGL_BasicUI | LVGL UI, GT911 BSP pointer input, button and backlight slider | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
 | 11_LVGL_Dashboard | LVGL dashboard, static/manual touch experiment | DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE |
+| 12_DisplayEspLcdRgbPanel_Probe | native esp_lcd RGB static transport and raw dynamic boundary | STATIC TRANSPORT PASS CANDIDATE / RAW DYNAMIC DRAW NOT ACCEPTABLE |
+| 13_LVGL_EspLcdStatic | LVGL 8 static UI over native esp_lcd path | PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED |
+| 14_GT911_NormalizedTouch | GT911 BSP raw-to-800x480 normalization, 3x3 zone coverage | PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS |
 
 ## Commit-safe Arduino records
 
@@ -81,6 +84,9 @@ evidence/specimens/sample-a/arduino/08-sdcard-readonly-20260826.md
 evidence/specimens/sample-a/arduino/09-ble-scan-20260826.md
 evidence/specimens/sample-a/arduino/10-lvgl-basic-ui-bsp-touch-20260826.md
 evidence/specimens/sample-a/arduino/11-lvgl-dashboard-manual-touch-20260826.md
+evidence/specimens/sample-a/arduino/12-esp-lcd-rgb-panel-probe-20260827.md
+evidence/specimens/sample-a/arduino/13-lvgl-esp-lcd-static-20260827.md
+evidence/specimens/sample-a/arduino/14-gt911-normalized-touch-20260827.md
 ```
 
 ## Source-backed and tested hardware map
@@ -103,14 +109,15 @@ RGB B0..B4    8, 3, 46, 9, 1
 Current validation boundary:
 
 ```text
-RGB display      : own Arduino_GFX runtime PASS
-GT911 touch      : own I2C/Product ID/polling/visual marker PASS + BSP LVGL functional pass candidate
+RGB display      : own Arduino_GFX runtime PASS + native esp_lcd static transport PASS candidate
+GT911 touch      : own I2C/Product ID/polling/visual marker PASS + BSP 9-zone normalized touch PASS candidate
 Backlight        : reported dedicated pass and exercised by display/LVGL slider tests
 SD / TF          : read-only mount + metadata + listing PASS candidate
 Wi-Fi            : scan + infrastructure PASS candidate
 BLE              : Arduino BLE active scan + advertisement receive PASS candidate
 LVGL BasicUI     : functional button/slider pass candidate, touch quality open
 LVGL Dashboard   : stable diagnostic dashboard, dynamic UX not acceptable
+LVGL esp_lcd     : static UI path works at 12.5 MHz; touch integration still separate
 ```
 
 ## Acceptance status
@@ -127,8 +134,8 @@ LVGL Dashboard   : stable diagnostic dashboard, dynamic UX not acceptable
 | FW-02 | Factory partition/string analysis | FIRST-PASS DONE |
 | FW-04 | Factory serial boot | PASS |
 | FW-05 | Factory LVGL Widgets Demo display/touch | PASS |
-| HW-02 | RGB display | OWN MINIMAL ARDUINO_GFX TEST PASS |
-| HW-03 | GT911 touch | PHYSICAL VISUAL PASS / 0x5D / PRODUCT ID 911 |
+| HW-02 | RGB display | OWN MINIMAL ARDUINO_GFX TEST PASS + ESP_LCD STATIC TRANSPORT PASS CANDIDATE |
+| HW-03 | GT911 touch | PHYSICAL VISUAL PASS / 0x5D / PRODUCT ID 911 / 9-ZONE NORMALIZATION PASS CANDIDATE |
 | HW-04 | Backlight | PHYSICAL PASS REPORTED |
 | HW-05 | SD card | READ-ONLY PHYSICAL PASS CANDIDATE |
 | HW-06 | Wi-Fi | FULL WIFI PHYSICAL PASS CANDIDATE |
@@ -137,6 +144,8 @@ LVGL Dashboard   : stable diagnostic dashboard, dynamic UX not acceptable
 | SW-01A | Local Arduino board profile | PASS CANDIDATE / SAMPLE A |
 | SW-02 | LVGL basic UI | FUNCTIONAL PASS CANDIDATE / TOUCH QUALITY OPEN |
 | SW-02B | LVGL dashboard | DIAGNOSTIC FUNCTIONAL PASS CANDIDATE / DYNAMIC UX NOT ACCEPTABLE |
+| SW-02C | LVGL over native esp_lcd static UI | PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED |
+| SW-02D | GT911 normalized touch BSP | PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS |
 | SW-03 | Web setup | OPEN |
 | SW-04 | Web Flasher | OPEN |
 | SW-05 | GitHub OTA | OPEN |
@@ -153,4 +162,6 @@ SD read-only evidence does not prove write safety, formatting, SD stress or SD-b
 WebServer evidence does not yet prove Web setup, OTA or Widget Runtime.
 LVGL BasicUI evidence proves functional button/slider interaction, but not polished touch UX, long-duration HMI stability, SD-backed assets, Web upload/control, Widget Runtime or GitHub OTA.
 LVGL Dashboard evidence proves static diagnostic stability and manual control intent, but explicitly rejects the current dynamic touch behavior for user-facing applications.
+Native esp_lcd evidence proves static transport and LVGL static UI at 12.5 MHz, but raw dynamic draw remains unacceptable.
+GT911 normalized-touch evidence proves 3x3 zone coverage and BSP coordinate normalization, but not LVGL pointer integration or user-facing interactive HMI quality.
 ```
