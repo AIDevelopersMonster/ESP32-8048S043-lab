@@ -60,8 +60,8 @@ This style is the preferred direction for the ESP32-8048S043 library.
 
 ```text
 1. rzeldent/platformio-espressif32-sunton      AUDITED FIRST-PASS
-2. rzeldent/esp32-smartdisplay                NEXT
-3. limpens/esp32-8048S043                     OPEN
+2. rzeldent/esp32-smartdisplay                AUDITED FIRST-PASS
+3. limpens/esp32-8048S043                     NEXT
 4. limpens/esp32-8048S043-lvgl9               OPEN
 5. pixelwave/Sunton-ESP32-8048S043            OPEN
 6. clumsyCoder00/Sunton-ESP32-8048S043        PARTIAL PRIOR INSPECTION
@@ -69,10 +69,11 @@ This style is the preferred direction for the ESP32-8048S043 library.
 8. ffodGit/esp32-8048s043-getting-started-00  OPEN
 ```
 
-Detailed first audit:
+Detailed audits:
 
 ```text
 docs/third-party/rzeldent-platformio-espressif32-sunton.md
+docs/third-party/rzeldent-esp32-smartdisplay.md
 ```
 
 ## First audit result: rzeldent/platformio-espressif32-sunton
@@ -99,7 +100,57 @@ Important caution:
 Upstream is GPL-3.0: reference only, no direct code/file copy.
 Upstream RGB R/B channel naming differs from our current physically tested Arduino_GFX pin header.
 Do not replace our pin map blindly.
-The next step is to inspect rzeldent/esp32-smartdisplay to see how these macros are consumed.
+```
+
+## Second audit result: rzeldent/esp32-smartdisplay
+
+Useful findings:
+
+```text
+library is a PlatformIO Arduino LVGL driver layer for Sunton/CYD boards;
+library metadata targets LVGL 9.2.2;
+root LICENSE and library metadata disagree, so treat it as reference-only;
+main public API is small: smartdisplay_init(), backlight setter, optional brightness/touch calibration helpers;
+smartdisplay_init() owns LVGL init, backlight setup, display init, touch init and touch calibration wrapper;
+ST7262 parallel path uses esp_lcd_new_rgb_panel(), not Arduino_GFX;
+board macros from platformio-espressif32-sunton feed the RGB panel config;
+LVGL buffer is allocated through heap_caps_malloc() with board-provided malloc flags;
+for ESP32-8048S043C the upstream board definition makes this buffer full-frame-capable;
+flush path goes through smartdisplay_dma_flush_with_rotation();
+DMA helper has direct/small-transfer path, DMA/large-transfer path, queue, fallback and retry logic;
+flush_ready timing is treated as a transfer-completion issue, not as a formality;
+GT911 path uses esp_lcd_touch style abstraction;
+GT911 driver reads controller product/fwd/resolution and scales raw touch coordinates to configured display bounds.
+```
+
+Most important direct lesson for our board:
+
+```text
+Our GT911 reports raw 480x272 while the display is 800x480.
+The upstream GT911 driver treats this as a driver-layer problem and scales inside the touch driver.
+This should move into our BSP, not remain in examples.
+```
+
+Most important display lesson:
+
+```text
+Do not keep polishing Arduino_GFX LVGL dashboards.
+The next serious dynamic-UI track should compare an esp_lcd RGB panel path with PSRAM framebuffer/full-frame-capable buffer strategy and explicit transfer completion handling.
+```
+
+Recommended future experiment after the audit round:
+
+```text
+12_DisplayEspLcdRgbPanel_Probe
+  -> esp_lcd_new_rgb_panel() bring-up only;
+  -> our known-good pin map first;
+  -> then upstream timing candidate: 12.5 MHz, 8/4/8 porches;
+  -> static color bars only;
+  -> no LVGL and no touch.
+
+13_LVGL_EspLcdStatic
+14_GT911_NormalizedTouch
+15_LVGL_EspLcdBasicUI
 ```
 
 ## Third-party study goals
@@ -132,4 +183,12 @@ no direct GPIO/register code in application examples.
 
 ## Current decision
 
-Freeze the current local dashboard path as evidence and diagnostic work. Continue by studying third-party and WT32-style LVGL organization, then port only the clean architectural parts into this repository.
+Freeze the current local dashboard path as evidence and diagnostic work.
+
+Continue the third-party audit in order. Next target:
+
+```text
+limpens/esp32-8048S043
+```
+
+Port only independently reimplemented architectural parts into this repository.
