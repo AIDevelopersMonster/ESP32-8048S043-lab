@@ -1,11 +1,54 @@
 # 12_DisplayEspLcdRgbPanel_Probe
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN / BULK-DRAW RETEST`.
 
 Firmware ID:
 
 ```text
+12ELCD-BULK1-240827B
+```
+
+Previous first-run firmware:
+
+```text
 12ELCD-PROBE1-240827A
+```
+
+## Current finding
+
+The first physical run showed an important boundary:
+
+```text
+esp_lcd RGB panel initialization worked;
+colors were excellent;
+static/quadrant/grid output was usable;
+the original moving-block probe flickered and temporarily broke geometry.
+```
+
+Operator observation:
+
+```text
+the blue block with cyan outline moved, but not smoothly;
+there were flickers and temporary geometry violations;
+sometimes the upper outline visually collapsed with the lower outline;
+left/right outline collapse was not observed.
+```
+
+Interpretation:
+
+```text
+Do not treat this as a color-order or pin-map failure.
+The first dynamic probe used row-by-row draw_bitmap calls for rectangles.
+That is a deliberately harsh and probably unrealistic update path for an RGB panel.
+```
+
+Revision `12ELCD-BULK1-240827B` changes the update method:
+
+```text
+full-screen patterns are built in one PSRAM frame buffer and sent with one draw_bitmap call;
+moving band is built in one full-width PSRAM band buffer and sent with one draw_bitmap call per step;
+a second moving probe sends one full frame per step;
+no row-by-row rectangle drawing remains in the visible tests.
 ```
 
 ## Purpose
@@ -49,6 +92,7 @@ PCLK active negative       : true
 Framebuffer in PSRAM       : true
 Double framebuffer          : true
 Data order                  : ESP-IDF RGB565 bus-bit order
+Update mode                 : bulk full-frame / bulk band draw_bitmap calls
 ```
 
 The ESP-IDF RGB565 bus-bit order is:
@@ -66,19 +110,21 @@ This is intentionally different from the Arduino_GFX constructor order used in `
 ```text
 ESP32-8048S043 Lab / 12_DisplayEspLcdRgbPanel_Probe
 Native esp_lcd RGB panel transport probe
-Firmware ID              : 12ELCD-PROBE1-240827A
+Firmware ID              : 12ELCD-BULK1-240827B
 Mode                     : esp_lcd RGB panel only
 Arduino_GFX              : not used
 LVGL                     : not used
 GT911 touch              : not used
 PCLK                     : 12500000 Hz
+Update mode              : bulk full-frame / bulk band draw_bitmap calls
 Data order               : ESP-IDF RGB565 bus bits DATA0..15 = B0..B4,G0..G5,R0..R4
-[PASS] line buffer allocated
+[PASS] full frame buffer allocated in PSRAM
+[PASS] band buffer allocated in PSRAM
 [PASS] esp_lcd_new_rgb_panel()
 [PASS] esp_lcd_panel_reset()
 [PASS] esp_lcd_panel_init()
 [PASS] Backlight ON after panel init
-[READY] Watch screen: correct colors, stable image, no random tearing/noise.
+[READY] Watch screen: compare moving band vs moving full-frame behavior.
 ```
 
 ## Expected visual output
@@ -89,42 +135,40 @@ The screen should cycle through:
 RGB color bars;
 orientation quadrants;
 stripe/grid pattern;
-small moving block probe;
+moving block as one band draw per step;
+moving block as one full-frame draw per step;
 solid red/green/blue/white screens.
 ```
 
-Acceptance for first pass:
+Acceptance for this retest:
 
 ```text
-screen initializes;
-no random noise after backlight-on;
-color bars show expected red/green/blue/white/yellow/cyan/magenta;
-orientation quadrants are stable;
-stripe/grid pattern is stable;
-small moving block does not produce large jumps/tears;
+static images remain correct;
+colors remain correct;
+moving band is better than the previous row-by-row version;
+full-frame moving block is compared separately;
 Serial ALIVE lines continue;
 no reset/brownout/panic.
 ```
 
-## What to report
+## What to report now
 
-For the first physical run, record:
+For the `12ELCD-BULK1-240827B` run, record:
 
 ```text
 Does it compile?
-Does it upload?
-Does Serial show 12ELCD-PROBE1-240827A?
-Does esp_lcd_new_rgb_panel() pass?
-Does the screen light only after panel init?
-Are red/green/blue correct or swapped?
-Is the image stable at 12.5 MHz?
-Does the moving block look acceptable?
+Does Serial show 12ELCD-BULK1-240827B?
+Do both PSRAM buffers allocate?
+Do colors remain excellent?
+Is the moving band better than before?
+Is the full-frame moving block better or worse than the moving band?
+Does either mode still show horizontal tearing/flicker?
 Any reset, brownout, panic, Guru Meditation, or PSRAM allocation failure?
 ```
 
 ## Next timing test
 
-Only after the default 12.5 MHz run is understood, test the second upstream timing candidate by changing:
+Only after the default 12.5 MHz bulk-draw run is understood, test the second upstream timing candidate by changing:
 
 ```cpp
 #define ESP_LCD_PROBE_PCLK_HZ 12500000
@@ -136,14 +180,14 @@ to:
 #define ESP_LCD_PROBE_PCLK_HZ 18000000
 ```
 
-Do not start with 18 MHz. The third-party reference says serious distortion appears above 18 MHz, so 18 MHz is the upper candidate, not the safe baseline.
+Do not move to 18 MHz until the 12.5 MHz bulk-draw behavior is recorded.
 
 ## PASS boundary
 
 A PASS here means only:
 
 ```text
-Native esp_lcd RGB panel transport works on Sample A with the selected timing and data order.
+Native esp_lcd RGB panel transport works on Sample A with the selected timing, data order and update granularity.
 ```
 
 It does not prove:
@@ -178,6 +222,18 @@ If the display initializes but colors are swapped:
 ```text
 Do not change the global BSP pin names yet.
 Only compare the esp_lcd data order in this probe.
+```
+
+If moving band is good but full-frame moving block is worse:
+
+```text
+Prefer limited-area bulk updates for LVGL8 esp_lcd experiments.
+```
+
+If both moving modes still show horizontal tearing:
+
+```text
+The next experiment must add VSYNC/panel-event synchronization or use a more formal LVGL/esp_lcd buffering strategy.
 ```
 
 If 12.5 MHz is stable but 18 MHz is unstable:
