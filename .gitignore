@@ -30,6 +30,27 @@ sdkconfig.old
 # Local board identity captures may include MAC addresses, serial ports and host paths.
 board-info/
 
+# Local third-party source checkouts and firmware experiments.
+# Keep audit notes in docs/third-party tracked; only root-level local clones are ignored here.
+/third-party/
+/third_party/
+/third-party-work/
+/third-party-src/
+/third-party-clones/
+/external/
+/externals/
+/vendor/
+/vendors/
+/upstream/
+/upstreams/
+/local-backups/
+/scratch/
+/tmp/
+/downloads/
+/clumsyCoder00-Sunton-ESP32-8048S043/
+/pixelwave-Sunton-ESP32-8048S043/
+/Sunton-ESP32-8048S043/
+
 # Local generated web-flasher output.
 web-site/
 .web-build/
