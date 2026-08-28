@@ -1,11 +1,49 @@
 # 16_LVGL_EspLcdMinimalInvalidation
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `FUNCTIONAL PASS CANDIDATE / IDLE STABLE / HARD-TAP JITTER OPEN`.
 
 Firmware ID:
 
 ```text
 16LVGL-MINV1-240828A
+```
+
+## Physical result on Sample A
+
+The first physical run changed the display/LVGL boundary materially.
+
+Accepted observations:
+
+```text
+Idle for 15 seconds: no self-redraw every 1-3 seconds.
+Gentle phone-like touch / careful touch: no visible jitter.
+Hard tapping on the target: screen jitter can appear.
+Click counter increases after release.
+White border remains stable.
+HITBOX pressed/clicked events are printed.
+readFail and pointFail remain 0 in the uploaded log.
+```
+
+Final uploaded ALIVE line summary:
+
+```text
+uptime=85s
+clicked=38
+pressed=38
+reports=715
+releases=38
+flush=82
+readFail=0
+pointFail=0
+heap=285924
+psram=8388608
+freePsram=6589028
+```
+
+Evidence:
+
+```text
+evidence/specimens/sample-a/arduino/16-lvgl-esp-lcd-minimal-invalidation-20260828.md
 ```
 
 ## Purpose
@@ -141,79 +179,56 @@ no constantly changing touch-coordinate label;
 no visible pressed-state color change.
 ```
 
-## How to test
-
-Let the screen idle for at least 15 seconds before touching it.
-
-Then tap the central target several times, slowly:
-
-```text
-press -> release -> wait 1 second -> press -> release
-```
-
-Do not drag.
-
-## What to report
-
-For the first physical run, record:
-
-```text
-Does it compile?
-Does Serial show 16LVGL-MINV1-240828A?
-Does esp_lcd_new_rgb_panel() pass?
-Does GT911 BSP init pass?
-Do both LVGL PSRAM buffers allocate?
-Does the first screen appear cleanly after backlight-on?
-Does idle screen still redraw/flicker every 1-3 seconds?
-Does touching the transparent target still cause screen jitter?
-Does the click counter update on release?
-Does the white border stay stable during press?
-Does Serial show HITBOX pressed/clicked events?
-Do readFail or pointFail remain 0?
-How many flush calls are reported before and after each tap?
-```
-
 ## Interpretation
 
-If idle screen is stable but press still jitters:
+This result proves that the 15th test's periodic redraw defect was caused by intentional UI invalidation and not by idle panel instability.
+
+Current boundary:
 
 ```text
-The remaining problem is tied to touch-time LVGL invalidation / RGB scanout synchronization.
-Proceed to 16B_DisplayEspLcdVsyncProbe or an event-synchronized flush strategy.
+Quiet idle LVGL screen: stable.
+Gentle click interaction: functionally usable.
+Hard-tap robustness: still open.
 ```
 
-If idle screen still redraws/flickers every 1-3 seconds:
+Recommended next step:
 
 ```text
-The redraw is not caused by our intentional label updates.
-Investigate LVGL display driver timing, RGB panel refresh behavior, PSRAM framebuffer interaction and flush synchronization.
+17_LVGL_EspLcdManualHitbox
 ```
 
-If counter update alone jitters:
+Candidate purpose:
 
 ```text
-Even tiny LVGL invalidations are visually unsafe with the current flush strategy.
-Do not continue UI-level polishing before VSYNC/frame-event work.
+Do not register GT911 as a LVGL pointer driver.
+Read GT911 manually in the sketch.
+Do manual hit testing against the central target.
+Do not invalidate anything on press.
+Update only a small counter label after release.
 ```
 
-If this test is visually stable:
+This separates LVGL pointer-state invalidation from manual touch handling with click-only LVGL update.
+
+Alternative lower-level path remains:
 
 ```text
-Use this as the baseline for future user-facing widgets.
-Add interactivity back one feature at a time.
+16B_DisplayEspLcdVsyncProbe
 ```
+
+if even click-only manual updates still produce unacceptable artifacts.
 
 ## PASS boundary
 
-A positive result here would mean:
+A positive result here means:
 
 ```text
-LVGL 8 over native esp_lcd can run a quiet interactive UI with GT911 BSP touch and click-only invalidation on Sample A.
+LVGL 8 over native esp_lcd can run a quiet interactive screen with GT911 BSP touch and click-only invalidation on Sample A, with stable idle display and correct click delivery.
 ```
 
-It would not prove:
+It does not prove:
 
 ```text
+hard-tap robustness;
 slider/drag stability;
 fast animation;
 full dashboard UI;
