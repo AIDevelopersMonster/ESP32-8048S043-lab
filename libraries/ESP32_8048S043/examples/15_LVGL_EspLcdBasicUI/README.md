@@ -1,11 +1,47 @@
 # 15_LVGL_EspLcdBasicUI
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `FUNCTIONAL PASS CANDIDATE / DYNAMIC REDRAW NOT ACCEPTABLE`.
 
 Firmware ID:
 
 ```text
 15LVGL-ELCDT1-240827A
+```
+
+## Result summary
+
+The first physical run proved the combined pipeline is functional:
+
+```text
+native esp_lcd RGB panel initializes;
+LVGL 8.3.11 display driver registers;
+GT911 BSP touch initializes at 0x5D;
+LVGL pointer driver registers;
+central button receives press/click events;
+Pressed and Clicked counters increase;
+readFail and pointFail remain zero.
+```
+
+But the visual quality is not acceptable for user-facing UI:
+
+```text
+periodic redraw is visible;
+screen jitter/redraw occurs when pressing the button;
+the same dynamic redraw defect seen in earlier LVGL paths remains.
+```
+
+Operator observation:
+
+```text
+Недостатки все те же: перерисовка раз в секунду или две или три и дребезг экрана при нажатии кнопки, без их учета все работает.
+```
+
+Therefore this example is a functional integration proof, not a polished UI template.
+
+## Evidence
+
+```text
+evidence/specimens/sample-a/arduino/15-lvgl-esp-lcd-basic-ui-20260827.md
 ```
 
 ## Purpose
@@ -22,7 +58,7 @@ PHYSICAL STATIC PASS CANDIDATE / TOUCH NOT TESTED
 PHYSICAL PASS CANDIDATE / 9-ZONE NORMALIZATION PASS
 ```
 
-The goal is to combine those two paths without returning to the previously rejected dynamic dashboard or raw moving-block update style.
+The goal was to combine those two paths without returning to the previously rejected dynamic dashboard or raw moving-block update style.
 
 ## What it uses
 
@@ -69,124 +105,129 @@ Touch input                : ESP32_8048S043_Touch BSP as LVGL pointer
 UI                         : one central button + small labels
 ```
 
-## Expected Serial output
+## Observed Serial result
+
+Successful initialization:
 
 ```text
-ESP32-8048S043 Lab / 15_LVGL_EspLcdBasicUI
-LVGL 8 button UI over esp_lcd RGB + GT911 BSP touch
-Firmware ID              : 15LVGL-ELCDT1-240827A
-Mode                     : LVGL button UI over esp_lcd RGB panel
-Arduino_GFX              : not used
-GT911 touch              : ESP32_8048S043_Touch BSP
-Moving animation         : not used
-Slider                   : not used
-PCLK                     : 12500000 Hz
 [PASS] esp_lcd_new_rgb_panel()
 [PASS] esp_lcd_panel_reset()
 [PASS] esp_lcd_panel_init()
-[PASS] ESP32_8048S043_Touch::begin() addr=0x5D fw=0x1060 res=480x272 int=...
-[PASS] lvBuf1 allocated in PSRAM
-[PASS] lvBuf2 allocated in PSRAM
+[PASS] ESP32_8048S043_Touch::begin() addr=0x5D fw=0x1060 res=480x272 int=1
+[PASS] lvBuf1 allocated in PSRAM: 128000 bytes
+[PASS] lvBuf2 allocated in PSRAM: 128000 bytes
 [PASS] LVGL display driver registered
 [PASS] LVGL GT911 pointer driver registered
 [PASS] LVGL minimal button UI objects created
 [PASS] Backlight ON after LVGL first draw
-[READY] Tap the central button. Watch button reaction, labels and border stability.
 ```
 
-## Expected visual output
-
-The screen should show:
+Functional LVGL button events:
 
 ```text
-title;
-subtitle;
-one central Tap me button;
-click/press counter label;
-touch coordinate/zone label;
-small status line;
-stable white border.
+[BUTTON] pressed=1 touch=(355,191) zone=CENTER flush=7
+[BUTTON] clicked=1 pressed=1 touch=(359,205) zone=CENTER flush=13
+[BUTTON] pressed=10 touch=(373,202) zone=CENTER flush=118
+[BUTTON] clicked=10 pressed=10 touch=(373,202) zone=CENTER flush=124
 ```
 
-There should be:
+Final observed ALIVE line:
 
 ```text
-no slider;
-no moving block;
-no dashboard-style screen redraw;
-no intentional animation;
-no Web/SD/BLE activity.
+[ALIVE] fw=15LVGL-ELCDT1-240827A uptime=30s panel=OK touch=OK lvgl=OK ui=OK clicked=10 pressed=10 reports=79 releases=10 flush=132 indev=940 loops=5354 readFail=0 pointFail=0 heap=285908 psram=8388608 freePsram=6589028
 ```
 
-## How to test
+## Interpretation
 
-Tap only the central button first.
-
-Then tap around the button and near the screen zones only after the button path is understood.
-
-Record:
+This test separates two facts:
 
 ```text
-Does it compile?
-Does Serial show 15LVGL-ELCDT1-240827A?
-Does display init pass?
-Does GT911 init pass?
-Does LVGL pointer driver register?
-Does the button visibly react when pressed?
-Does Pressed counter increment?
-Does Clicks counter increment after release?
-Does touch label show plausible coordinates and zone?
-Does the border remain stable while tapping?
-Does the button redraw cause tearing, flicker or geometry jumps?
-Does idle screen remain stable?
-Are touch readFailures or pointFailures increasing?
-Any reset, brownout, panic or Guru Meditation?
+The architecture is functionally connected:
+esp_lcd display + LVGL + GT911 BSP pointer input.
+
+The visual redraw behavior is still not acceptable:
+button-state redraw and/or LVGL invalidation can still produce visible screen disturbance.
 ```
 
-## Acceptance boundary
-
-A pass here means:
+This is not a touch-controller failure:
 
 ```text
-The board can run a minimal interactive LVGL button UI using native esp_lcd display transport and GT911 BSP normalized touch input.
+GT911 detected at 0x5D;
+firmware 0x1060;
+raw resolution 480x272;
+LVGL received pointer events;
+readFail=0;
+pointFail=0.
+```
+
+This is not a color-order or RGB pin-map failure.
+
+The remaining problem belongs to:
+
+```text
+LVGL invalidation granularity;
+button pressed-state redraw;
+periodic status label redraw;
+RGB panel scan/update synchronization;
+possibly missing VSYNC/frame-event discipline.
+```
+
+## Current decision
+
+Freeze this example as:
+
+```text
+FUNCTIONAL PASS CANDIDATE / DYNAMIC REDRAW NOT ACCEPTABLE
+```
+
+Do not promote it as a user-facing HMI template.
+
+## Recommended next experiment
+
+```text
+16_LVGL_EspLcdMinimalInvalidation
+```
+
+Goals:
+
+```text
+remove periodic status label updates;
+remove constantly changing touch label updates;
+minimize or neutralize button pressed-state visual redraw;
+update only one small counter on click;
+observe whether the screen still tears when LVGL invalidation is minimal.
+```
+
+Alternative lower-level follow-up:
+
+```text
+16B_DisplayEspLcdVsyncProbe
+```
+
+Goals:
+
+```text
+check whether Arduino-ESP32 / ESP-IDF v5.5.5 exposes usable RGB panel event callbacks;
+reason about VSYNC/frame timing;
+keep LVGL out until panel-event behavior is known.
+```
+
+## PASS boundary
+
+A positive functional result here means:
+
+```text
+LVGL 8 can receive GT911 BSP pointer events over the native esp_lcd display path and activate a central button on Sample A.
 ```
 
 It does not prove:
 
 ```text
-slider quality;
-fast animation;
-full dashboard UX;
-long-duration HMI stability;
+acceptable dynamic visual quality;
+tear-free LVGL updates;
+polished HMI behavior;
+slider/drag controls;
+full dashboard UI;
 Widget Runtime;
-Web setup;
-OTA;
-LVGL 9 migration;
-production-ready UI quality.
-```
-
-## Interpretation
-
-If the button works and the screen remains stable:
-
-```text
-Proceed to a controlled 16_LVGL_EspLcdControls test with two or three small widgets, still no moving animation.
-```
-
-If the button works but tearing appears only while pressing:
-
-```text
-The next step should investigate LVGL invalidation size, pressed-state redraw and possible VSYNC/panel synchronization.
-```
-
-If touch coordinates are correct in Serial but the button does not react:
-
-```text
-Inspect LVGL indev registration and coordinate delivery to LVGL.
-```
-
-If idle screen is unstable:
-
-```text
-Return to the esp_lcd/LVGL display path before adding more widgets.
+Web setup or OTA.
 ```
