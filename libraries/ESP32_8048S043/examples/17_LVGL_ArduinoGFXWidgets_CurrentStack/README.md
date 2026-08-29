@@ -1,68 +1,84 @@
 # 17_LVGL_ArduinoGFXWidgets_CurrentStack
 
-Status: `SOURCE IMPLEMENTED / PHYSICAL VALIDATION OPEN`.
+Status: `PHYSICAL FUNCTIONAL PASS / VISIBLE REDRAW FLICKER / USABLE WITH LIMITATION`.
 
 ## Purpose
 
-This is a controlled forward-port of the physically successful historical `wegi1` LVGL Widgets reference onto the current ESP32-8048S043-lab stack.
+This is a controlled forward-port of the physically successful historical `wegi1` LVGL Widgets reference onto the current ESP32-8048S043-lab software stack.
 
-It does not copy the third-party application source. It uses the standard LVGL 8 widgets demo already distributed with LVGL and independently wires it to the current project drivers.
+It does not copy the third-party application source. It uses the standard LVGL 8 widgets demo distributed with LVGL and independently wires it to the current project drivers.
 
-## What stays intentionally close to the known-good reference
+The experiment is diagnostic: keep the UI workload and RGB timing class close to the historical reference while moving to the current board profile, current Arduino-ESP32/ESP-IDF generation, current Arduino_GFX and the project GT911 BSP.
+
+## Physical result — 2026-08-29
+
+Sample A successfully booted and displayed the standard LVGL Widgets interface.
+
+Operator assessment:
 
 ```text
-resolution          800 x 480
-PCLK                14 MHz
-HSYNC               8 / 4 / 8
-VSYNC               8 / 4 / 8
-hsync polarity      0
-vsync polarity      0
-pclk active neg     1
-rendering            Arduino_GFX partial-area flush
-LVGL draw buffer     1/4 screen = 96000 RGB565 pixels
-loop cadence         5 ms
+looks like the familiar factory demo;
+pictures and interfaces work;
+UI behavior is analogous to the original/reference demo;
+touch and interaction are usable;
+the old visible defect class remains;
+with many active elements, redraw flicker is clearly visible;
+the eye perceives very short transitions through a black background/frame;
+even millisecond-scale black transitions are noticeable;
+usable, but not visually clean enough to call production-quality animation.
+```
+
+Important interpretation boundary:
+
+The operator visually perceives a black transition during redraw. This does **not** by itself prove that the software intentionally draws a full black frame or that the exact cause is already identified. It is recorded as a physical visual symptom.
+
+Current status:
+
+```text
+BOOT                  PASS
+DISPLAY               PASS
+LVGL WIDGETS          PASS
+IMAGES                 PASS
+INTERACTION            PASS by operator observation
+FACTORY-LIKE UI        YES by operator observation
+IDLE/STATIC CONTENT    GOOD
+ACTIVE REDRAW          VISIBLE FLICKER
+BLACK TRANSITION       VISUALLY PERCEIVED
+USABILITY              YES
+VISUAL QUALITY         LIMITED UNDER ACTIVE UI
+OVERALL                FUNCTIONAL PASS WITH VISUAL LIMITATION
+```
+
+Serial output for this exact physical run was not supplied, so the result is intentionally classified from physical observation rather than a synthetic serial-only PASS.
+
+## What stays intentionally close to the known-good historical reference
+
+```text
+resolution            800 x 480
+PCLK                  14 MHz
+HSYNC                 8 / 4 / 8
+VSYNC                 8 / 4 / 8
+hsync polarity        0
+vsync polarity        0
+pclk active neg       1
+rendering             Arduino_GFX partial-area flush
+LVGL draw buffer      1/4 screen = 96000 RGB565 pixels
+loop cadence          5 ms
 UI                    standard LVGL Widgets demo
 ```
 
 ## What is deliberately modernized
 
 ```text
-Board profile        ESP32-8048S043 Lab N16R8 FIXED
-Arduino-ESP32        current project generation
-ESP-IDF              current 5.x generation
-Arduino_GFX          current installed version
-LVGL                 current 8.x project version
-Touch                ESP32_8048S043_Touch BSP
+Board profile          ESP32-8048S043 Lab N16R8 FIXED
+Arduino-ESP32          3.3.11 in the reproduced current-stack run
+ESP-IDF                current 5.x generation shipped by that core
+Arduino_GFX            current project-installed version
+LVGL                   8.3.11 in the reproduced current-stack run
+Touch                  ESP32_8048S043_Touch BSP
 ```
 
-The experiment changes the software generation while keeping the visual workload and RGB timing class close to the historical physical PASS.
-
-## Required LVGL configuration
-
-The current LVGL configuration must include:
-
-```c
-#define LV_COLOR_DEPTH 16
-#define LV_USE_DEMO_WIDGETS 1
-```
-
-The sketch intentionally stops at compile time if these are not enabled.
-
-## Before compiling
-
-Restore the normal project libraries after the historical `wegi1` reproduction. Do not leave the bundled third-party `LVGL 8.3.0-dev` or `Arduino_GFX 1.2.8` active for this test.
-
-Use the project's normal local board profile:
-
-```text
-ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
-```
-
-Expected current FQBN:
-
-```text
-AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
-```
+The exact Arduino_GFX version should be recorded from the local `library.properties` when reproducing the experiment, because it is not vendored or pinned by this example.
 
 ## Architecture
 
@@ -90,34 +106,277 @@ ESP32_8048S043_Touch BSP
 LVGL pointer input
 ```
 
-## Memory strategy
+## Prerequisites
 
-To keep one more variable close to the historical reference, test 17 first requests the approximately 192 KB LVGL buffer from internal RAM:
+Use the normal project environment, not the historical `wegi1` stack.
+
+Required components:
 
 ```text
-96000 pixels x 2 bytes = ~192000 bytes
+Arduino IDE 2.x
+esp32 by Espressif Systems 3.3.11
+local AIDevelopersMonster ESP32 platform/profile
+LVGL 8.3.11
+current Arduino_GFX Library for Arduino
+ESP32_8048S043 project BSP library
 ```
 
-If the current stack cannot provide a contiguous internal block of that size, the sketch falls back to PSRAM and prints a warning. That fallback must be recorded in the evidence because it changes one experimental variable.
+Expected custom FQBN:
 
-## Expected serial markers
+```text
+AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
+```
+
+Expected board name:
+
+```text
+ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+```
+
+Recommended board settings used by the project:
+
+```text
+USB CDC On Boot   Disabled
+CPU Frequency     240 MHz
+Debug Level       None
+Erase All Flash   Disabled
+Events Run On     Core 1
+Flash Mode        QIO 80MHz
+Flash Size        16MB
+Arduino Runs On   Core 1
+PSRAM             OPI PSRAM
+Upload Mode       UART0 / Hardware CDC
+Upload Speed      921600
+USB Mode          Hardware CDC and JTAG
+Partition Scheme  16M Flash (3MB APP/9.9MB FATFS)
+```
+
+## 1. Get the current project
+
+PowerShell:
+
+```powershell
+cd C:\Users\CHUWI\Documents\GitHub\ESP32-8048S043-lab
+git pull
+```
+
+The example is located at:
+
+```text
+libraries/ESP32_8048S043/examples/
+17_LVGL_ArduinoGFXWidgets_CurrentStack/
+17_LVGL_ArduinoGFXWidgets_CurrentStack.ino
+```
+
+## 2. Restore the normal project libraries
+
+If the historical `wegi1` reproduction was run first, remove its temporary bundled libraries and restore the normal Arduino libraries before building Test 17.
+
+Typical project BSP sync:
+
+```powershell
+$Src = "$HOME\Documents\GitHub\ESP32-8048S043-lab\libraries\ESP32_8048S043"
+$Dst = "$HOME\Documents\Arduino\libraries\ESP32_8048S043"
+
+Remove-Item $Dst -Recurse -Force -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Path $Dst -Force | Out-Null
+Copy-Item "$Src\*" $Dst -Recurse -Force
+```
+
+Do not use the third-party bundled `LVGL 8.3.0-dev` or `Arduino_GFX 1.2.8` for Test 17.
+
+## 3. Confirm the current library versions
+
+PowerShell:
+
+```powershell
+$ArduinoLib = "$HOME\Documents\Arduino\libraries"
+
+Get-ChildItem $ArduinoLib -Directory | ForEach-Object {
+    $Prop = Join-Path $_.FullName "library.properties"
+    if (Test-Path $Prop) {
+        $Name = (Select-String $Prop '^name=' | Select-Object -First 1).Line
+        $Version = (Select-String $Prop '^version=' | Select-Object -First 1).Line
+        if ($Name -match 'lvgl|GFX Library for Arduino') {
+            [PSCustomObject]@{
+                Folder  = $_.Name
+                Name    = $Name
+                Version = $Version
+            }
+        }
+    }
+}
+```
+
+For the reproduced run, LVGL was:
+
+```text
+name=lvgl
+version=8.3.11
+```
+
+Record the Arduino_GFX version shown on the machine used for the reproduction.
+
+## 4. Enable the LVGL Widgets demo
+
+The active LVGL configuration must include:
+
+```c
+#define LV_COLOR_DEPTH 16
+#define LV_USE_DEMO_WIDGETS 1
+```
+
+Typical active config path:
+
+```text
+C:\Users\CHUWI\Documents\Arduino\libraries\lv_conf.h
+```
+
+Check it:
+
+```powershell
+$Conf = "$HOME\Documents\Arduino\libraries\lv_conf.h"
+Select-String $Conf -Pattern 'LV_COLOR_DEPTH|LV_USE_DEMO_WIDGETS'
+```
+
+If `LV_USE_DEMO_WIDGETS` is `0`, change only that setting to `1`.
+
+## 5. Make the official LVGL 8.3.11 demo visible to Arduino Builder
+
+The Arduino Library Manager packaging of LVGL 8.3.11 keeps the standard demos in the library-root `demos/` directory, while Arduino Builder compiles the library `src/` tree. Test 17 therefore uses a temporary packaging shim.
+
+First locate the installed LVGL library:
+
+```powershell
+$ArduinoLib = "$HOME\Documents\Arduino\libraries"
+
+$Lvgl = Get-ChildItem $ArduinoLib -Directory | Where-Object {
+    $p = Join-Path $_.FullName "library.properties"
+    (Test-Path $p) -and (Select-String -Path $p -Pattern '^name=lvgl$' -Quiet)
+} | Select-Object -First 1
+
+$Lvgl.FullName
+Get-Content (Join-Path $Lvgl.FullName "library.properties") |
+    Select-String '^name=|^version='
+```
+
+Check the demo layout:
+
+```powershell
+Test-Path (Join-Path $Lvgl.FullName "demos\lv_demos.h")
+Test-Path (Join-Path $Lvgl.FullName "src\demos\lv_demos.h")
+```
+
+The normal LVGL 8.3.11 Library Manager layout commonly gives:
+
+```text
+True
+False
+```
+
+Create the temporary shim using the official demo files from that same LVGL installation:
+
+```powershell
+$DemoSrc = Join-Path $Lvgl.FullName "demos"
+$DemoDst = Join-Path $Lvgl.FullName "src\demos"
+
+New-Item -ItemType Directory `
+    -Path "$DemoDst\widgets\assets" `
+    -Force | Out-Null
+
+Copy-Item "$DemoSrc\lv_demos.h" "$DemoDst\lv_demos.h" -Force
+Copy-Item "$DemoSrc\widgets\lv_demo_widgets.c" "$DemoDst\widgets\lv_demo_widgets.c" -Force
+Copy-Item "$DemoSrc\widgets\lv_demo_widgets.h" "$DemoDst\widgets\lv_demo_widgets.h" -Force
+Copy-Item "$DemoSrc\widgets\assets\*.c" "$DemoDst\widgets\assets\" -Force
+```
+
+Verify:
+
+```powershell
+Test-Path "$DemoDst\lv_demos.h"
+Test-Path "$DemoDst\widgets\lv_demo_widgets.c"
+Test-Path "$DemoDst\widgets\lv_demo_widgets.h"
+```
+
+Expected:
+
+```text
+True
+True
+True
+```
+
+This does not import any `wegi1` application source. The copied files are the official standard Widgets demo from the currently installed LVGL 8.3.11 package.
+
+## 6. Open the example
+
+Restart Arduino IDE after changing libraries/configuration.
+
+Open:
+
+```text
+File
+-> Examples
+-> ESP32_8048S043
+-> 17_LVGL_ArduinoGFXWidgets_CurrentStack
+```
+
+Select:
+
+```text
+ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+```
+
+## 7. Compile
+
+Press:
+
+```text
+Verify
+```
+
+The sketch intentionally fails compilation if either requirement is missing:
+
+```text
+LV_COLOR_DEPTH == 16
+LV_USE_DEMO_WIDGETS == 1
+```
+
+Do not patch the demo to bypass these guards.
+
+## 8. Flash
+
+Connect the board by USB/UART and select the correct COM port.
+
+Press:
+
+```text
+Upload
+```
+
+Project upload speed:
+
+```text
+921600
+```
+
+After flashing, reset/power-cycle if necessary.
+
+## 9. Serial monitor
+
+Use:
+
+```text
+115200 baud
+```
+
+Expected high-level markers from Test 17 include:
 
 ```text
 ESP32-8048S043 Lab / Test 17
 [PASS] gfx->begin()
 [PASS] GT911 BSP ...
-[PASS] LVGL buffer in internal RAM: ...
-```
-
-or, if internal allocation is unavailable:
-
-```text
-[WARN] Internal allocation unavailable; LVGL buffer in PSRAM: ...
-```
-
-Then:
-
-```text
+[PASS] LVGL buffer ...
 [PASS] LVGL partial display driver registered
 [PASS] LVGL pointer registered through BSP GT911
 [UI INIT] lv_demo_widgets()
@@ -125,60 +384,107 @@ Then:
 [READY] Judge this visually against the historical wegi1 Widgets PASS.
 ```
 
-Runtime evidence:
+Runtime touch/alive counters are diagnostic only; a clean serial log does not override visible display defects.
+
+## 10. Physical evaluation protocol
+
+Do not tune timings, buffers or touch filtering during the first comparison run.
+
+Check:
 
 ```text
-[TOUCH PRESS]
-[TOUCH RELEASE]
-[ALIVE] ... flush=... indev=... press=... release=...
+boot and first render;
+all Widgets tabs/screens;
+images and icons;
+buttons and touch interaction;
+animations;
+charts/meters;
+scrolling;
+fast and normal taps;
+idle/static stability;
+active-element-heavy screens;
+screen/tab transitions;
+any perceived black flash between redraw states.
 ```
 
-## Physical judgment
-
-Do not tune anything during the first run.
-
-Compare against the historical `wegi1` physical PASS and record only what is actually observed:
+For this reproduced run the important result was:
 
 ```text
-boot/display success;
-widgets rendering quality;
-animations and scrolling;
-normal taps;
-fast taps;
-intermittent jitter present/absent;
-idle stability;
-whether the behavior is better/same/worse than the historical reference.
+static pictures/interfaces look correct and factory-like;
+functional behavior matches the reference class;
+redraw-heavy scenes visibly flicker;
+short black transitions are visually obvious despite being very brief.
 ```
 
-The operator's visual judgment is intentionally part of the evidence. It should not be replaced by an artificial PASS solely because Serial reports no errors.
+## 11. Optional cleanup of the LVGL packaging shim
 
-## Interpretation matrix
+After the experiment, the temporary `src/demos` copy can be removed:
 
-If test 17 is visually clean:
+```powershell
+Remove-Item "$($Lvgl.FullName)\src\demos" -Recurse -Force
+```
+
+Restart Arduino IDE afterward.
+
+Do not remove the original root-level:
 
 ```text
-historical Arduino_GFX partial path  PASS
-current Arduino_GFX partial path     PASS
-native esp_lcd partial path          jitter observed
+lvgl/demos/
 ```
 
-That would strongly narrow the unresolved difference toward our native `esp_lcd` transport/synchronization path rather than LVGL 8, GT911, or partial invalidation itself.
+## Memory strategy
 
-If test 17 reproduces the intermittent jitter:
+To keep one variable close to the historical reference, Test 17 first requests the approximately 192 KB LVGL buffer from internal RAM:
 
 ```text
-historical stack                     PASS
-current stack                         jitter
+96000 pixels x 2 bytes = ~192000 bytes
 ```
 
-then the next diagnostic boundary becomes the software-generation transition: current Arduino-ESP32/ESP-IDF, current Arduino_GFX behavior, current memory placement, or an interaction among them.
+If the current stack cannot provide a contiguous internal block of that size, the sketch falls back to PSRAM and prints a warning. That fallback changes one experimental variable and should be recorded in the evidence.
 
-No conclusion should be promoted before physical observation.
+## Interpretation
+
+The physical result is stronger than a simple compile/boot PASS.
+
+The current software generation can reproduce the same standard LVGL Widgets application class on the project custom board profile:
+
+```text
+current board profile
++ current Arduino-ESP32 / ESP-IDF 5.x
++ current Arduino_GFX
++ LVGL 8.3.11
++ project GT911 BSP
++ Arduino_GFX partial-area redraw
+= functional factory-like UI
+```
+
+But the visible redraw limitation remains under dynamic load.
+
+This means Test 17 does **not** support the simple conclusion that moving from native `esp_lcd` to Arduino_GFX partial redraw automatically eliminates the defect.
+
+At the same time, the successful images, widgets and touch path show that the modern stack, board profile, LVGL 8.3.11 and BSP are functionally viable.
+
+The remaining visual issue should be treated as a redraw/display-presentation problem rather than evidence that the UI assets or input system are fundamentally broken.
+
+## Current comparison
+
+```text
+Path                         Rendering                    Physical result
+--------------------------------------------------------------------------------------
+wegi1 historical Widgets     Arduino_GFX partial          PASS / visually good reference
+15 local                     native esp_lcd partial       functional / visible jitter
+16 local                     native esp_lcd minimal       mostly stable / intermittent jitter
+15B local                    Arduino_GFX full-frame       separate comparison path
+17 current Widgets           Arduino_GFX partial          PASS / visible redraw flicker
+```
+
+The exact mechanism behind the perceived black redraw transition is still open.
 
 ## Related evidence
 
 ```text
 docs/third-party/wegi1-esp32-8048S043-4INCH-LCD.md
+evidence/specimens/sample-a/arduino/17-lvgl-arduinogfx-widgets-currentstack-20260829.md
 15_LVGL_EspLcdBasicUI
 16_LVGL_EspLcdMinimalInvalidation
 15B_LVGL_ArduinoGFXFullFrameUI
