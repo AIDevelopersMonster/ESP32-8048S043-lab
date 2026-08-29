@@ -1,6 +1,6 @@
 # Third-party audit: wegi1/ESP32-8048S043-4INCH-LCD
 
-Status: `AUDITED FIRST-PASS / EXTERNAL LVGL WIDGETS TEST CANDIDATE / REFERENCE ONLY`.
+Status: `PHYSICAL PASS / HISTORICAL STACK REPRODUCED / REFERENCE ONLY`.
 
 Upstream:
 
@@ -104,7 +104,25 @@ auto_flush          : true
 
 This independently repeats the 14 MHz + 8/4/8 timing combination previously observed in pixelwave/Sunton-ESP32-8048S043.
 
-## LVGL generation
+## Bundled historical software stack
+
+The repository ships its own Arduino libraries rather than assuming current Library Manager versions.
+
+Observed bundled versions:
+
+```text
+LVGL                     8.3.0-dev
+GFX Library for Arduino  1.2.8
+TAMC_GT911                1.0.2
+```
+
+The first attempt with current Arduino-ESP32 3.3.11 / ESP-IDF 5.x failed because Arduino_GFX 1.2.8 depends on old ESP32-S3 LCD internals, including the historical RGB callback/API and BSD LIST macros.
+
+The physical reproduction therefore used a historical Arduino-ESP32 2.x environment compatible with the bundled 2022-era Arduino_GFX code instead of patching the upstream source.
+
+This is important: the physical PASS below applies to the reconstructed historical stack, not to Arduino-ESP32 3.3.11.
+
+## LVGL configuration
 
 The supplied replacement `lv_conf.h` identifies itself as:
 
@@ -118,13 +136,13 @@ Important configuration values include:
 LV_COLOR_DEPTH            16
 LV_COLOR_16_SWAP          0
 LV_MEM_SIZE               48 KB
-LV_DISP_DEF_REFR_PERIOD   15 ms
 LV_INDEV_DEF_READ_PERIOD  30 ms
 LV_TICK_CUSTOM            1
 LV_TICK_CUSTOM_SYS_TIME_EXPR millis()
+LV_USE_DEMO_WIDGETS       1
 ```
 
-This makes the example directly relevant to our LVGL 8.x branch rather than only as a future LVGL 9 reference.
+The demo declaration was initially missing when a different LVGL configuration was active. Installing the upstream-compatible `lv_conf.h` restored `lv_demo_widgets()` without modifying the sketch.
 
 ## LVGL buffer strategy
 
@@ -173,23 +191,13 @@ For this parallel RGB panel they explicitly keep:
 LV_COLOR_16_SWAP = 0
 ```
 
-This architecture is useful because it gives a third comparison point:
+This architecture gives a useful comparison point:
 
 ```text
 our tests 15/16     : native esp_lcd partial update
 wegi1 Widgets       : Arduino_GFX partial update
 clumsyCoder00       : Arduino_GFX full-frame/direct update
 ```
-
-A physical run of the unmodified wegi1 Widgets demo can therefore help distinguish whether the observed intermittent jitter follows:
-
-```text
-partial update in general;
-native esp_lcd specifically;
-or some other timing/input/display interaction.
-```
-
-This is an experiment, not a proposed fix.
 
 ## GT911 touch configuration
 
@@ -209,13 +217,7 @@ TOUCH_MAP_Y1          272
 TOUCH_MAP_Y2          0
 ```
 
-This is especially useful because it matches the same polling-style choice we considered for other third-party projects:
-
-```text
-INT = -1
-```
-
-and again confirms the observed GT911 raw coordinate domain near:
+This again confirms the useful raw GT911 coordinate domain near:
 
 ```text
 480 x 272
@@ -223,73 +225,142 @@ and again confirms the observed GT911 raw coordinate domain near:
 
 The implementation calls `ts.read()` on every GT911 touch poll and maps the first reported point into the display dimensions.
 
-Its release model is simple:
+Its release model is intentionally simple and is not copied into our BSP.
+
+## Physical reproduction — 2026-08-29
+
+### Operator observation
+
+The upstream LVGL Widgets firmware was flashed to Sample A and worked well visually.
+
+Operator assessment:
 
 ```text
-touch_released() returns true for GT911
+works well;
+visually resembles the familiar factory demo firmware;
+UI is the standard/factory-like LVGL 8 widgets demonstration;
+no immediate reason to modify the historical upstream build itself.
 ```
 
-Do not copy this as our BSP input state model; use it only to reproduce the upstream application behavior.
+The visual similarity to the factory firmware is an observation, not proof that the factory image was built from this exact repository or exact source revision.
 
-## LVGL Widgets demo
+### Serial evidence
 
-The example initializes in this order:
+Observed boot/application log:
 
 ```text
-Serial
-Arduino_GFX display
-backlight
-RED/GREEN/BLUE/BLACK startup screens
-lv_init()
-touch_init()
-LVGL draw buffer
-LVGL display driver
-LVGL GT911 pointer driver
-lv_demo_widgets()
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce3808,len:0x43c
+load:0x403c9700,len:0xbec
+load:0x403cc700,len:0x2a3c
+entry 0x403c98d8
+LVGL Widgets Demo
+E (...) gpio: gpio_set_level(226): GPIO output gpio_num error
+E (...) gpio: gpio_set_level(226): GPIO output gpio_num error
+E (...) gpio: gpio_set_level(226): GPIO output gpio_num error
+Setup done
 ```
 
-Main loop:
+The repeated `gpio_num 226` diagnostics are non-fatal in this physical run: display and UI still initialize and operate correctly. They are recorded as an upstream/historical-stack anomaly and are not being patched in the reference firmware.
 
-```cpp
-lv_timer_handler();
-delay(5);
-```
-
-The UI is the standard LVGL widgets demo rather than a minimal custom button. That makes it a useful real dynamic UI stress test without us modifying the upstream firmware.
-
-## LVGL Benchmark demo
-
-The benchmark uses the same:
+### Physical status
 
 ```text
-RGB pin map
-14 MHz timing
+BOOT             PASS
+DISPLAY          PASS
+LVGL WIDGETS     PASS
+GT911 TOUCH      PASS by operator observation
+VISUAL QUALITY   GOOD
+SERIAL CLEAN     PARTIAL — non-fatal GPIO 226 diagnostics present
+OVERALL          PHYSICAL PASS
+```
+
+## Interpretation
+
+This result changes the comparison in an important way.
+
+A stable, good-looking dynamic LVGL 8 application exists on the same board family using:
+
+```text
+historical Arduino-ESP32 2.x
+LVGL 8.3.0-dev
+Arduino_GFX 1.2.8
+Arduino_GFX partial-area flush
+quarter-screen internal LVGL buffer
+GT911 polling
+14 MHz RGB timing
 8/4/8 porches
-Arduino_GFX partial flush
-quarter-screen internal-RAM LVGL buffer
-5 ms handler loop
 ```
 
-but does not configure real touch input. It calls:
-
-```cpp
-lv_demo_benchmark();
-```
-
-This may be useful later for display-load comparison, but the Widgets demo is the higher-priority physical test because it combines rendering and GT911 input.
-
-## Hardware documentation value
-
-The repository also contains a board specification PDF and schematic material, including:
+Therefore the earlier intermittent visual jitter seen in local native-`esp_lcd` tests cannot be attributed simply to:
 
 ```text
-2-Specification/ESP32-8048S043 Specifications-EN.pdf
-5-Schematic/ESP32-8048S043-1.png
-5-Schematic/ESP32-4827S043-MCU-V1.0.jpg
-5-Schematic/ESP32-S3-WROOM-1 Pin definition.png
+LVGL 8 itself;
+GT911 itself;
+partial invalidation itself;
+800x480 RGB hardware itself.
 ```
 
-These are useful as hardware cross-check references but are not yet treated as proof that every file corresponds exactly to Sample A PCB revision.
+The experiment does not yet identify the exact cause. It narrows the search toward differences in the display transport, synchronization behavior, Arduino-ESP32/ESP-IDF generation, driver implementation, buffering, or an interaction among those factors.
+
+## Boundary of the result
+
+This experiment does **not** prove that:
+
+```text
+Arduino_GFX partial redraw is always jitter-free;
+Arduino_GFX 1.2.8 is preferable for the project;
+Arduino-ESP32 2.x should become our production base;
+the factory firmware is this exact upstream project;
+our current board profile/core will behave the same with this UI.
+```
+
+The historical firmware is now a known-good physical reference, not a proposed production solution.
+
+## Next experiment: port the known-good UI path forward
+
+The useful next step is no longer to tune or repair the historical firmware.
+
+Instead, independently reproduce the same class of test on our current stack:
+
+```text
+our ESP32-8048S043 custom board profile
+current Arduino-ESP32 / ESP-IDF 5.x
+current Arduino_GFX
+current LVGL 8.x
+our validated BSP GT911
+standard LVGL Widgets demo
+Arduino_GFX partial-area flush
+14 MHz / 8/4/8 panel timing retained initially
+```
+
+This creates a controlled modernization step:
+
+```text
+KNOWN GOOD HISTORICAL STACK
+        ->
+SAME UI CLASS + SAME DISPLAY TIMING
+        ->
+CURRENT BOARD PROFILE + CURRENT CORE + CURRENT LIBRARIES + OUR TOUCH BSP
+```
+
+The objective is diagnostic, not corrective: determine whether the good visual behavior survives the software-generation transition.
+
+## Current comparative matrix
+
+```text
+Path                         LVGL         Core/IDF          Rendering                    Touch              Physical
+-----------------------------------------------------------------------------------------------------------------------
+15 local                     8.3.11       current/5.x       esp_lcd partial              BSP GT911          jitter present
+16 local                     8.3.11       current/5.x       esp_lcd minimal partial      BSP GT911          mostly stable, intermittent jitter
+clumsyCoder00 external       9.1.0        historical PIO    Arduino_GFX full-frame       TAMC GT911         PASS
+wegi1 Widgets external       8.3.0-dev    Arduino-ESP32 2.x Arduino_GFX partial          TAMC GT911         PASS
+17 current-stack port        8.x current  current/5.x       Arduino_GFX partial          BSP GT911          pending
+```
 
 ## License boundary
 
@@ -304,48 +375,15 @@ Use the repository as an external physical comparison and documentation referenc
 Independently reimplement any mechanism that proves useful.
 ```
 
-## Recommended physical experiment
+## Hardware documentation value
 
-Do not modify our tests 15 or 16 for this step.
-
-Run the upstream `LvglWidgets` example as an external firmware comparison.
-
-The key question is only:
+The repository also contains board specification and schematic material, including:
 
 ```text
-Does Arduino_GFX partial-area LVGL rendering on this upstream stack show the same intermittent jitter behavior?
+2-Specification/ESP32-8048S043 Specifications-EN.pdf
+5-Schematic/ESP32-8048S043-1.png
+5-Schematic/ESP32-4827S043-MCU-V1.0.jpg
+5-Schematic/ESP32-S3-WROOM-1 Pin definition.png
 ```
 
-Record only broad observations:
-
-```text
-boot success;
-UI renders;
-GT911 works;
-idle stability;
-intermittent jitter present/absent;
-whether jitter can appear on fast taps without appearing on every fast tap.
-```
-
-Do not tune timing, buffers or touch logic during the first run.
-
-## Current comparative matrix
-
-```text
-Path                         LVGL        Rendering                    Touch
---------------------------------------------------------------------------------
-15 local                     8.3.11      esp_lcd partial              BSP GT911
-16 local                     8.3.11      esp_lcd minimal partial      BSP GT911
-clumsyCoder00 external       9.1.0       Arduino_GFX full-frame       TAMC GT911
-wegi1 Widgets external       8.3.x       Arduino_GFX partial           TAMC GT911
-```
-
-The wegi1 experiment is therefore the cleanest next external comparison without trying to fix or optimize anything.
-
-## Next target after physical comparison
-
-The remaining original audit-list target is:
-
-```text
-ffodGit/esp32-8048s043-getting-started-00
-```
+These remain hardware cross-check references and are not treated as proof that every file corresponds exactly to Sample A PCB revision.
