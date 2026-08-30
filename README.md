@@ -252,6 +252,34 @@ RGB B0..B4    8, 3, 46, 9, 1
 
 This map is now **source-backed** with **own RGB display runtime PASS** and **own GT911 touch runtime PASS**. SD and the final BSP still require separate validation.
 
+## Third-party Robot-Core-Display reproduction
+
+`Albert-Benavent-Cabrera/Robot-Core-Display` was reproduced on **Sample A** as an external GPL-3.0 reference implementation. The project uses **LVGL 9.1 + Arduino_GFX + double internal-SRAM LVGL buffers + RGB bounce buffer + GT911** and is the display/HMI side of the Robot-Core cocktail-machine ecosystem.
+
+Physical result:
+
+```text
+Build / link / firmware image : PASS on current stack after a narrow ESP-NOW IDF 5.5 compatibility shim
+Display / touch runtime       : PHYSICAL FUNCTIONAL PASS / SAMPLE A
+Redraw                         : visibly slow, but stable
+Jitter / chatter               : NOT OBSERVED in this physical run
+Online ESP-NOW integration     : NOT YET TESTED
+```
+
+The important observation is that this implementation shows a **slow visible redraw rather than the unstable-looking redraw/jitter seen in some earlier current-stack partial-render experiments**. This makes the SRAM/bounce-buffer architecture a high-priority mechanism for controlled reproduction in the own BSP.
+
+Audit record:
+
+```text
+docs/third-party/albert-benavent-robot-core-display.md
+```
+
+Video demonstration:
+
+```text
+https://youtube.com/shorts/r2-6dwP3yoE
+```
+
 ## Target family
 
 This lab is intended for boards sold under names similar to:
