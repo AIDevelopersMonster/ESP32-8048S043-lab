@@ -1,6 +1,6 @@
 # Third-party audit: Albert-Benavent-Cabrera/Robot-Core-Display
 
-Status: `CURRENT-UPSTREAM BUILDS WITH NARROW IDF5.5 ESP-NOW COMPAT SHIM / EXTERNAL PHYSICAL TEST PENDING / GPL-3.0 REFERENCE`.
+Status: `PHYSICAL FUNCTIONAL PASS / SLOW VISIBLE REDRAW / NO JITTER OBSERVED / ONLINE ESP-NOW PATH NOT YET TESTED / GPL-3.0 REFERENCE`.
 
 Upstream:
 
@@ -95,7 +95,7 @@ LVGL buffers        : double
 LVGL render mode    : PARTIAL
 ```
 
-This differs from several other references that use 14 MHz and 8/4/8. The first physical run must keep the current upstream values unchanged.
+This differs from several other references that use 14 MHz and 8/4/8.
 
 ## Display path
 
@@ -117,59 +117,32 @@ LVGL invalidated area
 -> lv_disp_flush_ready()
 ```
 
-Therefore this experiment is particularly useful against Test 17:
+The ESP-NOW startup path also disables WiFi power saving with `esp_wifi_set_ps(WIFI_PS_NONE)` and comments that this is intended to prevent display flicker.
 
-```text
-Test 17:
-LVGL 8 + current Arduino_GFX + partial redraw
--> visible redraw flicker
-
-Robot-Core-Display:
-LVGL 9 + Arduino_GFX + partial redraw + double SRAM buffers + RGB bounce buffer
--> physical result pending
-```
-
-## Important claim to test physically
+## Important upstream anti-flicker claim
 
 Upstream README describes its display design as anti-flicker stabilization and says the bounce-buffer/SRAM architecture eliminates flickering caused by PSRAM concurrency.
 
-That claim is treated as an upstream claim until reproduced on Sample A.
+Before the physical run this was treated only as an upstream claim. The Sample A run now provides partial supporting evidence: the display is visibly slower to redraw, but the operator did not observe the previous jitter/chatter behavior.
+
+This does **not** isolate bounce buffering as the sole cause because LVGL generation, buffer placement, RGB timings and application workload also differ from Test 17.
 
 ## External reproduction protocol
 
-The project must first be built and flashed essentially unchanged in a private/external folder outside ESP32-8048S043-lab.
+The project was built and flashed from a private/external folder outside ESP32-8048S043-lab.
 
-Do not initially:
-
-```text
-change RGB timing;
-change PCLK;
-change bounce-buffer size;
-change LVGL draw-buffer size;
-replace GT911 code;
-replace board definition;
-port it to our BSP;
-remove application logic merely to simplify the test.
-```
-
-Record:
+The display path was intentionally preserved:
 
 ```text
-build result;
-boot log;
-PSRAM/SRAM messages;
-GFX initialization;
-LVGL initialization;
-GT911 behavior;
-static visual stability;
-page transitions;
-animations/sliders;
-visible black transitions;
-rapid taps;
-WiFi/ESP-NOW activity if present;
-any flicker or jitter;
-operator video and subjective assessment.
+RGB timings unchanged;
+PCLK unchanged;
+bounce-buffer size unchanged;
+LVGL draw-buffer design unchanged;
+GT911 path unchanged;
+UI/application logic unchanged.
 ```
+
+Only compatibility/configuration changes required to build the current upstream against the floated 2026 platform were made.
 
 ## Reproduction build notes — 2026-08-30
 
@@ -205,7 +178,7 @@ The external reproduction therefore created the expected local configuration by 
 TARGET_WIFI_SSID = YOUR_SSID_HERE
 ```
 
-This is a configuration prerequisite, not a display-code modification.
+The physical result therefore does not validate operation against a real target WiFi network/Robot-Core receiver.
 
 ### Current-upstream ESP-NOW compatibility boundary
 
@@ -245,8 +218,6 @@ GNU-stack note warning from libc_tinystdio_fwrite.c.o
 PlatformIO could not show firmware metrics because Windows terminal codepage was not UTF-8/cp65001
 ```
 
-The latter warning does not invalidate the explicit RAM/Flash size output or the generated firmware image.
-
 Build classification:
 
 ```text
@@ -255,33 +226,107 @@ DEPENDENCY RESOLUTION PASS after intermittent network/TLS issue
 SOURCE COMPILE        PASS with narrow ESP-NOW API shim
 LINK                   PASS
 FIRMWARE IMAGE         PASS
-DISPLAY/RUNTIME        NOT YET TESTED
+DISPLAY/RUNTIME        PHYSICAL FUNCTIONAL PASS
+ONLINE ESP-NOW         NOT YET TESTED
 ```
 
-A January 2026 upstream commit explicitly describes restoring `BOUNCE_BUFFER_SIZE` as a flicker fix, so preserving the display code untouched remains important.
+## Physical observation — Sample A
 
-## Physical observation
+Operator assessment after flashing the built firmware:
 
-Pending.
+```text
+works well overall;
+UI is functional;
+redrawing is visibly slow;
+slow redraw is distinguishable from jitter/chatter;
+no display chatter/jitter was observed during this run;
+visual behavior is substantially cleaner than the problematic redraw seen in previous current-stack partial-render tests;
+overall usability assessed as excellent despite the slow redraw.
+```
 
-## Serial evidence
+The important qualitative distinction is:
 
-Pending.
+```text
+previous problematic behavior: unstable-looking flicker/jitter during redraw
+this project:                visibly slow redraw, but stable redraw
+```
+
+No claim is made that redraw is fast or animation quality is production-perfect. The significant result is the absence of the previously observed jitter/chatter failure mode in this physical run.
+
+## Online behavior not yet reproduced
+
+The display repository is the physical-panel/UI side of the wider Robot-Core ecosystem. Upstream describes three primary display screens:
+
+```text
+Drink Selection
+Recipe Configuration
+Pump Configuration
+```
+
+When integrated with the matching Robot-Core drinks-machine side, the intended flow is:
+
+```text
+display scans for TARGET_WIFI_SSID
+-> learns the WiFi channel
+-> switches ESP-NOW radio to that channel
+-> initializes broadcast peer
+-> requests pump/recipe synchronization
+-> receives pump settings and recipe data
+-> updates local DataManager/UI
+-> sends drink orders, pump calibration and recipe updates back by ESP-NOW
+```
+
+The upstream README states that offline operation uses mock cocktail data. A real online integration would therefore be a materially different and useful stress test: it would exercise WiFi scanning and ESP-NOW traffic while the 800x480 RGB panel continues to redraw.
+
+That is especially relevant to the anti-flicker claim because the project deliberately puts LVGL buffers in internal SRAM, uses an RGB bounce buffer, and disables WiFi power saving in the ESP-NOW startup path.
 
 ## Interpretation
 
-The current repository is not a fully pinned reproducible build: its unpinned platform URL allows framework/API drift. As of 2026-08-30 the application itself can be built on the current stack after a narrow ESP-NOW callback compatibility shim outside the display path.
+This is now one of the strongest third-party references in the project.
 
-The successful build removes the compile barrier but does not yet validate the upstream anti-flicker claim. The next evidence threshold is physical execution on Sample A with the original RGB/LVGL/bounce-buffer path unchanged.
+The result changes the working picture from:
+
+```text
+partial redraw on modern stack => necessarily bad
+```
+
+to:
+
+```text
+partial redraw on modern stack can be physically stable,
+provided the surrounding RGB/buffer architecture is different.
+```
+
+Comparison boundary:
+
+```text
+Test 17 current stack
+LVGL 8 + Arduino_GFX partial
+-> functional, visible redraw flicker/black-like transition
+
+Robot-Core-Display current reproduction
+LVGL 9 + Arduino_GFX partial + double SRAM LVGL buffers + RGB bounce buffer
+-> functional, visibly slow redraw, no jitter observed
+```
+
+This does not yet prove which variable is decisive, but it sharply raises the priority of:
+
+```text
+internal SRAM draw buffers;
+RGB bounce buffer;
+WiFi power-save policy;
+LVGL 9 display path;
+RGB timing/presentation synchronization.
+```
+
+The next controlled in-repo experiment should independently reproduce these mechanisms in a minimal UI rather than copy the GPL application.
 
 ## Follow-up modernization rule
 
-Only after the upstream physical result is known should mechanisms be independently reproduced in ESP32-8048S043-lab.
-
-Likely isolated mechanisms, if the physical result is useful:
+The useful mechanisms should be reproduced independently in ESP32-8048S043-lab, likely beginning with:
 
 ```text
-LVGL 9 minimal single-button UI;
+LVGL 9 minimal one-button UI;
 double internal-SRAM draw buffers;
 RGB bounce buffer;
 partial redraw;
@@ -290,7 +335,7 @@ our GT911 BSP;
 controlled A/B against Test 17.
 ```
 
-The goal is to reproduce mechanisms, not copy the third-party application.
+After that, a second run with real WiFi/ESP-NOW activity would test whether the stabilization remains effective under radio/bus contention.
 
 ## License boundary
 
