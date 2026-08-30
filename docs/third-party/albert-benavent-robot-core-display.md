@@ -1,6 +1,6 @@
 # Third-party audit: Albert-Benavent-Cabrera/Robot-Core-Display
 
-Status: `AUDITED FIRST-PASS / EXTERNAL PHYSICAL TEST PENDING / GPL-3.0 REFERENCE`.
+Status: `AUDITED FIRST-PASS / CURRENT-UPSTREAM BUILD NEEDS IDF5.5 ESP-NOW COMPAT SHIM / EXTERNAL PHYSICAL TEST PENDING / GPL-3.0 REFERENCE`.
 
 Upstream:
 
@@ -56,6 +56,15 @@ TAMC_GT911      : ^1.0.2
 ```
 
 Arduino_GFX is present in the project tree rather than declared as a normal `lib_deps` dependency.
+
+The platform URL is not pinned to a commit or release. A clone/build performed on 2026-08-30 resolved that URL to the then-current Jason2866/pioarduino platform generation:
+
+```text
+espressif32     2026.08.50+sha.4f64b35
+Arduino/IDF     current IDF 5.5.x generation
+```
+
+This is newer than the January 2026 application commits and creates a reproducibility boundary: `git clone` of the application does not reconstruct a fixed toolchain.
 
 ## RGB configuration observed in current source
 
@@ -162,6 +171,73 @@ any flicker or jitter;
 operator video and subjective assessment.
 ```
 
+## Reproduction build notes — 2026-08-30
+
+External working clone:
+
+```text
+C:\Users\CHUWI\Documents\GitHub\third-party\Robot-Core-Display
+```
+
+The host PlatformIO environment had first been left in an inconsistent state after interrupted setup/power/network events. It was repaired before judging the upstream application. Confirmed working host state:
+
+```text
+PlatformIO Core  6.1.19
+pioarduino        6.1.19
+Python            3.14.6
+pip               26.2.1
+uv                 0.12.7
+```
+
+There was also an intermittent PyPI TLS `UNEXPECTED_EOF_WHILE_READING` during dependency retrieval. That was treated as host/network evidence, not an application failure.
+
+After dependencies were available, the untouched application reached source compilation.
+
+### Required local secrets file
+
+The repository excludes `display/secrets.h` and ships:
+
+```text
+display/secrets_example.h
+```
+
+The external reproduction therefore created the expected local configuration by copying the template without adding a real SSID:
+
+```text
+TARGET_WIFI_SSID = YOUR_SSID_HERE
+```
+
+This is a configuration prerequisite, not a display-code modification.
+
+### Current-upstream compile boundary
+
+With the current floated Jason2866 platform, compilation proceeds through the UI sources and then stops in:
+
+```text
+display/src/core/ESPNowManager.hpp
+```
+
+The source still declares the legacy send callback form:
+
+```text
+onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
+```
+
+but the resolved ESP-IDF 5.5.x headers require:
+
+```text
+esp_now_send_cb_t
+= void (*)(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
+```
+
+where `esp_now_send_info_t` is based on `wifi_tx_info_t` and provides the destination address through `des_addr`.
+
+This is not an RGB/LVGL failure. It is an ESP-NOW API compatibility failure outside the display path.
+
+For reference, ESP-IDF 5.4.x still used the legacy `const uint8_t *mac_addr` send-callback signature, while ESP-IDF 5.5.x uses the transmit-info structure. The upstream receive callback already contains a modern/legacy compatibility branch, but the send callback does not.
+
+A January 2026 upstream commit explicitly describes restoring `BOUNCE_BUFFER_SIZE` as a flicker fix, so preserving the display code untouched remains important. The next reproduction step is therefore a narrow external-only ESP-NOW callback compatibility shim; RGB timings, bounce buffer, LVGL buffers, UI and touch path remain unchanged.
+
 ## Physical observation
 
 Pending.
@@ -172,11 +248,13 @@ Pending.
 
 ## Interpretation
 
-Pending physical run.
+The current repository is not a fully pinned reproducible build: its unpinned platform URL allows framework/API drift. As of 2026-08-30 the first application-level incompatibility is the ESP-NOW send callback signature, not the display subsystem.
+
+No conclusion about the upstream anti-flicker claim can be made until the narrow compatibility boundary is crossed and the unchanged display architecture is run physically on Sample A.
 
 ## Follow-up modernization rule
 
-Only after the untouched upstream physical result is known should mechanisms be independently reproduced in ESP32-8048S043-lab.
+Only after the upstream physical result is known should mechanisms be independently reproduced in ESP32-8048S043-lab.
 
 Likely isolated mechanisms, if the physical result is useful:
 
