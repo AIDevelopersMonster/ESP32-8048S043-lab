@@ -1,6 +1,6 @@
 # Third-party audit: Albert-Benavent-Cabrera/Robot-Core-Display
 
-Status: `AUDITED FIRST-PASS / CURRENT-UPSTREAM BUILD NEEDS IDF5.5 ESP-NOW COMPAT SHIM / EXTERNAL PHYSICAL TEST PENDING / GPL-3.0 REFERENCE`.
+Status: `CURRENT-UPSTREAM BUILDS WITH NARROW IDF5.5 ESP-NOW COMPAT SHIM / EXTERNAL PHYSICAL TEST PENDING / GPL-3.0 REFERENCE`.
 
 Upstream:
 
@@ -191,8 +191,6 @@ uv                 0.12.7
 
 There was also an intermittent PyPI TLS `UNEXPECTED_EOF_WHILE_READING` during dependency retrieval. That was treated as host/network evidence, not an application failure.
 
-After dependencies were available, the untouched application reached source compilation.
-
 ### Required local secrets file
 
 The repository excludes `display/secrets.h` and ships:
@@ -209,34 +207,58 @@ TARGET_WIFI_SSID = YOUR_SSID_HERE
 
 This is a configuration prerequisite, not a display-code modification.
 
-### Current-upstream compile boundary
+### Current-upstream ESP-NOW compatibility boundary
 
-With the current floated Jason2866 platform, compilation proceeds through the UI sources and then stops in:
-
-```text
-display/src/core/ESPNowManager.hpp
-```
-
-The source still declares the legacy send callback form:
+The current floated ESP-IDF 5.5.x changed the send callback from the legacy form:
 
 ```text
 onDataSent(const uint8_t *mac_addr, esp_now_send_status_t status)
 ```
 
-but the resolved ESP-IDF 5.5.x headers require:
+to:
 
 ```text
-esp_now_send_cb_t
-= void (*)(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
+onDataSent(const esp_now_send_info_t *tx_info, esp_now_send_status_t status)
 ```
 
-where `esp_now_send_info_t` is based on `wifi_tx_info_t` and provides the destination address through `des_addr`.
+where the destination address is available through `tx_info->des_addr`.
 
-This is not an RGB/LVGL failure. It is an ESP-NOW API compatibility failure outside the display path.
+A narrow external-only compatibility shim was applied to `display/src/core/ESPNowManager.hpp`. It conditionally uses the IDF 5.5 callback and preserves the legacy callback for older stacks. No RGB timing, LVGL, buffer, touch or UI code was changed.
 
-For reference, ESP-IDF 5.4.x still used the legacy `const uint8_t *mac_addr` send-callback signature, while ESP-IDF 5.5.x uses the transmit-info structure. The upstream receive callback already contains a modern/legacy compatibility branch, but the send callback does not.
+### Build result
 
-A January 2026 upstream commit explicitly describes restoring `BOUNCE_BUFFER_SIZE` as a flicker fix, so preserving the display code untouched remains important. The next reproduction step is therefore a narrow external-only ESP-NOW callback compatibility shim; RGB timings, bounce buffer, LVGL buffers, UI and touch path remain unchanged.
+After the compatibility shim, the current upstream application builds successfully:
+
+```text
+[SUCCESS] Took 142.75 seconds
+RAM:   11.7%  (38444 / 327680 bytes)
+Flash: 30.4%  (1989539 / 6553600 bytes)
+firmware.bin created successfully
+esptool 5.3.0
+```
+
+Observed linker/tooling warnings were non-fatal:
+
+```text
+LTO wrapper used serial compilation for 12 LTRANS jobs
+GNU-stack note warning from libc_tinystdio_fwrite.c.o
+PlatformIO could not show firmware metrics because Windows terminal codepage was not UTF-8/cp65001
+```
+
+The latter warning does not invalidate the explicit RAM/Flash size output or the generated firmware image.
+
+Build classification:
+
+```text
+HOST ENVIRONMENT      PASS after repair
+DEPENDENCY RESOLUTION PASS after intermittent network/TLS issue
+SOURCE COMPILE        PASS with narrow ESP-NOW API shim
+LINK                   PASS
+FIRMWARE IMAGE         PASS
+DISPLAY/RUNTIME        NOT YET TESTED
+```
+
+A January 2026 upstream commit explicitly describes restoring `BOUNCE_BUFFER_SIZE` as a flicker fix, so preserving the display code untouched remains important.
 
 ## Physical observation
 
@@ -248,9 +270,9 @@ Pending.
 
 ## Interpretation
 
-The current repository is not a fully pinned reproducible build: its unpinned platform URL allows framework/API drift. As of 2026-08-30 the first application-level incompatibility is the ESP-NOW send callback signature, not the display subsystem.
+The current repository is not a fully pinned reproducible build: its unpinned platform URL allows framework/API drift. As of 2026-08-30 the application itself can be built on the current stack after a narrow ESP-NOW callback compatibility shim outside the display path.
 
-No conclusion about the upstream anti-flicker claim can be made until the narrow compatibility boundary is crossed and the unchanged display architecture is run physically on Sample A.
+The successful build removes the compile barrier but does not yet validate the upstream anti-flicker claim. The next evidence threshold is physical execution on Sample A with the original RGB/LVGL/bounce-buffer path unchanged.
 
 ## Follow-up modernization rule
 
