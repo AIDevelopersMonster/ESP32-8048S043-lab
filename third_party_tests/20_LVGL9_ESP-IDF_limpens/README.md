@@ -14,9 +14,35 @@ This test deliberately does **not** copy upstream source files into this reposit
 - Pinned revision: `eb1b8cff63e5a703631ab1638ff76eb7ba7e7a51`
 - Upstream revision date: 2025-11-05
 - Framework described by upstream: ESP-IDF 5.1+
-- Managed components at the pinned revision:
+- Managed components declared at the pinned revision:
   - `espressif/esp_lcd_touch_gt911 >=1.1.0`
   - `lvgl/lvgl ^9.4.0`
+
+## Reproduced dependency resolution — 2026-08-31
+
+On the lab Windows host, with standalone ESP-IDF v5.5.5 and the pinned upstream revision, `idf.py set-target esp32s3` completed configuration successfully and generated a new `dependencies.lock` in the ignored external working copy.
+
+Resolved components:
+
+```text
+idf                         5.5.5
+lvgl/lvgl                   9.5.0
+espressif/esp_lcd_touch     1.2.1
+espressif/esp_lcd_touch_gt911 1.2.1
+```
+
+Observed compiler/toolchain during configure:
+
+```text
+C compiler                  GNU 14.2.0
+CXX compiler                GNU 14.2.0
+Target                      esp32s3
+Python                      3.14.6
+```
+
+Configure status: **PASS**.
+
+The upstream dependency declaration remains unchanged. The resolved versions above describe this specific reproduced test environment and are recorded separately so that the original project is not silently modified.
 
 ## Architecture under test
 
@@ -144,13 +170,15 @@ LVGL 9.1.0
 ### Test 20 — upstream baseline
 
 ```text
-LVGL 9.x
+LVGL 9.5.0 (resolved on 2026-08-31)
 -> PSRAM partial draw buffers
 -> esp_lcd
 -> two full framebuffers in PSRAM
 -> no bounce buffer
 -> PCLK 18 MHz
--> result: pending physical test
+-> configure: PASS
+-> compile: pending
+-> physical result: pending
 ```
 
 The purpose is not to decide which framework is "better" from one run. The purpose is to identify which independent RGB scan-out architectures are physically stable on our specimen and which parameters are genuinely necessary.
