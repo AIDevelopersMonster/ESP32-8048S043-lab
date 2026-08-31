@@ -37,6 +37,7 @@ board-info/
 /third-party-work/
 /third-party-src/
 /third-party-clones/
+/.external-test-work/
 /external/
 /externals/
 /vendor/
