@@ -45,6 +45,33 @@ function Clone-CommitDependency([string]$name, [string]$url, [string]$commit) {
     Write-Host "[PASS] $name -> $rev"
 }
 
+function Disable-EezNestedLvglDependency {
+    $eezDir = Join-Path $libDir "eez-framework"
+    $props = Join-Path $eezDir "library.properties"
+    $json = Join-Path $eezDir "library.json"
+
+    if (Test-Path $props) {
+        $filtered = Get-Content $props | Where-Object { $_ -notmatch '^\s*depends\s*=\s*lvgl' }
+        $filtered | Set-Content -Encoding ASCII $props
+        Write-Host "[PASS] Removed nested LVGL dependency from eez-framework/library.properties"
+    }
+
+    if (Test-Path $json) {
+        $manifest = Get-Content $json -Raw | ConvertFrom-Json
+        if ($manifest.PSObject.Properties.Name -contains "dependencies") {
+            $manifest.PSObject.Properties.Remove("dependencies")
+        }
+        $manifest | ConvertTo-Json -Depth 10 | Set-Content -Encoding ASCII $json
+        Write-Host "[PASS] Removed nested LVGL dependency from eez-framework/library.json"
+    }
+
+    $staleLvgl = Join-Path $projectDir ".pio\libdeps\ESP32S3-8048S043\lvgl"
+    if (Test-Path $staleLvgl) {
+        Remove-Item $staleLvgl -Recurse -Force
+        Write-Host "[PASS] Removed stale auto-downloaded .pio/libdeps LVGL copy"
+    }
+}
+
 Write-Host ""
 Write-Host "=== ESP32-8048S043 Lab / Test 21 dependency layer ==="
 Write-Host "Project : $projectDir"
@@ -58,6 +85,12 @@ Clone-TaggedDependency "TAMC_GT911" "https://github.com/TAMCTec/gt911-arduino.gi
 # eez-framework has kept library.properties version=0.0.1 but has no corresponding Git tag.
 # Pin the last framework commit available before the upstream Test 21 project snapshot date.
 Clone-CommitDependency "eez-framework" "https://github.com/eez-open/eez-framework.git" "0f8e367bfa10e32340514530a77a1098e5e90ce2"
+
+# Upstream eez-framework declares "lvgl >=8.3.0" in both Arduino and PlatformIO manifests.
+# Test 21 already carries the exact upstream-requested LVGL v9.1.0 in lib/lvgl, so disable
+# only the package-manager metadata in this disposable external test copy. No library source
+# code, UI code or display configuration is changed.
+Disable-EezNestedLvglDependency
 
 Write-Host ""
 Write-Host "=== INSTALLED LIBRARY METADATA ==="
