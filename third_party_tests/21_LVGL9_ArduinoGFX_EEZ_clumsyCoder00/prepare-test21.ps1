@@ -69,26 +69,57 @@ $touchHeader | Select-String -Pattern "TOUCH_GT911|TOUCH_MAP_X|TOUCH_MAP_Y|TOUCH
 
 Write-Host ""
 Write-Host "=== PLATFORMIO CLI ==="
-$pio = Get-Command pio -ErrorAction SilentlyContinue
-$platformio = Get-Command platformio -ErrorAction SilentlyContinue
+$pioCmd = Get-Command pio -ErrorAction SilentlyContinue
+$platformioCmd = Get-Command platformio -ErrorAction SilentlyContinue
+$detectedCli = $null
 
-if ($pio) {
-    Write-Host "[PASS] pio found: $($pio.Source)"
-    pio --version
-    Write-Host ""
-    Write-Host "Next commands:"
-    Write-Host "  cd `"$projectDir`""
-    Write-Host "  pio run"
+if ($pioCmd) {
+    $detectedCli = $pioCmd.Source
 }
-elseif ($platformio) {
-    Write-Host "[PASS] platformio found: $($platformio.Source)"
-    platformio --version
-    Write-Host ""
-    Write-Host "Next commands:"
-    Write-Host "  cd `"$projectDir`""
-    Write-Host "  platformio run"
+elseif ($platformioCmd) {
+    $detectedCli = $platformioCmd.Source
 }
 else {
-    Write-Host "[NOTE] PlatformIO CLI is not currently available in PATH."
-    Write-Host "Install or activate PlatformIO before building Test 21."
+    $commonCandidates = @(
+        (Join-Path $env:USERPROFILE ".platformio\penv\Scripts\pio.exe"),
+        (Join-Path $env:USERPROFILE ".platformio\penv\Scripts\platformio.exe")
+    )
+
+    foreach ($candidate in $commonCandidates) {
+        if (Test-Path $candidate) {
+            $detectedCli = $candidate
+            break
+        }
+    }
+
+    if (-not $detectedCli) {
+        $searchRoots = @(
+            (Join-Path $env:USERPROFILE ".platformio"),
+            (Join-Path $env:LOCALAPPDATA "PlatformIO"),
+            (Join-Path $env:LOCALAPPDATA "Programs")
+        ) | Where-Object { Test-Path $_ }
+
+        foreach ($root in $searchRoots) {
+            $found = Get-ChildItem $root -Recurse -File -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -eq "pio.exe" -or $_.Name -eq "platformio.exe" } |
+                Select-Object -First 1 -ExpandProperty FullName
+            if ($found) {
+                $detectedCli = $found
+                break
+            }
+        }
+    }
+}
+
+if ($detectedCli) {
+    Write-Host "[PASS] PlatformIO CLI found: $detectedCli"
+    & $detectedCli --version
+    Write-Host ""
+    Write-Host "Next commands:"
+    Write-Host "  cd `"$projectDir`""
+    Write-Host "  & `"$detectedCli`" run"
+}
+else {
+    Write-Host "[NOTE] PlatformIO CLI was not found in PATH or standard PlatformIO locations."
+    Write-Host "Check/install PlatformIO Core before building Test 21."
 }
