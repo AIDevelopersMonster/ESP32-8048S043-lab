@@ -65,11 +65,24 @@ function Disable-EezNestedLvglDependency {
         Write-Host "[PASS] Removed nested LVGL dependency from eez-framework/library.json"
     }
 
-    $staleLvgl = Join-Path $projectDir ".pio\libdeps\ESP32S3-8048S043\lvgl"
-    if (Test-Path $staleLvgl) {
-        Remove-Item $staleLvgl -Recurse -Force
-        Write-Host "[PASS] Removed stale auto-downloaded .pio/libdeps LVGL copy"
+    $badProps = Select-String -Path $props -Pattern '^\s*depends\s*=.*lvgl' -ErrorAction SilentlyContinue
+    $badJson = Select-String -Path $json -Pattern 'lvgl/lvgl|"dependencies"' -ErrorAction SilentlyContinue
+    if ($badProps -or $badJson) {
+        throw "EEZ nested LVGL dependency is still present after compatibility patch"
     }
+    Write-Host "[PASS] Verified: EEZ manifests no longer request PlatformIO-managed LVGL"
+}
+
+function Reset-PlatformIoBuildState {
+    $pioDir = Join-Path $projectDir ".pio"
+    if (Test-Path $pioDir) {
+        Write-Host "[INFO] Removing cached PlatformIO build/dependency state: $pioDir"
+        Remove-Item $pioDir -Recurse -Force
+    }
+    if (Test-Path $pioDir) {
+        throw "Failed to remove cached .pio directory"
+    }
+    Write-Host "[PASS] PlatformIO .pio state reset"
 }
 
 Write-Host ""
@@ -91,6 +104,7 @@ Clone-CommitDependency "eez-framework" "https://github.com/eez-open/eez-framewor
 # only the package-manager metadata in this disposable external test copy. No library source
 # code, UI code or display configuration is changed.
 Disable-EezNestedLvglDependency
+Reset-PlatformIoBuildState
 
 Write-Host ""
 Write-Host "=== INSTALLED LIBRARY METADATA ==="
@@ -117,6 +131,7 @@ Write-Host ""
 Write-Host "=== PLATFORMIO ==="
 & $pio --version
 Write-Host ""
+Write-Host "Expected before build: no 'Installing lvgl/lvgl @ >=8.3.0' line."
 Write-Host "Next command:"
 Write-Host "  cd `"$projectDir`""
 Write-Host "  & `"$pio`" run"
