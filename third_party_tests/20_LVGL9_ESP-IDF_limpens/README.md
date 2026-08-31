@@ -41,6 +41,17 @@ Python                      3.14.6
 ```
 
 Configure status: **PASS**.
+Build status: **PASS**.
+
+Successful build produced the standard ESP-IDF flash set:
+
+```text
+0x0000  build/bootloader/bootloader.bin
+0x8000  build/partition_table/partition-table.bin
+0x10000 build/lvgl9.bin
+```
+
+Build output reported flash mode `dio`, flash size `16MB`, flash frequency `80m`.
 
 The upstream dependency declaration remains unchanged. The resolved versions above describe this specific reproduced test environment and are recorded separately so that the original project is not silently modified.
 
@@ -177,7 +188,7 @@ LVGL 9.5.0 (resolved on 2026-08-31)
 -> no bounce buffer
 -> PCLK 18 MHz
 -> configure: PASS
--> compile: pending
+-> compile: PASS
 -> physical result: pending
 ```
 
