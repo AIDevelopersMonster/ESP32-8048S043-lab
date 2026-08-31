@@ -9,7 +9,7 @@ Run the upstream project as close to its published configuration as possible and
 ```text
 Test 19: Arduino_GFX + partial LVGL buffers + RGB bounce buffer = PASS
 Test 20: native ESP-IDF esp_lcd + double PSRAM framebuffer + no bounce = PASS
-Test 21: Arduino_GFX + LVGL DIRECT_MODE + full-screen copy every loop = pending
+Test 21: Arduino_GFX + LVGL DIRECT_MODE + full-screen copy every loop = BUILD PASS / PHYSICAL TEST PENDING
 ```
 
 ## Upstream snapshot
@@ -137,21 +137,82 @@ For the first baseline run:
 
 If an environmental compatibility patch is required merely to build on the current toolchain, record it separately before any display-performance change.
 
+## Reproduction compatibility layers
+
+The 2024 upstream source does not build unchanged under the 2026 PlatformIO/Arduino-ESP32 environment. The following environment-only compatibility layers were required. None changes the display, LVGL UI, touch logic or timing code.
+
+### 1. Dependency reconstruction
+
+`install-test21-deps.ps1` installs the published dependency versions into the upstream `lib` directory:
+
+```text
+Arduino_GFX        1.4.7
+LVGL               9.1.0
+TAMC_GT911         1.0.2
+eez-framework      0.0.1-era commit 0f8e367bfa10e32340514530a77a1098e5e90ce2
+```
+
+The local EEZ package-manager metadata is adjusted so PlatformIO does not download a second unconstrained `lvgl >=8.3.0`; the exact local LVGL 9.1.0 copy remains authoritative.
+
+### 2. Historical Arduino-ESP32 environment
+
+The current 2026 `espressif32` platform supplies Arduino-ESP32 3.x and is incompatible with Arduino_GFX 1.4.7's old SPI HAL API. For the 2024 baseline, `apply-test21-2024-platform.ps1` pins:
+
+```text
+PlatformIO platform     espressif32 @ 6.7.0
+Arduino-ESP32           2.0.16
+ESP-IDF                 4.4.7
+```
+
+This corresponds to the toolchain generation available before the upstream snapshot date.
+
+### 3. Windows short-path build
+
+The full lab checkout path is long enough for the LVGL 9.1.0 nested include tree to fail on Windows with a false missing-header error for `src/lv_conf_internal.h`. The file is present. `run-test21-shortpath.ps1` temporarily maps the project to a short drive path using `subst`, builds there, then removes the mapping.
+
+## Build result
+
+Final clean historical-environment build: **PASS**.
+
+```text
+PlatformIO Core           6.1.19
+Platform                  espressif32 @ 6.7.0
+Arduino_GFX               1.4.7
+LVGL                      9.1.0
+eez-framework             0.0.1
+TAMC_GT911                1.0.2
+RAM                       100308 / 327680 bytes = 30.6%
+Flash                     641761 / 6553600 bytes = 9.8%
+firmware.elf              linked successfully
+firmware.bin              generated successfully
+esptool.py                4.5.1
+Result                    SUCCESS
+```
+
+The successful build confirms that the previous failures were reproducibility/toolchain issues, not evidence against the Test 21 display architecture.
+
 ## Prepare the external working copy
 
 From the root of `ESP32-8048S043-lab`:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\prepare-test21.ps1
+powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\install-test21-deps.ps1
+powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\apply-test21-2024-platform.ps1
+powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\run-test21-shortpath.ps1
 ```
 
-The script checks out the pinned upstream revision under:
+The scripts use the pinned upstream working copy under:
 
 ```text
 .external-test-work/21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00/upstream
 ```
 
-and reports whether PlatformIO CLI is available.
+For physical flashing after a successful build:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\run-test21-shortpath.ps1 -Upload
+```
 
 ## Baseline PASS criteria
 
