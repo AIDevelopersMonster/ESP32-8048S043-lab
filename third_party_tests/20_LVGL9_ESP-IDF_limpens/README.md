@@ -25,10 +25,10 @@ On the lab Windows host, with standalone ESP-IDF v5.5.5 and the pinned upstream 
 Resolved components:
 
 ```text
-idf                         5.5.5
-lvgl/lvgl                   9.5.0
-espressif/esp_lcd_touch     1.2.1
-espressif/esp_lcd_touch_gt911 1.2.1
+idf                            5.5.5
+lvgl/lvgl                      9.5.0
+espressif/esp_lcd_touch        1.2.1
+espressif/esp_lcd_touch_gt911  1.2.1
 ```
 
 Observed compiler/toolchain during configure:
@@ -42,6 +42,9 @@ Python                      3.14.6
 
 Configure status: **PASS**.
 Build status: **PASS**.
+Flash/boot status: **PASS**.
+Physical display status: **PASS**.
+Touch status: **PASS**.
 
 Successful build produced the standard ESP-IDF flash set:
 
@@ -58,7 +61,7 @@ The upstream dependency declaration remains unchanged. The resolved versions abo
 ## Architecture under test
 
 ```text
-LVGL 9.x
+LVGL 9.5.0
   -> two partial LVGL draw buffers in PSRAM
   -> esp_lcd_panel_draw_bitmap()
   -> ESP-IDF RGB panel driver
@@ -66,7 +69,7 @@ LVGL 9.x
   -> 800x480 RGB panel
 
 GT911
-  -> esp_lcd_touch_gt911
+  -> esp_lcd_touch_gt911 1.2.1
   -> coordinate mapping
   -> LVGL pointer input
 ```
@@ -92,18 +95,59 @@ The pinned upstream revision uses:
 
 This is intentionally a strong contrast with Test 19, which achieved a physical PASS with Arduino_GFX, 14 MHz PCLK, two 20-line LVGL buffers in internal SRAM and a 20-line RGB bounce buffer.
 
+## Physical result — 2026-08-31
+
+The unchanged upstream baseline was flashed to the lab ESP32-8048S043 specimen and tested physically.
+
+Observed result:
+
+```text
+Display image              PASS
+Visible flicker            none observed
+Horizontal image jumps     none observed
+UI                         stable
+LVGL performance monitor   about 22–25 FPS
+LVGL render time           about 1–2 ms
+Touch                      responsive and correctly oriented
+Touch edge accuracy        approximately 2–3 px from nominal 800x480 limits
+```
+
+The displayed upstream demo included the Espressif logo and operated smoothly during interaction.
+
+Touch mapping is effectively correct across the panel. At the corners the reported coordinates approach the 800x480 output limits within roughly 2–3 pixels, so no immediate calibration correction is required for this baseline.
+
+### Physical verdict
+
+**TEST 20 = PASS.**
+
+The board is physically stable with the upstream native ESP-IDF RGB path at 18 MHz using two full framebuffers in PSRAM and no RGB bounce buffer.
+
+This demonstrates that a bounce buffer is **not an intrinsic requirement of the ESP32-8048S043 panel itself**. The successful Test 19 and Test 20 instead establish at least two distinct stable scan-out architectures on the same specimen:
+
+```text
+Test 19
+LVGL 9.1.0
+-> two 20-line INTERNAL-SRAM partial draw buffers
+-> Arduino_GFX partial flush
+-> RGB bounce buffer = 20 lines
+-> PCLK 14 MHz
+-> PASS
+
+Test 20
+LVGL 9.5.0
+-> PSRAM partial draw buffers
+-> native esp_lcd RGB
+-> two full RGB framebuffers in PSRAM
+-> RGB bounce buffer = 0
+-> PCLK 18 MHz
+-> PASS
+```
+
+The result therefore shifts the investigation away from a simple "panel requires bounce buffering" explanation. Stability depends on the complete driver/buffering/flush architecture. Test 20 also provides a strong native ESP-IDF reference implementation for future comparisons.
+
 ## Controlled-test rule
 
-For the first physical run:
-
-1. Do not change PCLK.
-2. Do not add a bounce buffer.
-3. Do not move upstream framebuffers or LVGL buffers.
-4. Do not substitute our GT911 BSP.
-5. Do not rewrite the UI.
-6. Record the original behaviour first.
-
-Only after an upstream-baseline result is recorded may a `20B` adaptation be created.
+The baseline above was obtained without changing the upstream PCLK, framebuffer policy, bounce-buffer setting, GT911 path or UI. Any later adaptation must be recorded separately as `20B` or later and must not overwrite this baseline result.
 
 ## Prepare upstream working copy
 
@@ -115,56 +159,20 @@ powershell -ExecutionPolicy Bypass -File .\third_party_tests\20_LVGL9_ESP-IDF_li
 
 The script creates a local ignored-style working directory under `.external-test-work/` and checks out the pinned upstream revision.
 
-## Build
+## Build and flash
 
-Activate your ESP-IDF environment first, then:
+Activate the standalone ESP-IDF v5.5.5 environment first, then:
 
 ```powershell
 cd .external-test-work\20_LVGL9_ESP-IDF_limpens\upstream
 idf.py set-target esp32s3
 idf.py build
-```
-
-If build succeeds, connect the board and run:
-
-```powershell
 idf.py flash monitor
 ```
 
 Exit the monitor with `Ctrl+]`.
 
-## Evidence to record
-
-Record all of the following before changing upstream code:
-
-- ESP-IDF version (`idf.py --version`)
-- exact upstream commit
-- managed component versions resolved during build
-- whether build is PASS/FAIL
-- whether flash is PASS/FAIL
-- boot log
-- display image orientation and colors
-- visible flicker/jitter/tearing
-- whether the whole screen periodically shifts
-- touch orientation and mapping
-- touch stability
-- LVGL performance monitor values if visible
-- behaviour while idle for at least several minutes
-
-## PASS criteria
-
-The upstream baseline is a display-path PASS if:
-
-- firmware boots repeatedly;
-- image remains stable;
-- no recurring full-screen flicker is visible;
-- no recurring horizontal image jump is visible;
-- UI continues running without crash/reset;
-- memory/display path remains stable during an idle observation period.
-
-Touch accuracy is recorded separately and does not invalidate a display-path PASS.
-
-## Comparison target
+## Final comparison target
 
 ### Test 19 — physical PASS
 
@@ -178,18 +186,19 @@ LVGL 9.1.0
 -> no periodic LVGL redraw while idle
 ```
 
-### Test 20 — upstream baseline
+### Test 20 — physical PASS
 
 ```text
-LVGL 9.5.0 (resolved on 2026-08-31)
+LVGL 9.5.0
 -> PSRAM partial draw buffers
 -> esp_lcd
 -> two full framebuffers in PSRAM
 -> no bounce buffer
 -> PCLK 18 MHz
--> configure: PASS
--> compile: PASS
--> physical result: pending
+-> about 22–25 FPS
+-> about 1–2 ms LVGL render time
+-> touch edge error about 2–3 px
+-> stable physical output
 ```
 
-The purpose is not to decide which framework is "better" from one run. The purpose is to identify which independent RGB scan-out architectures are physically stable on our specimen and which parameters are genuinely necessary.
+The purpose is not to declare one framework universally better. The important result is that two materially different RGB scan-out architectures are now independently validated on the same physical specimen.
