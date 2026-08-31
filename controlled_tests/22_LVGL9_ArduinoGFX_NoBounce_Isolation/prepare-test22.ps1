@@ -38,27 +38,21 @@ if (Test-Path $outDir) {
 New-Item -ItemType Directory -Force $outDir | Out-Null
 
 # The repository Test 19 file predates the exact physical-PASS corrections used on Sample A.
-# Normalize line endings, reconstruct that verified RGB565 baseline first, then change only
+# Normalize the input, reconstruct that verified RGB565 baseline first, then change only
 # the RGB bounce-buffer setting for Test 22.
 $src = (Get-Content $sourceFile -Raw) -replace "`r`n", "`n"
 $src = $src -replace "`r", "`n"
 
-$oldGuard = @'
-#if LV_VERSION_MAJOR != 9
-#error "Test 19 requires LVGL 9.x. Use Test 18 for the LVGL 8 controlled comparison."
-#endif
-'@
-
-$newGuard = @'
-#ifndef LVGL_VERSION_MAJOR
-#error "LVGL version macros not found. Check which lvgl.h Arduino IDE is actually using."
-#elif LVGL_VERSION_MAJOR != 9
-#error "Test 19 requires LVGL 9.x. Use Test 18 for the LVGL 8 controlled comparison."
-#endif
-'@
-
 $baseline = $src
-$baseline = Replace-Once $baseline $oldGuard $newGuard "LVGL 9 version guard"
+
+# Replace only the preprocessor condition line. This intentionally avoids a multiline
+# literal match so Git autocrlf / Windows CRLF cannot affect the reconstruction.
+$newGuardPrefix = "#ifndef LVGL_VERSION_MAJOR`n#error `"LVGL version macros not found. Check which lvgl.h Arduino IDE is actually using.`"`n#elif LVGL_VERSION_MAJOR != 9"
+$baseline = Replace-Once $baseline `
+    '#if LV_VERSION_MAJOR != 9' `
+    $newGuardPrefix `
+    "LVGL 9 version guard"
+
 $baseline = Replace-Once $baseline `
     'static constexpr size_t LVGL_BUFFER_BYTES = LVGL_BUFFER_PIXELS * sizeof(lv_color_t);' `
     'static constexpr size_t LVGL_BUFFER_BYTES = LVGL_BUFFER_PIXELS * sizeof(uint16_t);' `
@@ -85,12 +79,7 @@ $baseline = Replace-Once $baseline `
     "explicit LVGL RGB565 display format"
 
 $oldDiag = '  Serial.printf("%-28s: %d\n", "LV_COLOR_DEPTH", LV_COLOR_DEPTH);'
-$newDiag = @'
-  Serial.printf("%-28s: %d bytes\n", "sizeof(lv_color_t)",
-                static_cast<int>(sizeof(lv_color_t)));
-  Serial.printf("%-28s: %d\n", "LV_COLOR_DEPTH", LV_COLOR_DEPTH);
-  Serial.printf("%-28s: RGB565 / 2 bytes px\n", "LVGL display format");
-'@
+$newDiag = "  Serial.printf(`"%-28s: %d bytes\n`", `"sizeof(lv_color_t)`",`n                static_cast<int>(sizeof(lv_color_t)));`n  Serial.printf(`"%-28s: %d\n`", `"LV_COLOR_DEPTH`", LV_COLOR_DEPTH);`n  Serial.printf(`"%-28s: RGB565 / 2 bytes px\n`", `"LVGL display format`");"
 $baseline = Replace-Once $baseline $oldDiag $newDiag "physical-PASS LVGL diagnostics"
 
 $baselineRequired = @(
