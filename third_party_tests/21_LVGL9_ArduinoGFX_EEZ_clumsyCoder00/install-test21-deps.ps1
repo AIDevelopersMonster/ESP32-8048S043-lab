@@ -41,7 +41,7 @@ function Clone-CommitDependency([string]$name, [string]$url, [string]$commit) {
     if ($LASTEXITCODE -ne 0) { throw "Fetch failed for $name" }
     git -C $dest checkout --detach FETCH_HEAD | Out-Null
     $rev = (git -C $dest rev-parse HEAD).Trim()
-    if ($rev -ne $commit) { throw "Revision mismatch for $name: expected $commit, got $rev" }
+    if ($rev -ne $commit) { throw "Revision mismatch for ${name}: expected $commit, got $rev" }
     Write-Host "[PASS] $name -> $rev"
 }
 
