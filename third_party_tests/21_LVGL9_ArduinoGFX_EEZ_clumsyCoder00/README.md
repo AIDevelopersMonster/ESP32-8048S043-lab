@@ -9,7 +9,7 @@ Run the upstream project as close to its published configuration as possible and
 ```text
 Test 19: Arduino_GFX + partial LVGL buffers + RGB bounce buffer = PASS
 Test 20: native ESP-IDF esp_lcd + double PSRAM framebuffer + no bounce = PASS
-Test 21: Arduino_GFX + LVGL DIRECT_MODE + full-screen copy every loop = BUILD PASS / PHYSICAL TEST PENDING
+Test 21: Arduino_GFX + LVGL DIRECT_MODE + full-screen copy every loop = PASS
 ```
 
 ## Upstream snapshot
@@ -83,7 +83,7 @@ The upstream source enables:
 
 and disables `RGB_PANEL`.
 
-This is an important architecture to test because LVGL renders into one full 800x480 draw buffer, while the Arduino loop then performs:
+LVGL renders into one full 800x480 draw buffer, while the Arduino loop performs:
 
 ```cpp
 gfx->draw16bitRGBBitmap(0, 0, (uint16_t *)disp_draw_buf, screenWidth, screenHeight);
@@ -121,7 +121,7 @@ raw Y     272 -> 0
 output    scaled to 800 x 480
 ```
 
-This differs from Test 20's `esp_lcd_touch_gt911` path and gives us another independent GT911 implementation to validate.
+This differs from Test 20's `esp_lcd_touch_gt911` path and gives another independent GT911 implementation.
 
 ## Controlled-test rule
 
@@ -133,9 +133,7 @@ For the first baseline run:
 4. Do not remove the full-screen copy from `loop()`.
 5. Do not replace TAMC_GT911 with the lab BSP.
 6. Do not regenerate the EEZ UI.
-7. Record build and physical behavior before making any compatibility patch.
-
-If an environmental compatibility patch is required merely to build on the current toolchain, record it separately before any display-performance change.
+7. Record build and physical behavior before making any display-performance patch.
 
 ## Reproduction compatibility layers
 
@@ -191,7 +189,31 @@ Result                    SUCCESS
 
 The successful build confirms that the previous failures were reproducibility/toolchain issues, not evidence against the Test 21 display architecture.
 
-## Prepare the external working copy
+## Physical result
+
+Physical test on the lab ESP32-8048S043 specimen: **PASS**.
+
+User report after flashing the unmodified display/UI baseline:
+
+```text
+Everything works excellently.
+```
+
+Observed acceptance status:
+
+```text
+EEZ UI                         PASS
+Display output                 PASS
+Periodic full-screen flicker   NOT OBSERVED
+Recurring horizontal jump      NOT OBSERVED
+Crash/reset                    NOT OBSERVED
+Touch                          PASS
+Overall physical result        PASS
+```
+
+No RGB timing, bounce-buffer, DIRECT_MODE, full-screen-copy, touch-driver or EEZ UI changes were required to obtain the physical PASS.
+
+## Reproduction commands
 
 From the root of `ESP32-8048S043-lab`:
 
@@ -202,39 +224,55 @@ powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX
 powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\run-test21-shortpath.ps1
 ```
 
-The scripts use the pinned upstream working copy under:
-
-```text
-.external-test-work/21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00/upstream
-```
-
-For physical flashing after a successful build:
+For flashing:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\third_party_tests\21_LVGL9_ArduinoGFX_EEZ_clumsyCoder00\run-test21-shortpath.ps1 -Upload
 ```
 
-## Baseline PASS criteria
+## Architectural comparison
 
-Display-path PASS requires:
-
-- firmware boots repeatedly;
-- EEZ UI renders correctly;
-- no periodic full-screen flicker;
-- no recurring horizontal image jump;
-- no crash/reset;
-- continuous full-screen copies remain physically stable for several minutes.
-
-Touch is scored separately for orientation and edge accuracy.
-
-## Why this test matters
-
-If Test 21 also runs stably, the same physical specimen will have three independently validated architectures:
+The same physical specimen now has three independently validated display architectures:
 
 ```text
-A. Arduino_GFX + partial/bounce
-B. native esp_lcd + double framebuffer/no bounce
-C. Arduino_GFX + LVGL direct full-frame copy
+Test 19
+LVGL 9.1
+  -> two small 20-line INTERNAL-SRAM partial draw buffers
+  -> Arduino_GFX partial-area flush
+  -> Arduino_GFX RGB bounce buffer, 20 lines
+  -> RGB panel
+
+Test 20
+LVGL 9.5
+  -> two partial draw buffers in PSRAM
+  -> native ESP-IDF esp_lcd_panel_draw_bitmap()
+  -> two full RGB framebuffers in PSRAM
+  -> no bounce buffer
+  -> RGB panel
+
+Test 21
+LVGL 9.1 DIRECT_MODE
+  -> one full 800x480 LVGL draw buffer
+  -> no normal LVGL partial transfer path
+  -> draw16bitRGBBitmap() copies the entire screen through Arduino_GFX every loop
+  -> RGB panel
 ```
 
-That would narrow the old flicker/jump failure even further: it would no longer be attributable simply to Arduino_GFX, PSRAM, LVGL 9, full-frame rendering, or the panel itself in isolation.
+The visual result can look similar, but the memory ownership, flush policy and transfer mechanism are different.
+
+## Main conclusion
+
+Test 21 materially strengthens the isolation result from Tests 19 and 20.
+
+The old periodic horizontal jump/flicker cannot now be attributed simply to any one of the following in isolation:
+
+- Arduino_GFX;
+- PSRAM;
+- LVGL 9;
+- full-screen rendering;
+- continuous full-screen copies;
+- absence of a bounce buffer;
+- presence of a bounce buffer;
+- the RGB panel itself.
+
+In particular, Test 21 proves on this specimen that **continuous full-screen copying through Arduino_GFX can be physically stable**. The earlier failing architecture must therefore depend on a more specific interaction among framebuffer ownership, flush scheduling, synchronization/timing or buffer-management details rather than on full-screen redraw alone.
