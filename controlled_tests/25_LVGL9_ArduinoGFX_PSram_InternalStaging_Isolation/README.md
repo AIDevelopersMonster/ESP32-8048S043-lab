@@ -4,7 +4,7 @@ Controlled follow-up to the Test 23 visual FAIL.
 
 ## Starting point
 
-Test 23 reproduced flicker with:
+Test 23 reproduced visible flicker during touch-driven redraw with:
 
 ```text
 LVGL draw buffers        PSRAM
@@ -24,7 +24,7 @@ RGB bounce buffer        0 -> 20 display lines
 
 ## Test 25 purpose
 
-Determine whether the essential stabilizing factor is specifically the Arduino_GFX RGB bounce implementation, or the more general act of staging PSRAM-backed partial draw data through INTERNAL SRAM before handing it to the display path.
+Determine whether the essential stabilizing factor is specifically the RGB panel bounce implementation, or the more general act of staging PSRAM-backed partial draw data through INTERNAL SRAM before handing it to Arduino_GFX.
 
 ## Controlled delta from Test 23
 
@@ -54,23 +54,48 @@ PSRAM pxMap
   -> draw16bitRGBBitmap()
 ```
 
-The staging buffer is the same maximum size as one LVGL 20-line partial draw buffer.
+## Physical result
+
+**VISUAL FAIL — SAME PRACTICAL FLICKER AS TEST 23.**
+
+Operator correction on the physical ESP32-8048S043 specimen:
+
+```text
+Flicker appears during touch/redraw.
+If there is any difference from Test 23, it is not distinguishable by eye without special preparation or measurement.
+```
+
+Therefore Test 25 must not be classified as a separate jitter/drift failure mode. For engineering purposes its visual behavior is the same as Test 23.
 
 ## Decision matrix
 
 ```text
 Test 22: INTERNAL LVGL buffers + bounce0 + direct draw       -> PASS
-Test 23: PSRAM LVGL buffers    + bounce0 + direct draw       -> FAIL / flicker
+Test 23: PSRAM LVGL buffers    + bounce0 + direct draw       -> FAIL / touch flicker
 Test 24: PSRAM LVGL buffers    + bounce20 + direct draw      -> PASS
-Test 25: PSRAM LVGL buffers    + bounce0 + INTERNAL staging  -> ?
+Test 25: PSRAM LVGL buffers    + bounce0 + INTERNAL staging  -> FAIL / same touch flicker
 ```
 
 ## Interpretation
 
-If Test 25 is visually stable, then the essential factor is not unique to the Arduino_GFX bounce implementation. The stronger engineering conclusion becomes:
+Test 25 rejects the simple hypothesis that the RGB bounce buffer is equivalent to copying each LVGL dirty chunk through INTERNAL SRAM before `draw16bitRGBBitmap()`.
+
+Manual source staging produces no practically observable improvement. Therefore the stabilizing action of the real RGB bounce buffer must occur deeper in the RGB transport/scanout path than the LVGL flush-source pointer alone.
+
+The current evidence supports this working model:
 
 ```text
-PSRAM-backed LVGL partial chunks must cross an INTERNAL-SRAM staging boundary before the Arduino_GFX RGB update path on this specimen/configuration.
+PSRAM-backed LVGL partial updates
++
+RGB scanout without driver-level bounce buffering
+=> visible flicker during touch/redraw on this specimen
 ```
 
-If Test 25 still flickers, then the Arduino_GFX RGB bounce mechanism is doing something more specific than merely copying the dirty chunk through INTERNAL SRAM, and the next experiments should target RGB DMA/scanout synchronization and bounce-buffer timing semantics.
+while:
+
+```text
+driver-level RGB bounce buffering
+=> visual stability restored
+```
+
+The next controlled experiments should target RGB scanout bandwidth/timing rather than additional LVGL source-buffer copies.
