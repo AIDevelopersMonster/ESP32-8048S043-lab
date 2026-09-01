@@ -45,8 +45,28 @@ bounce10 -> PASS / clean
 bounce20 -> PASS / clean
 ```
 
-## Interpretation
+## Driver-level finding
 
-The absence of a visible quality gradient across 5, 10 and 20 lines suggests that, for this exact firmware/board configuration, the important transition may be enabling the driver-level bounce path itself rather than progressively increasing bounce depth.
+Inspection of ESP-IDF 5.5.5 shows that `bounce_buffer_size_px == 0` and `bounce_buffer_size_px > 0` are not merely different buffer sizes. They select different RGB DMA transport paths.
 
-This is not a universal ESP32-S3 or LVGL rule. It is a controlled observation for this exact Arduino_GFX + ESP-IDF RGB + PSRAM + LVGL9.1 partial-render architecture.
+With bounce disabled, GDMA is linked to the framebuffer path directly. With any valid non-zero bounce size, the driver allocates two INTERNAL + DMA-capable bounce buffers, builds a dedicated bounce-buffer DMA link list, pre-fills both buffers, starts GDMA from that bounce link, and refills the next chunk from the framebuffer on DMA EOF events.
+
+Therefore the transition
+
+```text
+bounce = 0 -> bounce > 0
+```
+
+is a qualitative execution-path change. The transitions
+
+```text
+1 -> 5 -> 10 -> 20 lines
+```
+
+only change chunk size inside the already-enabled bounce transport mode.
+
+This explains why the current evidence can show a sharp difference between zero and non-zero bounce without showing a visible gradient between 5, 10 and 20 lines.
+
+## Scope
+
+This remains a controlled observation for this exact Arduino_GFX + ESP-IDF RGB + PSRAM + LVGL9.1 partial-render architecture. It is not a universal rule for all ESP32-S3/LVGL configurations.
