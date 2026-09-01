@@ -57,7 +57,10 @@ $baselineRequired = @(
     'static uint16_t *allocateStrictPsramBuffer(const char *name) {',
     'MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT',
     'if (!esp_ptr_external_ram(ptr))',
-    'reinterpret_cast<uint16_t *>(pxMap)',
+    'static void lvglFlush(lv_display_t *disp, const lv_area_t *area, uint8_t *pxMap) {',
+    'const int32_t h = area->y2 - area->y1 + 1;',
+    'reinterpret_cast<uint16_t *>(pxMap),',
+    'display = lv_display_create(LCD_WIDTH, LCD_HEIGHT);',
     'lv_display_set_color_format(display, LV_COLOR_FORMAT_RGB565);',
     'LV_DISPLAY_RENDER_MODE_PARTIAL'
 )
@@ -73,22 +76,11 @@ $dst = $baseline
 # keep LVGL draw buffers in PSRAM and RGB bounce disabled, but insert exactly one
 # INTERNAL SRAM transfer buffer between the LVGL PSRAM chunk and Arduino_GFX.
 $dst = Replace-Once $dst `
-    "static uint16_t *lvBufB = nullptr;" `
+    'static uint16_t *lvBufB = nullptr;' `
     "static uint16_t *lvBufB = nullptr;`nstatic uint16_t *flushStage = nullptr;" `
     "add INTERNAL flush staging pointer"
 
-$psramAllocatorEnd = @'
-  Serial.printf("[PASS] %s PSRAM: %u bytes at %p\n",
-                name, static_cast<unsigned>(LVGL_BUFFER_BYTES), ptr);
-  return ptr;
-}
-'@
 $stageAllocator = @'
-  Serial.printf("[PASS] %s PSRAM: %u bytes at %p\n",
-                name, static_cast<unsigned>(LVGL_BUFFER_BYTES), ptr);
-  return ptr;
-}
-
 static uint16_t *allocateStrictInternalStageBuffer(const char *name) {
   uint16_t *ptr = static_cast<uint16_t *>(
     heap_caps_malloc(LVGL_BUFFER_BYTES, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT)
@@ -110,29 +102,13 @@ static uint16_t *allocateStrictInternalStageBuffer(const char *name) {
                 name, static_cast<unsigned>(LVGL_BUFFER_BYTES), ptr);
   return ptr;
 }
+
 '@
-$dst = Replace-Once $dst $psramAllocatorEnd $stageAllocator "add strict INTERNAL staging allocator"
+$flushSignature = 'static void lvglFlush(lv_display_t *disp, const lv_area_t *area, uint8_t *pxMap) {'
+$dst = Replace-Once $dst $flushSignature ($stageAllocator + $flushSignature) "insert INTERNAL staging allocator before lvglFlush"
 
-$oldInitBlock = @'
-  lvBufA = allocateStrictPsramBuffer("LVGL buffer A");
-  lvBufB = allocateStrictPsramBuffer("LVGL buffer B");
-
-  if (!lvBufA || !lvBufB) {
-    Serial.println("[STOP] Strict double-buffer PSRAM condition not met");
-    return false;
-  }
-
-  display = lv_display_create(LCD_WIDTH, LCD_HEIGHT);
-'@
-$newInitBlock = @'
-  lvBufA = allocateStrictPsramBuffer("LVGL buffer A");
-  lvBufB = allocateStrictPsramBuffer("LVGL buffer B");
-
-  if (!lvBufA || !lvBufB) {
-    Serial.println("[STOP] Strict double-buffer PSRAM condition not met");
-    return false;
-  }
-
+$displayCreate = '  display = lv_display_create(LCD_WIDTH, LCD_HEIGHT);'
+$stageInit = @'
   flushStage = allocateStrictInternalStageBuffer("LVGL flush stage");
   if (!flushStage) {
     Serial.println("[STOP] Strict INTERNAL flush-staging condition not met");
@@ -141,34 +117,10 @@ $newInitBlock = @'
 
   display = lv_display_create(LCD_WIDTH, LCD_HEIGHT);
 '@
-$dst = Replace-Once $dst $oldInitBlock $newInitBlock "allocate INTERNAL staging during LVGL init"
+$dst = Replace-Once $dst $displayCreate $stageInit "allocate INTERNAL staging before display creation"
 
-$oldFlush = @'
-static void lvglFlush(lv_display_t *disp, const lv_area_t *area, uint8_t *pxMap) {
-  flushCount++;
-
-  if (gfx) {
-    const int32_t w = area->x2 - area->x1 + 1;
-    const int32_t h = area->y2 - area->y1 + 1;
-
-    gfx->draw16bitRGBBitmap(
-      area->x1,
-      area->y1,
-      reinterpret_cast<uint16_t *>(pxMap),
-      w,
-      h
-    );
-  }
-
-  lv_display_flush_ready(disp);
-}
-'@
-$newFlush = @'
-static void lvglFlush(lv_display_t *disp, const lv_area_t *area, uint8_t *pxMap) {
-  flushCount++;
-
-  if (gfx) {
-    const int32_t w = area->x2 - area->x1 + 1;
+$hLine = '    const int32_t h = area->y2 - area->y1 + 1;'
+$stagingLogic = @'
     const int32_t h = area->y2 - area->y1 + 1;
     const size_t pixelCount = static_cast<size_t>(w) * static_cast<size_t>(h);
     const size_t copyBytes = pixelCount * sizeof(uint16_t);
@@ -183,20 +135,13 @@ static void lvglFlush(lv_display_t *disp, const lv_area_t *area, uint8_t *pxMap)
     }
 
     memcpy(flushStage, pxMap, copyBytes);
-
-    gfx->draw16bitRGBBitmap(
-      area->x1,
-      area->y1,
-      flushStage,
-      w,
-      h
-    );
-  }
-
-  lv_display_flush_ready(disp);
-}
 '@
-$dst = Replace-Once $dst $oldFlush $newFlush "stage PSRAM flush chunk through INTERNAL SRAM"
+$dst = Replace-Once $dst $hLine $stagingLogic "insert PSRAM-to-INTERNAL staging copy"
+
+$dst = Replace-Once $dst `
+    '      reinterpret_cast<uint16_t *>(pxMap),' `
+    '      flushStage,' `
+    "route Arduino_GFX source through INTERNAL staging"
 
 # Identification/reporting-only changes.
 $dst = $dst.Replace('23_LVGL9_ArduinoGFX_PSramBuffers_Isolation', '25_LVGL9_ArduinoGFX_PSram_InternalStaging_Isolation')
@@ -204,11 +149,6 @@ $dst = $dst.Replace('23-LVGL9-GFX-PSRAM1-240901A', '25-LVGL9-GFX-PSRAM-STAGE1-24
 $dst = $dst.Replace('ESP32-8048S043 Lab / Test 23', 'ESP32-8048S043 Lab / Test 25')
 $dst = $dst.Replace('double PSRAM buffers + NO RGB bounce buffer', 'double PSRAM buffers + INTERNAL flush staging + NO RGB bounce buffer')
 $dst = $dst.Replace('2x PSRAM + NO bounce buffer', '2x PSRAM + INTERNAL staging + NO bounce buffer')
-
-# Add one diagnostic line without changing runtime behavior.
-$diagAnchor = '  Serial.printf("%-28s: PSRAM required\n", "LVGL buffer policy");'
-$diagReplacement = "  Serial.printf(`"%-28s: PSRAM required\n`", `"LVGL buffer policy`");`n  Serial.printf(`"%-28s: INTERNAL SRAM / %lu bytes\n`", `"Flush staging`",`n                static_cast<unsigned long>(LVGL_BUFFER_BYTES));"
-$dst = Replace-Once $dst $diagAnchor $diagReplacement "flush staging diagnostic"
 
 $test25Required = @(
     '25-LVGL9-GFX-PSRAM-STAGE1-240901A',
@@ -220,6 +160,7 @@ $test25Required = @(
     'MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT',
     'if (!esp_ptr_internal(ptr))',
     'flushStage = allocateStrictInternalStageBuffer("LVGL flush stage");',
+    'const size_t copyBytes = pixelCount * sizeof(uint16_t);',
     'memcpy(flushStage, pxMap, copyBytes);',
     'gfx->draw16bitRGBBitmap(',
     '      flushStage,',
