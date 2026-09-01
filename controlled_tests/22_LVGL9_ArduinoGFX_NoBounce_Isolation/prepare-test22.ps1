@@ -5,7 +5,7 @@ $repoRoot = Resolve-Path (Join-Path $scriptDir "..\..")
 $sourceDir = Join-Path $repoRoot "libraries\ESP32_8048S043\examples\19_LVGL9_ArduinoGFX_BounceBufferUI"
 $sourceFile = Join-Path $sourceDir "19_LVGL9_ArduinoGFX_BounceBufferUI.ino"
 $outDir = Join-Path $repoRoot ".controlled-test-work\22_LVGL9_ArduinoGFX_NoBounce_Isolation"
-$baselineFile = Join-Path $outDir "19_LVGL9_ArduinoGFX_BounceBufferUI_PHYSICAL_PASS_RECONSTRUCTED.ino"
+$baselineFile = Join-Path $outDir "19_LVGL9_ArduinoGFX_BounceBufferUI_PHYSICAL_PASS_RECONSTRUCTED.txt"
 $outFile = Join-Path $outDir "22_LVGL9_ArduinoGFX_NoBounce_Isolation.ino"
 
 function Replace-Once([string]$text, [string]$old, [string]$new, [string]$label) {
@@ -104,6 +104,8 @@ if ($baseline.Contains('LVGL_BUFFER_PIXELS * sizeof(lv_color_t)')) {
     throw "Stale sizeof(lv_color_t) draw-buffer sizing remains in reconstructed Test 19 baseline"
 }
 
+# Keep the reconstructed reference for audit, but deliberately NOT as .ino.
+# Arduino concatenates every .ino in a sketch folder, which would create duplicate symbols.
 Set-Content -Path $baselineFile -Value $baseline -Encoding UTF8
 
 # Test 22 controlled runtime mutation: disable RGB bounce buffering and nothing else
@@ -146,6 +148,12 @@ if ($dst.Contains('LVGL_BUFFER_PIXELS * sizeof(lv_color_t)')) {
 
 Set-Content -Path $outFile -Value $dst -Encoding UTF8
 
+# Arduino sketch hygiene: exactly one .ino is allowed in this generated directory.
+$inoFiles = @(Get-ChildItem -Path $outDir -Filter *.ino -File)
+if ($inoFiles.Count -ne 1 -or $inoFiles[0].FullName -ne $outFile) {
+    throw "Generated sketch directory must contain exactly one .ino: $outFile"
+}
+
 Write-Host ""
 Write-Host "=== ESP32-8048S043 Lab / Test 22 ==="
 Write-Host "Repository source : $sourceFile"
@@ -161,6 +169,9 @@ Write-Host "       INTERNAL SRAM required"
 Write-Host ""
 Write-Host "[PASS] Test22 only runtime delta:"
 Write-Host "       RGB bounce 20 lines -> 0"
+Write-Host ""
+Write-Host "[PASS] Arduino sketch hygiene:"
+Write-Host "       exactly one .ino in generated directory"
 Write-Host ""
 Write-Host "Retained controls:"
 Write-Host "       PARTIAL render mode"
