@@ -2,7 +2,9 @@
 
 ## Status
 
-**THIRD-PARTY CANDIDATE / PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL VERDICT PENDING**
+
+Build PASS was obtained on 2026-09-03 using the pinned ffodGit application source and a historical PlatformIO Espressif32 6.8.1 environment reconstruction. Physical display/touch verdict is still pending.
 
 This test studies a third independent display architecture for the ESP32-8048S043 family.
 
@@ -130,7 +132,7 @@ lv_disp_flush_ready(disp);
 
 ## PlatformIO environment
 
-Upstream `platformio.ini`:
+Upstream `platformio.ini` originally contains:
 
 ```text
 framework = arduino
@@ -139,16 +141,38 @@ BOARD_HAS_PSRAM
 memory_type = qio_opi
 flash = 16 MB
 flash clock = 80 MHz
+platform = espressif32
 LovyanGFX ^1.1.16
 ```
 
-Important reproducibility limitation:
+The unpinned `platform = espressif32` is a reproducibility gap. On 2026-09-02 it resolved to a modern pioarduino 2026.8.50 environment that failed before application compilation. The Test 30 harness therefore applies a temporary build-environment overlay only; application, display, touch and UI source remain exact upstream.
+
+Historical reconstruction used for the successful build:
 
 ```text
-platform = espressif32
+PlatformIO Core              6.1.19
+Platform Espressif32         6.8.1+sha.3f33cce
+Platform commit              3f33ccea90eb316581cdb7524d6a78c1335b9731
+Arduino-ESP32 package        3.20017.241212+sha.dcc1105b
+Arduino-ESP32 core line      2.0.17
+ESP-IDF core line            4.4.7
+LovyanGFX                    1.1.16
+LVGL                         upstream vendored 9.1.1-dev
+Xtensa ESP32-S3 toolchain    8.4.0+2021r2-patch5
+esptoolpy                    1.40501.0
 ```
 
-is not pinned to an exact platform version. Therefore the exact original Arduino-ESP32/ESP-IDF version is not fully reproducible from the repository alone.
+Note: the PlatformIO platform itself is pinned to the historical 6.8.1 commit. The framework package resolver currently supplied a later package revision within the required `~3.20017.0` line (`3.20017.241212+sha.dcc1105b`). This preserves the Arduino-ESP32 2.0.17 core line but is recorded explicitly rather than described as byte-for-byte archival reconstruction.
+
+### Build verdict
+
+```text
+2026-09-03
+BUILD: PASS
+Tracked upstream source restored after build: PASS
+LovyanGFX resolved exactly to 1.1.16: PASS
+Physical board test: PENDING
+```
 
 ## Comparison with our known-good paths
 
