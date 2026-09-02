@@ -20,6 +20,15 @@ $platformSpec = "https://github.com/platformio/platform-espressif32.git#$platfor
 $lovyanVersion = "1.1.16"
 $envStamp = "platformio-espressif32=$platformCommit`nlovyangfx=$lovyanVersion`n"
 $envStampPath = Join-Path $workRoot "HISTORICAL_ENV.txt"
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+function Write-Utf8NoBom {
+    param(
+        [string]$Path,
+        [string]$Text
+    )
+    [System.IO.File]::WriteAllText($Path, $Text, $utf8NoBom)
+}
 
 if (-not (Test-Path $upstreamDir)) {
     & powershell -ExecutionPolicy Bypass -File $prep
@@ -75,7 +84,25 @@ if (-not $pioExe) {
 Write-Host "[PASS] PlatformIO CLI: $pioExe"
 
 $platformioIni = Join-Path $upstreamDir "platformio.ini"
-$originalIni = Get-Content $platformioIni -Raw
+
+# The previous script revision could leave platformio.ini with a UTF-8 BOM on
+# Windows PowerShell 5.1. This is a disposable pinned upstream checkout, so
+# restore the tracked file from HEAD before constructing the temporary overlay.
+Push-Location $upstreamDir
+try {
+    $head = (git rev-parse HEAD).Trim()
+    if ($head -ne "18b6d4de509abb61feb0084c1583d41497836cfd") {
+        throw "Unexpected upstream HEAD: $head"
+    }
+
+    git checkout -- platformio.ini
+    if ($LASTEXITCODE -ne 0) { throw "Could not restore pristine upstream platformio.ini" }
+}
+finally {
+    Pop-Location
+}
+
+$originalIni = [System.IO.File]::ReadAllText($platformioIni)
 
 if (-not $originalIni.Contains("platform = espressif32")) {
     throw "Expected unpinned upstream platform declaration not found. Refusing to alter unknown project state."
@@ -103,16 +130,24 @@ if (Test-Path $envStampPath) {
 if ($needClean) {
     $pioBuildDir = Join-Path $upstreamDir ".pio"
     if (Test-Path $pioBuildDir) {
-        Write-Host "Removing previous .pio state produced by the unpinned 2026 environment..."
+        Write-Host "Removing previous .pio state produced by a different environment..."
         Remove-Item $pioBuildDir -Recurse -Force
     }
-    Set-Content -Path $envStampPath -Value $envStamp -Encoding ASCII -NoNewline
+    [System.IO.File]::WriteAllText($envStampPath, $envStamp, [System.Text.Encoding]::ASCII)
 }
 
 Push-Location $upstreamDir
 try {
     # Temporary build-environment overlay only. Application/display/touch/UI source remains exact upstream.
-    Set-Content -Path $platformioIni -Value $pinnedIni -Encoding UTF8 -NoNewline
+    # IMPORTANT: PlatformIO 6.1.x rejects an INI whose first byte is a UTF-8 BOM,
+    # so use .NET UTF8Encoding(false), not PowerShell 5.1 Set-Content -Encoding UTF8.
+    Write-Utf8NoBom -Path $platformioIni -Text $pinnedIni
+
+    $firstBytes = [System.IO.File]::ReadAllBytes($platformioIni)
+    if ($firstBytes.Length -ge 3 -and $firstBytes[0] -eq 0xEF -and $firstBytes[1] -eq 0xBB -and $firstBytes[2] -eq 0xBF) {
+        throw "Internal error: temporary platformio.ini still contains UTF-8 BOM"
+    }
+    Write-Host "[PASS] Temporary platformio.ini written as UTF-8 without BOM"
 
     Write-Host ""
     Write-Host "=== Test 30 historical upstream build ==="
@@ -160,12 +195,17 @@ try {
     }
 }
 finally {
-    # Restore the exact upstream platformio.ini so the checked-out specimen remains pristine.
-    Set-Content -Path $platformioIni -Value $originalIni -Encoding UTF8 -NoNewline
+    # Restore the exact upstream file byte-for-byte from git instead of rewriting
+    # it through PowerShell, which could change encoding/BOM/newline details.
     Pop-Location
 
     Push-Location $upstreamDir
     try {
+        git checkout -- platformio.ini
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "Could not restore platformio.ini from pinned upstream HEAD"
+        }
+
         $trackedChanges = @(git status --porcelain --untracked-files=no)
         if ($trackedChanges.Count -eq 0) {
             Write-Host "[PASS] Exact tracked upstream source restored after build"
