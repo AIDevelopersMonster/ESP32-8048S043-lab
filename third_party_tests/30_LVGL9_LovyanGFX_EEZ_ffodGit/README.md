@@ -2,9 +2,15 @@
 
 ## Status
 
-**BUILD PASS / PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL PASS / CLOSED**
 
-Build PASS was obtained on 2026-09-03 using the pinned ffodGit application source and a historical PlatformIO Espressif32 6.8.1 environment reconstruction. Physical display/touch verdict is still pending.
+Build PASS was obtained on 2026-09-03 using the pinned ffodGit application source and a historical PlatformIO Espressif32 6.8.1 environment reconstruction.
+
+Physical board verdict from the user on 2026-09-03:
+
+> Прошивка работает отлично.
+
+No visible display instability, touch failure, reset or other functional defect was reported during the physical run. Test 30 is therefore frozen as a known-good third-party reference architecture.
 
 This test studies a third independent display architecture for the ESP32-8048S043 family.
 
@@ -164,60 +170,64 @@ esptoolpy                    1.40501.0
 
 Note: the PlatformIO platform itself is pinned to the historical 6.8.1 commit. The framework package resolver currently supplied a later package revision within the required `~3.20017.0` line (`3.20017.241212+sha.dcc1105b`). This preserves the Arduino-ESP32 2.0.17 core line but is recorded explicitly rather than described as byte-for-byte archival reconstruction.
 
-### Build verdict
+## Final verdict
 
 ```text
 2026-09-03
-BUILD: PASS
-Tracked upstream source restored after build: PASS
-LovyanGFX resolved exactly to 1.1.16: PASS
-Physical board test: PENDING
+BUILD:                         PASS
+PHYSICAL BOARD:                PASS
+Image/UI operation:            PASS
+Visible display instability:   NOT REPORTED / overall clean verdict
+Touch failure:                 NOT REPORTED / overall clean verdict
+Reset/crash:                   NOT REPORTED / overall clean verdict
+Tracked upstream restored:     PASS
+LovyanGFX resolved:             1.1.16
+Test state:                     CLOSED / KNOWN-GOOD
 ```
 
-## Comparison with our known-good paths
+Physical verdict wording is intentionally conservative: the user reported that the firmware "works excellently" as an overall result, but did not separately enumerate every checklist item in this run.
+
+## Comparison with known-good paths
 
 ```text
 Test 19/24:
 LVGL9 -> Arduino_GFX PARTIAL -> esp_lcd RGB -> bounce transport
+PASS
 
 Test 20:
 LVGL9.5 -> native esp_lcd PARTIAL -> PSRAM framebuffers
+PASS
 
 Test 21:
 LVGL9.1 -> Arduino_GFX DIRECT/full-screen continuous copy
+PASS
 
 Test 30:
 LVGL9.1.1-dev -> LovyanGFX PARTIAL -> LovyanGFX RGB bus
+PASS
 ```
 
-If Test 30 is physically clean, it will establish a third independent stable architecture on the same panel family.
+Test 30 therefore establishes a third independent stable application-level RGB architecture on this board family.
 
-## Physical questions
+## Engineering conclusion
 
-Record separately:
+The old flicker/jump failures cannot be attributed generically to any of the following:
 
-```text
-Boot                         : PASS / FAIL
-Image                        : visible / absent
-Periodic flicker             : observed / not observed
-Horizontal jump              : observed / not observed
-Touch                        : works / fails
-Touch coordinate mapping     : correct / incorrect
-Screen transitions           : clean / unstable
-Widget interaction           : clean / unstable
-Reset / crash                : observed / not observed
-```
+- LVGL 9;
+- Arduino framework use;
+- partial rendering;
+- rich interactive UI activity;
+- the RGB panel itself;
+- GT911 touch activity;
+- or PSRAM availability on the board.
 
-## Next engineering step after physical test
+The accumulated evidence continues to point to the exact display-memory/scanout transport topology as the decisive variable. In the previously isolated Arduino_GFX partial-render path, PSRAM LVGL draw buffers combined with driver RGB bounce disabled produced visible redraw flicker, while enabling any tested non-zero driver bounce depth restored stability. LovyanGFX now provides an independent stable transport for comparison.
 
-If physically stable:
+## Next engineering step
 
-1. freeze upstream behavior;
-2. inspect LovyanGFX `Bus_RGB` / `Panel_RGB` internals;
-3. identify framebuffer memory and DMA staging policy;
-4. compare it directly with Arduino_GFX `bounce=0` and `bounce>0` paths;
-5. decide whether LovyanGFX deserves a production BSP option or is best retained as reference architecture.
+Do not modify Test 30. Keep it frozen as a reference.
 
-If unstable:
+Next useful work is either:
 
-keep the result as evidence and do not immediately modify the upstream architecture; first identify the failing transport/memory characteristic.
+1. inspect LovyanGFX `Bus_RGB` / `Panel_RGB` internals to identify framebuffer placement, DMA descriptors, cache handling and any internal staging/bounce mechanism; or
+2. run another architecturally different third-party implementation, preferably the native ESP-IDF `duck4i/esp32_8048S043-ST7262_GT911` path (one PSRAM framebuffer, LVGL partial INTERNAL draw buffer, no explicit bounce) as the next physical reference test.
