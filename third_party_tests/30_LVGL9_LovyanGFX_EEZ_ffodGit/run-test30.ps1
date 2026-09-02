@@ -12,6 +12,15 @@ $workRoot = Join-Path $repoRoot ".third-party-work\30_LVGL9_LovyanGFX_EEZ_ffodGi
 $upstreamDir = Join-Path $workRoot "upstream"
 $prep = Join-Path $scriptDir "prepare-test30.ps1"
 
+# Historical environment reconstruction for upstream commit 2024-09-22.
+# PlatformIO Espressif32 6.8.1 was the latest official release before 6.9.0
+# (6.9.0 was released 2024-09-26). 6.8.1 uses Arduino-ESP32 2.0.17 / IDF 4.4.7.
+$platformCommit = "3f33ccea90eb316581cdb7524d6a78c1335b9731"
+$platformSpec = "https://github.com/platformio/platform-espressif32.git#$platformCommit"
+$lovyanVersion = "1.1.16"
+$envStamp = "platformio-espressif32=$platformCommit`nlovyangfx=$lovyanVersion`n"
+$envStampPath = Join-Path $workRoot "HISTORICAL_ENV.txt"
+
 if (-not (Test-Path $upstreamDir)) {
     & powershell -ExecutionPolicy Bypass -File $prep
     if ($LASTEXITCODE -ne 0) { throw "prepare-test30.ps1 failed" }
@@ -37,6 +46,8 @@ function Resolve-PlatformIO {
     $candidates = @(
         (Join-Path $env:USERPROFILE ".platformio\penv\Scripts\platformio.exe"),
         (Join-Path $env:USERPROFILE ".platformio\penv\Scripts\pio.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python314\Scripts\platformio.exe"),
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python313\Scripts\platformio.exe"),
         (Join-Path $env:LOCALAPPDATA "Programs\Python\Python312\Scripts\platformio.exe"),
         (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\Scripts\platformio.exe"),
         (Join-Path $env:LOCALAPPDATA "Programs\Python\Python310\Scripts\platformio.exe")
@@ -58,35 +69,74 @@ if (-not $pioExe) {
     Write-Host "  $env:USERPROFILE\.platformio\penv\Scripts\platformio.exe"
     Write-Host "  $env:USERPROFILE\.platformio\penv\Scripts\pio.exe"
     Write-Host ""
-    Write-Host "If VS Code PlatformIO is installed, open a PlatformIO terminal once, or locate the executable with:"
-    Write-Host '  Get-ChildItem "$env:USERPROFILE\.platformio" -Filter platformio.exe -Recurse -ErrorAction SilentlyContinue'
-    Write-Host ""
-    Write-Host "Then pass it explicitly, for example:"
-    Write-Host '  .\third_party_tests\30_LVGL9_LovyanGFX_EEZ_ffodGit\run-test30.ps1 -PlatformIOPath "$env:USERPROFILE\.platformio\penv\Scripts\platformio.exe"'
     throw "PlatformIO CLI not found."
 }
 
 Write-Host "[PASS] PlatformIO CLI: $pioExe"
 
+$platformioIni = Join-Path $upstreamDir "platformio.ini"
+$originalIni = Get-Content $platformioIni -Raw
+
+if (-not $originalIni.Contains("platform = espressif32")) {
+    throw "Expected unpinned upstream platform declaration not found. Refusing to alter unknown project state."
+}
+if (-not $originalIni.Contains("lovyan03/LovyanGFX@^1.1.16")) {
+    throw "Expected upstream LovyanGFX dependency declaration not found. Refusing to alter unknown project state."
+}
+
+$pinnedIni = $originalIni.Replace(
+    "platform = espressif32",
+    "platform = $platformSpec"
+).Replace(
+    "lovyan03/LovyanGFX@^1.1.16",
+    "lovyan03/LovyanGFX@$lovyanVersion"
+)
+
+$needClean = $true
+if (Test-Path $envStampPath) {
+    $oldStamp = Get-Content $envStampPath -Raw
+    if ($oldStamp -eq $envStamp) {
+        $needClean = $false
+    }
+}
+
+if ($needClean) {
+    $pioBuildDir = Join-Path $upstreamDir ".pio"
+    if (Test-Path $pioBuildDir) {
+        Write-Host "Removing previous .pio state produced by the unpinned 2026 environment..."
+        Remove-Item $pioBuildDir -Recurse -Force
+    }
+    Set-Content -Path $envStampPath -Value $envStamp -Encoding ASCII -NoNewline
+}
+
 Push-Location $upstreamDir
 try {
+    # Temporary build-environment overlay only. Application/display/touch/UI source remains exact upstream.
+    Set-Content -Path $platformioIni -Value $pinnedIni -Encoding UTF8 -NoNewline
+
     Write-Host ""
-    Write-Host "=== Test 30 upstream build ==="
-    Write-Host "Project : $upstreamDir"
-    Write-Host "Source  : exact pinned ffodGit upstream"
+    Write-Host "=== Test 30 historical upstream build ==="
+    Write-Host "Project          : $upstreamDir"
+    Write-Host "Application code : exact ffodGit commit 18b6d4de509abb61feb0084c1583d41497836cfd"
+    Write-Host "Platform         : official PlatformIO Espressif32 6.8.1"
+    Write-Host "Platform commit  : $platformCommit"
+    Write-Host "Arduino-ESP32    : 2.0.17"
+    Write-Host "ESP-IDF          : 4.4.7"
+    Write-Host "LovyanGFX        : $lovyanVersion"
+    Write-Host "LVGL             : upstream vendored 9.1.1-dev"
     Write-Host ""
 
     & $pioExe --version
     if ($LASTEXITCODE -ne 0) { throw "PlatformIO CLI failed to start" }
 
     & $pioExe run -e esp32-s3-devkitm-1
-    if ($LASTEXITCODE -ne 0) { throw "PlatformIO build failed" }
+    if ($LASTEXITCODE -ne 0) { throw "PlatformIO historical build failed" }
 
     Write-Host ""
-    Write-Host "=== PlatformIO resolved environment ==="
-    & $pioExe platform show espressif32
+    Write-Host "=== Project package inventory ==="
+    & $pioExe pkg list
     if ($LASTEXITCODE -ne 0) {
-        Write-Warning "Could not print resolved platform details; build itself succeeded."
+        Write-Warning "Could not print package inventory; build itself succeeded."
     }
 
     if ($Upload) {
@@ -110,5 +160,22 @@ try {
     }
 }
 finally {
+    # Restore the exact upstream platformio.ini so the checked-out specimen remains pristine.
+    Set-Content -Path $platformioIni -Value $originalIni -Encoding UTF8 -NoNewline
     Pop-Location
+
+    Push-Location $upstreamDir
+    try {
+        $trackedChanges = @(git status --porcelain --untracked-files=no)
+        if ($trackedChanges.Count -eq 0) {
+            Write-Host "[PASS] Exact tracked upstream source restored after build"
+        }
+        else {
+            Write-Warning "Tracked upstream files differ after build. Inspect before using result:"
+            $trackedChanges | ForEach-Object { Write-Warning $_ }
+        }
+    }
+    finally {
+        Pop-Location
+    }
 }
