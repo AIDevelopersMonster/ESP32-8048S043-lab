@@ -16,7 +16,10 @@ $overlayStamp = Join-Path $workRoot "HISTORICAL_ENV.txt"
 
 $upstreamCommit = "bb056490f0738911618f60f98e164f36dde0f84d"
 $platformSpec = "https://github.com/pioarduino/platform-espressif32/releases/download/53.03.11/platform-espressif32.zip"
-$lvglVersion = "9.1.0"
+# Upstream declares ^9.1.0, but its checked-in lv_conf.h explicitly says it is
+# the configuration file for LVGL v9.2.2. v9.2.2 existed before the upstream
+# 2025-01-23 commit, so 9.2.2 is the source-consistent historical pin.
+$lvglVersion = "9.2.2"
 $gfxVersion = "1.5.2"
 $timeVersion = "1.6.1"
 $eezCommit = "5bb6c8692d440e599469d5c52b6c3f2094dbf910"
@@ -71,6 +74,13 @@ if (-not $original.Contains("platform = https://github.com/pioarduino/platform-e
 if (-not $original.Contains("lvgl/lvgl@^9.1.0")) { throw "Unexpected upstream LVGL dependency" }
 if (-not $original.Contains("moononournation/GFX Library for Arduino@^1.5.2")) { throw "Unexpected upstream Arduino_GFX dependency" }
 
+$lvConf = Join-Path $upstreamDir "include\lv_conf.h"
+if (-not (Test-Path $lvConf)) { throw "Upstream lv_conf.h not found" }
+$lvConfText = [System.IO.File]::ReadAllText($lvConf)
+if (-not $lvConfText.Contains("Configuration file for v9.2.2")) {
+    throw "Unexpected upstream lv_conf.h version marker"
+}
+
 $overlay = $original
 $overlay = $overlay.Replace(
     "platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip",
@@ -101,6 +111,7 @@ platform-espressif32: 53.03.11
 Arduino core:          3.1.1
 ESP-IDF line:          5.3.2.241224
 LVGL:                  $lvglVersion
+LVGL pin rationale:    checked-in lv_conf.h explicitly targets v9.2.2
 Arduino_GFX:           $gfxVersion
 Time:                   $timeVersion
 EEZ framework:          $eezCommit
@@ -108,6 +119,7 @@ GT911 Arduino:          $gt911Commit
 
 Source display/touch/UI code is not modified.
 platformio.ini is restored after the command finishes.
+.pio is a disposable build directory and is removed before source-cleanliness verification.
 "@
 [System.IO.File]::WriteAllText($overlayStamp, $envText, $utf8NoBom)
 
@@ -123,7 +135,7 @@ try {
     Write-Host "=== Test 32 historical build ==="
     Write-Host "Upstream commit : $upstreamCommit"
     Write-Host "Platform         : pioarduino 53.03.11 / Arduino 3.1.1 / IDF 5.3.2 line"
-    Write-Host "LVGL             : $lvglVersion"
+    Write-Host "LVGL             : $lvglVersion (matches upstream lv_conf.h)"
     Write-Host "Arduino_GFX      : $gfxVersion"
     Write-Host "Architecture     : Arduino_GFX RGB / EEZ / LVGL PARTIAL / PCLK15 / pclk edge 0"
     Write-Host ""
@@ -153,13 +165,21 @@ try {
 }
 finally {
     Pop-Location
+
+    # Restore the only tracked file temporarily overlaid by the harness.
     & git -C $upstreamDir checkout -- platformio.ini
 
-    $status = (& git -C $upstreamDir status --porcelain | Out-String).Trim()
+    # PlatformIO generates .pio/ inside the upstream worktree. It is not source
+    # and must not be mistaken for an upstream modification.
+    if (Test-Path $pioDir) {
+        Remove-Item -Recurse -Force $pioDir
+    }
+
+    $status = (& git -C $upstreamDir status --porcelain --untracked-files=all | Out-String).Trim()
     if ($status) {
-        Write-Host "[FAIL] Upstream tracked tree changed after build:"
+        Write-Host "[FAIL] Upstream source tree changed after build:"
         Write-Host $status
         throw "Exact upstream source was not restored"
     }
-    Write-Host "[PASS] Exact tracked upstream source restored after build"
+    Write-Host "[PASS] Exact upstream source restored; disposable .pio build output removed"
 }
