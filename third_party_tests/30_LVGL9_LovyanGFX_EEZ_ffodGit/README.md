@@ -2,7 +2,7 @@
 
 ## Status
 
-**BUILD PASS / PHYSICAL PASS / CLOSED**
+**BUILD PASS / DISPLAY + TOUCH DEMO PASS / CLOSED / KNOWN-GOOD REFERENCE**
 
 Build PASS was obtained on 2026-09-03 using the pinned ffodGit application source and a historical PlatformIO Espressif32 6.8.1 environment reconstruction.
 
@@ -10,11 +10,17 @@ Physical board verdict from the user on 2026-09-03:
 
 > Прошивка работает отлично.
 
-No visible display instability, touch failure, reset or other functional defect was reported during the physical run. Test 30 is therefore frozen as a known-good third-party reference architecture.
+A later physical observation was:
 
-This test studies a third independent display architecture for the ESP32-8048S043 family.
+> На экране Screen2 не работают ползунки ни вертикальный ни горизонтальный.
 
-Upstream repository:
+Source inspection shows that this is **expected upstream behavior, not a touch failure**: the two Screen02 controls are `lv_bar` objects, not `lv_slider` objects. They are passive ADC indicators driven from GPIO13 by application code. They are not intended to move when dragged by touch.
+
+Test 30 remains frozen as a known-good third-party display/touch reference architecture.
+
+## Upstream
+
+Repository:
 
 ```text
 ffodGit/esp32-8048s043-getting-started-00
@@ -35,9 +41,7 @@ Copyright (c) 2024 Embedded Weekends
 Copyright (c) 2021 LVGL Kft
 ```
 
-## Why this candidate matters
-
-This is not another Arduino_GFX variant. It uses:
+## Architecture
 
 ```text
 LVGL 9.1.1-dev
@@ -50,29 +54,26 @@ LVGL 9.1.1-dev
 
 The UI is generated with EEZ Studio and contains multiple screens and interactive widgets.
 
-This makes Test 30 useful for two reasons:
-
-1. it gives a third independent RGB display transport to compare with our known-good Arduino_GFX and native esp_lcd paths;
-2. it tests a richer real-world UI architecture rather than a minimal synthetic screen.
+This gives a third independent RGB display transport to compare with the known-good Arduino_GFX and native esp_lcd paths.
 
 ## Display configuration
 
 From `include/lovyanGfxSetup.h`:
 
 ```text
-Resolution            800 x 480
-PCLK                  14 MHz
-HSYNC polarity        0
+Resolution             800 x 480
+PCLK                   14 MHz
+HSYNC polarity         0
 HSYNC front/pulse/back 8 / 4 / 8
-VSYNC polarity        0
+VSYNC polarity         0
 VSYNC front/pulse/back 8 / 4 / 8
-pclk_active_neg       1
-de_idle_high          0
-pclk_idle_high        0
-Backlight             GPIO2 PWM
+pclk_active_neg        1
+de_idle_high           0
+pclk_idle_high         0
+Backlight              GPIO2 PWM
 ```
 
-RGB pins match the known ESP32-8048S043 mapping:
+RGB pins:
 
 ```text
 B: 8,3,46,9,1
@@ -96,11 +97,11 @@ address   0x5D
 raw range 480 x 272
 ```
 
-LovyanGFX maps this to the 800x480 panel coordinates.
+LovyanGFX maps the configured raw touch range to the 800x480 panel coordinates.
 
 ## LVGL configuration
 
-Upstream contains its own LVGL source tree reporting:
+Upstream vendored LVGL reports:
 
 ```text
 LVGL_VERSION_MAJOR 9
@@ -109,7 +110,7 @@ LVGL_VERSION_PATCH 1
 LVGL_VERSION_INFO  "dev"
 ```
 
-Main display setup:
+Display setup:
 
 ```cpp
 lv_display_t *disp = lv_display_create(TFT_HOR_RES, TFT_VER_RES);
@@ -117,14 +118,12 @@ lv_display_set_flush_cb(disp, my_disp_flush);
 lv_display_set_buffers(disp, draw_buf, NULL, sizeof(draw_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
 ```
 
-Draw-buffer size:
+Draw buffer:
 
 ```text
 DRAW_BUF_SIZE = 800 * 480 / 10 * 2 bytes
               = 76,800 bytes
 ```
-
-The buffer is a static global array, therefore placement is controlled by the linker rather than explicit heap capability flags.
 
 Flush path:
 
@@ -136,9 +135,55 @@ tft.endWrite();
 lv_disp_flush_ready(disp);
 ```
 
+## Screen02 clarification — bars, not sliders
+
+The EEZ-generated source creates these objects as bars:
+
+```cpp
+// Screen02BarHorizontal
+lv_obj_t *obj = lv_bar_create(parent_obj);
+lv_bar_set_range(obj, 0, 4095);
+
+// Screen02BarVertical
+lv_obj_t *obj = lv_bar_create(parent_obj);
+```
+
+There is no `lv_slider_create()` for either object.
+
+The application defines:
+
+```cpp
+#define ANALOG_INPUT_PIN 13
+```
+
+and while Screen02 is active it reads GPIO13:
+
+```cpp
+int potValCur = analogRead(ANALOG_INPUT_PIN);
+```
+
+Only when the ADC value changes by more than 5 counts does the application update the two bars:
+
+```cpp
+int32_t mappedVal = map(potValCur, 0, 4095, 0, 100);
+
+lv_bar_set_value(objects.screen02_bar_horizontal, potValCur, LV_ANIM_OFF);
+lv_bar_set_value(objects.screen02_bar_vertical, mappedVal, LV_ANIM_OFF);
+```
+
+Therefore:
+
+```text
+Horizontal Screen02 bar  = raw ADC GPIO13, 0..4095
+Vertical Screen02 bar    = mapped ADC GPIO13, 0..100 %
+Touch drag               = NOT an intended input method
+```
+
+If no potentiometer or varying analog signal is connected to GPIO13, these bars can appear static. That behavior must not be classified as a GT911 or LVGL input failure.
+
 ## PlatformIO environment
 
-Upstream `platformio.ini` originally contains:
+Upstream `platformio.ini` originally contains an unpinned platform declaration:
 
 ```text
 framework = arduino
@@ -151,9 +196,9 @@ platform = espressif32
 LovyanGFX ^1.1.16
 ```
 
-The unpinned `platform = espressif32` is a reproducibility gap. On 2026-09-02 it resolved to a modern pioarduino 2026.8.50 environment that failed before application compilation. The Test 30 harness therefore applies a temporary build-environment overlay only; application, display, touch and UI source remain exact upstream.
+On 2026-09-02 the unpinned platform resolved to a modern pioarduino 2026.8.50 environment that failed before application compilation. The Test 30 harness therefore applies a temporary build-environment overlay only; application, display, touch and UI source remain exact upstream.
 
-Historical reconstruction used for the successful build:
+Successful reconstruction:
 
 ```text
 PlatformIO Core              6.1.19
@@ -168,7 +213,7 @@ Xtensa ESP32-S3 toolchain    8.4.0+2021r2-patch5
 esptoolpy                    1.40501.0
 ```
 
-Note: the PlatformIO platform itself is pinned to the historical 6.8.1 commit. The framework package resolver currently supplied a later package revision within the required `~3.20017.0` line (`3.20017.241212+sha.dcc1105b`). This preserves the Arduino-ESP32 2.0.17 core line but is recorded explicitly rather than described as byte-for-byte archival reconstruction.
+The PlatformIO platform is pinned to the historical 6.8.1 commit. The framework resolver supplied a later package revision within the required `~3.20017.0` line, so this is recorded as a historical environment reconstruction rather than a byte-for-byte archival recreation.
 
 ## Final verdict
 
@@ -176,16 +221,16 @@ Note: the PlatformIO platform itself is pinned to the historical 6.8.1 commit. T
 2026-09-03
 BUILD:                         PASS
 PHYSICAL BOARD:                PASS
-Image/UI operation:            PASS
-Visible display instability:   NOT REPORTED / overall clean verdict
-Touch failure:                 NOT REPORTED / overall clean verdict
-Reset/crash:                   NOT REPORTED / overall clean verdict
-Tracked upstream restored:     PASS
+Display output:                PASS / overall clean verdict
+Visible display instability:   NOT REPORTED
+Touch/navigation:               PASS in the exercised demo path
+Screen02 horizontal "slider":  NOT A SLIDER — ADC BAR, expected passive behavior
+Screen02 vertical "slider":    NOT A SLIDER — ADC BAR, expected passive behavior
+Reset/crash:                    NOT REPORTED
+Tracked upstream restored:      PASS
 LovyanGFX resolved:             1.1.16
 Test state:                     CLOSED / KNOWN-GOOD
 ```
-
-Physical verdict wording is intentionally conservative: the user reported that the firmware "works excellently" as an overall result, but did not separately enumerate every checklist item in this run.
 
 ## Comparison with known-good paths
 
@@ -211,23 +256,10 @@ Test 30 therefore establishes a third independent stable application-level RGB a
 
 ## Engineering conclusion
 
-The old flicker/jump failures cannot be attributed generically to any of the following:
+The old flicker/jump failures cannot be attributed generically to LVGL 9, Arduino framework use, partial rendering, the RGB panel, GT911 activity, or PSRAM availability.
 
-- LVGL 9;
-- Arduino framework use;
-- partial rendering;
-- rich interactive UI activity;
-- the RGB panel itself;
-- GT911 touch activity;
-- or PSRAM availability on the board.
-
-The accumulated evidence continues to point to the exact display-memory/scanout transport topology as the decisive variable. In the previously isolated Arduino_GFX partial-render path, PSRAM LVGL draw buffers combined with driver RGB bounce disabled produced visible redraw flicker, while enabling any tested non-zero driver bounce depth restored stability. LovyanGFX now provides an independent stable transport for comparison.
-
-## Next engineering step
+The accumulated evidence continues to point to the exact display-memory/scanout transport topology as the decisive variable. In the isolated Arduino_GFX partial-render path, PSRAM LVGL draw buffers combined with driver RGB bounce disabled produced visible redraw flicker, while enabling any tested non-zero driver bounce depth restored stability. LovyanGFX now provides an independent stable transport for comparison.
 
 Do not modify Test 30. Keep it frozen as a reference.
 
-Next useful work is either:
-
-1. inspect LovyanGFX `Bus_RGB` / `Panel_RGB` internals to identify framebuffer placement, DMA descriptors, cache handling and any internal staging/bounce mechanism; or
-2. run another architecturally different third-party implementation, preferably the native ESP-IDF `duck4i/esp32_8048S043-ST7262_GT911` path (one PSRAM framebuffer, LVGL partial INTERNAL draw buffer, no explicit bounce) as the next physical reference test.
+Next useful work is to inspect LovyanGFX `Bus_RGB` / `Panel_RGB` internals for framebuffer placement, DMA descriptors, cache handling and internal staging, then continue with another architecturally different third-party implementation such as `duck4i/esp32_8048S043-ST7262_GT911`.
