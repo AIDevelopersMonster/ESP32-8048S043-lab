@@ -132,21 +132,20 @@ function Resolve-Python {
         "  none"
     }
 
-    throw @"
-No ESPHome-compatible Python was found.
-
-ESPHome $esphomeVersion requires Python >=3.11 and <3.14.
-Detected Python interpreters:
-$detectedText
-
-Install Python 3.13 side-by-side with your existing Python 3.14:
-  winget install -e --id Python.Python.3.13
-
-Then verify:
-  py -0p
-
-Python 3.14 does not need to be removed. Rerun Test 33 after Python 3.13 is installed.
-"@
+    Write-Host ""
+    Write-Host "[BLOCKED] No ESPHome-compatible Python was found."
+    Write-Host "ESPHome $esphomeVersion requires Python >=3.11 and <3.14."
+    Write-Host "Detected Python interpreters:"
+    Write-Host $detectedText
+    Write-Host ""
+    Write-Host "Install Python 3.13 side-by-side with your existing Python 3.14:"
+    Write-Host "  winget install -e --id Python.Python.3.13"
+    Write-Host ""
+    Write-Host "Then verify:"
+    Write-Host "  py -0p"
+    Write-Host ""
+    Write-Host "Python 3.14 does not need to be removed. Rerun Test 33 after Python 3.13 is installed."
+    exit 2
 }
 
 $pythonInfo = Resolve-Python -Explicit $PythonPath
