@@ -1,24 +1,26 @@
 param(
     [switch]$Upload,
     [string]$UploadPort = "",
-    [string]$PlatformIOPath = ""
+    [string]$PlatformIOPath = "",
+    [string]$WorkRoot = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$repoRoot = Resolve-Path (Join-Path $scriptDir "..\..")
-$workRoot = Join-Path $repoRoot ".third-party-work\32_LVGL9_ArduinoGFX_EEZ_DevAnyKR"
-$upstreamDir = Join-Path $workRoot "upstream"
 $prep = Join-Path $scriptDir "prepare-test32.ps1"
+
+if ([string]::IsNullOrWhiteSpace($WorkRoot)) {
+    $WorkRoot = Join-Path $env:USERPROFILE "t32-devany"
+}
+
+$workRoot = $WorkRoot
+$upstreamDir = Join-Path $workRoot "upstream"
 $platformioIni = Join-Path $upstreamDir "platformio.ini"
 $overlayStamp = Join-Path $workRoot "HISTORICAL_ENV.txt"
 
 $upstreamCommit = "bb056490f0738911618f60f98e164f36dde0f84d"
 $platformSpec = "https://github.com/pioarduino/platform-espressif32/releases/download/53.03.11/platform-espressif32.zip"
-# Upstream declares ^9.1.0, but its checked-in lv_conf.h explicitly says it is
-# the configuration file for LVGL v9.2.2. v9.2.2 existed before the upstream
-# 2025-01-23 commit, so 9.2.2 is the source-consistent historical pin.
 $lvglVersion = "9.2.2"
 $gfxVersion = "1.5.2"
 $timeVersion = "1.6.1"
@@ -26,7 +28,7 @@ $eezCommit = "5bb6c8692d440e599469d5c52b6c3f2094dbf910"
 $gt911Commit = "b3f175e65a799368be9c544e255204e1e74ad2ed"
 
 if (-not (Test-Path $upstreamDir)) {
-    & powershell -ExecutionPolicy Bypass -File $prep
+    & powershell -ExecutionPolicy Bypass -File $prep -WorkRoot $workRoot
     if ($LASTEXITCODE -ne 0) { throw "prepare-test32.ps1 failed" }
 }
 
@@ -62,8 +64,8 @@ $pio = Resolve-PlatformIO -Explicit $PlatformIOPath
 if (-not $pio) { throw "PlatformIO was not found" }
 
 Write-Host "[PASS] PlatformIO: $pio"
+Write-Host "[PASS] Short work root: $workRoot"
 
-# Always restore original upstream config before inspecting or overlaying it.
 & git -C $upstreamDir checkout -- platformio.ini
 if ($LASTEXITCODE -ne 0) { throw "Could not restore upstream platformio.ini" }
 
@@ -95,16 +97,12 @@ $overlay = $overlay.Replace("moononournation/GFX Library for Arduino@^1.5.2", "m
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText($platformioIni, $overlay, $utf8NoBom)
 
-$bytes = [System.IO.File]::ReadAllBytes($platformioIni)
-if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) {
-    throw "Temporary platformio.ini was written with a UTF-8 BOM"
-}
-
 $envText = @"
 Test 32 historical environment overlay
 ======================================
 Upstream commit: $upstreamCommit
 Upstream date: 2025-01-23
+Short Windows work root: $workRoot
 
 Temporary build-only dependency reconstruction:
 platform-espressif32: 53.03.11
@@ -119,11 +117,10 @@ GT911 Arduino:          $gt911Commit
 
 Source display/touch/UI code is not modified.
 platformio.ini is restored after the command finishes.
-.pio is a disposable build directory and is removed before source-cleanliness verification.
+.pio is disposable and removed before source-cleanliness verification.
 "@
 [System.IO.File]::WriteAllText($overlayStamp, $envText, $utf8NoBom)
 
-# Avoid stale packages/objects from a previous dependency overlay.
 $pioDir = Join-Path $upstreamDir ".pio"
 if (Test-Path $pioDir) {
     Remove-Item -Recurse -Force $pioDir
@@ -134,10 +131,11 @@ try {
     Write-Host ""
     Write-Host "=== Test 32 historical build ==="
     Write-Host "Upstream commit : $upstreamCommit"
-    Write-Host "Platform         : pioarduino 53.03.11 / Arduino 3.1.1 / IDF 5.3.2 line"
-    Write-Host "LVGL             : $lvglVersion (matches upstream lv_conf.h)"
-    Write-Host "Arduino_GFX      : $gfxVersion"
-    Write-Host "Architecture     : Arduino_GFX RGB / EEZ / LVGL PARTIAL / PCLK15 / pclk edge 0"
+    Write-Host "Work root       : $workRoot"
+    Write-Host "Platform        : pioarduino 53.03.11 / Arduino 3.1.1 / IDF 5.3.2 line"
+    Write-Host "LVGL            : $lvglVersion (matches upstream lv_conf.h)"
+    Write-Host "Arduino_GFX     : $gfxVersion"
+    Write-Host "Architecture    : Arduino_GFX RGB / EEZ / LVGL PARTIAL / PCLK15 / pclk edge 0"
     Write-Host ""
 
     & $pio run -e ESP32_8048S043C
@@ -158,19 +156,12 @@ try {
         Write-Host ""
         Write-Host "Build complete. To upload:"
         Write-Host "  powershell -ExecutionPolicy Bypass -File .\third_party_tests\32_LVGL9_ArduinoGFX_EEZ_DevAnyKR\run-test32.ps1 -Upload"
-        Write-Host ""
-        Write-Host "Explicit port example:"
-        Write-Host "  powershell -ExecutionPolicy Bypass -File .\third_party_tests\32_LVGL9_ArduinoGFX_EEZ_DevAnyKR\run-test32.ps1 -Upload -UploadPort COM7"
     }
 }
 finally {
     Pop-Location
-
-    # Restore the only tracked file temporarily overlaid by the harness.
     & git -C $upstreamDir checkout -- platformio.ini
 
-    # PlatformIO generates .pio/ inside the upstream worktree. It is not source
-    # and must not be mistaken for an upstream modification.
     if (Test-Path $pioDir) {
         Remove-Item -Recurse -Force $pioDir
     }
