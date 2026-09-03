@@ -28,7 +28,7 @@ if (-not (Test-Path $upstreamDir)) {
     if ($LASTEXITCODE -ne 0) { throw "prepare-test33.ps1 failed" }
 }
 
-function Get-CompatiblePythonInfo {
+function Get-PythonInfo {
     param([string]$Executable)
 
     if (-not $Executable -or -not (Test-Path $Executable)) {
@@ -52,14 +52,13 @@ function Get-CompatiblePythonInfo {
 
     $major = [int]$versionParts[0]
     $minor = [int]$versionParts[1]
-    $compatible = ($major -eq 3 -and $minor -ge 11 -and $minor -lt 14)
 
     return [PSCustomObject]@{
         Path = $parts[1]
         Version = $parts[0]
         Major = $major
         Minor = $minor
-        Compatible = $compatible
+        Compatible = ($major -eq 3 -and $minor -ge 11 -and $minor -lt 14)
     }
 }
 
@@ -70,7 +69,7 @@ function Resolve-Python {
         if (-not (Test-Path $Explicit)) {
             throw "Specified Python executable not found: $Explicit"
         }
-        $info = Get-CompatiblePythonInfo -Executable (Resolve-Path $Explicit).Path
+        $info = Get-PythonInfo -Executable (Resolve-Path $Explicit).Path
         if (-not $info) {
             throw "Could not execute specified Python: $Explicit"
         }
@@ -81,10 +80,6 @@ function Resolve-Python {
     }
 
     $candidates = @()
-
-    # Ask the Windows Python launcher for the interpreters that actually exist.
-    # Do not probe missing versions with `py -3.x`: Windows PowerShell can turn
-    # the launcher's "No suitable Python runtime found" stderr into an exception.
     $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
     if ($pyLauncher) {
         $launcherLines = @(& $pyLauncher.Source -0p 2>$null)
@@ -98,7 +93,6 @@ function Resolve-Python {
         }
     }
 
-    # Common per-user/system CPython install paths.
     foreach ($minor in @(13, 12, 11)) {
         $candidates += (Join-Path $env:LOCALAPPDATA "Programs\Python\Python3$minor\python.exe")
         $candidates += (Join-Path $env:ProgramFiles "Python3$minor\python.exe")
@@ -114,7 +108,7 @@ function Resolve-Python {
 
     $detected = @()
     foreach ($candidate in ($candidates | Where-Object { $_ } | Select-Object -Unique)) {
-        $info = Get-CompatiblePythonInfo -Executable $candidate
+        $info = Get-PythonInfo -Executable $candidate
         if ($info) {
             $detected += $info
             if ($info.Compatible) {
@@ -153,7 +147,7 @@ $python = $pythonInfo.Path
 Write-Host "[PASS] Python: $python"
 Write-Host "[PASS] Python version: $($pythonInfo.Version) (ESPHome-compatible)"
 
-# Verify exact upstream state before introducing disposable local files.
+# Restore exact upstream source before any disposable files are introduced.
 & git -C $upstreamDir reset --hard $upstreamCommit
 if ($LASTEXITCODE -ne 0) { throw "Could not reset pinned upstream source" }
 & git -C $upstreamDir clean -fdx
@@ -164,26 +158,26 @@ if ($head -ne $upstreamCommit) { throw "Unexpected upstream HEAD: $head" }
 
 $venvPython = Join-Path $venvDir "Scripts\python.exe"
 $venvEspHome = Join-Path $venvDir "Scripts\esphome.exe"
+$venvScripts = Join-Path $venvDir "Scripts"
 
-# A previous Test 33 attempt may have created this venv with Python 3.14+.
-# Reuse only an ESPHome-compatible environment; otherwise rebuild it.
+# Reuse the Test 33 venv only if it is on an ESPHome-compatible Python.
 if (Test-Path $venvPython) {
-    $venvInfo = Get-CompatiblePythonInfo -Executable $venvPython
+    $venvInfo = Get-PythonInfo -Executable $venvPython
     if (-not $venvInfo -or -not $venvInfo.Compatible) {
-        Write-Host "Removing incompatible previous virtual environment..."
+        Write-Host "Removing incompatible previous Test 33 virtual environment..."
         Remove-Item -Recurse -Force $venvDir
     }
 }
 
 if (-not (Test-Path $venvDir)) {
-    Write-Host "Creating isolated Python environment with Python $($pythonInfo.Version)..."
+    Write-Host "Creating isolated Test 33 Python environment with Python $($pythonInfo.Version)..."
     & $python -m venv $venvDir
     if ($LASTEXITCODE -ne 0) { throw "Python venv creation failed" }
 }
 
 if (-not (Test-Path $venvPython)) { throw "Virtual environment Python not found" }
 
-$finalVenvInfo = Get-CompatiblePythonInfo -Executable $venvPython
+$finalVenvInfo = Get-PythonInfo -Executable $venvPython
 if (-not $finalVenvInfo -or -not $finalVenvInfo.Compatible) {
     throw "Virtual environment Python is not compatible with ESPHome $esphomeVersion"
 }
@@ -198,6 +192,34 @@ $versionText = (& $venvEspHome version | Out-String).Trim()
 Write-Host "[PASS] $versionText"
 if ($versionText -notmatch [regex]::Escape($esphomeVersion)) {
     throw "Unexpected ESPHome version: $versionText"
+}
+
+# ESPHome/PlatformIO has a second Python layer for ESP-IDF dependencies.
+# Do not reuse the user's global ~/.platformio environment, which may be bound
+# to Python 3.14. Use a Test-33-only PlatformIO core and make the selected
+# compatible Python the first interpreter visible to all child processes.
+$pioCoreDir = Join-Path $WorkRoot ("platformio-core-py{0}{1}" -f $finalVenvInfo.Major, $finalVenvInfo.Minor)
+New-Item -ItemType Directory -Force -Path $pioCoreDir | Out-Null
+
+$env:PLATFORMIO_CORE_DIR = $pioCoreDir
+$env:VIRTUAL_ENV = $venvDir
+$env:UV_PYTHON = $venvPython
+$env:PATH = "$venvScripts;$($env:PATH)"
+
+Write-Host "[PASS] Isolated PlatformIO core: $pioCoreDir"
+Write-Host "[PASS] Child Python forced to: $venvPython"
+Write-Host "[PASS] Global $env:USERPROFILE\.platformio is not used by Test 33"
+
+# If an interrupted previous isolated run created an IDF venv with the wrong
+# interpreter, discard only that disposable Test 33 environment.
+$idfEnvDir = Join-Path $pioCoreDir "penv\.espidf-5.5.1"
+$idfEnvPython = Join-Path $idfEnvDir "Scripts\python.exe"
+if (Test-Path $idfEnvPython) {
+    $idfInfo = Get-PythonInfo -Executable $idfEnvPython
+    if (-not $idfInfo -or -not $idfInfo.Compatible) {
+        Write-Host "Removing incompatible isolated ESP-IDF Python environment..."
+        Remove-Item -Recurse -Force $idfEnvDir
+    }
 }
 
 $escapedSsid = $WifiSsid.Replace("'", "''")
@@ -221,6 +243,7 @@ try {
     Write-Host "Upstream commit : $upstreamCommit"
     Write-Host "ESPHome         : $esphomeVersion"
     Write-Host "Python          : $($finalVenvInfo.Version)"
+    Write-Host "PIO core        : $pioCoreDir"
     Write-Host "Target          : sunton-43-example.yaml"
     Write-Host "Architecture    : ESPHome / ESP-IDF / mipi_rgb / LVGL modular YAML / GT911"
     Write-Host ""
@@ -258,8 +281,6 @@ finally {
         Remove-Item -Force $secrets
     }
 
-    # ESPHome writes .esphome and PlatformIO build files inside the upstream tree.
-    # They are disposable build products and are removed before source verification.
     foreach ($generated in @(
         (Join-Path $upstreamDir ".esphome"),
         (Join-Path $upstreamDir ".pio")
@@ -280,4 +301,5 @@ finally {
     }
 
     Write-Host "[PASS] Exact upstream source restored; ESPHome build artifacts removed"
+    Write-Host "[PASS] Isolated PlatformIO cache retained at: $pioCoreDir"
 }
