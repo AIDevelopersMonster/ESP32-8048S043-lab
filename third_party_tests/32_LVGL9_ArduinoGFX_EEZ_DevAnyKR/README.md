@@ -28,6 +28,14 @@ This is a strong physical PASS. The display/UI stack is stable on the tested ESP
 
 No visible flicker, horizontal jump, touch-redraw instability, reset, or crash was reported in this physical run.
 
+## Video evidence
+
+Physical-board video recorded by the project user:
+
+https://youtube.com/shorts/swX6I932kTM
+
+The video is retained as visual evidence for the Test 32 physical PASS. It shows the original DevAnyKR EEZ Studio graphical demo running on the tested ESP32-8048S043 board, including the GPS/GNSS-oriented UI and the responsive interactive controls/sliders.
+
 ## Why this candidate matters
 
 This project returns to an Arduino_GFX + LVGL PARTIAL architecture, but differs from our isolated Arduino_GFX experiments and from Test 21 in several important ways:
