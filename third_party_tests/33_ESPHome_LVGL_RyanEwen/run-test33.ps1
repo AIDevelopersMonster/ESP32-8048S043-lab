@@ -80,23 +80,25 @@ function Resolve-Python {
         return $info
     }
 
-    # Prefer the Windows py launcher because it can select a compatible Python
-    # even when the default interpreter is Python 3.14 or newer.
+    $candidates = @()
+
+    # Ask the Windows Python launcher for the interpreters that actually exist.
+    # Do not probe missing versions with `py -3.x`: Windows PowerShell can turn
+    # the launcher's "No suitable Python runtime found" stderr into an exception.
     $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
     if ($pyLauncher) {
-        foreach ($minor in @(13, 12, 11)) {
-            $resolved = (& $pyLauncher.Source "-3.$minor" -c "import sys; print(sys.executable)" 2>$null | Out-String).Trim()
-            if ($LASTEXITCODE -eq 0 -and $resolved -and (Test-Path $resolved)) {
-                $info = Get-CompatiblePythonInfo -Executable $resolved
-                if ($info -and $info.Compatible) {
-                    return $info
+        $launcherLines = @(& $pyLauncher.Source -0p 2>$null)
+        if ($LASTEXITCODE -eq 0) {
+            foreach ($line in $launcherLines) {
+                $text = [string]$line
+                if ($text -match '(?<path>[A-Za-z]:\\.*?python(?:\.exe)?)\s*$') {
+                    $candidates += $Matches['path']
                 }
             }
         }
     }
 
-    # Common per-user CPython install paths.
-    $candidates = @()
+    # Common per-user/system CPython install paths.
     foreach ($minor in @(13, 12, 11)) {
         $candidates += (Join-Path $env:LOCALAPPDATA "Programs\Python\Python3$minor\python.exe")
         $candidates += (Join-Path $env:ProgramFiles "Python3$minor\python.exe")
@@ -110,21 +112,40 @@ function Resolve-Python {
         if ($cmd) { $candidates += $cmd.Source }
     }
 
-    foreach ($candidate in ($candidates | Select-Object -Unique)) {
+    $detected = @()
+    foreach ($candidate in ($candidates | Where-Object { $_ } | Select-Object -Unique)) {
         $info = Get-CompatiblePythonInfo -Executable $candidate
-        if ($info -and $info.Compatible) {
-            return $info
+        if ($info) {
+            $detected += $info
+            if ($info.Compatible) {
+                return $info
+            }
         }
     }
 
+    $detectedText = if ($detected.Count -gt 0) {
+        (($detected | Sort-Object Major, Minor -Descending | ForEach-Object {
+            "  Python $($_.Version) - $($_.Path)"
+        }) -join "`n")
+    }
+    else {
+        "  none"
+    }
+
     throw @"
-No compatible Python was found.
+No ESPHome-compatible Python was found.
+
 ESPHome $esphomeVersion requires Python >=3.11 and <3.14.
-Install Python 3.13, 3.12, or 3.11 and rerun Test 33.
-Recommended Windows command:
+Detected Python interpreters:
+$detectedText
+
+Install Python 3.13 side-by-side with your existing Python 3.14:
   winget install -e --id Python.Python.3.13
-You can inspect installed interpreters with:
+
+Then verify:
   py -0p
+
+Python 3.14 does not need to be removed. Rerun Test 33 after Python 3.13 is installed.
 "@
 }
 
