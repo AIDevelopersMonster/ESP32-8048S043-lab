@@ -31,6 +31,14 @@ CONFIG_LV_THEME_DEFAULT_DARK=y
 
 No visible flicker, horizontal jump, touch-redraw instability, reset, or crash was reported in this physical run.
 
+## Video evidence
+
+Physical-board video recorded by the project user:
+
+https://youtube.com/shorts/H8bcEiqERTA
+
+The video is retained as visual evidence for the Test 31 physical PASS and shows the LVGL 9.2.2 Widgets demo running on the tested ESP32-8048S043 board.
+
 ## Why this candidate matters
 
 This is an architecturally distinct path from Tests 19/20/21/30:
@@ -227,6 +235,51 @@ INTERNAL LVGL draw buffer -> one PSRAM framebuffer -> bounce0
 PASS, ~66 fps, very good touch
 ```
 
+## Production opportunity — keep the transport, replace the demo/UI layer
+
+The upstream project is useful not only as a diagnostic reference but also as a strong candidate foundation for our own ESP32-8048S043 applications.
+
+In the original duck4i source, the visible interface is compiled into the firmware and launched directly with:
+
+```cpp
+lv_demo_widgets();
+```
+
+There is no independent widget/package loader in the upstream implementation. The demo is therefore an application-layer example sitting on top of a display/touch stack that has now been physically verified on our board.
+
+For our own projects, the proven lower layers can be preserved:
+
+```text
+ESP-IDF
+  -> native esp_lcd RGB / ST7262
+  -> PSRAM RGB framebuffer
+  -> INTERNAL LVGL partial draw buffer
+  -> GT911
+  -> LVGL 9.x
+```
+
+while replacing the fixed demo/UI layer with our own application shell, for example:
+
+```text
+proven Test 31 transport
+        -> application shell
+        -> UI/widget runtime
+        -> separately selectable or loadable screens/widgets
+        -> LittleFS / SD / network-delivered UI assets when required
+```
+
+This is a **future extension opportunity**, not a feature already implemented by duck4i.
+
+Recommended development rule:
+
+- keep Test 31 frozen as the exact known-good upstream reference;
+- create a separate derived test/branch for our own UI or widget loader;
+- initially preserve the display driver, framebuffer placement, LVGL draw-buffer placement, timings and GT911 path unchanged;
+- change only the application/UI layer first;
+- compare every derived implementation against the Test 31 physical baseline.
+
+In practical terms, this project can be used as the hardware/display/touch foundation of a custom product, with the built-in `lv_demo_widgets()` replaced by our own modular UI, widget loader or application runtime.
+
 ## Engineering conclusion
 
 Test 31 is particularly strong evidence against any generic claim that an ESP32-S3 RGB framebuffer in PSRAM requires a non-zero bounce buffer for stable display output.
@@ -251,4 +304,4 @@ Combined with Tests 22-29, the narrower conclusion remains more defensible:
 - the decisive behavior depends on the exact combination of draw-buffer placement, framebuffer placement, driver path, and scanout/DMA transport topology;
 - the previously isolated failure remains specific to the Arduino_GFX partial-render configuration with PSRAM LVGL draw buffers and driver bounce disabled.
 
-Do not modify Test 31. Keep the upstream implementation frozen as a known-good native ESP-IDF reference.
+Do not modify the Test 31 upstream implementation. Keep it frozen as a known-good native ESP-IDF reference; implement any modular widget/runtime extension as a separate derived test.
