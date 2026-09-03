@@ -14,9 +14,11 @@ A later physical observation was:
 
 > На экране Screen2 не работают ползунки ни вертикальный ни горизонтальный.
 
-Source inspection shows that this is **expected upstream behavior, not a touch failure**: the two Screen02 controls are `lv_bar` objects, not `lv_slider` objects. They are passive ADC indicators driven from GPIO13 by application code. They are not intended to move when dragged by touch.
+The user additionally clarified that an interactive control on an earlier screen responds normally to touch. This is important: the observation is **local to the implementation of Screen02**, not a global GT911/LovyanGFX/LVGL touch failure.
 
-Test 30 remains frozen as a known-good third-party display/touch reference architecture.
+Source inspection explains the difference. The two controls on Screen02 are `lv_bar` objects, not `lv_slider` objects. They are passive ADC indicators driven from GPIO13 by application code, whereas the earlier PWM control is an actual interactive LVGL control with an event handler and responds to touch.
+
+Test 30 remains frozen as a known-good third-party display/touch reference architecture, with a documented Screen02 UI implementation limitation.
 
 ## Upstream
 
@@ -135,9 +137,25 @@ tft.endWrite();
 lv_disp_flush_ready(disp);
 ```
 
-## Screen02 clarification — bars, not sliders
+## Screen02 clarification — local UI implementation issue
 
-The EEZ-generated source creates these objects as bars:
+The previous interactive PWM control is created as an LVGL `arc` and has an event callback. The application reads its value and applies it to PWM:
+
+```cpp
+lv_obj_t *obj = lv_arc_create(parent_obj);
+lv_obj_add_event_cb(obj, event_handler_cb_screen01_screen01_arc_pwm, LV_EVENT_ALL, 0);
+```
+
+and later:
+
+```cpp
+int32_t val = lv_arc_get_value(objects.screen01_arc_pwm);
+ledcWrite(PWM_CHANNEL, val);
+```
+
+This provides a working touch-interaction reference inside the same firmware.
+
+By contrast, Screen02 creates the two visually slider-like objects as bars:
 
 ```cpp
 // Screen02BarHorizontal
@@ -148,7 +166,7 @@ lv_bar_set_range(obj, 0, 4095);
 lv_obj_t *obj = lv_bar_create(parent_obj);
 ```
 
-There is no `lv_slider_create()` for either object.
+There is no `lv_slider_create()` for either Screen02 object and no drag/value-change handler attached to them.
 
 The application defines:
 
@@ -171,15 +189,17 @@ lv_bar_set_value(objects.screen02_bar_horizontal, potValCur, LV_ANIM_OFF);
 lv_bar_set_value(objects.screen02_bar_vertical, mappedVal, LV_ANIM_OFF);
 ```
 
-Therefore:
+Therefore the correct classification is:
 
 ```text
-Horizontal Screen02 bar  = raw ADC GPIO13, 0..4095
-Vertical Screen02 bar    = mapped ADC GPIO13, 0..100 %
-Touch drag               = NOT an intended input method
+Global touch subsystem       PASS
+Earlier interactive control  PASS
+Screen02 horizontal control  passive ADC bar, not touch slider
+Screen02 vertical control    passive ADC bar, not touch slider
+Root cause                    specific Screen02 UI/application implementation
 ```
 
-If no potentiometer or varying analog signal is connected to GPIO13, these bars can appear static. That behavior must not be classified as a GT911 or LVGL input failure.
+If no potentiometer or varying analog signal is connected to GPIO13, the two Screen02 bars can remain static. Their non-response to dragging must not be used as evidence of a GT911, LovyanGFX or LVGL input failure.
 
 ## PlatformIO environment
 
@@ -223,13 +243,14 @@ BUILD:                         PASS
 PHYSICAL BOARD:                PASS
 Display output:                PASS / overall clean verdict
 Visible display instability:   NOT REPORTED
-Touch/navigation:               PASS in the exercised demo path
-Screen02 horizontal "slider":  NOT A SLIDER — ADC BAR, expected passive behavior
-Screen02 vertical "slider":    NOT A SLIDER — ADC BAR, expected passive behavior
+Touch/navigation:               PASS
+Earlier interactive control:   PASS
+Screen02 horizontal "slider":  local UI implementation — actually passive ADC bar
+Screen02 vertical "slider":    local UI implementation — actually passive ADC bar
 Reset/crash:                    NOT REPORTED
 Tracked upstream restored:      PASS
 LovyanGFX resolved:             1.1.16
-Test state:                     CLOSED / KNOWN-GOOD
+Test state:                     CLOSED / KNOWN-GOOD REFERENCE
 ```
 
 ## Comparison with known-good paths
