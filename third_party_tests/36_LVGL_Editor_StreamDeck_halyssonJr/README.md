@@ -2,129 +2,161 @@
 
 ## Status
 
-**BUILD PASS / PHYSICAL VERDICT PENDING**
+**BUILD PASS / DISPLAY PHYSICAL PASS / TOUCH UX FAIL-DEGRADED / NOT A KNOWN-GOOD HMI REFERENCE**
 
-The first local compilation attempt on 2026-09-04 is **not classified as an upstream BUILD FAIL**. The original Test 36 runner incorrectly executed `idf.py set-target esp32s3`, which caused ESP-IDF to rename and replace the upstream tracked `sdkconfig`. That destroyed required project-specific LVGL and partition settings before compilation.
-
-The harness was corrected to preserve the exact tracked upstream `sdkconfig`. The corrected build subsequently completed successfully on 2026-09-04 and is classified as **BUILD PASS**. Physical-board validation is the next step.
-
-Upstream repository:
+Pinned upstream:
 
 ```text
 halyssonJr/lvgl-demo-esp32s3
-https://github.com/halyssonJr/lvgl-demo-esp32s3
-```
-
-Pinned upstream commit:
-
-```text
 79e862ca332525ba8721c4691f450fb44ec08738
-2025-08-05 13:57:18 UTC
-Update README.md
+2025-08-05
 ```
 
-No root license declaration was present in the repository tree at the pinned revision. The upstream source is therefore **not vendored** into ESP32-8048S043-lab. The test harness clones the exact public commit into a disposable local working directory.
+The exact pinned application builds successfully after the laboratory harness was corrected to preserve the upstream tracked `sdkconfig`.
 
-## Why Test 36 is genuinely new
-
-The previous third-party series already covered:
+Physical-board testing on 2026-09-04 produced a mixed result:
 
 ```text
-Robot-Core          applied LVGL HMI / Arduino_GFX / bounce
-Test 20             native esp_lcd / LVGL / double PSRAM framebuffer
-Test 21             Arduino_GFX / LVGL DIRECT / EEZ
-Test 30             LovyanGFX / LVGL / EEZ
-Test 31             native esp_lcd / LVGL 9.2.2 / INTERNAL partial buffer
-Test 32             Arduino_GFX / LVGL / EEZ Studio
-Test 33/34          ESPHome / LVGL modular YAML HMI
+Boot                         PASS
+Backlight                    PASS
+Stream Deck UI appears       PASS
+Six cards render             PASS
+Icons/text render            PASS
+Display stability            PASS
+Visible flicker              not reported
+Visible tearing              not reported
+GT911 input                  FUNCTIONAL BUT DEGRADED
+Button presses               intermittent / missed
+Button release/pressed state sometimes appears to stick
+Visual pressed feedback      present but very subtle
+On-screen application action not implemented upstream
+Overall HMI verdict          TOUCH UX FAIL-DEGRADED
 ```
 
-Test 36 introduces a different UI-authoring path:
+The user first described the screen as essentially six static images, then observed a very small press animation. Repeated physical use showed that the buttons do not respond reliably: some touches are missed and some presses appear to remain held or delayed.
 
-```text
-LVGL Editor 3.x
-    -> XML project
-    -> reusable XML component
-    -> generated C
-    -> native LVGL application
-    -> native ESP-IDF RGB display path
+This means Test 36 must **not** be classified together with the responsive Test 31/32/33/34 references.
+
+## What the six cards actually do
+
+The generated screen attaches `LV_EVENT_CLICKED` to each `deck_btn`.
+
+The application callback is implemented in `main/examples/examples.c`, but it only logs the button label to Serial:
+
+```c
+void button_cb(lv_event_t * e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    lv_obj_t *deck_btn = lv_event_get_target(e);
+
+    if (code == LV_EVENT_CLICKED)
+    {
+        lv_obj_t *btn_label = lv_obj_get_child(deck_btn, 1);
+        ESP_LOGI(demo_tag,"Button Name : %s", lv_label_get_text(btn_label));
+    }
+}
 ```
 
-This is not runtime XML loading on the board. The pinned firmware has `LV_USE_XML` disabled and runs the generated C output. XML is the editable source used by LVGL Editor.
-
-## Upstream UI workflow
-
-The upstream README describes the project as a Stream Deck UI made with the new LVGL XML support and instructs the developer to open:
+Therefore:
 
 ```text
-main/examples/
+screen navigation       NOT IMPLEMENTED
+application state       NOT CHANGED
+button action           SERIAL LOG ONLY
 ```
 
-in LVGL Editor.
+The small visible response is consistent with the normal pressed state of an `lv_button`. The XML component itself does not define a dedicated press animation or transition.
 
-The editable source includes:
+## Strong touch-latency candidate found after physical test
 
-```text
-main/examples/project.xml
-main/examples/globals.xml
-main/examples/components/deck_btn.xml
-main/examples/screens/stream_deck_main.xml
+The upstream display code configures the LVGL port as:
+
+```c
+#define LVGL_TASK_SLEEP 500
+#define LVGL_TIMER_MS   5
+
+const lvgl_port_cfg_t lvgl_cfg = {
+    .task_priority = 4,
+    .task_stack = 8192,
+    .task_affinity = -1,
+    .task_max_sleep_ms = LVGL_TASK_SLEEP,
+    .timer_period_ms = LVGL_TIMER_MS
+};
 ```
 
-Generated target sources are committed alongside the XML:
+At the same time the GT911 interrupt pin is explicitly disabled:
 
-```text
-components/deck_btn_gen.c/.h
-screens/stream_deck_main_gen.c/.h
-examples_gen.c/.h
+```c
+#define TOUCH_GPIO_INT GPIO_NUM_NC
 ```
 
-This gives us a direct editable-source -> generated-C comparison, which neither EEZ nor ESPHome tests provided in this exact form.
+The exact `esp_lvgl_port 2.6.0` documentation states that the LVGL task can sleep until a display/animation/input interrupt, user wake, or `task_max_sleep_ms` timeout, and specifically warns that a touch interrupt pin should be configured when a large sleep value is used.
 
-## Stream Deck component model
-
-The reusable XML component `deck_btn` exposes properties such as:
+This creates a strong mechanism consistent with the physical symptoms:
 
 ```text
-button_image
-button_text
-text_color
-bg_color
-image_size
-text_font
-text offsets
+GT911 interrupt disabled
+        +
+LVGL task allowed to sleep up to 500 ms
+        ->
+short touch can occur between polls
+release can be observed late
+        ->
+missed presses / delayed or apparently stuck pressed state
 ```
 
-and extends an LVGL button with a 140x140 rounded touch target containing an image and label.
+This is currently a **mechanism hypothesis supported by source configuration and Espressif documentation**, not yet a proven causal conclusion for this board.
 
-The main screen composes six instances into two rows:
+## Next controlled derivative — Test 36B
+
+A one-variable derivative is justified before abandoning the project:
 
 ```text
-Power
-Media
-Game/Media label in upstream XML
-Social
-Work/Social label in upstream XML
-Settings
+ONLY CHANGE:
+LVGL_TASK_SLEEP 500 ms -> 16 ms
+
+UNCHANGED:
+GT911 driver
+GT911 INT remains disabled
+I2C 400 kHz
+coordinate mapping
+LVGL 9.3.0
+esp_lvgl_port 2.6.0
+PCLK 18 MHz
+timings
+2 PSRAM framebuffers
+bounce10
+direct mode
+avoid_tearing
+XML/generated UI
 ```
 
-The duplicate labels above are retained exactly as upstream behavior for the baseline; they are not silently corrected before physical testing.
+If button acquisition/release becomes immediately reliable, the 500 ms no-interrupt sleep configuration is strongly implicated.
 
-The project target is declared as:
+If Test 36B remains poor, the next independent candidate is a separate interrupt-enabled experiment using the board's known GT911 INT path; it must not be mixed into 36B.
+
+## Why Test 36 is still useful
+
+Even with the poor baseline input UX, Test 36 contributes several useful ideas:
 
 ```text
-800 x 420
-RGB565
+LVGL Editor XML source
+reusable declarative components
+generated C for embedded target
+large 140x140 touch-target design
+native esp_lcd RGB
+2 PSRAM framebuffers
+bounce10
+DIRECT + avoid_tearing
 ```
 
-while the physical display driver is 800x480. The baseline keeps this upstream layout unchanged. Any visible unused 60-pixel region must first be classified as application layout behavior rather than a panel defect.
+The authoring workflow remains interesting. The exact baseline touch scheduling is not suitable as a production reference on our specimen.
 
-## Exact dependency lock
-
-The pinned `dependencies.lock` records:
+## Exact dependency baseline
 
 ```text
-ESP-IDF                         5.5.0
+ESP-IDF                         5.5.0 upstream lock
+host reproduction              ESP-IDF 5.5.5
 LVGL                            9.3.0
 espressif/esp_lvgl_port         2.6.0
 espressif/esp_lcd_touch_gt911   1.1.3
@@ -132,200 +164,41 @@ espressif/esp_lcd_touch         1.1.2
 target                          esp32s3
 ```
 
-The manifest allows broader versions, but Test 36 treats the checked-in lock as the upstream dependency baseline.
-
-The laboratory runner accepts the already-proven ESP-IDF **5.5.x** line. The current host provides ESP-IDF 5.5.5. The successful 5.5.5 build is therefore classified as a close compatible reproduction of the upstream 5.5.0 lock, not a byte-identical reconstruction.
-
-## Board / memory configuration
-
-The checked-in upstream `sdkconfig` is explicitly generated by ESP-IDF 5.5.0 for:
+## Board / display baseline
 
 ```text
 ESP32-S3
 16 MB flash
-80 MHz flash
-Octal PSRAM
-80 MHz PSRAM
-SPIRAM instruction fetch enabled
-SPIRAM RODATA enabled
-custom partitions.csv
-CONFIG_LV_USE_OBJ_NAME=y
-```
-
-Partition map:
-
-```text
-nvs       0x009000   0x006000
-phy_init  0x00F000   0x001000
-factory   0x010000   2 MB
-storage   0x210000   1 MB SPIFFS
-```
-
-The SPIFFS partition is available for an optional external-resource workflow, but the default baseline does **not** require flashing SPIFFS because the committed generated-C path uses compiled image resources when `LV_USE_XML == 0`.
-
-## Native display architecture
-
-The 4.3-inch path uses:
-
-```text
-ESP-IDF esp_lcd RGB
-800x480
+Octal PSRAM 80 MHz
+800x480 RGB
 PCLK 18 MHz
-pclk_active_neg = true
-HSYNC pulse/back/front = 30 / 16 / 20
-VSYNC pulse/back/front = 13 / 10 / 22
+pclk_active_neg true
+HSYNC pulse/back/front 30/16/20
+VSYNC pulse/back/front 13/10/22
+2 RGB framebuffers in PSRAM
+10-line RGB bounce buffer
+LVGL DIRECT
+bb_mode true
+avoid_tearing true
 ```
 
-Pins match the known ESP32-8048S043 specimen:
-
-```text
-DE      40
-VSYNC   41
-HSYNC   39
-PCLK    42
-BL      2
-GT911   SDA19 / SCL20 / RST38 / INT unused
-
-RGB data bus:
-8,3,46,9,1,
-5,6,7,15,16,4,
-45,48,47,21,14
-```
-
-This timing set is deliberately left unchanged. It is substantially different from our common 8/4/8 porch references and therefore adds useful physical evidence if it passes.
-
-## Framebuffer / tearing architecture
-
-The upstream driver configures:
-
-```text
-RGB panel framebuffers       2
-framebuffers                 PSRAM
-RGB bounce buffer            10 lines
-LVGL display buffer_size     full 800x480 pixels
-LVGL double_buffer           false
-LVGL direct_mode             true
-esp_lvgl_port bb_mode        true
-esp_lvgl_port avoid_tearing  true
-color format                 RGB565
-```
-
-Conceptually:
-
-```text
-LVGL generated Stream Deck UI
-        -> esp_lvgl_port DIRECT
-        -> avoid_tearing + bb_mode
-        -> native esp_lcd RGB
-        -> 2 PSRAM RGB framebuffers
-        -> 10-line RGB bounce buffer
-        -> 800x480 panel
-```
-
-This is materially different from Test 31 and is especially relevant to the long-running flicker/scanout investigation. Test 36 is still a whole-project third-party test, not a one-variable causal experiment.
-
-## GT911 path
-
-The upstream project uses:
+GT911:
 
 ```text
 I2C bus 1
-SDA 19
-SCL 20
+SDA19 / SCL20
 400 kHz
-RST 38
+RST38
 INT disabled
-esp_lcd_touch_gt911
+raw X 0..477 -> 0..800
+raw Y 0..269 -> 0..480
 ```
 
-It normalizes the measured raw range:
+## Harness history
 
-```text
-X 0..477 -> display 0..800
-Y 0..269 -> display 0..480
-```
+The first laboratory compilation attempt was invalidated because the original lab runner called `idf.py set-target esp32s3`, which replaced the tracked upstream `sdkconfig` and removed required project settings including `CONFIG_LV_USE_OBJ_NAME=y` and the custom partition map.
 
-This matches the driver/BSP normalization direction already supported by our earlier limpens/rzeldent studies.
-
-## First build attempt — INVALIDATED BY HARNESS
-
-Date:
-
-```text
-2026-09-04
-```
-
-Host environment selected by the runner:
-
-```text
-ESP-IDF 5.5.5
-C:\Espressif\frameworks\esp-idf-v5.5.5\export.ps1
-Python 3.14.6 inside the ESP-IDF environment
-```
-
-Preparation succeeded and exact upstream commit `79e862c...` was checked out cleanly.
-
-The original laboratory runner then incorrectly executed:
-
-```text
-idf.py set-target esp32s3
-```
-
-ESP-IDF explicitly reported:
-
-```text
-Existing sdkconfig '.../sdkconfig' renamed to '.../sdkconfig.old'.
-Set Target to: esp32s3, new sdkconfig will be created.
-```
-
-This was the decisive harness error. The upstream project was already configured for ESP32-S3; `set-target` was unnecessary and destructive for a historical reproduction because the tracked `sdkconfig` is part of the application baseline.
-
-### Evidence that the wrong configuration was used
-
-The regenerated build produced the default partition table:
-
-```text
-nvs       24K
-phy_init  4K
-factory   1M
-```
-
-instead of the upstream table:
-
-```text
-factory   2M
-storage   1M SPIFFS
-```
-
-At compile step 1767/1805, generated UI code then failed at:
-
-```text
-main/examples/components/deck_btn_gen.c:78
-error: implicit declaration of function 'lv_obj_set_name'
-```
-
-The pinned upstream `sdkconfig`, however, contains:
-
-```text
-CONFIG_LV_USE_OBJ_NAME=y
-```
-
-and LVGL 9.3.0 provides `lv_obj_set_name()` when `LV_USE_OBJ_NAME` is enabled. Therefore this error is fully explained by the lab runner replacing the upstream configuration. There was no need to patch generated C or bump LVGL.
-
-### Classification
-
-```text
-Upstream source build verdict   superseded by valid BUILD PASS
-First lab run                    INVALIDATED
-Failure class                    LAB HARNESS CONFIGURATION ERROR
-Physical verdict                PENDING
-```
-
-Do **not** record the first attempt as a Test 36 BUILD FAIL.
-
-## Harness correction
-
-Two fixes were committed after the invalidated run:
+That was fixed by:
 
 ```text
 c26e88962561b8ef5bde654d9e688eb89413a8ab
@@ -335,117 +208,20 @@ fix(test36): preserve upstream sdkconfig and build cache
 fix(test36): build with pinned upstream sdkconfig
 ```
 
-The corrected harness now:
+The corrected build passed. The first invalidated attempt is not an upstream BUILD FAIL.
+
+## Final baseline classification
 
 ```text
-never calls idf.py set-target;
-restores and verifies the exact tracked sdkconfig;
-requires CONFIG_LV_USE_OBJ_NAME=y;
-requires the custom partition table;
-verifies 16 MB flash and Octal 80 MHz PSRAM;
-verifies factory 2M + SPIFFS 1M;
-detects the incompatible old build/config/sdkconfig.h;
-removes only that invalid build/ directory;
-retains managed_components/ to avoid unnecessary downloads;
-builds directly with the upstream configuration;
-verifies the actual generated build config after compilation;
-restores all tracked upstream files after the run.
+Test 36 exact upstream
+
+BUILD                      PASS
+DISPLAY                    PHYSICAL PASS
+GRAPHICS STABILITY         PASS by observation
+TOUCH DETECTION            PARTIAL / DEGRADED
+TOUCH RESPONSIVENESS       FAIL for production-quality UX
+BUTTON ACTIONS             SERIAL LOG ONLY BY DESIGN
+LVGL Editor/XML workflow   VALID / INTERESTING
+KNOWN-GOOD HMI REFERENCE   NO
+NEXT                       Test 36B sleep 500 -> 16 ms isolation
 ```
-
-No manual cleanup of `%USERPROFILE%\t36-lvgl-editor` was necessary before the successful retry.
-
-## Valid build after harness correction — PASS
-
-Date:
-
-```text
-2026-09-04
-```
-
-User-reported terminal result:
-
-```text
-[PASS] Test 36 build complete
-```
-
-Classification:
-
-```text
-Pinned upstream source          79e862ca332525ba8721c4691f450fb44ec08738
-ESP-IDF host line               5.5.5
-Upstream sdkconfig preserved    PASS
-LVGL object naming              ENABLED
-Custom partition map            PRESERVED
-Compilation                     PASS
-Physical-board verdict          PENDING
-```
-
-This closes the build-stage question. The next evidence must come from the physical ESP32-8048S043 board.
-
-## Physical test goal
-
-After flash, record:
-
-```text
-Boot
-Backlight
-Stream Deck screen appears
-all six cards render
-icons render correctly
-text renders correctly
-button press response
-button acquisition near card edges
-GT911 mapping across full panel
-idle display stability
-stability during repeated button presses
-visible flicker
-horizontal jump
-tearing
-reset/crash
-```
-
-Also note:
-
-```text
-whether the 800x420 UI leaves a visible 60 px region;
-whether that region is clean/stable;
-whether 140x140 buttons are comfortable by finger;
-whether the XML component layout is worth adopting for our own UI work.
-```
-
-## Build
-
-From the Test 36 branch:
-
-```powershell
-git pull
-powershell -ExecutionPolicy Bypass -File .\third_party_tests\36_LVGL_Editor_StreamDeck_halyssonJr\run-test36.ps1
-```
-
-## Build + flash
-
-Example for COM7:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\third_party_tests\36_LVGL_Editor_StreamDeck_halyssonJr\run-test36.ps1 -Upload -UploadPort COM7
-```
-
-## Baseline rules
-
-For the first valid physical run do **not**:
-
-```text
-run idf.py set-target;
-change PCLK or porch timings;
-change bounce depth;
-disable avoid_tearing;
-change framebuffer count;
-change direct mode;
-change GT911 mapping;
-change XML layout;
-fix duplicate upstream labels;
-regenerate UI with a newer LVGL Editor;
-flash the optional SPIFFS resource partition.
-```
-
-First obtain the valid physical baseline. Any modification becomes Test 36B or a later controlled derivative.
