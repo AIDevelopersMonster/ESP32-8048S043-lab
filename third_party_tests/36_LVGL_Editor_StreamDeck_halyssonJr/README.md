@@ -2,11 +2,11 @@
 
 ## Status
 
-**BUILD RETRY REQUIRED / FIRST RUN INVALIDATED BY LAB HARNESS / HARNESS FIXED / PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL VERDICT PENDING**
 
 The first local compilation attempt on 2026-09-04 is **not classified as an upstream BUILD FAIL**. The original Test 36 runner incorrectly executed `idf.py set-target esp32s3`, which caused ESP-IDF to rename and replace the upstream tracked `sdkconfig`. That destroyed required project-specific LVGL and partition settings before compilation.
 
-The harness has now been corrected. The next build must use the exact tracked upstream `sdkconfig` without running `idf.py set-target`.
+The harness was corrected to preserve the exact tracked upstream `sdkconfig`. The corrected build subsequently completed successfully on 2026-09-04 and is classified as **BUILD PASS**. Physical-board validation is the next step.
 
 Upstream repository:
 
@@ -134,7 +134,7 @@ target                          esp32s3
 
 The manifest allows broader versions, but Test 36 treats the checked-in lock as the upstream dependency baseline.
 
-The laboratory runner accepts the already-proven ESP-IDF **5.5.x** line. The current host provides ESP-IDF 5.5.5. A successful 5.5.5 build will therefore be classified as a close compatible reproduction of the upstream 5.5.0 lock, not a byte-identical reconstruction.
+The laboratory runner accepts the already-proven ESP-IDF **5.5.x** line. The current host provides ESP-IDF 5.5.5. The successful 5.5.5 build is therefore classified as a close compatible reproduction of the upstream 5.5.0 lock, not a byte-identical reconstruction.
 
 ## Board / memory configuration
 
@@ -310,12 +310,12 @@ The pinned upstream `sdkconfig`, however, contains:
 CONFIG_LV_USE_OBJ_NAME=y
 ```
 
-and LVGL 9.3.0 provides `lv_obj_set_name()` when `LV_USE_OBJ_NAME` is enabled. Therefore this error is fully explained by the lab runner replacing the upstream configuration. There is no need at this stage to patch generated C or bump LVGL.
+and LVGL 9.3.0 provides `lv_obj_set_name()` when `LV_USE_OBJ_NAME` is enabled. Therefore this error is fully explained by the lab runner replacing the upstream configuration. There was no need to patch generated C or bump LVGL.
 
 ### Classification
 
 ```text
-Upstream source build verdict   NOT YET DETERMINED
+Upstream source build verdict   superseded by valid BUILD PASS
 First lab run                    INVALIDATED
 Failure class                    LAB HARNESS CONFIGURATION ERROR
 Physical verdict                PENDING
@@ -352,11 +352,39 @@ verifies the actual generated build config after compilation;
 restores all tracked upstream files after the run.
 ```
 
-No manual cleanup of `%USERPROFILE%\t36-lvgl-editor` should be necessary before retrying.
+No manual cleanup of `%USERPROFILE%\t36-lvgl-editor` was necessary before the successful retry.
+
+## Valid build after harness correction — PASS
+
+Date:
+
+```text
+2026-09-04
+```
+
+User-reported terminal result:
+
+```text
+[PASS] Test 36 build complete
+```
+
+Classification:
+
+```text
+Pinned upstream source          79e862ca332525ba8721c4691f450fb44ec08738
+ESP-IDF host line               5.5.5
+Upstream sdkconfig preserved    PASS
+LVGL object naming              ENABLED
+Custom partition map            PRESERVED
+Compilation                     PASS
+Physical-board verdict          PENDING
+```
+
+This closes the build-stage question. The next evidence must come from the physical ESP32-8048S043 board.
 
 ## Physical test goal
 
-After a valid build and flash, record:
+After flash, record:
 
 ```text
 Boot
@@ -385,7 +413,7 @@ whether 140x140 buttons are comfortable by finger;
 whether the XML component layout is worth adopting for our own UI work.
 ```
 
-## Build retry
+## Build
 
 From the Test 36 branch:
 
@@ -394,9 +422,7 @@ git pull
 powershell -ExecutionPolicy Bypass -File .\third_party_tests\36_LVGL_Editor_StreamDeck_halyssonJr\run-test36.ps1
 ```
 
-The corrected runner automatically removes the incompatible first-run build cache if it detects it. The downloaded managed components are retained.
-
-## Build + flash after a valid build PASS
+## Build + flash
 
 Example for COM7:
 
