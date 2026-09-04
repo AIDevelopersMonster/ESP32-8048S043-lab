@@ -196,17 +196,23 @@ if ($versionText -notmatch [regex]::Escape($esphomeVersion)) {
 
 # ESPHome/PlatformIO has a second Python layer for ESP-IDF dependencies.
 # Do not reuse the user's global ~/.platformio environment, which may be bound
-# to Python 3.14. Use a Test-33-only PlatformIO core and make the selected
-# compatible Python the first interpreter visible to all child processes.
-$pioCoreDir = Join-Path $WorkRoot ("platformio-core-py{0}{1}" -f $finalVenvInfo.Major, $finalVenvInfo.Minor)
+# to Python 3.14. Also keep the PlatformIO core path deliberately short:
+# ESP-IDF contains deeply nested OpenThread/mbedTLS test files and a long
+# Windows path can exceed the traditional MAX_PATH boundary during extraction.
+$pioCoreDir = Join-Path $env:USERPROFILE ("p33-pio-py{0}{1}" -f $finalVenvInfo.Major, $finalVenvInfo.Minor)
 New-Item -ItemType Directory -Force -Path $pioCoreDir | Out-Null
+
+$legacyPioCoreDir = Join-Path $WorkRoot ("platformio-core-py{0}{1}" -f $finalVenvInfo.Major, $finalVenvInfo.Minor)
+if (Test-Path $legacyPioCoreDir) {
+    Write-Host "[INFO] Previous long-path Test 33 cache is ignored: $legacyPioCoreDir"
+}
 
 $env:PLATFORMIO_CORE_DIR = $pioCoreDir
 $env:VIRTUAL_ENV = $venvDir
 $env:UV_PYTHON = $venvPython
 $env:PATH = "$venvScripts;$($env:PATH)"
 
-Write-Host "[PASS] Isolated PlatformIO core: $pioCoreDir"
+Write-Host "[PASS] Short isolated PlatformIO core: $pioCoreDir"
 Write-Host "[PASS] Child Python forced to: $venvPython"
 Write-Host "[PASS] Global $env:USERPROFILE\.platformio is not used by Test 33"
 
