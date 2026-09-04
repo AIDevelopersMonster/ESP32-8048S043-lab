@@ -12,6 +12,7 @@ $Upstream = Join-Path $WorkRoot 'upstream'
 $Prepare = Join-Path $PSScriptRoot 'prepare-test36.ps1'
 
 & powershell -ExecutionPolicy Bypass -File $Prepare -WorkRoot $WorkRoot
+if ($LASTEXITCODE -ne 0) { throw 'prepare-test36.ps1 failed' }
 
 function Import-IdfEnvironment {
     param([string]$ExplicitExport)
@@ -61,35 +62,78 @@ try {
     if ($Head -ne $Commit) {
         throw "Pinned commit mismatch before build: $Head"
     }
-    if (git status --porcelain) {
-        throw "Upstream tree is dirty before build"
+
+    $TrackedStatus = (git status --porcelain --untracked-files=no | Out-String).Trim()
+    if ($TrackedStatus) {
+        throw "Tracked upstream tree is dirty before build: $TrackedStatus"
     }
 
-    idf.py set-target esp32s3
-    if ($LASTEXITCODE -ne 0) { throw "idf.py set-target failed" }
+    $SdkConfig = [System.IO.File]::ReadAllText((Join-Path $Upstream 'sdkconfig'))
+    if (-not $SdkConfig.Contains('CONFIG_IDF_TARGET="esp32s3"')) {
+        throw 'Pinned sdkconfig no longer targets esp32s3'
+    }
+    if (-not $SdkConfig.Contains('CONFIG_LV_USE_OBJ_NAME=y')) {
+        throw 'Pinned sdkconfig lost CONFIG_LV_USE_OBJ_NAME=y'
+    }
+    if (-not $SdkConfig.Contains('CONFIG_PARTITION_TABLE_CUSTOM=y')) {
+        throw 'Pinned sdkconfig lost custom partition table selection'
+    }
+
+    # The first Test 36 runner incorrectly called `idf.py set-target esp32s3`.
+    # That command replaced the tracked sdkconfig, disabling LV_USE_OBJ_NAME and
+    # switching the build to the default 1 MB partition table. If that failed
+    # build cache is present, discard only build/ and keep managed_components/.
+    $BuildConfig = Join-Path $Upstream 'build\config\sdkconfig.h'
+    if (Test-Path $BuildConfig) {
+        $BuildConfigText = [System.IO.File]::ReadAllText($BuildConfig)
+        $BadObjName = -not $BuildConfigText.Contains('#define CONFIG_LV_USE_OBJ_NAME 1')
+        $BadCustomPartition = -not $BuildConfigText.Contains('#define CONFIG_PARTITION_TABLE_CUSTOM 1')
+        if ($BadObjName -or $BadCustomPartition) {
+            Write-Host '[INFO] Removing incompatible build cache created by the previous Test 36 runner'
+            Remove-Item -Recurse -Force (Join-Path $Upstream 'build')
+        }
+    }
+
+    Write-Host '[PASS] Using pinned upstream sdkconfig; idf.py set-target is intentionally NOT called'
 
     idf.py build
-    if ($LASTEXITCODE -ne 0) { throw "idf.py build failed" }
+    if ($LASTEXITCODE -ne 0) { throw 'idf.py build failed' }
 
-    Write-Host "[PASS] Test 36 build complete"
+    # Verify that the actual build consumed the required upstream configuration.
+    $BuiltSdkConfig = Join-Path $Upstream 'build\config\sdkconfig.h'
+    if (-not (Test-Path $BuiltSdkConfig)) {
+        throw 'Build completed but build/config/sdkconfig.h is missing'
+    }
+    $BuiltConfigText = [System.IO.File]::ReadAllText($BuiltSdkConfig)
+    if (-not $BuiltConfigText.Contains('#define CONFIG_LV_USE_OBJ_NAME 1')) {
+        throw 'Build did not retain CONFIG_LV_USE_OBJ_NAME=1'
+    }
+    if (-not $BuiltConfigText.Contains('#define CONFIG_PARTITION_TABLE_CUSTOM 1')) {
+        throw 'Build did not retain the custom upstream partition table'
+    }
+
+    Write-Host '[PASS] Test 36 build complete'
+    Write-Host '[PASS] LVGL object-name support retained in actual build'
+    Write-Host '[PASS] Upstream custom partition configuration retained in actual build'
 
     if ($Upload) {
         if (-not $UploadPort) {
-            throw "-Upload requires -UploadPort, for example COM7"
+            throw '-Upload requires -UploadPort, for example COM7'
         }
         idf.py -p $UploadPort flash
-        if ($LASTEXITCODE -ne 0) { throw "idf.py flash failed" }
+        if ($LASTEXITCODE -ne 0) { throw 'idf.py flash failed' }
         Write-Host "[PASS] Test 36 flashed to $UploadPort"
         Write-Host "Monitor command: idf.py -p $UploadPort monitor"
     }
 }
 finally {
-    # Keep build output and managed components for reproducibility/incremental rebuild,
-    # but ensure tracked source remains unchanged.
+    # Restore tracked source/config exactly to the pinned commit. Keep ignored
+    # build and managed component directories for faster repeat builds.
     git checkout -- . 2>$null
     $After = (git rev-parse HEAD).Trim()
-    if ($After -eq $Commit) {
-        Write-Host "[PASS] Exact pinned upstream revision retained"
+    $AfterStatus = (git status --porcelain --untracked-files=no | Out-String).Trim()
+    if (($After -eq $Commit) -and (-not $AfterStatus)) {
+        Write-Host '[PASS] Exact pinned upstream tracked revision retained'
     }
     Pop-Location
 }
