@@ -2,9 +2,22 @@
 
 ## Status
 
-**BUILD PASS / PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL PASS / CLOSED / KNOWN-GOOD THIRD-PARTY REFERENCE**
 
-Historical build verified on 2026-09-04 against the exact pinned xoquox fork commit. Physical-board verification is the next step.
+Historical build and real-board physical verification were completed on 2026-09-04 against the exact pinned xoquox fork commit.
+
+Final physical verdict from direct observation:
+
+```text
+Boot/display/UI             PASS
+Visible flicker             NOT OBSERVED
+Visible artifacting         NOT OBSERVED
+Visible difference vs T33   NONE APPARENT BY EYE
+Overall physical result     PASS
+State                       CLOSED / KNOWN-GOOD REFERENCE
+```
+
+User comparison with Test 33: **organoleptically the same; no flicker; visually the same.**
 
 Upstream repository:
 
@@ -22,7 +35,7 @@ This repository is a fork of:
 RyanEwen/esphome-lvgl
 ```
 
-Test 33 already established the RyanEwen baseline as BUILD PASS + PHYSICAL PASS. Test 34 intentionally keeps the xoquox fork separate so fork-specific differences are not mixed into that known-good reference.
+Test 33 established the RyanEwen baseline as BUILD PASS + PHYSICAL PASS. Test 34 intentionally keeps the xoquox fork separate so fork-specific differences are not mixed into that known-good reference.
 
 ## Pinned upstream commit
 
@@ -36,7 +49,7 @@ At the time of this test GitHub reports no license declaration for the fork (`li
 
 ## Why Test 34
 
-The fork is close enough to Test 33 to give us a controlled architectural comparison, but different enough to be worth testing as a whole-project variant.
+The fork is close enough to Test 33 to give us a useful architectural comparison, but different enough to be worth testing as a whole-project variant.
 
 Key differences visible at the pinned commit include:
 
@@ -60,7 +73,7 @@ The xoquox device profile contains the historical comment:
 # platform_version: 6.8.1
 ```
 
-Those pins are deliberately **not re-enabled** in the first Test 34 build because the pinned upstream commit itself commented them out. The purpose is to test the exact current fork state first.
+Those pins were deliberately **not re-enabled** because the pinned upstream commit itself commented them out. Test 34 therefore represents the exact current fork state at the selected commit.
 
 ## ESP32-8048S043 device profile at the pin
 
@@ -121,7 +134,7 @@ SDA 17
 SCL 18
 ```
 
-The latest commit also adds `sensors/bme680.yaml` for a BME680 at address `0x77` on `bus_b`. That optional sensor package is **not included in the default physical HMI baseline**, because the laboratory board is being tested for display/touch behavior and a BME680 is not required hardware for that purpose.
+The latest commit also adds `sensors/bme680.yaml` for a BME680 at address `0x77` on `bus_b`. That optional sensor package was **not included in the default physical HMI baseline**, because the laboratory board was being tested for display/touch behavior and a BME680 is not required hardware for that purpose.
 
 ## No ready 4.3-inch root example in the fork
 
@@ -187,10 +200,30 @@ Historical reconstruction  PASS
 Firmware compilation       PASS
 Upstream source restored   PASS
 Global ~/.platformio       NOT USED
-Physical-board verdict     PENDING
+Physical-board verdict     PASS
 ```
 
 No upstream source changes were required to obtain the successful build. The commented ESP-IDF 5.3.0 / platform 6.8.1 anti-artifact pins remained commented, matching the pinned xoquox commit.
+
+## Physical-board result
+
+The firmware was flashed to the same real ESP32-8048S043 board used for Test 33.
+
+Direct visual comparison against the known-good RyanEwen Test 33 baseline found:
+
+```text
+Test 33 RyanEwen / mipi_rgb       PASS
+Test 34 xoquox / rpi_dpi_rgb      PASS
+
+Visible flicker T33               none observed
+Visible flicker T34               none observed
+Visible artifacting T34           none observed
+Subjective visual difference      none apparent by eye
+```
+
+The user explicitly reported that the two variants looked **organoleptically the same** and that no flicker was visible.
+
+This is a visual/functional whole-project comparison, not an instrumented timing or electrical equivalence result. It therefore supports the limited conclusion that both tested ESPHome display paths are visually stable on this board under the tested conditions; it does **not** prove identical internal transport, latency, memory use or signal timing.
 
 ## Reused Windows reproducibility lessons from Test 33
 
@@ -224,38 +257,40 @@ Baseline rules:
 5. external wrapper only to compose the fork packages because the fork has no ready root example;
 6. build first, physical verdict second.
 
-The build phase is now complete. Any derived compatibility experiment, if needed after the physical verdict, must remain separate from this baseline.
+Both build and physical phases are now complete.
 
-## What to observe physically
+## Architectural conclusion
 
-After flashing:
-
-```text
-Boot
-Backlight
-UI appears
-Display stability at idle
-Display stability during touch/redraw
-GT911 mapping
-Page navigation
-Button response
-Interactive control response
-Animation smoothness
-Horizontal jump
-Flicker/artifacting
-Reset/crash
-```
-
-Home Assistant entity availability remains separate from the display/touch verdict.
-
-## Expected architectural value
-
-Test 34 can answer a useful practical question:
+For the exact tested board and these exact reconstructed project states:
 
 ```text
-Does the xoquox fork's rpi_dpi_rgb + dual-I2C ESPHome profile
-remain stable on the same real ESP32-8048S043 board where the
-RyanEwen mipi_rgb baseline passed?
+RyanEwen Test 33
+ESPHome / mipi_rgb / GT911
+-> BUILD PASS
+-> PHYSICAL PASS
+
+xoquox Test 34
+ESPHome / rpi_dpi_rgb / dual-I2C / GT911
+-> BUILD PASS
+-> PHYSICAL PASS
 ```
 
-Because Test 33 is already frozen as known-good, the Test 34 physical result will provide a useful whole-architecture comparison without contaminating the proven parent baseline.
+No visible display-quality advantage was observed for either variant. In practical HMI terms they were visually equivalent by eye during the test.
+
+This makes both projects useful known-good ESPHome references. The xoquox fork additionally demonstrates a second I2C bus and optional BME680 integration without introducing visible display instability in the tested baseline.
+
+## Final Test 34 conclusion
+
+```text
+xoquox/esphome-lvgl
+ESP32-8048S043
+ESPHome 2025.12.7 historical reconstruction
+ESP-IDF / rpi_dpi_rgb / LVGL / GT911
+
+BUILD PASS
+PHYSICAL PASS
+NO VISIBLE FLICKER OBSERVED
+NO VISIBLE ARTIFACTING OBSERVED
+NO APPARENT VISUAL DIFFERENCE VS TEST 33
+CLOSED / KNOWN-GOOD THIRD-PARTY REFERENCE
+```
