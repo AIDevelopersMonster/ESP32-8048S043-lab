@@ -2,7 +2,9 @@
 
 ## Status
 
-**THIRD-PARTY CANDIDATE / BUILD + PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL VERDICT PENDING**
+
+Historical build verified on 2026-09-04 against the exact pinned xoquox fork commit. Physical-board verification is the next step.
 
 Upstream repository:
 
@@ -165,6 +167,31 @@ ESPHome 2025.12.7
 
 as the latest stable ESPHome release available before the fork commit.
 
+## Build result
+
+The exact fork state compiled successfully on 2026-09-04:
+
+```text
+============================================ [SUCCESS] Took 1264.69 seconds ============================================
+INFO Successfully compiled program.
+
+[PASS] Exact upstream source restored; generated build artifacts removed
+[PASS] Isolated PlatformIO cache retained at: C:\Users\CHUWI\p34-pio-py313
+```
+
+Build verdict:
+
+```text
+ESPHome validation          PASS
+Historical reconstruction  PASS
+Firmware compilation       PASS
+Upstream source restored   PASS
+Global ~/.platformio       NOT USED
+Physical-board verdict     PENDING
+```
+
+No upstream source changes were required to obtain the successful build. The commented ESP-IDF 5.3.0 / platform 6.8.1 anti-artifact pins remained commented, matching the pinned xoquox commit.
+
 ## Reused Windows reproducibility lessons from Test 33
 
 Test 34 starts with the Test 33 build-environment fixes already applied:
@@ -188,7 +215,7 @@ C:\Users\<USER>\p34-pio-py313
 
 This is a **whole-project third-party architecture test**, not a one-variable causal experiment.
 
-First baseline rules:
+Baseline rules:
 
 1. exact upstream commit `33a2a35...`;
 2. no edits to upstream source;
@@ -197,11 +224,11 @@ First baseline rules:
 5. external wrapper only to compose the fork packages because the fork has no ready root example;
 6. build first, physical verdict second.
 
-If the exact fork fails, any derived compatibility experiment will be placed in a separate follow-up test or clearly identified variant rather than silently modifying Test 34.
+The build phase is now complete. Any derived compatibility experiment, if needed after the physical verdict, must remain separate from this baseline.
 
 ## What to observe physically
 
-If build succeeds and firmware is flashed:
+After flashing:
 
 ```text
 Boot
@@ -231,4 +258,4 @@ remain stable on the same real ESP32-8048S043 board where the
 RyanEwen mipi_rgb baseline passed?
 ```
 
-Because Test 33 is already frozen as known-good, any Test 34 result becomes a useful whole-architecture comparison without contaminating the proven parent baseline.
+Because Test 33 is already frozen as known-good, the Test 34 physical result will provide a useful whole-architecture comparison without contaminating the proven parent baseline.
