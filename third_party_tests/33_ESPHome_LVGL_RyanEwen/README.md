@@ -2,7 +2,9 @@
 
 ## Status
 
-**THIRD-PARTY CANDIDATE / BUILD + PHYSICAL VERDICT PENDING**
+**BUILD PASS / PHYSICAL VERDICT PENDING**
+
+Build verified on 2026-09-04 with the pinned historical ESPHome reconstruction. The first physical-board verdict has not yet been recorded.
 
 Upstream repository:
 
@@ -177,6 +179,28 @@ Test 33 pins that exact ESPHome version for the first reconstruction.
 
 This is intentionally historical rather than using the moving current ESPHome release.
 
+## Build result
+
+The historical reconstruction reached a clean successful build on 2026-09-04:
+
+```text
+[SUCCESS] Took 839.35 seconds
+INFO Successfully compiled program.
+[PASS] Exact upstream source restored; ESPHome build artifacts removed
+[PASS] Isolated PlatformIO cache retained at: C:\Users\CHUWI\p33-pio-py313
+```
+
+Environment findings from the reconstruction:
+
+```text
+ESPHome 2025.12.5 requires Python >=3.11 and <3.14
+Python 3.13 selected for Test 33
+PlatformIO core isolated from the user's global ~/.platformio
+short PlatformIO core path used to avoid Windows MAX_PATH failures while unpacking ESP-IDF
+```
+
+The successful build proves the pinned RyanEwen application/package source is buildable under this controlled historical reconstruction. It does **not** yet prove the physical display/touch behavior; that remains the next verdict.
+
 ## Build harness policy
 
 The Test 33 harness:
@@ -186,10 +210,11 @@ The Test 33 harness:
 3. creates an isolated Python virtual environment;
 4. installs `esphome==2025.12.5`;
 5. creates a temporary local `secrets.yaml` only for compilation;
-6. compiles the original `sunton-43-example.yaml`;
-7. optionally uploads through a specified serial port;
-8. removes build artifacts and the temporary secrets file;
-9. verifies that the pinned upstream source tree is unchanged.
+6. uses a short isolated PlatformIO core path for the ESP-IDF dependency layer;
+7. compiles the original `sunton-43-example.yaml`;
+8. optionally uploads through a specified serial port;
+9. removes build artifacts and the temporary secrets file;
+10. verifies that the pinned upstream source tree is unchanged.
 
 No display, touch, layout, widget or application source is patched before the first physical verdict.
 
