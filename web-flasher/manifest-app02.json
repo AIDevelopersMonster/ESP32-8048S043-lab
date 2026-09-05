@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS App 02 - Mixed Widgets",
+  "version": "0.1.1",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app02-mixed-widgets-v0.1.1.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
