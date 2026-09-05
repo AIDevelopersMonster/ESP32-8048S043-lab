@@ -41,10 +41,11 @@ jobs:
       - name: Build App 01 with exact ESP-IDF 5.5.5
         run: |
           docker run --rm \
+            -e APP01_BIN_NAME="${APP01_BIN_NAME}" \
             -v "$PWD:/project" \
             -w "/project/${APP01_PROJECT_DIR}" \
             espressif/idf:v5.5.5 \
-            bash -lc 'idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP01_BIN_NAME}" @flash_args'
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP01_BIN_NAME}" @flash_args'
 
       - name: Verify merged firmware
         run: |
