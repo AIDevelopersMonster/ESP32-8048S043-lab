@@ -30,13 +30,17 @@ try {
     $Head = (git rev-parse HEAD).Trim()
     if ($Head -ne $Commit) { throw "Pinned commit mismatch: $Head" }
 
-    $LcdPath = Join-Path $Upstream 'main\lcd_display.c'
-    $Text = [System.IO.File]::ReadAllText($LcdPath)
-    if (-not $Text.Contains('#define LVGL_TASK_SLEEP 500')) {
-        throw 'Expected Test36 baseline LVGL_TASK_SLEEP 500 not found'
+    $LcdSourcePath = Join-Path $Upstream 'main\lcd_display.c'
+    $LcdHeaderPath = Join-Path $Upstream 'main\lcd_display.h'
+
+    $SourceText = [System.IO.File]::ReadAllText($LcdSourcePath)
+    $HeaderText = [System.IO.File]::ReadAllText($LcdHeaderPath)
+
+    if (-not $SourceText.Contains('#define LVGL_TASK_SLEEP 500')) {
+        throw 'Expected Test36 baseline LVGL_TASK_SLEEP 500 not found in main/lcd_display.c'
     }
-    if (-not $Text.Contains('#define TOUCH_GPIO_INT GPIO_NUM_NC')) {
-        throw 'Expected GT911 interrupt-disabled baseline not found'
+    if (-not $HeaderText.Contains('#define TOUCH_GPIO_INT GPIO_NUM_NC')) {
+        throw 'Expected GT911 interrupt-disabled baseline not found in main/lcd_display.h'
     }
 
     $Baseline = @"
@@ -49,7 +53,7 @@ ONLY intended runtime source delta:
   #define LVGL_TASK_SLEEP 16
 
 Everything else remains baseline Test 36, including:
-- GT911 INT disabled
+- GT911 INT disabled in main/lcd_display.h
 - I2C 400 kHz
 - same coordinate mapping
 - same LVGL/esp_lvgl_port versions
@@ -62,8 +66,8 @@ Everything else remains baseline Test 36, including:
     [System.IO.File]::WriteAllText((Join-Path $WorkRoot 'BASELINE.txt'), $Baseline, (New-Object System.Text.UTF8Encoding($false)))
 
     Write-Host '[PASS] Test 36B baseline prepared'
-    Write-Host '[PASS] Test 36 baseline sleep=500 verified'
-    Write-Host '[PASS] GT911 interrupt remains disabled'
+    Write-Host '[PASS] Test 36 baseline sleep=500 verified in lcd_display.c'
+    Write-Host '[PASS] GT911 interrupt-disabled baseline verified in lcd_display.h'
 }
 finally {
     Pop-Location
