@@ -2,50 +2,67 @@
 
 ## Status
 
-**ORIGINAL APPLICATION / PHYSICAL BOOT CONFIRMED / UI-TASK STACK FIX APPLIED / FULL PHYSICAL VALIDATION PENDING**
+**ORIGINAL APPLICATION / PHYSICAL PASS / PROFILE SWITCHING PASS / STACK STABLE**
 
 This is the first own application in the ESP32-8048S043 lab. It is not a fork of the `halyssonJr/lvgl-demo-esp32s3` Stream Deck UI and does not reuse that project's UI source or image assets.
 
 The application intentionally keeps only the useful concept discovered during external-project study: a six-card command panel.
 
-## First physical boot result
+## Physical result
 
-The first flashed build reached all of the following successfully on the physical board:
+The application now passes on the physical ESP32-8048S043 board.
+
+Confirmed:
 
 ```text
 ESP32-S3 boot                  PASS
 16 MB flash                    PASS
 8 MB Octal PSRAM               PASS
-native RGB display init        PASS
+native RGB display             PASS
 GT911 identification           PASS
 GT911 Config Version 65        PASS
-HOME profile construction      PASS
-six-card screen visible        PASS
+HOME profile                   PASS
+MEDIA profile                  PASS
+SYSTEM profile                 PASS
+profile switching              PASS
+card touch                     PASS
+serial CARD commands           PASS
+visible UI                     PASS
+reboot/stack overflow          FIXED
+long-running stack stability   PASS
 ```
 
-Observed serial sequence:
+Observed command examples:
 
 ```text
-APP01: App 01 - Six-Card Serial Deck
-APP01: Free INTERNAL heap before display: 312987
-APP01: Free PSRAM before display: 7840024
-GT911: TouchPad_ID:0x39,0x31,0x31
-GT911: TouchPad_Config_Version:65
-PROFILE:HOME
-APP01: Ready. Tap cards; press PROFILE to reassign all six slots.
+CARD:POWER
+CARD:MEDIA
+CARD:GAME
+CARD:SETTINGS
+CARD:WORK
+CARD:SOCIAL
 ```
 
-Immediately after this, the first build repeatedly rebooted with:
+The dedicated UI task remained stable during the physical run. Reported stack high-water values settled at approximately:
+
+```text
+11956 bytes
+11924 bytes
+```
+
+with a configured task stack of 16384 bytes. This leaves a large operating margin for the current application.
+
+## First physical boot issue and fix
+
+The first flashed build reached all initialization stages successfully but repeatedly rebooted with:
 
 ```text
 ***ERROR*** A stack overflow in task main has been detected.
 ```
 
-This was not a display, PSRAM or GT911 failure. The UI was already visible and the touch controller had initialized correctly. The fault was architectural: the infinite `lv_timer_handler()` loop had been left inside ESP-IDF's system `main` task, whose stack was insufficient for the LVGL runtime path.
+The display, PSRAM, GT911 and UI had already initialized correctly. The fault was architectural: the infinite `lv_timer_handler()` loop had been left inside ESP-IDF's system `main` task.
 
-### Fix
-
-The LVGL runtime now executes in a dedicated pinned FreeRTOS task:
+The LVGL runtime was moved into a dedicated pinned FreeRTOS task:
 
 ```text
 task name    app01_ui
@@ -54,7 +71,7 @@ priority     9
 core         1
 ```
 
-`app_main()` now only creates that task and returns. The UI task reports its stack high-water mark after initialization and every 10 seconds so stack usage remains observable during development.
+`app_main()` now only creates the UI task and returns.
 
 ## Architecture
 
@@ -71,7 +88,7 @@ ESP32-S3
   -> six universal card slots
 ```
 
-Display baseline uses the physically proven board-family configuration:
+Display baseline:
 
 ```text
 PCLK       16 MHz
@@ -167,15 +184,36 @@ SD Card    -> CARD:SD_CARD
 Settings   -> CARD:SETTINGS
 ```
 
-Press the `PROFILE` button in the top-right corner to cycle through the profiles.
+Press the profile selector in the top-right corner to cycle through the profiles.
 
-Profile changes are also reported:
+Profile changes are reported as:
 
 ```text
 PROFILE:HOME
 PROFILE:MEDIA
 PROFILE:SYSTEM
 ```
+
+## Profile selector UX
+
+The first physically successful version used a 150 x 40 top-right profile button. Functionally it worked correctly, but the user reported two UX issues:
+
+1. the control initially looked more like a label than a button;
+2. the longest text did not fit cleanly, with part of the label clipped at the right edge.
+
+The control was therefore changed without touching display/touch/profile logic:
+
+```text
+old size     150 x 40
+new size     200 x 48
+position     moved left
+border       added
+shadow       added
+background   made more distinct
+label        remains PROFILE: <NAME> >
+```
+
+This is a presentation-only refinement; the profile callback and hit behavior remain unchanged.
 
 ## Visual-slot design
 
@@ -209,37 +247,6 @@ Flash, for example COM7:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\apps\01_SixCardSerialDeck\run-app01.ps1 -Flash -Port COM7
 ```
-
-## Physical acceptance
-
-Minimum acceptance run after the UI-task fix:
-
-```text
-1. leave screen running for at least 20 seconds
-   -> no reboot
-   -> observe UI task stack high-water logs
-
-2. HOME profile:
-   each card x10
-   then one circular pass across all six
-
-3. switch to MEDIA:
-   verify all six labels/symbols change
-   press each once
-
-4. switch to SYSTEM:
-   verify all six labels/symbols change
-   press each once
-```
-
-Expected:
-
-- no reboot or stack-overflow message;
-- no visible flicker;
-- no missed ordinary taps;
-- pressed feedback visible immediately;
-- one serial `CARD:` line per completed click;
-- profile change does not alter touch reliability.
 
 ## Independence
 
