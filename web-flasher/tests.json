@@ -15,9 +15,20 @@
       "id": "app01-six-card-serial-deck",
       "version": "1.0.0",
       "manifest": "manifest-app01.json",
-      "status": "physical-pass",
+      "runtimeStatus": "physical-pass",
+      "webFlasherStatus": "physical-pass",
       "video": "https://youtube.com/shorts/0I5JL6jt8e0",
       "source": "../apps/01_SixCardSerialDeck/"
+    },
+    {
+      "id": "app02-mixed-widgets",
+      "version": "0.1.1",
+      "manifest": "manifest-app02.json",
+      "runtimeStatus": "physical-pass-v0.1.0",
+      "webFlasherStatus": "pending-browser-install-v0.1.1",
+      "notes": "v0.1.1 only widens and repositions BACK TO CONTROLS; functional widget behavior is unchanged from physically validated v0.1.0.",
+      "video": "https://youtube.com/shorts/LwmW8UwDED0",
+      "source": "../apps/02_MixedWidgets/"
     }
   ]
 }

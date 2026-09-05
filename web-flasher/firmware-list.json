@@ -1,0 +1,27 @@
+{
+  "project": "KONTAKTS / ESP32-8048S043 Lab",
+  "programmer": "Sol",
+  "engineer": "Alex Malachevsky",
+  "firmwares": [
+    {
+      "id": "app01",
+      "name": "Six-Card Serial Deck",
+      "version": "1.0.0",
+      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS",
+      "description": "Six touch cards with HOME, MEDIA and SYSTEM profiles plus Serial commands.",
+      "manifest": "./manifest-app01.json",
+      "video": "https://youtube.com/shorts/0I5JL6jt8e0",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/01_SixCardSerialDeck"
+    },
+    {
+      "id": "app02",
+      "name": "Mixed Widgets",
+      "version": "0.1.1",
+      "status": "FUNCTIONAL PHYSICAL PASS / COSMETIC FIX BUILD",
+      "description": "LVGL button, switch, slider, arc, progress indicator and multi-screen navigation.",
+      "manifest": "./manifest-app02.json",
+      "video": "https://youtube.com/shorts/LwmW8UwDED0",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/02_MixedWidgets"
+    }
+  ]
+}
