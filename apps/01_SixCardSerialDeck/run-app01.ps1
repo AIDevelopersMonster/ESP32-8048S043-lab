@@ -54,6 +54,47 @@ function Select-Idf55 {
     return $null
 }
 
+function Get-SerialPorts {
+    try {
+        return @([System.IO.Ports.SerialPort]::GetPortNames() | Sort-Object)
+    }
+    catch {
+        return @()
+    }
+}
+
+function Show-LatestIdfFlashLogs {
+    param([string]$BuildDir)
+
+    $logDir = Join-Path $BuildDir "log"
+    if (-not (Test-Path $logDir)) {
+        Write-Warning "ESP-IDF log directory not found: $logDir"
+        return
+    }
+
+    $files = @(Get-ChildItem -Path $logDir -File -ErrorAction SilentlyContinue |
+        Where-Object {
+            $_.Name -like "idf_py_stderr_output_*" -or
+            $_.Name -like "idf_py_stdout_output_*"
+        } |
+        Sort-Object LastWriteTime -Descending |
+        Select-Object -First 4)
+
+    if ($files.Count -eq 0) {
+        Write-Warning "No ESP-IDF stdout/stderr log files found in $logDir"
+        return
+    }
+
+    Write-Host ""
+    Write-Host "========== ESP-IDF / esptool diagnostic tail =========="
+    foreach ($file in $files) {
+        Write-Host "--- $($file.FullName) ---"
+        Get-Content -Path $file.FullName -Tail 160 -ErrorAction SilentlyContinue
+    }
+    Write-Host "========================================================"
+    Write-Host ""
+}
+
 $roots = @(Discover-IdfRoots $IdfPath)
 $idfRoot = Select-Idf55 $roots
 if (-not $idfRoot) {
@@ -80,9 +121,30 @@ try {
     Write-Host "[PASS] App 01 build complete"
 
     if ($Flash) {
-        if ($Port) { & python $idfPy -p $Port flash }
-        else { & python $idfPy flash }
-        if ($LASTEXITCODE -ne 0) { throw "App 01 flash failed" }
+        $ports = @(Get-SerialPorts)
+        if ($ports.Count -gt 0) {
+            Write-Host "Detected serial ports: $($ports -join ', ')"
+        }
+        else {
+            Write-Host "Detected serial ports: none"
+        }
+
+        if ($Port) {
+            if ($ports.Count -gt 0 -and $ports -notcontains $Port) {
+                throw "Requested upload port $Port is not present. Available: $($ports -join ', ')"
+            }
+            Write-Host "Flashing App 01 to $Port ..."
+            & python $idfPy -p $Port flash
+        }
+        else {
+            Write-Host "Flashing App 01 using ESP-IDF auto-detected port ..."
+            & python $idfPy flash
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+            Show-LatestIdfFlashLogs -BuildDir (Join-Path $projectDir "build")
+            throw "App 01 flash failed"
+        }
         Write-Host "[PASS] App 01 flashed"
     }
 }
