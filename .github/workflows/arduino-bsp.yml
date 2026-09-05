@@ -21,6 +21,9 @@ jobs:
           arduino-cli config init
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install esp32:esp32@3.3.8 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Install example dependencies
+        run: |
+          arduino-cli lib install "GFX Library for Arduino@1.6.0"
       - name: Compile skeleton examples
         run: |
           for example in 01_BoardInfo 02_DisplayRGBTest 03_TouchGT911Test 04_BacklightTest 05_TestConsole; do
