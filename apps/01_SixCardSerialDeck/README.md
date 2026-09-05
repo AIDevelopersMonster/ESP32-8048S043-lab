@@ -20,19 +20,20 @@ App path:
 apps/01_SixCardSerialDeck/
 ```
 
-Full physical demonstration:
+Full physical demonstration of the current corrected firmware:
 
 https://youtube.com/shorts/0I5JL6jt8e0
 
 The video demonstrates the complete App 01 idea on the physical ESP32-8048S043 board:
 
+- corrected top-right PROFILE control;
 - HOME / MEDIA / SYSTEM profile switching;
 - visible reassignment of all six cards on the 800x480 display;
 - GT911 touch operation;
 - matching `PROFILE:` and `CARD:` output in Serial/COM;
 - the profile-driven design where visible label/icon and stable command are separate.
 
-The recording was made on the physically validated baseline. A small presentation-only clipping issue is visible in the original top-right `PROFILE` control; it does not affect profile switching or touch reliability and is handled as a later UX-only refinement.
+The video is the physical demonstration of the current normal App 01 firmware after the PROFILE presentation fix. The earlier version with the small PROFILE-label clipping issue was shown separately on YouTube and is not the video registered here as the current App 01 evidence.
 
 ## Physical result
 
@@ -220,14 +221,11 @@ PROFILE:MEDIA
 PROFILE:SYSTEM
 ```
 
-## Profile selector UX
+## Profile selector UX history
 
-The first physically successful version used a 150 x 40 top-right profile button. Functionally it worked correctly, but the user reported two UX issues:
+An earlier physically successful build used a smaller 150 x 40 top-right profile button. Functionally it worked correctly, but the control was not visually obvious enough and part of the PROFILE label could be clipped.
 
-1. the control initially looked more like a label than a button;
-2. the text did not fit cleanly, with part of the label clipped at the edge.
-
-The control was therefore changed without touching display/touch/profile logic:
+The current firmware uses the corrected presentation:
 
 ```text
 old size     150 x 40
@@ -236,10 +234,10 @@ position     moved left
 border       added
 shadow       added
 background   made more distinct
-label        remains PROFILE: <NAME> >
+label        PROFILE: <NAME> >
 ```
 
-This is a presentation-only refinement; the profile callback and hit behavior remain unchanged.
+This was a presentation-only refinement; profile logic and touch behavior were not changed. The registered current demonstration video shows the corrected version.
 
 ## Visual-slot design
 
