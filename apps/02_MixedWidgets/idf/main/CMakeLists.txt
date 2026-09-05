@@ -1,3 +1,8 @@
+# Project: KONTAKTS / ESP32-8048S043 Lab
+# Application: App 02 - Mixed Widgets
+# Programmer: Sol
+# Engineer: Alex Malachevsky
+
 idf_component_register(
     SRCS "main.c"
     INCLUDE_DIRS "."
