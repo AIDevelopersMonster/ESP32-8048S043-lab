@@ -59,7 +59,6 @@ try {
     $ExamplesPath = Join-Path $Upstream 'main\examples\examples.c'
     $GenPath = Join-Path $Upstream 'main\examples\screens\stream_deck_main_gen.c'
 
-    # Reproduce Test 36C modern-I2C baseline first.
     $NewTouchH = @'
 #pragma once
 #include "driver/i2c_master.h"
@@ -68,6 +67,7 @@ try {
 esp_err_t i2c_dev_init(void);
 i2c_master_bus_handle_t i2c_dev_get_bus(void);
 '@
+
     $NewTouchC = @'
 #include "touch_i2c.h"
 #include "esp_log.h"
@@ -98,11 +98,13 @@ esp_err_t i2c_dev_init(void)
 }
 i2c_master_bus_handle_t i2c_dev_get_bus(void) { return i2c_bus_handle; }
 '@
+
     Write-Utf8NoBom $TouchHPath $NewTouchH
     Write-Utf8NoBom $TouchCPath $NewTouchC
 
     $LcdC = [System.IO.File]::ReadAllText($LcdCPath)
-    $LcdC = $LcdC.Replace('#include "lcd_display.h"', "#include \"lcd_display.h\"`r`n#include \"touch_i2c.h\"")
+    $IncludeBlock = '#include "lcd_display.h"' + "`r`n" + '#include "touch_i2c.h"'
+    $LcdC = $LcdC.Replace('#include "lcd_display.h"', $IncludeBlock)
     $LcdC = $LcdC.Replace('esp_lcd_panel_io_i2c_config_t tp_io_cfg = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();', "esp_lcd_panel_io_i2c_config_t tp_io_cfg = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();`r`n        tp_io_cfg.scl_speed_hz = 400000;")
     $LcdC = $LcdC.Replace('if (esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)1, &tp_io_cfg, tp_io) != ESP_OK)', 'if (esp_lcd_new_panel_io_i2c(i2c_dev_get_bus(), &tp_io_cfg, tp_io) != ESP_OK)')
     Write-Utf8NoBom $LcdCPath $LcdC
@@ -111,7 +113,6 @@ i2c_master_bus_handle_t i2c_dev_get_bus(void) { return i2c_bus_handle; }
     $Cmake = $Cmake.Replace('REQUIRES esp_lcd lvgl lvgl__lvgl)', 'REQUIRES esp_lcd esp_driver_i2c lvgl lvgl__lvgl)')
     Write-Utf8NoBom $CmakePath $Cmake
 
-    # Resolve managed components so esp_lvgl_port 2.6.0 source exists locally.
     idf.py reconfigure
     if ($LASTEXITCODE -ne 0) { throw 'idf.py reconfigure failed' }
 
@@ -136,7 +137,6 @@ bool touchpad_pressed = esp_lcd_touch_get_coordinates(touch_ctx->handle, touchpa
     $PortTouch = $PortTouch.Replace($Needle, $Diag)
     Write-Utf8NoBom $PortTouchPath $PortTouch
 
-    # Ask the existing button callback to receive all events, then log the relevant transition classes.
     $Gen = [System.IO.File]::ReadAllText($GenPath)
     if (($Gen -split 'LV_EVENT_CLICKED').Count -lt 7) { throw 'Expected six generated CLICKED registrations not found' }
     $Gen = $Gen.Replace('button_cb, LV_EVENT_CLICKED, NULL', 'button_cb, LV_EVENT_ALL, NULL')
@@ -208,10 +208,9 @@ void button_cb(lv_event_t * e)
 }
 finally {
     git checkout -- . 2>$null
-    $Managed = Join-Path $Upstream 'managed_components\espressif__esp_lvgl_port\src\lvgl9\esp_lvgl_port_touch.c'
-    if (Test-Path $Managed) {
-        # Managed component is outside upstream tracked source; restore it on next reconfigure/prepare.
-        Remove-Item -Recurse -Force (Join-Path $Upstream 'managed_components\espressif__esp_lvgl_port') -ErrorAction SilentlyContinue
+    $ManagedComponent = Join-Path $Upstream 'managed_components\espressif__esp_lvgl_port'
+    if (Test-Path $ManagedComponent) {
+        Remove-Item -Recurse -Force $ManagedComponent -ErrorAction SilentlyContinue
     }
     $Status = (git status --porcelain --untracked-files=no | Out-String).Trim()
     if ($Status) { Write-Warning "Tracked upstream tree is not clean after restore: $Status" }
