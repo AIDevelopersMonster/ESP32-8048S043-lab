@@ -2,7 +2,7 @@
 
 ## Status
 
-**CONTROLLED DERIVATIVE PREPARED / BUILD AND PHYSICAL VERDICT PENDING**
+**BUILD PASS / FLASH PASS / PHYSICAL NO IMPROVEMENT / MODERN-I2C HYPOTHESIS FALSIFIED**
 
 Parent baseline: Test 36 (`halyssonJr/lvgl-demo-esp32s3`, pinned commit `79e862ca332525ba8721c4691f450fb44ec08738`).
 
@@ -16,28 +16,26 @@ Delayed/stuck press      observed
 Production-quality UX    FAIL
 ```
 
-Test 36B changed only `task_max_sleep_ms` from 500 ms to 16 ms and produced **no touch improvement**. Therefore Test 36C returns to the exact Test 36 runtime baseline (`LVGL_TASK_SLEEP=500`) and tests the next independent variable.
+Test 36B changed only `task_max_sleep_ms` from 500 ms to 16 ms and produced no touch improvement. Test 36C returned to the exact Test 36 runtime baseline (`LVGL_TASK_SLEEP=500`) and changed only the GT911 I2C transport backend.
 
 ## Single experimental variable
-
-Replace only the GT911 I2C transport backend:
 
 ```text
 legacy ESP-IDF I2C backend
   driver/i2c.h
   i2c_param_config()
   i2c_driver_install()
-  integer bus id passed to esp_lcd_new_panel_io_i2c()
+  integer bus id
 
 ->
 
 modern ESP-IDF I2C master backend
   driver/i2c_master.h
   i2c_new_master_bus()
-  i2c_master_bus_handle_t passed to esp_lcd_new_panel_io_i2c()
+  i2c_master_bus_handle_t
 ```
 
-The small CMake dependency update required to compile the new driver and the handle-plumbing changes required to pass the modern bus handle are part of this one transport-backend variable.
+Required handle plumbing and the CMake dependency update are part of the transport-backend substitution.
 
 ## Preserved variables
 
@@ -67,93 +65,104 @@ XML/generated-C UI        unchanged
 button callback           serial log only
 ```
 
-### Why 400 kHz is set explicitly
+## Valid boot evidence
 
-The GT911 panel-IO convenience macro in the current component defaults to 100 kHz. In Test 36 the legacy bus itself was initialized at 400 kHz. Test 36C therefore explicitly sets:
-
-```c
-tp_io_cfg.scl_speed_hz = 400000;
-```
-
-when using the modern per-device I2C API. This preserves the intended/effective Test 36 bus speed rather than introducing a second experimental variable.
-
-## Why this is a strong next test
-
-Known-good physical reference Test 20 (`limpens/esp32-8048S043-lvgl9`) uses the modern ESP-IDF I2C master API and had excellent GT911 touch behavior on this board family. Its relevant I2C pattern includes:
+The physical Test 36C boot confirmed that the intended new backend was actually running:
 
 ```text
-driver/i2c_master.h
-i2c_new_master_bus()
-glitch_ignore_cnt = 7
-internal pull-up enabled
-```
-
-Test 36 uses the deprecated legacy I2C driver and ESP-IDF 5.5.5 prints the legacy-driver warning during boot.
-
-Test 36C asks only:
-
-```text
-Does replacing the legacy I2C transport with the modern master-bus transport make GT911 acquisition reliable?
-```
-
-## Expected boot evidence
-
-The Test 36 legacy boot contains:
-
-```text
-W (...) i2c: This driver is an old driver ...
-```
-
-For a valid Test 36C build this warning should disappear because `driver/i2c.h` is no longer used by our GT911 bus setup.
-
-The GT911 itself should still identify as before, for example:
-
-```text
+I2C DEV: Modern I2C master bus installed: port=1 SDA=19 SCL=20
 GT911: TouchPad_ID:0x39,0x31,0x31
 GT911: TouchPad_Config_Version:65
 ```
 
-## Run
+The legacy-driver warning seen in Test 36 disappeared.
 
-From the lab repository:
+Therefore this was a valid modern-I2C reproduction rather than an accidental rebuild of the legacy path.
 
-```powershell
-git fetch
-git switch --track origin/agent/test36c-modern-i2c-isolation
+## Quantified physical result
 
-powershell -ExecutionPolicy Bypass -File .\controlled_tests\36C_LVGL_Editor_ModernI2C_Isolation\run-test36c.ps1
-```
-
-Then flash, for example COM7:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\controlled_tests\36C_LVGL_Editor_ModernI2C_Isolation\run-test36c.ps1 -Upload -UploadPort COM7
-```
-
-## Physical comparison
-
-Use exactly the same six Stream Deck cards and compare directly with Tests 36/36B:
+The user pressed each of the six Stream Deck cards exactly ten times with approximately 500 ms between presses:
 
 ```text
-20 rapid short taps on one card
-20 slow deliberate taps on one card
-alternate two adjacent cards 20 times
-press + immediate release
-press-and-hold + release
-repeat after 30-60 seconds idle
+6 buttons x 10 presses = 60 physical click attempts
 ```
 
-Record:
+Only nine `LV_EVENT_CLICKED` application callbacks appeared in the captured COM log:
 
 ```text
-attempted presses
-serial callback count
-missed taps
-late callbacks
-stuck pressed state
-release delay
-subjective responsiveness
-any display regression
+Power      1
+Media      7
+Settings   1
+----------------
+Total      9 / 60
 ```
 
-A dramatic improvement would strongly implicate the old I2C transport/integration. No improvement would falsify that candidate and move the investigation deeper into GT911 acquisition/state handling or LVGL integration.
+The upstream UI contains duplicate card labels, so the textual label distribution is not suitable for identifying every physical card. The decisive metric is the total callback count.
+
+Observed callback efficiency:
+
+```text
+9 / 60 = 15%
+51 / 60 = 85% missed at application-click level
+```
+
+The 500 ms press spacing is far slower than the pinned LVGL 33 ms input refresh period, so this cannot reasonably be explained merely by taps being shorter than one normal LVGL polling interval.
+
+## Conclusion
+
+```text
+Test 36    legacy I2C  -> severely degraded touch
+Test 36C   modern I2C  -> severely degraded touch, 9/60 clicked callbacks
+```
+
+Therefore:
+
+> Replacing the legacy ESP-IDF I2C transport with the modern `i2c_master` backend is not sufficient to make the Test 36 GT911 input reliable.
+
+The modern-I2C backend hypothesis is **falsified as the primary cause** for the observed application-level missed clicks.
+
+This does not prove that both I2C implementations are electrically or temporally identical. It proves only that changing this transport backend did not remove the defect under the tested conditions.
+
+## Next diagnostic step
+
+The failure must now be localized across the input stack:
+
+```text
+physical touch
+  -> GT911 status/data acquisition
+  -> esp_lcd_touch_get_coordinates()
+  -> esp_lvgl_port indev state
+  -> LVGL object hit/press/release processing
+  -> LV_EVENT_CLICKED
+```
+
+Test 36D should be diagnostic rather than another blind parameter change. It should log state transitions at the GT911/esp_lvgl_port boundary before LVGL object processing and, separately, the button-level `PRESSED`, `RELEASED`, `PRESS_LOST`, and `CLICKED` events.
+
+With the same 10 presses per card / 500 ms protocol:
+
+```text
+raw transitions ~60, clicked ~9
+    -> acquisition is good; loss occurs in LVGL hit/click semantics
+
+raw transitions also ~9
+    -> loss occurs at/below GT911 acquisition/driver boundary
+
+PRESS seen but RELEASE/PRESS_LOST abnormal
+    -> explains stuck-looking state and missing CLICKED events
+```
+
+## Final classification
+
+```text
+BUILD                     PASS
+FLASH                     PASS
+MODERN I2C ACTIVE         CONFIRMED
+GT911 IDENTIFICATION      PASS
+DISPLAY                   PASS
+PHYSICAL CLICK ATTEMPTS   60
+APPLICATION CLICKED       9
+CLICK YIELD               15%
+TOUCH IMPROVEMENT         NO
+CAUSAL HYPOTHESIS         FALSIFIED
+NEXT                      Test 36D raw-to-LVGL diagnostic instrumentation
+```
