@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>ESP32-8048S043 App 01 Web Flasher</title>
+  <title>KONTAKTS ESP32-8048S043 Firmware Catalog</title>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
     :root {
@@ -15,49 +15,75 @@
       --esp-tools-button-text-color: #ffffff;
       --esp-tools-button-border-radius: 14px;
     }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
-    main { width: min(760px, 100%); background: #182027; border: 1px solid #37474f; border-radius: 24px; padding: 28px; box-shadow: 0 18px 60px rgba(0,0,0,.35); }
-    h1 { margin-top: 0; font-size: clamp(28px, 5vw, 44px); }
-    h2 { margin-top: 28px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 24px; background: #101418; }
+    main { width: min(1100px, 100%); margin: 0 auto; }
+    header { margin-bottom: 24px; }
+    h1 { margin: 0 0 10px; font-size: clamp(30px, 5vw, 48px); }
+    h2 { margin: 0 0 8px; }
     p, li { line-height: 1.55; color: #cfd8dc; }
-    .status { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1b5e20; color: white; font-weight: 700; }
-    .installer { margin: 28px 0; padding: 22px; background: #11171c; border-radius: 18px; text-align: center; }
-    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+    .meta { color: #90caf9; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    .card { background: #182027; border: 1px solid #37474f; border-radius: 24px; padding: 24px; box-shadow: 0 18px 60px rgba(0,0,0,.25); }
+    .status { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1b5e20; color: white; font-weight: 700; font-size: 13px; }
+    .status.candidate { background: #7a4f00; }
+    .installer { margin: 22px 0; padding: 18px; background: #11171c; border-radius: 18px; text-align: center; }
+    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
     .links a { color: #90caf9; text-decoration: none; }
     code { color: #ffcc80; }
-    .warning { border-left: 4px solid #ffb300; padding-left: 14px; }
+    .warning { margin-top: 24px; border-left: 4px solid #ffb300; padding: 12px 0 12px 14px; color: #cfd8dc; }
+    footer { margin-top: 28px; padding: 18px 0; color: #90a4ae; }
   </style>
 </head>
 <body>
   <main>
-    <span class="status">PHYSICAL PASS</span>
-    <h1>ESP32-8048S043 — Six-Card Serial Deck</h1>
-    <p>Browser installer for the current physically validated App 01 firmware demonstrated on the real ESP32-8048S043 board.</p>
+    <header>
+      <div class="meta">Project KONTAKTS · Programmer Sol · Engineer Alex Malachevsky</div>
+      <h1>ESP32-8048S043 Firmware Catalog</h1>
+      <p>Choose a tested firmware and install it directly from Chrome or Edge through ESP Web Tools.</p>
+    </header>
 
-    <div class="installer">
-      <esp-web-install-button manifest="./manifest-app01.json">
-        <button slot="activate">INSTALL APP 01</button>
-        <span slot="unsupported">Use a Chromium browser with Web Serial support, such as Chrome or Edge.</span>
-        <span slot="not-allowed">This installer must be opened from the HTTPS GitHub Pages site.</span>
-      </esp-web-install-button>
-    </div>
+    <section class="grid">
+      <article class="card">
+        <span class="status">WEB FLASHER PHYSICAL PASS</span>
+        <h2>App 01 — Six-Card Serial Deck</h2>
+        <p>Six large touch cards with HOME / MEDIA / SYSTEM profiles and stable <code>CARD:</code> / <code>PROFILE:</code> Serial commands.</p>
+        <div class="installer">
+          <esp-web-install-button manifest="./manifest-app01.json">
+            <button slot="activate">INSTALL APP 01</button>
+            <span slot="unsupported">Use Chrome or Edge with Web Serial support.</span>
+            <span slot="not-allowed">Open this installer from the HTTPS GitHub Pages site.</span>
+          </esp-web-install-button>
+        </div>
+        <div class="links">
+          <a href="https://youtube.com/shorts/0I5JL6jt8e0">Video</a>
+          <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/01_SixCardSerialDeck">Source</a>
+        </div>
+      </article>
 
-    <h2>What this firmware demonstrates</h2>
-    <ul>
-      <li>HOME / MEDIA / SYSTEM profile switching</li>
-      <li>six profile-driven touch cards</li>
-      <li>GT911 touch input</li>
-      <li>800×480 LVGL 9 interface</li>
-      <li><code>PROFILE:</code> and <code>CARD:</code> commands over Serial/COM</li>
-    </ul>
+      <article class="card">
+        <span class="status candidate">FUNCTIONAL PHYSICAL PASS · v0.1.1 FIX</span>
+        <h2>App 02 — Mixed Widgets</h2>
+        <p>LVGL 9 control laboratory with COMMAND, SWITCH, SLIDER, ARC, PROGRESS and multi-screen NAVIGATION. v0.1.1 changes only the width of the top BACK TO CONTROLS button.</p>
+        <div class="installer">
+          <esp-web-install-button manifest="./manifest-app02.json">
+            <button slot="activate">INSTALL APP 02</button>
+            <span slot="unsupported">Use Chrome or Edge with Web Serial support.</span>
+            <span slot="not-allowed">Open this installer from the HTTPS GitHub Pages site.</span>
+          </esp-web-install-button>
+        </div>
+        <div class="links">
+          <a href="https://youtube.com/shorts/LwmW8UwDED0">Physical test video</a>
+          <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/02_MixedWidgets">Source</a>
+        </div>
+      </article>
+    </section>
 
-    <p class="warning"><strong>Target hardware:</strong> the physically validated ESP32-8048S043 ESP32-S3 800×480 / GT911 board profile used by this repository. Installing replaces the current firmware on the connected board.</p>
+    <p class="warning"><strong>Target hardware:</strong> the validated ESP32-8048S043 ESP32-S3 800×480 RGB / GT911 board profile used by this repository. Installing replaces the firmware currently stored on the connected board.</p>
 
-    <div class="links">
-      <a href="https://youtube.com/shorts/0I5JL6jt8e0">Physical demo video</a>
-      <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab">GitHub repository</a>
-      <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/01_SixCardSerialDeck">App 01 source</a>
-    </div>
+    <footer>
+      Catalog data: <code>firmware-list.json</code>. Future App 03 and recovery builds can be added without changing the flashing model.
+    </footer>
 
     <script src="./app.js"></script>
   </main>
