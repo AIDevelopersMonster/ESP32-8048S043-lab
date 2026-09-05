@@ -1,3 +1,21 @@
+/*
+ * ESP32-8048S043 Lab - App 01: Six-Card Serial Deck
+ *
+ * Repository:
+ * https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+ *
+ * App path:
+ * apps/01_SixCardSerialDeck/
+ *
+ * Physical demonstration:
+ * https://youtube.com/shorts/0I5JL6jt8e0
+ *
+ * The video demonstrates HOME / MEDIA / SYSTEM profile switching,
+ * on-screen UI changes, GT911 touch operation and matching Serial/COM commands.
+ * It was recorded on the physically validated App 01 baseline; the small
+ * PROFILE-label clipping visible in that baseline is a presentation-only issue.
+ */
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
