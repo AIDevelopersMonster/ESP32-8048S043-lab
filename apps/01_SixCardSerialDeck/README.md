@@ -8,6 +8,32 @@ This is the first own application in the ESP32-8048S043 lab. It is not a fork of
 
 The application intentionally keeps only the useful concept discovered during external-project study: a six-card command panel.
 
+## Repository and physical demonstration
+
+Repository:
+
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab
+
+App path:
+
+```text
+apps/01_SixCardSerialDeck/
+```
+
+Full physical demonstration:
+
+https://youtube.com/shorts/0I5JL6jt8e0
+
+The video demonstrates the complete App 01 idea on the physical ESP32-8048S043 board:
+
+- HOME / MEDIA / SYSTEM profile switching;
+- visible reassignment of all six cards on the 800x480 display;
+- GT911 touch operation;
+- matching `PROFILE:` and `CARD:` output in Serial/COM;
+- the profile-driven design where visible label/icon and stable command are separate.
+
+The recording was made on the physically validated baseline. A small presentation-only clipping issue is visible in the original top-right `PROFILE` control; it does not affect profile switching or touch reliability and is handled as a later UX-only refinement.
+
 ## Physical result
 
 The application now passes on the physical ESP32-8048S043 board.
@@ -199,7 +225,7 @@ PROFILE:SYSTEM
 The first physically successful version used a 150 x 40 top-right profile button. Functionally it worked correctly, but the user reported two UX issues:
 
 1. the control initially looked more like a label than a button;
-2. the longest text did not fit cleanly, with part of the label clipped at the right edge.
+2. the text did not fit cleanly, with part of the label clipped at the edge.
 
 The control was therefore changed without touching display/touch/profile logic:
 
