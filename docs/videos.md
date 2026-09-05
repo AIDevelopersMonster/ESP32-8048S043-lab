@@ -11,6 +11,7 @@
 | 05 | ESP32-8048S043 — third test from our Arduino library: GT911 touchscreen | https://youtube.com/shorts/_zhtl-AWcCE | Show `03_TouchGT911Test` from the `ESP32_8048S043` Arduino library, validating the GT911 touch controller at I2C address 0x5D, Product ID `911`, raw coordinate polling and visible touch marker movement on the 800x480 screen. | SAMPLE A OWN GT911 TOUCH VISUAL PASS |
 | 06 | ESP32-8048S043 — Wi-Fi scan from our Arduino library | https://youtube.com/shorts/DOus0uNBBZI | Show `06_WiFiTest` in scan-only mode under the local Arduino board profile, confirming STA MAC readout and active Wi-Fi scan with nearby networks found. | SAMPLE A WIFI RADIO SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING |
 | 07 | ESP32-8048S043 — read-only microSD / TF test from our Arduino library | https://youtube.com/shorts/vACvK85U0Lw | Show `08_SDCardTest` mounting a microSD card on the source-backed SPI pins CS=10, MOSI=11, CLK=12, MISO=13, reading SDHC/SDXC metadata and listing the root directory without write/format/delete operations. | SAMPLE A READ-ONLY SD PHYSICAL PASS CANDIDATE |
+| 08 | ESP32-8048S043 + LVGL 9 — Six-Card Serial Deck full profile demonstration | https://youtube.com/shorts/0I5JL6jt8e0 | Full demonstration of the current corrected App 01 firmware: HOME / MEDIA / SYSTEM profile switching, corrected PROFILE control, visible reassignment of all six cards, GT911 touch operation and matching `PROFILE:` / `CARD:` commands in Serial/COM. | APP 01 CURRENT FIRMWARE PHYSICAL PASS / PROFILE SWITCHING PASS / SERIAL COMMANDS PASS / STACK STABLE |
 
 ## Planned shooting sequence
 
@@ -32,6 +33,7 @@
 | 14 Web Flasher | browser firmware install | OPEN |
 | 15 Widget Runtime | JSON UI without reflashing | OPEN |
 | 16 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
+| 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
 
 ## Rule
 

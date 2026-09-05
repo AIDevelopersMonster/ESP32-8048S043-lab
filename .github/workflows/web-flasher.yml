@@ -1,13 +1,91 @@
-name: Web Flasher
+name: Web Flasher - App 01
 
 on:
+  push:
+    branches:
+      - main
+      - agent/app01-six-card-serial-deck
+    paths:
+      - "apps/01_SixCardSerialDeck/**"
+      - "web-flasher/**"
+      - ".github/workflows/web-flasher.yml"
   workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy the physically validated App 01 Web Flasher to GitHub Pages"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: web-flasher-pages
+  cancel-in-progress: false
+
+env:
+  APP01_PROJECT_DIR: apps/01_SixCardSerialDeck/idf
+  APP01_WEB_VERSION: "1.0.0"
+  APP01_BIN_NAME: app01-six-card-serial-deck-v1.0.0.bin
 
 jobs:
-  placeholder:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Explain status
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build App 01 with exact ESP-IDF 5.5.5
         run: |
-          echo "Web Flasher is intentionally a skeleton until non-destructive firmware targets are physically validated."
+          docker run --rm \
+            -v "$PWD:/project" \
+            -w "/project/${APP01_PROJECT_DIR}" \
+            espressif/idf:v5.5.5 \
+            bash -lc 'idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP01_BIN_NAME}" @flash_args'
+
+      - name: Verify merged firmware
+        run: |
+          test -s "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          ls -lh "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+
+      - name: Assemble Web Flasher site artifact
+        run: |
+          rm -rf site
+          mkdir -p site/firmware
+          cp -R web-flasher/. site/
+          cp "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}" "site/firmware/${APP01_BIN_NAME}"
+
+      - name: Upload merged firmware for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: app01-web-flasher-v1.0.0
+          path: |
+            ${{ env.APP01_PROJECT_DIR }}/build/${{ env.APP01_BIN_NAME }}
+            web-flasher/manifest-app01.json
+          if-no-files-found: error
+
+      - name: Configure GitHub Pages
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy Web Flasher to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
