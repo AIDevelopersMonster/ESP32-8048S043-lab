@@ -283,12 +283,17 @@ static void create_ui(void)
     lv_obj_set_style_text_color(title, lv_color_hex(0xE8EEF2), 0);
     lv_obj_set_pos(title, 24, 20);
 
+    /* Make the profile selector visibly actionable and wide enough for all profile names. */
     lv_obj_t *profile_button = lv_button_create(screen);
-    lv_obj_set_size(profile_button, 150, 40);
-    lv_obj_set_pos(profile_button, 626, 10);
+    lv_obj_set_size(profile_button, 200, 48);
+    lv_obj_set_pos(profile_button, 576, 8);
     lv_obj_set_style_radius(profile_button, 14, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(profile_button, lv_color_hex(0x263238), LV_PART_MAIN);
-    lv_obj_set_style_opa(profile_button, LV_OPA_70, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_bg_color(profile_button, lv_color_hex(0x37474F), LV_PART_MAIN);
+    lv_obj_set_style_border_width(profile_button, 1, LV_PART_MAIN);
+    lv_obj_set_style_border_color(profile_button, lv_color_hex(0x78909C), LV_PART_MAIN);
+    lv_obj_set_style_shadow_width(profile_button, 8, LV_PART_MAIN);
+    lv_obj_set_style_shadow_opa(profile_button, LV_OPA_20, LV_PART_MAIN);
+    lv_obj_set_style_opa(profile_button, LV_OPA_65, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_add_event_cb(profile_button, profile_event_cb, LV_EVENT_CLICKED, NULL);
 
     s_profile_label = lv_label_create(profile_button);
