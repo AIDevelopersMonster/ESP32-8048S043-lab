@@ -1,10 +1,23 @@
 {
   "schema": 1,
   "board": {
-    "id": "esp32-8048s043c-i-reference",
-    "name": "ESP32-8048S043C-I reported reference profile",
+    "id": "esp32-8048s043-sample-a",
+    "name": "ESP32-8048S043 Sample A",
     "chipFamily": "ESP32-S3",
-    "status": "reported-only"
+    "display": "800x480 RGB",
+    "touch": "GT911",
+    "flash": "16 MB",
+    "psram": "8 MB Octal",
+    "status": "physical-pass"
   },
-  "tests": []
+  "firmware": [
+    {
+      "id": "app01-six-card-serial-deck",
+      "version": "1.0.0",
+      "manifest": "manifest-app01.json",
+      "status": "physical-pass",
+      "video": "https://youtube.com/shorts/0I5JL6jt8e0",
+      "source": "../apps/01_SixCardSerialDeck/"
+    }
+  ]
 }
