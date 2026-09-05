@@ -2,11 +2,59 @@
 
 ## Status
 
-**ORIGINAL APPLICATION / READY FOR BUILD AND PHYSICAL VALIDATION**
+**ORIGINAL APPLICATION / PHYSICAL BOOT CONFIRMED / UI-TASK STACK FIX APPLIED / FULL PHYSICAL VALIDATION PENDING**
 
 This is the first own application in the ESP32-8048S043 lab. It is not a fork of the `halyssonJr/lvgl-demo-esp32s3` Stream Deck UI and does not reuse that project's UI source or image assets.
 
 The application intentionally keeps only the useful concept discovered during external-project study: a six-card command panel.
+
+## First physical boot result
+
+The first flashed build reached all of the following successfully on the physical board:
+
+```text
+ESP32-S3 boot                  PASS
+16 MB flash                    PASS
+8 MB Octal PSRAM               PASS
+native RGB display init        PASS
+GT911 identification           PASS
+GT911 Config Version 65        PASS
+HOME profile construction      PASS
+six-card screen visible        PASS
+```
+
+Observed serial sequence:
+
+```text
+APP01: App 01 - Six-Card Serial Deck
+APP01: Free INTERNAL heap before display: 312987
+APP01: Free PSRAM before display: 7840024
+GT911: TouchPad_ID:0x39,0x31,0x31
+GT911: TouchPad_Config_Version:65
+PROFILE:HOME
+APP01: Ready. Tap cards; press PROFILE to reassign all six slots.
+```
+
+Immediately after this, the first build repeatedly rebooted with:
+
+```text
+***ERROR*** A stack overflow in task main has been detected.
+```
+
+This was not a display, PSRAM or GT911 failure. The UI was already visible and the touch controller had initialized correctly. The fault was architectural: the infinite `lv_timer_handler()` loop had been left inside ESP-IDF's system `main` task, whose stack was insufficient for the LVGL runtime path.
+
+### Fix
+
+The LVGL runtime now executes in a dedicated pinned FreeRTOS task:
+
+```text
+task name    app01_ui
+stack        16384 bytes
+priority     9
+core         1
+```
+
+`app_main()` now only creates that task and returns. The UI task reports its stack high-water mark after initialization and every 10 seconds so stack usage remains observable during development.
 
 ## Architecture
 
@@ -19,6 +67,7 @@ ESP32-S3
   -> LVGL 9.3 partial rendering
   -> 60-line INTERNAL LVGL draw buffer
   -> GT911 over modern i2c_master
+  -> dedicated app01_ui FreeRTOS task
   -> six universal card slots
 ```
 
@@ -163,24 +212,29 @@ powershell -ExecutionPolicy Bypass -File .\apps\01_SixCardSerialDeck\run-app01.p
 
 ## Physical acceptance
 
-Minimum acceptance run:
+Minimum acceptance run after the UI-task fix:
 
 ```text
-HOME profile:
-  each card x10
-  then one circular pass across all six
+1. leave screen running for at least 20 seconds
+   -> no reboot
+   -> observe UI task stack high-water logs
 
-switch to MEDIA:
-  verify all six labels/symbols change
-  press each once
+2. HOME profile:
+   each card x10
+   then one circular pass across all six
 
-switch to SYSTEM:
-  verify all six labels/symbols change
-  press each once
+3. switch to MEDIA:
+   verify all six labels/symbols change
+   press each once
+
+4. switch to SYSTEM:
+   verify all six labels/symbols change
+   press each once
 ```
 
 Expected:
 
+- no reboot or stack-overflow message;
 - no visible flicker;
 - no missed ordinary taps;
 - pressed feedback visible immediately;
