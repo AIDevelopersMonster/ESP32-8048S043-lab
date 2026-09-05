@@ -293,7 +293,7 @@ static void create_ui(void)
     lv_obj_set_style_border_color(profile_button, lv_color_hex(0x78909C), LV_PART_MAIN);
     lv_obj_set_style_shadow_width(profile_button, 8, LV_PART_MAIN);
     lv_obj_set_style_shadow_opa(profile_button, LV_OPA_20, LV_PART_MAIN);
-    lv_obj_set_style_opa(profile_button, LV_OPA_65, LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_opa(profile_button, LV_OPA_60, LV_PART_MAIN | LV_STATE_PRESSED);
     lv_obj_add_event_cb(profile_button, profile_event_cb, LV_EVENT_CLICKED, NULL);
 
     s_profile_label = lv_label_create(profile_button);
