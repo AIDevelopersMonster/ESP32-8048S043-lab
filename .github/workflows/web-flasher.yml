@@ -1,18 +1,23 @@
-name: Web Flasher - App 01
+# Project: KONTAKTS / ESP32-8048S043 Lab
+# Programmer: Sol
+# Engineer: Alex Malachevsky
+
+name: Web Flasher - Firmware Catalog
 
 on:
   push:
     branches:
       - main
-      - agent/app01-six-card-serial-deck
+      - agent/app02-mixed-widgets
     paths:
       - "apps/01_SixCardSerialDeck/**"
+      - "apps/02_MixedWidgets/**"
       - "web-flasher/**"
       - ".github/workflows/web-flasher.yml"
   workflow_dispatch:
     inputs:
       deploy:
-        description: "Deploy the physically validated App 01 Web Flasher to GitHub Pages"
+        description: "Deploy the KONTAKTS firmware catalog to GitHub Pages"
         required: true
         type: boolean
         default: false
@@ -28,8 +33,9 @@ concurrency:
 
 env:
   APP01_PROJECT_DIR: apps/01_SixCardSerialDeck/idf
-  APP01_WEB_VERSION: "1.0.0"
   APP01_BIN_NAME: app01-six-card-serial-deck-v1.0.0.bin
+  APP02_PROJECT_DIR: apps/02_MixedWidgets/idf
+  APP02_BIN_NAME: app02-mixed-widgets-v0.1.1.bin
 
 jobs:
   build:
@@ -38,7 +44,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build App 01 with exact ESP-IDF 5.5.5
+      - name: Build and merge App 01 with ESP-IDF 5.5.5
         run: |
           docker run --rm \
             -e APP01_BIN_NAME="${APP01_BIN_NAME}" \
@@ -47,26 +53,40 @@ jobs:
             espressif/idf:v5.5.5 \
             bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP01_BIN_NAME}" @flash_args'
 
-      - name: Verify merged firmware
+      - name: Build and merge App 02 with ESP-IDF 5.5.5
+        run: |
+          docker run --rm \
+            -e APP02_BIN_NAME="${APP02_BIN_NAME}" \
+            -v "$PWD:/project" \
+            -w "/project/${APP02_PROJECT_DIR}" \
+            espressif/idf:v5.5.5 \
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP02_BIN_NAME}" @flash_args'
+
+      - name: Verify merged firmware images
         run: |
           test -s "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          test -s "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
-          ls -lh "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
+          ls -lh "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}" "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
 
-      - name: Assemble Web Flasher site artifact
+      - name: Assemble Web Flasher catalog
         run: |
           rm -rf site
           mkdir -p site/firmware
           cp -R web-flasher/. site/
           cp "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}" "site/firmware/${APP01_BIN_NAME}"
+          cp "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}" "site/firmware/${APP02_BIN_NAME}"
 
-      - name: Upload merged firmware for review
+      - name: Upload firmware catalog for review
         uses: actions/upload-artifact@v4
         with:
-          name: app01-web-flasher-v1.0.0
+          name: kontakts-web-flasher-catalog
           path: |
             ${{ env.APP01_PROJECT_DIR }}/build/${{ env.APP01_BIN_NAME }}
+            ${{ env.APP02_PROJECT_DIR }}/build/${{ env.APP02_BIN_NAME }}
             web-flasher/manifest-app01.json
+            web-flasher/manifest-app02.json
           if-no-files-found: error
 
       - name: Configure GitHub Pages
