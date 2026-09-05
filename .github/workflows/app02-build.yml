@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+env:
+  APP02_PROJECT_DIR: apps/02_MixedWidgets/idf
+  APP02_BIN_NAME: app02-mixed-widgets-v0.1.0.bin
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,16 +23,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build App 02 with ESP-IDF 5.5.5
+      - name: Build and merge App 02 with ESP-IDF 5.5.5
         run: |
           docker run --rm \
+            -e APP02_BIN_NAME="${APP02_BIN_NAME}" \
             -v "$PWD:/project" \
-            -w "/project/apps/02_MixedWidgets/idf" \
+            -w "/project/${APP02_PROJECT_DIR}" \
             espressif/idf:v5.5.5 \
-            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build'
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP02_BIN_NAME}" @flash_args'
 
-      - name: Verify application binary
+      - name: Verify merged firmware
         run: |
-          test -s apps/02_MixedWidgets/idf/build/mixed_widgets_lab.bin
-          sha256sum apps/02_MixedWidgets/idf/build/mixed_widgets_lab.bin
-          ls -lh apps/02_MixedWidgets/idf/build/mixed_widgets_lab.bin
+          test -s "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
+          sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
+          ls -lh "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
+
+      - name: Upload App 02 experimental firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: app02-mixed-widgets-experimental
+          path: ${{ env.APP02_PROJECT_DIR }}/build/${{ env.APP02_BIN_NAME }}
+          if-no-files-found: error
