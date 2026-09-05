@@ -1,8 +1,14 @@
+# Project: KONTAKTS / ESP32-8048S043 Lab
+# Application: App 02 - Mixed Widgets
+# Programmer: Sol
+# Engineer: Alex Malachevsky
+
 name: App 02 - Mixed Widgets Build
 
 on:
   push:
     branches:
+      - main
       - agent/app02-mixed-widgets
     paths:
       - "apps/02_MixedWidgets/**"
@@ -14,7 +20,7 @@ permissions:
 
 env:
   APP02_PROJECT_DIR: apps/02_MixedWidgets/idf
-  APP02_BIN_NAME: app02-mixed-widgets-v0.1.0.bin
+  APP02_BIN_NAME: app02-mixed-widgets-v0.1.1.bin
 
 jobs:
   build:
@@ -38,9 +44,9 @@ jobs:
           sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           ls -lh "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
 
-      - name: Upload App 02 experimental firmware
+      - name: Upload App 02 corrected firmware
         uses: actions/upload-artifact@v4
         with:
-          name: app02-mixed-widgets-experimental
+          name: app02-mixed-widgets-v0.1.1
           path: ${{ env.APP02_PROJECT_DIR }}/build/${{ env.APP02_BIN_NAME }}
           if-no-files-found: error
