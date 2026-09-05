@@ -149,7 +149,12 @@ i2c_master_bus_handle_t i2c_dev_get_bus(void)
 
     if (-not $LcdC.Contains('#include "lcd_display.h"')) { throw 'lcd_display include anchor missing' }
     if (-not $LcdC.Contains('#include "touch_i2c.h"')) {
-        $LcdC = $LcdC.Replace('#include "lcd_display.h"', "#include \"lcd_display.h\"`r`n#include \"touch_i2c.h\"")
+        $OldInclude = '#include "lcd_display.h"'
+        $NewInclude = @'
+#include "lcd_display.h"
+#include "touch_i2c.h"
+'@
+        $LcdC = $LcdC.Replace($OldInclude, $NewInclude.TrimEnd())
     }
     Write-Utf8NoBom -Path $LcdCPath -Text $LcdC
 
