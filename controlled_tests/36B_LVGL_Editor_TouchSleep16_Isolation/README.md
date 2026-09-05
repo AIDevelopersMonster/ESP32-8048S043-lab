@@ -2,7 +2,7 @@
 
 ## Status
 
-**CONTROLLED DERIVATIVE PREPARED / PHYSICAL VERDICT PENDING**
+**BUILD PASS / FLASH PASS / PHYSICAL NO IMPROVEMENT / HYPOTHESIS FALSIFIED**
 
 Parent baseline: Test 36 (`halyssonJr/lvgl-demo-esp32s3`, commit `79e862ca332525ba8721c4691f450fb44ec08738`).
 
@@ -24,7 +24,7 @@ Production-quality UX    FAIL
 #define LVGL_TASK_SLEEP 16
 ```
 
-No other source or configuration change is allowed in this test.
+No other source or configuration change was allowed in this test.
 
 Unchanged:
 
@@ -44,56 +44,87 @@ avoid_tearing             true
 XML/generated C UI        unchanged
 ```
 
-## Hypothesis
+## Physical result
 
-The parent config allows the LVGL port task to sleep for as long as 500 ms while the GT911 interrupt line is not connected to the port. A short press or release can therefore be observed late or missed between polling intervals.
+The Test 36B firmware was built, flashed and monitored on the physical board.
 
-Test 36B asks only:
-
-```text
-Does 500 ms -> 16 ms remove the missed/stuck touch behavior?
-```
-
-If yes, the no-interrupt + long-sleep scheduling configuration is strongly implicated.
-
-If no, do not change anything else in this test. A later independent experiment can examine interrupt-driven touch or a different GT911 integration.
-
-## Run
-
-```powershell
-git fetch
-git switch --track origin/agent/test36b-touch-sleep16-isolation
-
-powershell -ExecutionPolicy Bypass -File .\controlled_tests\36B_LVGL_Editor_TouchSleep16_Isolation\run-test36b.ps1
-```
-
-Then flash, for example COM7:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\controlled_tests\36B_LVGL_Editor_TouchSleep16_Isolation\run-test36b.ps1 -Upload -UploadPort COM7
-```
-
-## Physical comparison
-
-Use the same six cards and compare directly with Test 36:
+User observation:
 
 ```text
-rapid short taps
-slow deliberate taps
-repeated tapping of one card
-alternating adjacent cards
-press + immediate release
-press-and-hold + release
-edge-of-card acquisition
+COM output is the same as Test 36.
+Touch acquisition remains non-guaranteed and highly selective after the first press.
+Missed presses remain.
+Apparently stuck/delayed button presses remain.
+No meaningful responsiveness improvement from 500 ms -> 16 ms.
 ```
 
-Record:
+Representative application log contained only a small subset of attempted clicks, for example:
 
 ```text
-missed taps
-late responses
-stuck pressed state
-release delay
-subjective responsiveness
-any display regression
+DEMO: Button Name : Power
+DEMO: Button Name : Settings
+DEMO: Button Name : Social
+```
+
+The firmware otherwise booted normally, identified the GT911 (`TouchPad_ID: 0x39,0x31,0x31`) and reported GT911 config version 65.
+
+## Conclusion
+
+```text
+Test 36 baseline   task_max_sleep_ms = 500   -> degraded touch
+Test 36B           task_max_sleep_ms = 16    -> same degraded touch
+```
+
+Therefore:
+
+> Reducing `task_max_sleep_ms` from 500 ms to 16 ms is not sufficient to improve the observed GT911 input behavior on this specimen.
+
+The original hypothesis that the degraded touch was primarily caused by the 500 ms LVGL task maximum sleep is **falsified for this configuration**.
+
+## Why the sleep change had little leverage
+
+Further source audit showed that the non-interrupt input device is created in LVGL timer mode. LVGL 9.3 creates the indev read timer using `LV_DEF_REFR_PERIOD`, and the pinned upstream `sdkconfig` sets:
+
+```text
+CONFIG_LV_DEF_REFR_PERIOD=33
+```
+
+Thus the touch path already has an approximately 33 ms LVGL indev timer. `task_max_sleep_ms` is an upper sleep bound, not the direct GT911 polling interval in this configuration. This explains why `500 -> 16 ms` was not a strong control variable.
+
+## New strongest comparison
+
+A known-good physical reference, Test 20 (`limpens/esp32-8048S043-lvgl9`), uses the same board family and GT911 but uses the modern ESP-IDF I2C master API:
+
+```text
+driver/i2c_master.h
+i2c_new_master_bus()
+glitch_ignore_cnt = 7
+internal pull-up enabled
+```
+
+Its touch was physically observed as excellent.
+
+Test 36 instead uses the deprecated legacy I2C driver:
+
+```text
+driver/i2c.h
+i2c_param_config()
+i2c_driver_install()
+legacy bus index cast into esp_lcd panel IO
+```
+
+and ESP-IDF 5.5.5 prints the corresponding legacy-driver warning at boot.
+
+The next controlled derivative should therefore return to the exact Test 36 baseline (`task_max_sleep_ms=500`) and change only the GT911 I2C transport backend from legacy to modern master-bus API, while preserving pins, 400 kHz, GT911 component, coordinate mapping, LVGL, UI and display transport.
+
+## Final classification
+
+```text
+BUILD                     PASS
+FLASH                     PASS
+PHYSICAL EXECUTION        PASS
+TOUCH IMPROVEMENT         NO
+CAUSAL HYPOTHESIS         FALSIFIED
+DISPLAY REGRESSION        NONE REPORTED
+NEXT                      Test 36C modern-I2C backend isolation
 ```
