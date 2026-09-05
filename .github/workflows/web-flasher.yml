@@ -38,24 +38,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install ESP-IDF 5.5.5
-        uses: espressif/install-esp-idf-action@v1
-        with:
-          version: "v5.5.5"
-
-      - name: Build physically validated App 01
-        working-directory: ${{ env.APP01_PROJECT_DIR }}
+      - name: Build App 01 with exact ESP-IDF 5.5.5
         run: |
-          idf.py set-target esp32s3
-          idf.py build
-          idf.py merge-bin -o "build/${APP01_BIN_NAME}" -f raw
+          docker run --rm \
+            -v "$PWD:/project" \
+            -w "/project/${APP01_PROJECT_DIR}" \
+            espressif/idf:v5.5.5 \
+            bash -lc 'idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP01_BIN_NAME}" @flash_args'
 
       - name: Verify merged firmware
-        working-directory: ${{ env.APP01_PROJECT_DIR }}
         run: |
-          test -s "build/${APP01_BIN_NAME}"
-          sha256sum "build/${APP01_BIN_NAME}"
-          ls -lh "build/${APP01_BIN_NAME}"
+          test -s "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
+          ls -lh "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
 
       - name: Assemble Web Flasher site artifact
         run: |
