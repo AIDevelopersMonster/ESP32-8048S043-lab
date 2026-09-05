@@ -25,6 +25,10 @@
 #define LCD_BOUNCE_LINES 10
 #define LVGL_BUF_LINES 60
 
+#define APP_UI_TASK_STACK_SIZE 16384
+#define APP_UI_TASK_PRIORITY 9
+#define APP_UI_TASK_CORE 1
+
 #define LCD_PIN_BL    GPIO_NUM_2
 #define LCD_PIN_HSYNC GPIO_NUM_39
 #define LCD_PIN_VSYNC GPIO_NUM_41
@@ -435,9 +439,13 @@ static void init_lvgl(void)
     lv_indev_set_read_cb(indev, touch_read_cb);
 }
 
-void app_main(void)
+static void app_ui_task(void *arg)
 {
-    ESP_LOGI(TAG, "App 01 - Six-Card Serial Deck");
+    (void)arg;
+
+    ESP_LOGI(TAG, "UI task started on core %d with %u-byte stack",
+             xPortGetCoreID(),
+             (unsigned)APP_UI_TASK_STACK_SIZE);
     ESP_LOGI(TAG, "Free INTERNAL heap before display: %u", (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL));
     ESP_LOGI(TAG, "Free PSRAM before display: %u", (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
 
@@ -447,10 +455,41 @@ void app_main(void)
     create_ui();
 
     gpio_set_level(LCD_PIN_BL, 1);
-    ESP_LOGI(TAG, "Ready. Tap cards; press PROFILE to reassign all six slots.");
 
+    UBaseType_t high_water = uxTaskGetStackHighWaterMark(NULL);
+    ESP_LOGI(TAG, "Ready. UI task stack high-water after init: %u bytes", (unsigned)high_water);
+    ESP_LOGI(TAG, "Tap cards; press PROFILE to reassign all six slots.");
+
+    TickType_t last_stack_log = xTaskGetTickCount();
     while (true) {
         lv_timer_handler();
+
+        TickType_t now = xTaskGetTickCount();
+        if ((now - last_stack_log) >= pdMS_TO_TICKS(10000)) {
+            high_water = uxTaskGetStackHighWaterMark(NULL);
+            ESP_LOGI(TAG, "UI task stack high-water: %u bytes", (unsigned)high_water);
+            last_stack_log = now;
+        }
+
         vTaskDelay(pdMS_TO_TICKS(5));
     }
+}
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "App 01 - Six-Card Serial Deck");
+
+    BaseType_t created = xTaskCreatePinnedToCore(app_ui_task,
+                                                 "app01_ui",
+                                                 APP_UI_TASK_STACK_SIZE,
+                                                 NULL,
+                                                 APP_UI_TASK_PRIORITY,
+                                                 NULL,
+                                                 APP_UI_TASK_CORE);
+    if (created != pdPASS) {
+        ESP_LOGE(TAG, "Failed to create app01_ui task");
+        abort();
+    }
+
+    ESP_LOGI(TAG, "Dedicated UI task created; app_main returning");
 }
