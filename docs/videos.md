@@ -12,6 +12,7 @@
 | 06 | ESP32-8048S043 — Wi-Fi scan from our Arduino library | https://youtube.com/shorts/DOus0uNBBZI | Show `06_WiFiTest` in scan-only mode under the local Arduino board profile, confirming STA MAC readout and active Wi-Fi scan with nearby networks found. | SAMPLE A WIFI RADIO SCAN PASS CANDIDATE / INFRASTRUCTURE PENDING |
 | 07 | ESP32-8048S043 — read-only microSD / TF test from our Arduino library | https://youtube.com/shorts/vACvK85U0Lw | Show `08_SDCardTest` mounting a microSD card on the source-backed SPI pins CS=10, MOSI=11, CLK=12, MISO=13, reading SDHC/SDXC metadata and listing the root directory without write/format/delete operations. | SAMPLE A READ-ONLY SD PHYSICAL PASS CANDIDATE |
 | 08 | ESP32-8048S043 + LVGL 9 — Six-Card Serial Deck full profile demonstration | https://youtube.com/shorts/0I5JL6jt8e0 | Full demonstration of the current corrected App 01 firmware: HOME / MEDIA / SYSTEM profile switching, corrected PROFILE control, visible reassignment of all six cards, GT911 touch operation and matching `PROFILE:` / `CARD:` commands in Serial/COM. | APP 01 CURRENT FIRMWARE PHYSICAL PASS / PROFILE SWITCHING PASS / SERIAL COMMANDS PASS / STACK STABLE |
+| 09 | ESP32-8048S043 + LVGL 9 — App 02 Mixed Widgets | https://youtube.com/shorts/LwmW8UwDED0 | Physical demonstration of COMMAND, SWITCH, SLIDER, ARC, PROGRESS/STATUS and NAVIGATION on the App 01 hardware/runtime baseline. One cosmetic issue remains: the top-right `BACK TO CONTROLS` button is slightly too narrow. | APP 02 v0.1.0 PHYSICAL PASS / WIDGET INTERACTION PASS / COSMETIC BACK BUTTON FIX PENDING |
 
 ## Planned shooting sequence
 
@@ -28,9 +29,9 @@
 | 09 Wi-Fi infrastructure | association, DHCP, DNS, TCP/HTTP and reconnect using local `wifi_secrets.h` | DONE / FULL WIFI PASS CANDIDATE |
 | 10 HTTP WebServer | browser page, `/status.json` and `/ping` from the board | DONE / WEB SERVER PASS CANDIDATE |
 | 11 SD card read-only | mount microSD through SPI, read card metadata and list directories without writing | PUBLISHED / READ-ONLY SD PASS CANDIDATE |
-| 12 LVGL basic UI | button, slider, touch using lab firmware | OPEN |
+| 12 LVGL basic UI | button, slider, touch using lab firmware | DONE / APP 02 MIXED WIDGETS PHYSICAL PASS |
 | 13 Web setup | AP/browser setup path | OPEN |
-| 14 Web Flasher | browser firmware install | OPEN |
+| 14 Web Flasher | browser firmware install | APP 01 PHYSICAL PASS |
 | 15 Widget Runtime | JSON UI without reflashing | OPEN |
 | 16 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
