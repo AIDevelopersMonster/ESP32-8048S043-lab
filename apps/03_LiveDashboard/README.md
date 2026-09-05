@@ -2,7 +2,8 @@
 
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Programmer:** Sol  
-**Engineer:** Alex Malachevsky
+**Engineer:** Alex Malachevsky  
+**Status:** PHYSICAL PASS (v0.1.0)
 
 ## Purpose
 
@@ -55,16 +56,20 @@ Inherited from physically validated App 01/App 02:
 - ESP-IDF 5.5.x
 - LVGL 9.3.0
 
-## Physical test boundary
+## Physical validation
 
-App 03 remains **BUILD / PHYSICAL PENDING** until tested on the real ESP32-8048S043 board.
+The exact merged firmware artifact `app03-live-dashboard-v0.1.0.bin` was flashed to the real ESP32-8048S043 board over COM12 using esptool and reported by the engineer as working correctly on hardware.
 
-Physical PASS requires:
+Validated observations:
 1. stable 800x480 display;
-2. temperature value changes plausibly over time;
-3. heap/PSRAM values are visible and stable;
-4. live chart advances once per second;
-5. DETAILS and BACK touch navigation works reliably;
-6. no flicker, reset, hang, touch loss or stack overflow during observation.
+2. live telemetry is rendered from real ESP32-S3 runtime values;
+3. heap/PSRAM and uptime telemetry are visible;
+4. temperature history chart runs live;
+5. DETAILS and BACK navigation operate on the physical touch panel;
+6. no blocking display/touch/runtime failure was reported during the physical run.
 
-After physical PASS, App 03 can be added to the KONTAKTS Web Flasher catalog.
+Formal evidence record: `evidence/app03-live-dashboard-v0.1.0-physical-pass.md`.
+
+## Next platform step
+
+App 03 closes the live-dashboard phase. The next foundation work is persistent settings/configuration, filesystem-backed partial resource loading, Wi-Fi STA/AP provisioning, local web setup and OTA/recovery support before the repository expands into concrete sensor/actuator projects.
