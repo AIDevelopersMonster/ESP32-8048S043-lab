@@ -1,5 +1,8 @@
 /*
- * ESP32-8048S043 Lab - App 02: Mixed Widgets
+ * Project: KONTAKTS / ESP32-8048S043 Lab
+ * Application: App 02 - Mixed Widgets
+ * Programmer: Sol
+ * Engineer: Alex Malachevsky
  *
  * Hardware baseline is intentionally inherited from physically validated App 01.
  * This experiment changes only the LVGL UI layer.
@@ -468,8 +471,8 @@ static void create_status_screen(void)
     lv_obj_set_pos(title, 24, 22);
 
     lv_obj_t *back = lv_button_create(s_status_screen);
-    lv_obj_set_size(back, 200, 48);
-    lv_obj_set_pos(back, 576, 8);
+    lv_obj_set_size(back, 236, 48);
+    lv_obj_set_pos(back, 540, 8);
     lv_obj_set_style_radius(back, 14, LV_PART_MAIN);
     lv_obj_set_style_bg_color(back, lv_color_hex(0x37474F), LV_PART_MAIN);
     lv_obj_set_style_opa(back, LV_OPA_70, LV_PART_MAIN | LV_STATE_PRESSED);
