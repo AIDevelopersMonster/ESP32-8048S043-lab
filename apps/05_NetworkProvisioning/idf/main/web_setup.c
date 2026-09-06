@@ -103,7 +103,9 @@ static esp_err_t scan_get(httpd_req_t *req)
     char *json = NULL;
     esp_err_t err = network_manager_scan_json(&json);
     if (err == ESP_ERR_INVALID_STATE) {
-        httpd_resp_send_err(req, HTTPD_409_CONFLICT, "scan available only in AP setup mode");
+        httpd_resp_set_status(req, "409 Conflict");
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_sendstr(req, "scan available only in AP setup mode");
         return err;
     }
     if (err != ESP_OK) {
