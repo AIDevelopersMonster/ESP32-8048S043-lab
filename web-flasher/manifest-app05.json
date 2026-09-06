@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS App 05 - Network Provisioning",
+  "version": "0.1.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app05-network-provisioning-v0.1.0.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
