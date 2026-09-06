@@ -1,5 +1,9 @@
 idf_component_register(
-    SRCS "main.c"
+    SRCS
+        "main.c"
+        "storage_credentials.c"
+        "network_manager.c"
+        "web_setup.c"
     INCLUDE_DIRS "."
     REQUIRES
         nvs_flash
