@@ -27,10 +27,19 @@
       "id": "app03",
       "name": "Live System Dashboard",
       "version": "0.1.0",
-      "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
+      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS / CLOSED",
       "description": "Real ESP32-S3 temperature, heap, PSRAM and uptime telemetry with a live chart and touch navigation.",
       "manifest": "./manifest-app03.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/03_LiveDashboard"
+    },
+    {
+      "id": "app05",
+      "name": "Network Provisioning",
+      "version": "0.1.0",
+      "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
+      "description": "Wi-Fi STA registration, KONTAKTS fallback access point, local setup page, saved NVS credentials, bounded reconnect and DHCP status.",
+      "manifest": "./manifest-app05.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app05-network-provisioning/apps/05_NetworkProvisioning"
     }
   ]
 }
