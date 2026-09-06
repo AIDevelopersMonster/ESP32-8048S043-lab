@@ -35,11 +35,11 @@
     {
       "id": "app05",
       "name": "Network Provisioning",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
-      "description": "Wi-Fi STA registration, KONTAKTS fallback access point, local setup page, saved NVS credentials, bounded reconnect and DHCP status.",
+      "description": "Wi-Fi STA registration, KONTAKTS fallback access point, local setup page, saved NVS credentials, bounded reconnect, automatic AP recovery and automatic setup-AP shutdown after STA success.",
       "manifest": "./manifest-app05.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app05-network-provisioning/apps/05_NetworkProvisioning"
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
     }
   ]
 }
