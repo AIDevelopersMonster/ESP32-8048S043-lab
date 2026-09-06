@@ -1,0 +1,91 @@
+name: App 06 - GitHub OTA Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'app06-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve App06 version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/app06-v* ]]; then
+            version="${GITHUB_REF_NAME#app06-v}"
+          else
+            version="0.1.0"
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid semantic version: $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "App06 version: $version"
+
+      - name: Build application-only OTA image with ESP-IDF 5.5.5
+        env:
+          APP06_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          docker run --rm \
+            -e KONTAKTS_APP_VERSION="${APP06_VERSION}" \
+            -v "$PWD:/project" \
+            -w /project/apps/06_OTARecovery/idf \
+            espressif/idf:v5.5.5 \
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build'
+
+      - name: Build OTA manifest
+        id: assets
+        shell: bash
+        run: |
+          mkdir -p .app06-ota
+          cp apps/06_OTARecovery/idf/build/app06_ota_recovery.bin .app06-ota/app06-ota.bin
+          sha="$(sha256sum .app06-ota/app06-ota.bin | awk '{print $1}')"
+          size="$(stat -c '%s' .app06-ota/app06-ota.bin)"
+          version="${{ steps.version.outputs.version }}"
+          tag="app06-v${version}"
+          firmware_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/app06-ota.bin"
+          cat > .app06-ota/app06-ota.json <<EOF
+          {
+            "schema": 1,
+            "board": "esp32-8048s043-lab-n16r8",
+            "app": "app06-ota-recovery",
+            "version": "${version}",
+            "channel": "stable",
+            "size": ${size},
+            "sha256": "${sha}",
+            "firmware": "${firmware_url}"
+          }
+          EOF
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          cat .app06-ota/app06-ota.json
+
+      - name: Upload CI OTA assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: app06-github-ota-${{ steps.version.outputs.version }}
+          path: |
+            .app06-ota/app06-ota.bin
+            .app06-ota/app06-ota.json
+          if-no-files-found: error
+
+      - name: Publish GitHub Release assets
+        if: startsWith(github.ref, 'refs/tags/app06-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            .app06-ota/app06-ota.bin \
+            .app06-ota/app06-ota.json \
+            --title "KONTAKTS App06 GitHub OTA ${{ steps.version.outputs.version }}" \
+            --notes "ESP32-8048S043 App06 OTA release. Version ${{ steps.version.outputs.version }}. SHA-256: ${{ steps.assets.outputs.sha256 }}. Size: ${{ steps.assets.outputs.size }} bytes."

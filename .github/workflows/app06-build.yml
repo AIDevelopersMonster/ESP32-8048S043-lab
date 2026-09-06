@@ -1,0 +1,44 @@
+name: App 06 - GitHub OTA Recovery Build
+
+on:
+  push:
+    branches:
+      - agent/app06-ota-recovery
+    paths:
+      - 'apps/06_OTARecovery/**'
+      - '.github/workflows/app06-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:v5.5.5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build App06 baseline
+        working-directory: apps/06_OTARecovery/idf
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py set-target esp32s3
+          idf.py build
+      - name: Assemble full-install and OTA images
+        working-directory: apps/06_OTARecovery/idf
+        run: |
+          . $IDF_PATH/export.sh
+          mkdir -p dist
+          cp build/app06_ota_recovery.bin dist/app06-ota-v0.1.0.bin
+          cd build
+          esptool.py --chip esp32s3 merge_bin -o ../dist/app06-ota-recovery-v0.1.0-full.bin @flash_args
+          cd ..
+          test -s dist/app06-ota-v0.1.0.bin
+          test -s dist/app06-ota-recovery-v0.1.0-full.bin
+          sha256sum dist/*.bin
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app06-github-ota-recovery-v0.1.0
+          path: |
+            apps/06_OTARecovery/idf/dist/*.bin
+            apps/06_OTARecovery/idf/partitions.csv
+          if-no-files-found: error
