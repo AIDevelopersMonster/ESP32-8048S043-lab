@@ -3,7 +3,7 @@
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Programmer:** Sol  
 **Engineer:** Alex Malachevsky  
-**Status:** BUILD PASS / PHYSICAL PENDING
+**Status:** BUILD PASS / PHYSICAL PASS / CLOSED
 
 ## Purpose
 
@@ -32,6 +32,28 @@ Produced artifact:
 Artifact digest reported by GitHub Actions:
 
 `sha256:29202dfda972cffd8e25be8ca52b94c7c0775fb6265581aa736c687be8e7b9c9`
+
+## Physical validation
+
+Real-board serial evidence confirms the App04 storage contract.
+
+Observed across repeated boots:
+
+- persistent `boot_count`: `2 -> 3 -> 4 -> 5`;
+- `device_name=KONTAKTS-8048S043` remained stable;
+- `brightness=80` remained stable;
+- SPIFFS mounted successfully at `/storage` on every captured boot;
+- filesystem reported `total=5775761` and `used=1004` consistently;
+- `/storage/platform.cfg`: `bytes=121`, `chunks=1`, `fnv1a=0xfa9d74b4` on every captured boot;
+- `/storage/ui-settings-screen.cfg`: `bytes=121`, `chunks=1`, `fnv1a=0xf0acadc6` on every captured boot;
+- `APP04:STORAGE:PASS-CANDIDATE` was reached repeatedly;
+- no reset loop, partition error, mount failure, NVS error or heap-exhaustion symptom was observed.
+
+The first captured monitored boot already reported `boot_count=2`, consistent with the automatic first boot after flashing occurring before the serial monitor was attached. The persisted defaults and repeated counter increments demonstrate that NVS survived resets as intended.
+
+**Result:** App04 v0.1.0 is `PHYSICAL PASS / CLOSED`.
+
+See `evidence/app04-storage-config-v0.1.0-physical-pass.md` for the compact evidence record.
 
 ## App 04 boot behavior
 
@@ -93,20 +115,20 @@ This intentionally prepares the flash topology before the OTA application is int
 
 ## Physical PASS boundary
 
-App 04 is PHYSICAL PASS only after the real board demonstrates all of the following:
+The physical-pass boundary has now been met on the real board:
 
-1. first boot creates defaults and mounts `/storage`;
-2. second/repeated boot shows an increased persistent boot counter;
-3. `device_name` and `brightness` are read from NVS without NVS initialization errors;
+1. defaults are present and `/storage` mounts successfully;
+2. repeated boots show an increasing persistent boot counter;
+3. `device_name` and `brightness` are read from NVS without initialization errors;
 4. both resource files are read successfully;
-5. chunk count / byte count / checksum are stable for unchanged files;
-6. no reset loop, partition error, filesystem mount failure or heap exhaustion occurs.
+5. chunk count, byte count and checksums remain stable for unchanged files;
+6. no reset loop, partition error, filesystem mount failure or heap exhaustion is observed.
 
 ## Explicit non-goals
 
-App 04 does **not** add Wi-Fi, AP mode, web setup or OTA download yet. Those become the next controlled variables after the storage contract passes physically.
+App 04 does **not** add Wi-Fi, AP mode, web setup or OTA download. Those become the next controlled variables after the storage contract.
 
-## Next step after PASS
+## Next step
 
 App 05: network provisioning foundation:
 
