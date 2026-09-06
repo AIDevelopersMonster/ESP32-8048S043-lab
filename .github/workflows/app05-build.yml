@@ -3,6 +3,7 @@ name: App 05 - Network Provisioning Build
 on:
   push:
     branches:
+      - main
       - agent/app05-network-provisioning
       - agent/app05-stability
     paths:
