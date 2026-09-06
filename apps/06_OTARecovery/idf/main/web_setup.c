@@ -57,39 +57,66 @@ static esp_err_t root_get(httpd_req_t *req)
     ota_manager_get_status(&ota);
 
     const bool setup = network_manager_state() == NETWORK_STATE_AP_SETUP;
+
     const char *network_form = setup
-        ? "<div class='card'><h2>Wi-Fi setup</h2><form method='post' action='/save'><label>Network</label><select id='ssid' name='ssid'><option>Scanning...</option></select><label>Password</label><input type='password' name='password'><button>Save and connect</button></form></div>"
+        ? "<div class='card'><h2>Wi-Fi setup</h2><p>Connect this device to its working Wi-Fi network first. OTA controls become available only after STA is online.</p><form method='post' action='/save'><label>Network</label><select id='ssid' name='ssid'><option>Scanning...</option></select><label>Password</label><input type='password' name='password'><button>Save and connect</button></form></div>"
         : "";
+
     const char *scan_script = setup
         ? "<script>fetch('/scan').then(r=>r.json()).then(a=>{let s=document.getElementById('ssid');s.innerHTML='';a.forEach(x=>{let o=document.createElement('option');o.value=x.ssid;o.textContent=x.ssid+' ('+x.rssi+' dBm)';s.appendChild(o)});if(!a.length)s.innerHTML='<option value=\"\">No networks found</option>'}).catch(()=>{});</script>"
         : "";
 
-    char *html = calloc(1, 6000);
+    char ota_card[3600] = {0};
+    char ota_script[1200] = {0};
+    char clear_card[320] = {0};
+
+    if (!setup) {
+        snprintf(
+            ota_card, sizeof(ota_card),
+            "<div class='card'><h2>GitHub OTA</h2><div id='ota'>"
+            "<b>State:</b> %s<br><b>Installed:</b> %s<br><b>Available:</b> %s<br><b>Running:</b> %s<br><b>Image:</b> %s<br><b>Progress:</b> %d%%<br><b>Message:</b> %s"
+            "</div><p><code>%s</code></p>"
+            "<form method='post' action='/ota/check'><button>CHECK GITHUB</button></form>"
+            "<form method='post' action='/ota/install'><button>DOWNLOAD & INSTALL</button></form>"
+            "<form method='post' action='/ota/confirm'><button>CONFIRM RUNNING IMAGE</button></form>"
+            "<form method='post' action='/ota/rollback'><button>ROLLBACK PENDING CANDIDATE</button></form>"
+            "<form method='post' action='/ota/recovery'><button>BOOT FACTORY RECOVERY</button></form></div>",
+            ota.state,
+            ota.current_version,
+            ota.available_version[0] ? ota.available_version : "-",
+            ota.running_partition,
+            ota.image_state,
+            ota.progress_percent,
+            ota.message,
+            ota_manager_manifest_url());
+
+        snprintf(
+            ota_script, sizeof(ota_script),
+            "<script>setInterval(()=>fetch('/ota/status').then(r=>r.json()).then(x=>{document.getElementById('ota').innerHTML='<b>State:</b> '+x.state+'<br><b>Installed:</b> '+x.current_version+'<br><b>Available:</b> '+x.available_version+'<br><b>Running:</b> '+x.running_partition+'<br><b>Image:</b> '+x.image_state+'<br><b>Progress:</b> '+x.progress_percent+'%%<br><b>Message:</b> '+x.message}).catch(()=>{}),2000);</script>");
+
+        snprintf(
+            clear_card, sizeof(clear_card),
+            "<div class='card'><form method='post' action='/clear'><button>Clear saved Wi-Fi and use setup AP</button></form></div>");
+    }
+
+    char *html = calloc(1, 7600);
     if (!html) return ESP_ERR_NO_MEM;
 
     int n = snprintf(
-        html, 6000,
+        html, 7600,
         "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>KONTAKTS App06</title><style>body{font-family:sans-serif;max-width:760px;margin:24px auto;padding:0 16px;background:#101418;color:#eef}input,select,button{font-size:17px;padding:10px;margin:6px 0;width:100%%;box-sizing:border-box}button{cursor:pointer}.card{background:#182027;padding:18px;border-radius:16px;margin:12px 0}.warn{background:#402020}.ok{background:#18352a}code{word-break:break-all}</style></head><body>"
         "<h1>KONTAKTS App06</h1>"
         "<div class='card'><h2>Network</h2><b>State:</b> %s<br><b>STA IP:</b> %s<br><b>Setup AP:</b> %s</div>"
-        "%s"
-        "<div class='card'><h2>GitHub OTA</h2><div id='ota'>"
-        "<b>State:</b> %s<br><b>Installed:</b> %s<br><b>Available:</b> %s<br><b>Running:</b> %s<br><b>Image:</b> %s<br><b>Progress:</b> %d%%<br><b>Message:</b> %s"
-        "</div><p><code>%s</code></p>"
-        "<form method='post' action='/ota/check'><button>CHECK GITHUB</button></form>"
-        "<form method='post' action='/ota/install'><button>DOWNLOAD & INSTALL</button></form>"
-        "<form method='post' action='/ota/confirm'><button>CONFIRM RUNNING IMAGE</button></form>"
-        "<form method='post' action='/ota/rollback'><button>ROLLBACK PENDING CANDIDATE</button></form>"
-        "<form method='post' action='/ota/recovery'><button>BOOT FACTORY RECOVERY</button></form></div>"
-        "<div class='card'><form method='post' action='/clear'><button>Clear saved Wi-Fi and use setup AP</button></form></div>"
-        "<script>setInterval(()=>fetch('/ota/status').then(r=>r.json()).then(x=>{document.getElementById('ota').innerHTML='<b>State:</b> '+x.state+'<br><b>Installed:</b> '+x.current_version+'<br><b>Available:</b> '+x.available_version+'<br><b>Running:</b> '+x.running_partition+'<br><b>Image:</b> '+x.image_state+'<br><b>Progress:</b> '+x.progress_percent+'%%<br><b>Message:</b> '+x.message}).catch(()=>{}),2000);</script>"
-        "%s</body></html>",
-        network_manager_state_name(), network_manager_sta_ip(), network_manager_ap_ssid(),
+        "%s%s%s%s%s</body></html>",
+        network_manager_state_name(),
+        network_manager_sta_ip(),
+        network_manager_ap_ssid(),
         network_form,
-        ota.state, ota.current_version, ota.available_version[0] ? ota.available_version : "-",
-        ota.running_partition, ota.image_state, ota.progress_percent, ota.message,
-        ota_manager_manifest_url(), scan_script);
+        ota_card,
+        clear_card,
+        ota_script,
+        scan_script);
 
     httpd_resp_set_type(req, "text/html");
     esp_err_t err = httpd_resp_send(req, html, n);

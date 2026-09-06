@@ -16,28 +16,46 @@ jobs:
       image: espressif/idf:v5.5.5
     steps:
       - uses: actions/checkout@v4
-      - name: Build App06 baseline
+
+      - name: Resolve App06 version
+        id: version
+        shell: bash
+        run: |
+          version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid semantic version: $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build App06
         working-directory: apps/06_OTARecovery/idf
+        env:
+          KONTAKTS_APP_VERSION: ${{ steps.version.outputs.version }}
         run: |
           . $IDF_PATH/export.sh
           idf.py set-target esp32s3
           idf.py build
+
       - name: Assemble full-install and OTA images
         working-directory: apps/06_OTARecovery/idf
+        env:
+          APP06_VERSION: ${{ steps.version.outputs.version }}
         run: |
           . $IDF_PATH/export.sh
           mkdir -p dist
-          cp build/app06_ota_recovery.bin dist/app06-ota-v0.1.0.bin
+          cp build/app06_ota_recovery.bin "dist/app06-ota-v${APP06_VERSION}.bin"
           cd build
-          esptool.py --chip esp32s3 merge_bin -o ../dist/app06-ota-recovery-v0.1.0-full.bin @flash_args
+          esptool.py --chip esp32s3 merge_bin -o "../dist/app06-ota-recovery-v${APP06_VERSION}-full.bin" @flash_args
           cd ..
-          test -s dist/app06-ota-v0.1.0.bin
-          test -s dist/app06-ota-recovery-v0.1.0-full.bin
+          test -s "dist/app06-ota-v${APP06_VERSION}.bin"
+          test -s "dist/app06-ota-recovery-v${APP06_VERSION}-full.bin"
           sha256sum dist/*.bin
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app06-github-ota-recovery-v0.1.0
+          name: app06-github-ota-recovery-v${{ steps.version.outputs.version }}
           path: |
             apps/06_OTARecovery/idf/dist/*.bin
             apps/06_OTARecovery/idf/partitions.csv

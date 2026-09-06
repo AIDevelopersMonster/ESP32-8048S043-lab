@@ -1,35 +1,37 @@
 name: App 06 - GitHub OTA Release
 
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - 'app06-v*'
+    branches:
+      - agent/app06-ota-recovery
+    paths:
+      - 'apps/06_OTARecovery/release-version.txt'
+      - '.github/workflows/app06-ota-release.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   build-release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Resolve App06 version
         id: version
         shell: bash
         run: |
-          if [[ "${GITHUB_REF}" == refs/tags/app06-v* ]]; then
-            version="${GITHUB_REF_NAME#app06-v}"
-          else
-            version="0.1.0"
-          fi
+          version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Invalid semantic version: $version"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "App06 version: $version"
+          echo "App06 release version: $version"
 
       - name: Build application-only OTA image with ESP-IDF 5.5.5
         env:
@@ -69,6 +71,21 @@ jobs:
           echo "size=$size" >> "$GITHUB_OUTPUT"
           cat .app06-ota/app06-ota.json
 
+      - name: Attach physically validated factory recovery image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          mkdir -p .app06-factory
+          gh run download 34047113353 \
+            --repo "$GITHUB_REPOSITORY" \
+            --name app06-github-ota-recovery-v0.1.0 \
+            --dir .app06-factory
+          factory_src="$(find .app06-factory -type f -name 'app06-ota-recovery-v0.1.0-full.bin' -print -quit)"
+          test -n "$factory_src"
+          cp "$factory_src" .app06-ota/app06-factory-recovery-v0.1.0-full.bin
+          echo "c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d  .app06-ota/app06-factory-recovery-v0.1.0-full.bin" | sha256sum -c -
+
       - name: Upload CI OTA assets
         uses: actions/upload-artifact@v4
         with:
@@ -76,16 +93,32 @@ jobs:
           path: |
             .app06-ota/app06-ota.bin
             .app06-ota/app06-ota.json
+            .app06-ota/app06-factory-recovery-v0.1.0-full.bin
           if-no-files-found: error
 
       - name: Publish GitHub Release assets
-        if: startsWith(github.ref, 'refs/tags/app06-v')
         env:
           GH_TOKEN: ${{ github.token }}
+          APP06_VERSION: ${{ steps.version.outputs.version }}
+          APP06_SHA256: ${{ steps.assets.outputs.sha256 }}
+          APP06_SIZE: ${{ steps.assets.outputs.size }}
         shell: bash
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            .app06-ota/app06-ota.bin \
-            .app06-ota/app06-ota.json \
-            --title "KONTAKTS App06 GitHub OTA ${{ steps.version.outputs.version }}" \
-            --notes "ESP32-8048S043 App06 OTA release. Version ${{ steps.version.outputs.version }}. SHA-256: ${{ steps.assets.outputs.sha256 }}. Size: ${{ steps.assets.outputs.size }} bytes."
+          tag="app06-v${APP06_VERSION}"
+          notes="ESP32-8048S043 App06 stable OTA ${APP06_VERSION}. OTA SHA-256: ${APP06_SHA256}. OTA size: ${APP06_SIZE} bytes. Factory recovery asset is the physically validated v0.1.0 full image, SHA-256 c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d."
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" \
+              .app06-ota/app06-ota.bin \
+              .app06-ota/app06-ota.json \
+              .app06-ota/app06-factory-recovery-v0.1.0-full.bin \
+              --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" \
+              .app06-ota/app06-ota.bin \
+              .app06-ota/app06-ota.json \
+              .app06-ota/app06-factory-recovery-v0.1.0-full.bin \
+              --target "$GITHUB_SHA" \
+              --title "KONTAKTS App06 GitHub OTA ${APP06_VERSION}" \
+              --notes "$notes" \
+              --repo "$GITHUB_REPOSITORY"
+          fi
