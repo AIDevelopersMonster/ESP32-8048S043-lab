@@ -11,6 +11,7 @@ on:
       - agent/app02-mixed-widgets
       - agent/app03-live-dashboard
       - agent/app05-network-provisioning
+      - agent/app05-stability
     paths:
       - "apps/01_SixCardSerialDeck/**"
       - "apps/02_MixedWidgets/**"
@@ -43,7 +44,7 @@ env:
   APP03_PROJECT_DIR: apps/03_LiveDashboard/idf
   APP03_BIN_NAME: app03-live-dashboard-v0.1.0.bin
   APP05_PROJECT_DIR: apps/05_NetworkProvisioning/idf
-  APP05_BIN_NAME: app05-network-provisioning-v0.1.0.bin
+  APP05_BIN_NAME: app05-network-provisioning-v0.1.1.bin
 
 jobs:
   build:
