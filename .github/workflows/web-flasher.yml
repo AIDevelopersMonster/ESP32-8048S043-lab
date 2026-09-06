@@ -131,17 +131,17 @@ jobs:
           if-no-files-found: error
 
       - name: Configure GitHub Pages
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main') }}
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages artifact
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+        if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main') }}
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
 
   deploy:
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
