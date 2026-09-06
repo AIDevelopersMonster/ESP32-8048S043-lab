@@ -1,6 +1,6 @@
 {
   "name": "KONTAKTS App 05 - Network Provisioning",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "new_install_prompt_erase": true,
   "builds": [
     {
@@ -8,7 +8,7 @@
       "improv": false,
       "parts": [
         {
-          "path": "firmware/app05-network-provisioning-v0.1.0.bin",
+          "path": "firmware/app05-network-provisioning-v0.1.1.bin",
           "offset": 0
         }
       ]

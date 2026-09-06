@@ -77,6 +77,12 @@ static esp_err_t root_get(httpd_req_t *req)
     return httpd_resp_send(req, html, n);
 }
 
+static esp_err_t favicon_get(httpd_req_t *req)
+{
+    httpd_resp_set_status(req, "204 No Content");
+    return httpd_resp_send(req, NULL, 0);
+}
+
 static esp_err_t status_get(httpd_req_t *req)
 {
     char json[192];
@@ -96,6 +102,12 @@ static esp_err_t scan_get(httpd_req_t *req)
 {
     char *json = NULL;
     esp_err_t err = network_manager_scan_json(&json);
+    if (err == ESP_ERR_INVALID_STATE) {
+        httpd_resp_set_status(req, "409 Conflict");
+        httpd_resp_set_type(req, "text/plain");
+        httpd_resp_sendstr(req, "scan available only in AP setup mode");
+        return ESP_OK;
+    }
     if (err != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "scan failed");
         return err;
@@ -154,15 +166,18 @@ esp_err_t web_setup_start(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_uri_handlers = 8;
+    config.stack_size = 8192;
     ESP_RETURN_ON_ERROR(httpd_start(&s_httpd, &config), TAG, "httpd_start failed");
 
     const httpd_uri_t root = {.uri = "/", .method = HTTP_GET, .handler = root_get};
+    const httpd_uri_t favicon = {.uri = "/favicon.ico", .method = HTTP_GET, .handler = favicon_get};
     const httpd_uri_t status = {.uri = "/status", .method = HTTP_GET, .handler = status_get};
     const httpd_uri_t scan = {.uri = "/scan", .method = HTTP_GET, .handler = scan_get};
     const httpd_uri_t save = {.uri = "/save", .method = HTTP_POST, .handler = save_post};
     const httpd_uri_t clear = {.uri = "/clear", .method = HTTP_POST, .handler = clear_post};
 
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd, &root), TAG, "root handler failed");
+    ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd, &favicon), TAG, "favicon handler failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd, &status), TAG, "status handler failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd, &scan), TAG, "scan handler failed");
     ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd, &save), TAG, "save handler failed");

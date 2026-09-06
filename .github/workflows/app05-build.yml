@@ -3,7 +3,9 @@ name: App 05 - Network Provisioning Build
 on:
   push:
     branches:
+      - main
       - agent/app05-network-provisioning
+      - agent/app05-stability
     paths:
       - 'apps/05_NetworkProvisioning/**'
       - '.github/workflows/app05-build.yml'
@@ -27,13 +29,13 @@ jobs:
         run: |
           . $IDF_PATH/export.sh
           cd build
-          esptool.py --chip esp32s3 merge_bin -o app05-network-provisioning-v0.1.0.bin @flash_args
-          test -s app05-network-provisioning-v0.1.0.bin
+          esptool.py --chip esp32s3 merge_bin -o app05-network-provisioning-v0.1.1.bin @flash_args
+          test -s app05-network-provisioning-v0.1.1.bin
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app05-network-provisioning-v0.1.0
+          name: app05-network-provisioning-v0.1.1
           path: |
-            apps/05_NetworkProvisioning/idf/build/app05-network-provisioning-v0.1.0.bin
+            apps/05_NetworkProvisioning/idf/build/app05-network-provisioning-v0.1.1.bin
             apps/05_NetworkProvisioning/idf/partitions.csv
           if-no-files-found: error
