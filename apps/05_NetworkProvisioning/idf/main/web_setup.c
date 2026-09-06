@@ -106,7 +106,7 @@ static esp_err_t scan_get(httpd_req_t *req)
         httpd_resp_set_status(req, "409 Conflict");
         httpd_resp_set_type(req, "text/plain");
         httpd_resp_sendstr(req, "scan available only in AP setup mode");
-        return err;
+        return ESP_OK;
     }
     if (err != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "scan failed");
