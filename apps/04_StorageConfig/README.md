@@ -3,7 +3,7 @@
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Programmer:** Sol  
 **Engineer:** Alex Malachevsky  
-**Status:** IMPLEMENTATION / BUILD PENDING / PHYSICAL PENDING
+**Status:** BUILD PASS / PHYSICAL PENDING
 
 ## Purpose
 
@@ -18,6 +18,21 @@ It deliberately isolates storage from the HMI so failures can be attributed to N
 3. project/config resources loaded in bounded chunks rather than copied into one large RAM buffer;
 4. an OTA-ready 16 MB partition layout with factory + two OTA application slots and a dedicated internal storage partition.
 
+## Build validation
+
+GitHub Actions build run `33999399235` completed successfully on ESP-IDF 5.5.5.
+
+Produced artifact:
+
+- `app04-storage-config-v0.1.0`
+- merged flash image `app04-storage-config-v0.1.0.bin`
+- standalone `storage.bin`
+- `partitions.csv`
+
+Artifact digest reported by GitHub Actions:
+
+`sha256:29202dfda972cffd8e25be8ca52b94c7c0775fb6265581aa736c687be8e7b9c9`
+
 ## App 04 boot behavior
 
 On every boot the firmware:
@@ -28,7 +43,7 @@ On every boot the firmware:
 - reads persistent `device_name` and `brightness` settings;
 - mounts the internal SPIFFS resource partition;
 - reports total/used filesystem size;
-- reads `/storage/platform.cfg` and `/storage/ui/settings-screen.cfg` in fixed-size chunks;
+- reads `/storage/platform.cfg` and `/storage/ui-settings-screen.cfg` in fixed-size chunks;
 - calculates a streaming FNV-1a checksum while loading;
 - reports byte/chunk counts without allocating a buffer equal to the whole file.
 
@@ -47,6 +62,19 @@ The same higher-level storage contract can later be backed by internal flash or 
 - **NVS** - small durable settings and selectors;
 - **internal filesystem** - compact resources required when no SD card is installed;
 - **SD card (later)** - large project packages, history, media, logs, profiles and optional models.
+
+## GPIO mapping boundary for future project packages
+
+The storage architecture is intentionally compatible with a future external GPIO/resource map, but App 04 does not implement runtime GPIO reassignment yet.
+
+The intended rule is hybrid rather than fully dynamic:
+
+- **board-critical pins stay compiled into the firmware**: RGB display bus, PCLK/DE/HSYNC/VSYNC, GT911 I2C/reset/interrupt, flash/PSRAM-related resources, boot/USB/JTAG constraints, and any pin required before the filesystem is mounted;
+- **project I/O may later be selected from an allow-listed pool by an external project file**: sensors, relays, fans, pumps, OneWire, UART/RS-485, generic I2C/SPI peripherals and other application-level signals;
+- the firmware must validate direction, peripheral capability, reserved-pin conflicts and unsafe combinations before applying an external map;
+- a bad or missing project file must fall back to a known-safe mapping/state rather than blindly configuring GPIOs.
+
+This gives future project packages flexibility without allowing an SD/config file to reassign pins that can prevent the board from booting, displaying recovery UI or accepting recovery firmware.
 
 ## Partition direction
 
