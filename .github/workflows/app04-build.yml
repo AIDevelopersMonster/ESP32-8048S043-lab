@@ -1,0 +1,58 @@
+# Project: KONTAKTS / ESP32-8048S043 Lab
+# Application: App 04 - Persistent Storage / Partial Resource Loading
+# Programmer: Sol
+# Engineer: Alex Malachevsky
+
+name: App 04 - Storage Config Build
+
+on:
+  push:
+    branches:
+      - agent/app04-storage-config
+    paths:
+      - "apps/04_StorageConfig/**"
+      - ".github/workflows/app04-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  APP04_PROJECT_DIR: apps/04_StorageConfig/idf
+  APP04_BIN_NAME: app04-storage-config-v0.1.0.bin
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build App 04 with ESP-IDF 5.5.5
+        run: |
+          docker run --rm \
+            -e APP04_BIN_NAME="${APP04_BIN_NAME}" \
+            -v "$PWD:/project" \
+            -w "/project/${APP04_PROJECT_DIR}" \
+            espressif/idf:v5.5.5 \
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP04_BIN_NAME}" @flash_args'
+
+      - name: Verify merged image and storage image
+        run: |
+          test -s "${APP04_PROJECT_DIR}/build/${APP04_BIN_NAME}"
+          test -s "${APP04_PROJECT_DIR}/build/storage.bin"
+          sha256sum "${APP04_PROJECT_DIR}/build/${APP04_BIN_NAME}"
+          sha256sum "${APP04_PROJECT_DIR}/build/storage.bin"
+          ls -lh \
+            "${APP04_PROJECT_DIR}/build/${APP04_BIN_NAME}" \
+            "${APP04_PROJECT_DIR}/build/storage.bin"
+
+      - name: Upload App 04 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: app04-storage-config-v0.1.0
+          path: |
+            ${{ env.APP04_PROJECT_DIR }}/build/${{ env.APP04_BIN_NAME }}
+            ${{ env.APP04_PROJECT_DIR }}/build/storage.bin
+            ${{ env.APP04_PROJECT_DIR }}/partitions.csv
+          if-no-files-found: error
