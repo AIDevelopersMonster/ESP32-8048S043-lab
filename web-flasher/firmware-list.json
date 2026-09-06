@@ -17,11 +17,20 @@
       "id": "app02",
       "name": "Mixed Widgets",
       "version": "0.1.1",
-      "status": "FUNCTIONAL PHYSICAL PASS / COSMETIC FIX BUILD",
+      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS / CLOSED",
       "description": "LVGL button, switch, slider, arc, progress indicator and multi-screen navigation.",
       "manifest": "./manifest-app02.json",
       "video": "https://youtube.com/shorts/LwmW8UwDED0",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/02_MixedWidgets"
+    },
+    {
+      "id": "app03",
+      "name": "Live System Dashboard",
+      "version": "0.1.0",
+      "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
+      "description": "Real ESP32-S3 temperature, heap, PSRAM and uptime telemetry with a live chart and touch navigation.",
+      "manifest": "./manifest-app03.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/03_LiveDashboard"
     }
   ]
 }
