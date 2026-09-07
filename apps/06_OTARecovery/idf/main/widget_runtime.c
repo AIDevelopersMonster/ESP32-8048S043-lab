@@ -77,6 +77,8 @@ static bool binding_allowed(const char *binding)
     static const char *allowed[] = {
         "system.uptime", "system.heap", "system.psram", "wifi.ip",
         "wifi.rssi", "firmware.version", "ota.state",
+        "time.clock", "time.date", "time.year", "time.weekday",
+        "time.sync_state", "time.last_sync",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -86,7 +88,9 @@ static bool binding_allowed(const char *binding)
 
 static bool button_action_allowed(const char *action)
 {
-    return action && (strcmp(action, "show_status") == 0 || strcmp(action, "show_ota") == 0);
+    return action && (strcmp(action, "show_status") == 0 ||
+                      strcmp(action, "show_ota") == 0 ||
+                      strcmp(action, "sync_time") == 0);
 }
 
 static bool parse_widget(const char *json, size_t len, widget_model_t *out,
@@ -106,6 +110,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
     memset(out, 0, sizeof(*out));
     out->background = 0x101820;
     bool ok = true;
+    size_t clock_count = 0;
 
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
     const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
@@ -183,10 +188,16 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 const char *text = json_string(object, "text");
                 const char *action = json_string(object, "action");
                 if (!text[0] || strlen(text) > 64 || !button_action_allowed(action)) {
-                    set_reason(reason, reason_len, "button supports show_status/show_ota only"); ok = false; break;
+                    set_reason(reason, reason_len, "button action must be show_status/show_ota/sync_time"); ok = false; break;
                 }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->action, action, sizeof(dst->action));
+            } else if (strcmp(type->valuestring, "clock") == 0) {
+                dst->type = WIDGET_OBJECT_CLOCK;
+                clock_count++;
+                if (clock_count > WIDGET_MAX_CLOCKS || dst->w < 320 || dst->h < 90) {
+                    set_reason(reason, reason_len, "clock requires >=320x90 and max 2 instances"); ok = false; break;
+                }
             } else {
                 set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
             }
