@@ -16,6 +16,8 @@
 #define TAG "APP07_STORAGE_WEB"
 #define STORAGE_UPLOAD_MAX_BYTES (512 * 1024)
 #define STORAGE_IO_CHUNK 4096
+#define STORAGE_NAME_MAX 63
+#define STORAGE_PATH_MAX (sizeof(STORAGE_FS_BASE) + STORAGE_NAME_MAX + 1)
 #define STORAGE_TEMP_FILE STORAGE_FS_BASE "/.upload.tmp"
 
 static bool protected_name(const char *name)
@@ -26,14 +28,21 @@ static bool protected_name(const char *name)
            strcmp(name, ".upload.tmp") == 0;
 }
 
-static bool valid_name(const char *name)
+static bool safe_name_chars(const char *name, bool allow_internal)
 {
-    if (!name || !name[0] || strlen(name) > 63 || protected_name(name)) return false;
-    if (name[0] == '.') return false;
+    if (!name || !name[0]) return false;
+    size_t len = strnlen(name, STORAGE_NAME_MAX + 1);
+    if (len == 0 || len > STORAGE_NAME_MAX) return false;
+    if (!allow_internal && name[0] == '.') return false;
     for (const unsigned char *p = (const unsigned char *)name; *p; ++p) {
         if (!(isalnum(*p) || *p == '.' || *p == '_' || *p == '-')) return false;
     }
     return true;
+}
+
+static bool valid_name(const char *name)
+{
+    return safe_name_chars(name, false) && !protected_name(name);
 }
 
 static bool query_name(httpd_req_t *req, char *out, size_t out_len)
@@ -46,9 +55,17 @@ static bool query_name(httpd_req_t *req, char *out, size_t out_len)
     return valid_name(out);
 }
 
-static void make_path(char *out, size_t out_len, const char *name)
+static bool make_path(char *out, size_t out_len, const char *name)
 {
-    snprintf(out, out_len, STORAGE_FS_BASE "/%s", name);
+    if (!out || !name) return false;
+    size_t name_len = strnlen(name, STORAGE_NAME_MAX + 1);
+    const size_t base_len = sizeof(STORAGE_FS_BASE) - 1;
+    if (name_len == 0 || name_len > STORAGE_NAME_MAX || base_len + 1 + name_len + 1 > out_len) return false;
+    memcpy(out, STORAGE_FS_BASE, base_len);
+    out[base_len] = '/';
+    memcpy(out + base_len + 1, name, name_len);
+    out[base_len + 1 + name_len] = '\0';
+    return true;
 }
 
 static esp_err_t list_get(httpd_req_t *req)
@@ -69,17 +86,17 @@ static esp_err_t list_get(httpd_req_t *req)
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
             const char *name = entry->d_name;
-            if (!name || !name[0] || strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
+            if (!safe_name_chars(name, true) || strcmp(name, ".") == 0 || strcmp(name, "..") == 0) continue;
 
-            char path[128];
-            make_path(path, sizeof(path), name);
+            char path[STORAGE_PATH_MAX];
+            if (!make_path(path, sizeof(path), name)) continue;
             struct stat st = {0};
             if (stat(path, &st) != 0) continue;
 
-            char item[256];
+            char item[160];
             snprintf(item, sizeof(item),
-                     "%s{\"name\":\"%s\",\"size\":%u,\"protected\":%s}",
-                     first ? "" : ",", name, (unsigned)st.st_size,
+                     "%s{\"name\":\"%.*s\",\"size\":%u,\"protected\":%s}",
+                     first ? "" : ",", STORAGE_NAME_MAX, name, (unsigned)st.st_size,
                      protected_name(name) ? "true" : "false");
             httpd_resp_sendstr_chunk(req, item);
             first = false;
@@ -93,7 +110,7 @@ static esp_err_t list_get(httpd_req_t *req)
 
 static esp_err_t upload_post(httpd_req_t *req)
 {
-    char name[64];
+    char name[STORAGE_NAME_MAX + 1];
     if (!query_name(req, name, sizeof(name))) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "invalid file name");
         return ESP_OK;
@@ -103,8 +120,11 @@ static esp_err_t upload_post(httpd_req_t *req)
         return ESP_OK;
     }
 
-    char target[128];
-    make_path(target, sizeof(target), name);
+    char target[STORAGE_PATH_MAX];
+    if (!make_path(target, sizeof(target), name)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "file path too long");
+        return ESP_OK;
+    }
     unlink(STORAGE_TEMP_FILE);
     FILE *f = fopen(STORAGE_TEMP_FILE, "wb");
     if (!f) {
@@ -157,22 +177,25 @@ static esp_err_t upload_post(httpd_req_t *req)
 
 static esp_err_t download_get(httpd_req_t *req)
 {
-    char name[64];
+    char name[STORAGE_NAME_MAX + 1];
     if (!query_name(req, name, sizeof(name))) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "invalid file name");
         return ESP_OK;
     }
 
-    char path[128];
-    make_path(path, sizeof(path), name);
+    char path[STORAGE_PATH_MAX];
+    if (!make_path(path, sizeof(path), name)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "file path too long");
+        return ESP_OK;
+    }
     FILE *f = fopen(path, "rb");
     if (!f) {
         httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "file not found");
         return ESP_OK;
     }
 
-    char disposition[128];
-    snprintf(disposition, sizeof(disposition), "attachment; filename=\"%s\"", name);
+    char disposition[96];
+    snprintf(disposition, sizeof(disposition), "attachment; filename=\"%.*s\"", STORAGE_NAME_MAX, name);
     httpd_resp_set_type(req, "application/octet-stream");
     httpd_resp_set_hdr(req, "Content-Disposition", disposition);
 
@@ -200,14 +223,17 @@ static esp_err_t download_get(httpd_req_t *req)
 
 static esp_err_t delete_post(httpd_req_t *req)
 {
-    char name[64];
+    char name[STORAGE_NAME_MAX + 1];
     if (!query_name(req, name, sizeof(name))) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "invalid or protected file name");
         return ESP_OK;
     }
 
-    char path[128];
-    make_path(path, sizeof(path), name);
+    char path[STORAGE_PATH_MAX];
+    if (!make_path(path, sizeof(path), name)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "file path too long");
+        return ESP_OK;
+    }
     if (unlink(path) != 0) {
         httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "file not found");
         return ESP_OK;
