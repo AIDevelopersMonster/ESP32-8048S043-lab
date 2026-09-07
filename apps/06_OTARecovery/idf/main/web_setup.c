@@ -13,6 +13,7 @@
 #include "ota_manager.h"
 #include "storage_credentials.h"
 #include "storage_fs.h"
+#include "storage_web.h"
 #include "widget_runtime.h"
 
 #define TAG "APP07_WEB"
@@ -27,24 +28,31 @@ static esp_err_t root_get(httpd_req_t *req)
     ota_status_t ota; ota_manager_get_status(&ota); widget_info_t wi; widget_runtime_get_info(&wi);
     size_t fs_total=0,fs_used=0; storage_fs_info(&fs_total,&fs_used);
     bool setup=network_manager_state()==NETWORK_STATE_AP_SETUP;
-    char *html=heap_caps_calloc(1,14000,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT); if(!html) html=calloc(1,14000); if(!html)return ESP_ERR_NO_MEM;
-    int n=snprintf(html,14000,
+    char *html=heap_caps_calloc(1,20000,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT); if(!html) html=calloc(1,20000); if(!html)return ESP_ERR_NO_MEM;
+    int n=snprintf(html,20000,
       "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'><title>KONTAKTS Platform</title>"
-      "<style>body{font-family:sans-serif;max-width:820px;margin:20px auto;padding:0 14px;background:#101418;color:#eef}input,select,button{font-size:16px;padding:10px;margin:5px 0;width:100%%;box-sizing:border-box}button{cursor:pointer}.card{background:#182027;padding:16px;border-radius:14px;margin:12px 0}code{word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body>"
+      "<style>body{font-family:sans-serif;max-width:920px;margin:20px auto;padding:0 14px;background:#101418;color:#eef}input,select,button{font-size:16px;padding:10px;margin:5px 0;width:100%%;box-sizing:border-box}button{cursor:pointer}.card{background:#182027;padding:16px;border-radius:14px;margin:12px 0}code{word-break:break-all}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}table{width:100%%;border-collapse:collapse}td,th{padding:8px;border-bottom:1px solid #34404a;text-align:left}.muted{color:#9aa7b2}.protected{color:#f0ad4e}@media(max-width:600px){.grid{grid-template-columns:1fr}table{font-size:13px}}</style></head><body>"
       "<h1>KONTAKTS Platform</h1><div class='card'><b>Network:</b> %s<br><b>STA IP:</b> %s<br><b>Setup AP:</b> %s</div>",
       network_manager_state_name(),network_manager_sta_ip(),network_manager_ap_ssid());
-    if(setup){n+=snprintf(html+n,14000-n,"<div class='card'><h2>Wi-Fi setup</h2><select id='ssid' name='ssid' form='wf'><option>Scanning...</option></select><form id='wf' method='post' action='/save'><input type='password' name='password' placeholder='Password'><button>Save and connect</button></form></div><script>fetch('/scan').then(r=>r.json()).then(a=>{let s=document.getElementById('ssid');s.innerHTML='';a.forEach(x=>{let o=document.createElement('option');o.name='ssid';o.value=x.ssid;o.textContent=x.ssid+' ('+x.rssi+' dBm)';s.appendChild(o)});s.setAttribute('name','ssid')})</script>");}
+    if(setup){n+=snprintf(html+n,20000-n,"<div class='card'><h2>Wi-Fi setup</h2><select id='ssid' name='ssid' form='wf'><option>Scanning...</option></select><form id='wf' method='post' action='/save'><input type='password' name='password' placeholder='Password'><button>Save and connect</button></form></div><script>fetch('/scan').then(r=>r.json()).then(a=>{let s=document.getElementById('ssid');s.innerHTML='';a.forEach(x=>{let o=document.createElement('option');o.name='ssid';o.value=x.ssid;o.textContent=x.ssid+' ('+x.rssi+' dBm)';s.appendChild(o)});s.setAttribute('name','ssid')})</script>");}
     else{
-      n+=snprintf(html+n,14000-n,
+      n+=snprintf(html+n,20000-n,
        "<div class='card'><h2>GitHub OTA</h2><div id='ota'><b>State:</b> %s<br><b>Installed:</b> %s<br><b>Available:</b> %s<br><b>Running:</b> %s<br><b>Image:</b> %s<br><b>Progress:</b> %d%%%%<br><b>Message:</b> %s</div><div class='grid'><form method='post' action='/ota/check'><button>CHECK GITHUB</button></form><form method='post' action='/ota/install'><button>DOWNLOAD & INSTALL</button></form><form method='post' action='/ota/confirm'><button>CONFIRM</button></form><form method='post' action='/ota/rollback'><button>ROLLBACK</button></form></div><form method='post' action='/ota/recovery'><button>FACTORY RECOVERY</button></form></div>",
        ota.state,ota.current_version,ota.available_version[0]?ota.available_version:"-",ota.running_partition,ota.image_state,ota.progress_percent,ota.message);
-      n+=snprintf(html+n,14000-n,
+      n+=snprintf(html+n,20000-n,
        "<div class='card'><h2>Filesystem Widget</h2><div id='widget'><b>Installed:</b> %s<br><b>ID:</b> %s<br><b>Name:</b> %s<br><b>Version:</b> %s<br><b>File:</b> %u bytes<br><b>Generation:</b> %u<br><b>Status:</b> %s<br><b>SPIFFS:</b> %u / %u bytes used</div><p>Select a JSON document (max 32 KiB). It is validated before replacing <code>/storage/widget.json</code>.</p><input id='widgetFile' type='file' accept='.json,application/json'><button onclick='installWidget()'>UPLOAD & INSTALL WIDGET</button><form method='post' action='/widget/delete'><button>DELETE EXTERNAL WIDGET</button></form><p id='uploadMsg'></p></div>",
        wi.installed?"yes":"no",wi.id,wi.name,wi.version,(unsigned)wi.file_size,(unsigned)wi.generation,wi.status,(unsigned)fs_used,(unsigned)fs_total);
-      n+=snprintf(html+n,14000-n,
-       "<div class='card'><form method='post' action='/clear'><button>Clear saved Wi-Fi and use setup AP</button></form></div><script>async function installWidget(){let f=document.getElementById('widgetFile').files[0];if(!f){uploadMsg.textContent='Choose JSON first';return}let t=await f.text();let r=await fetch('/widget/install',{method:'POST',headers:{'Content-Type':'application/json'},body:t});uploadMsg.textContent=await r.text();if(r.ok)setTimeout(()=>location.reload(),400)}setInterval(()=>fetch('/ota/status').then(r=>r.json()).then(x=>{document.getElementById('ota').innerHTML='<b>State:</b> '+x.state+'<br><b>Installed:</b> '+x.current_version+'<br><b>Available:</b> '+x.available_version+'<br><b>Running:</b> '+x.running_partition+'<br><b>Image:</b> '+x.image_state+'<br><b>Progress:</b> '+x.progress_percent+'%%<br><b>Message:</b> '+x.message}).catch(()=>{}),2000)</script>");
+      n+=snprintf(html+n,20000-n,
+       "<div class='card'><h2>Storage Manager</h2><p class='muted'>Browser view of <code>/storage</code>. Widget system files are visible but protected; install widgets only through the Widget section above.</p><div id='storageInfo'>Loading...</div><input id='storageFile' type='file'><button onclick='uploadStorage()'>UPLOAD FILE TO STORAGE</button><p id='storageMsg'></p><div style='overflow-x:auto'><table><thead><tr><th>Name</th><th>Size</th><th>Type</th><th>Action</th></tr></thead><tbody id='storageRows'></tbody></table></div></div>");
+      n+=snprintf(html+n,20000-n,
+       "<div class='card'><form method='post' action='/clear'><button>Clear saved Wi-Fi and use setup AP</button></form></div><script>"
+       "async function installWidget(){let f=document.getElementById('widgetFile').files[0];if(!f){uploadMsg.textContent='Choose JSON first';return}let t=await f.text();let r=await fetch('/widget/install',{method:'POST',headers:{'Content-Type':'application/json'},body:t});uploadMsg.textContent=await r.text();if(r.ok)setTimeout(()=>location.reload(),400)}"
+       "async function loadStorage(){try{let x=await fetch('/storage/list').then(r=>r.json());storageInfo.textContent='Used '+x.used+' / '+x.total+' bytes';let b='';for(let f of x.files){let type=f.protected?'system / protected':'user';let action=f.protected?'<span class=\"protected\">protected</span>':'<a href=\"/storage/download?name='+encodeURIComponent(f.name)+'\">Download</a> | <a href=\"#\" onclick=\"deleteStorage(\\\''+f.name+'\\\');return false\">Delete</a>';b+='<tr><td>'+f.name+'</td><td>'+f.size+'</td><td>'+type+'</td><td>'+action+'</td></tr>'}storageRows.innerHTML=b||'<tr><td colspan=\"4\">Storage is empty</td></tr>'}catch(e){storageInfo.textContent='Storage read failed'}}"
+       "async function uploadStorage(){let f=storageFile.files[0];if(!f){storageMsg.textContent='Choose a file first';return}let safe=f.name.replace(/[^A-Za-z0-9._-]/g,'_');let r=await fetch('/storage/upload?name='+encodeURIComponent(safe),{method:'POST',body:f});storageMsg.textContent=await r.text();if(r.ok){storageFile.value='';loadStorage()}}"
+       "async function deleteStorage(name){if(!confirm('Delete '+name+'?'))return;let r=await fetch('/storage/delete?name='+encodeURIComponent(name),{method:'POST'});storageMsg.textContent=await r.text();if(r.ok)loadStorage()}"
+       "setInterval(()=>fetch('/ota/status').then(r=>r.json()).then(x=>{document.getElementById('ota').innerHTML='<b>State:</b> '+x.state+'<br><b>Installed:</b> '+x.current_version+'<br><b>Available:</b> '+x.available_version+'<br><b>Running:</b> '+x.running_partition+'<br><b>Image:</b> '+x.image_state+'<br><b>Progress:</b> '+x.progress_percent+'%%<br><b>Message:</b> '+x.message}).catch(()=>{}),2000);loadStorage();</script>");
     }
-    n+=snprintf(html+n,14000-n,"</body></html>"); httpd_resp_set_type(req,"text/html");esp_err_t err=httpd_resp_send(req,html,n);free(html);return err;
+    n+=snprintf(html+n,20000-n,"</body></html>"); httpd_resp_set_type(req,"text/html");esp_err_t err=httpd_resp_send(req,html,n);free(html);return err;
 }
 
 static esp_err_t favicon_get(httpd_req_t *req){httpd_resp_set_status(req,"204 No Content");return httpd_resp_send(req,NULL,0);}
@@ -79,5 +87,6 @@ esp_err_t web_setup_start(void)
       {.uri="/widget/status",.method=HTTP_GET,.handler=widget_status_get},{.uri="/widget/install",.method=HTTP_POST,.handler=widget_install_post},{.uri="/widget/delete",.method=HTTP_POST,.handler=widget_delete_post},
     };
     for(size_t i=0;i<sizeof(h)/sizeof(h[0]);++i)ESP_RETURN_ON_ERROR(httpd_register_uri_handler(s_httpd,&h[i]),TAG,"URI handler failed");
-    ESP_LOGI(TAG,"Platform HTTP server started with widget install API");return ESP_OK;
+    ESP_RETURN_ON_ERROR(storage_web_register(s_httpd),TAG,"storage web register failed");
+    ESP_LOGI(TAG,"Platform HTTP server started with widget install and storage manager APIs");return ESP_OK;
 }
