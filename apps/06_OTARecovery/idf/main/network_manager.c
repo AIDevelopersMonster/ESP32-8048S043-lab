@@ -16,6 +16,7 @@
 #include "esp_wifi.h"
 
 #include "storage_credentials.h"
+#include "time_service.h"
 
 #define TAG "APP05_NET"
 #define STA_RETRY_LIMIT 5
@@ -89,6 +90,12 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         xEventGroupClearBits(s_events, BIT_STA_FAILED);
         xEventGroupSetBits(s_events, BIT_STA_GOT_IP);
         ESP_LOGI(TAG, "STA online ip=%s", s_sta_ip);
+
+        /* Power-on/reconnect time discipline: synchronize as soon as IP is usable. */
+        esp_err_t sync_err = time_service_request_sync();
+        if (sync_err != ESP_OK && sync_err != ESP_ERR_INVALID_STATE) {
+            ESP_LOGW(TAG, "Automatic NTP sync request failed: %s", esp_err_to_name(sync_err));
+        }
     }
 }
 
