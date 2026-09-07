@@ -23,6 +23,8 @@
 
 #include "network_manager.h"
 #include "ota_manager.h"
+#include "sevenseg_clock.h"
+#include "time_service.h"
 #include "widget_runtime.h"
 
 #define TAG "APP07_UI"
@@ -65,6 +67,8 @@ static lv_obj_t *s_widget_header, *s_widget_content;
 static widget_model_t *s_widget_model;
 static bound_label_t s_bound[WIDGET_MAX_BOUND_LABELS];
 static size_t s_bound_count;
+static sevenseg_clock_view_t *s_clocks[WIDGET_MAX_CLOCKS];
+static size_t s_clock_count;
 static uint32_t s_widget_generation;
 static bool s_first_refresh = true;
 
@@ -172,6 +176,12 @@ static void widget_action_cb(lv_event_t *e)
     if (!action) return;
     if (strcmp(action, "show_status") == 0) show_status_panel();
     else if (strcmp(action, "show_ota") == 0) show_ota_panel();
+    else if (strcmp(action, "sync_time") == 0) {
+        esp_err_t err = time_service_request_sync();
+        if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
+            ESP_LOGW(TAG, "SYNC TIME rejected: %s", esp_err_to_name(err));
+        }
+    }
 }
 
 static lv_obj_t *make_panel(void)
@@ -226,9 +236,19 @@ static void create_ui(void)
     select_panel(s_status_panel); lv_screen_load(s_screen);
 }
 
+static void clear_clock_views(void)
+{
+    for (size_t i = 0; i < s_clock_count; ++i) {
+        sevenseg_clock_destroy(s_clocks[i]);
+        s_clocks[i] = NULL;
+    }
+    s_clock_count = 0;
+}
+
 static void render_widget(void)
 {
     widget_info_t info; widget_runtime_get_info(&info);
+    clear_clock_views();
     lv_obj_clean(s_widget_content); s_bound_count = 0;
     if (!info.installed) {
         lv_obj_set_style_bg_color(s_widget_content, lv_color_hex(0x101820), 0);
@@ -257,16 +277,21 @@ static void render_widget(void)
             lv_obj_t *button = make_button(s_widget_content, o->x, o->y, o->w, o->h, o->text, widget_action_cb);
             lv_obj_remove_event_cb(button, widget_action_cb);
             lv_obj_add_event_cb(button, widget_action_cb, LV_EVENT_CLICKED, o->action);
+        } else if (o->type == WIDGET_OBJECT_CLOCK && s_clock_count < WIDGET_MAX_CLOCKS) {
+            sevenseg_clock_view_t *clock = sevenseg_clock_create(s_widget_content, o->x, o->y, o->w, o->h, o->color);
+            if (clock) s_clocks[s_clock_count++] = clock;
         }
     }
-    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u generation=%u", s_widget_model->id,
-             (unsigned)s_widget_model->object_count, (unsigned)s_widget_generation);
+    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u clocks=%u generation=%u", s_widget_model->id,
+             (unsigned)s_widget_model->object_count, (unsigned)s_clock_count, (unsigned)s_widget_generation);
 }
 
 static void binding_value(const char *binding, char *out, size_t out_len)
 {
     ota_status_t ota; ota_manager_get_status(&ota);
-    if (strcmp(binding, "system.uptime") == 0) {
+    if (strncmp(binding, "time.", 5) == 0) {
+        time_service_format_binding(binding, out, out_len);
+    } else if (strcmp(binding, "system.uptime") == 0) {
         uint64_t total = (uint64_t)esp_timer_get_time() / 1000000ULL;
         snprintf(out, out_len, "%02llu:%02llu:%02llu", (unsigned long long)(total / 3600ULL),
                  (unsigned long long)((total / 60ULL) % 60ULL), (unsigned long long)(total % 60ULL));
@@ -294,6 +319,7 @@ static void refresh_bindings(void)
         snprintf(text, sizeof(text), "%s%s%s", s_bound[i].source->prefix, value, s_bound[i].source->suffix);
         lv_label_set_text(s_bound[i].label, text);
     }
+    for (size_t i = 0; i < s_clock_count; ++i) sevenseg_clock_update(s_clocks[i]);
 }
 
 static void refresh_ui(void)
