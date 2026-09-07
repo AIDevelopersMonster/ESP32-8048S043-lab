@@ -2,6 +2,8 @@ idf_component_register(
     SRCS
         "main.c"
         "storage_credentials.c"
+        "storage_fs.c"
+        "widget_runtime.c"
         "network_manager.c"
         "web_setup.c"
         "ota_manager.c"
@@ -9,6 +11,7 @@ idf_component_register(
     INCLUDE_DIRS "."
     REQUIRES
         nvs_flash
+        spiffs
         esp_wifi
         esp_event
         esp_netif
