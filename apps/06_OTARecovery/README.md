@@ -1,13 +1,13 @@
 # App 06 - GitHub OTA, Rollback and Recovery
 
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
-**Status:** FUNCTIONAL PHYSICAL PASS — GitHub OTA + on-device LVGL9 OTA control validated; cosmetic header overlap remains deferred
+**Status:** FUNCTIONAL PHYSICAL PASS — GitHub OTA + on-device LVGL9 OTA control + explicit rollback validated; TLS memory-headroom hardening remains open
 
 ## Current validated result
 
-App06 now has a physically validated GitHub OTA path and a physically validated on-device OTA control surface on the ESP32-8048S043 reference board.
+App06 now has a physically validated GitHub OTA path, a physically validated on-device OTA control surface, and a physically validated explicit rollback path on the ESP32-8048S043 reference board.
 
-Validated path:
+Validated physical path:
 
 ```text
 factory 0.1.0
@@ -16,6 +16,14 @@ factory 0.1.0
    -> byte-count / SHA-256 / ESP image validation
    -> ota_0 0.1.1 PENDING_VERIFY
    -> saved Wi-Fi/NVS preserved
+   -> explicit rollback
+   -> factory 0.1.0
+   -> GitHub OTA 0.1.2
+   -> ota_0 0.1.2 PENDING_VERIFY
+   -> LVGL9 display + GT911 touch online
+   -> explicit rollback from the v0.1.2 control surface
+   -> factory 0.1.0
+   -> re-install 0.1.2 reproduced successfully
 ```
 
 The v0.1.2 release adds a local 800x480 LVGL 9.3 / GT911 touch UI based on the physically validated App03 display stack. Repeated physical runs confirmed that the display, touch interaction, STATUS/OTA navigation and OTA controls work functionally on the board.
@@ -24,7 +32,7 @@ Video evidence for the v0.1.2 display OTA interface:
 
 - https://youtube.com/shorts/WaIzVkcltCk
 
-Known issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
+Known UI issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
 
 ## Controlled variable
 
@@ -58,7 +66,7 @@ select boot partition + reboot
 ESP_OTA_IMG_PENDING_VERIFY
       |
       +-- CONFIRM -> VALID
-      +-- explicit ROLLBACK
+      +-- explicit ROLLBACK -> previous working image
       +-- reset/WDT before confirm -> bootloader rollback
       +-- FACTORY RECOVERY -> factory partition
 ```
@@ -116,6 +124,27 @@ CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 
 A newly installed OTA image therefore boots as `PENDING_VERIFY`. App06 intentionally keeps explicit confirm/rollback controls available for laboratory validation.
 
+Explicit rollback is now physically proven. The serial transcript includes:
+
+```text
+esp_ota_ops: Rollback to previously worked partition.
+```
+
+followed by:
+
+```text
+boot: Defaulting to factory image
+APP06_OTA: Running partition=factory version=0.1.0 state=FACTORY
+```
+
+The v0.1.2 reboot cleanup is also physically proven:
+
+```text
+APP05_NET: Wi-Fi is stopping for reboot; reconnect suppressed
+```
+
+This replaces the earlier false reconnect/AP-fallback noise seen during OTA reboot teardown.
+
 ## Persistence boundary
 
 ```text
@@ -123,7 +152,23 @@ full USB/Web-Flasher installation -> may erase NVS
 app-only GitHub OTA              -> preserves NVS and stored Wi-Fi credentials
 ```
 
-This boundary has been physically observed across OTA operation on the reference board.
+This boundary has been physically observed across OTA and rollback operation on the reference board. The same saved SSID reconnects automatically after update and after return to factory.
+
+## Open hardening item: TLS allocation headroom
+
+One `CHECK GITHUB` while v0.1.2 + LVGL was already active failed with:
+
+```text
+esp-tls-mbedtls: mbedtls_ssl_setup returned -0x7F00
+esp-tls: create_ssl_handle failed
+HTTP_CLIENT: Connection failed, sock < 0
+```
+
+`-0x7F00` corresponds to `MBEDTLS_ERR_SSL_ALLOC_FAILED`, so this is a real internal-RAM / largest-free-block headroom issue, not a cosmetic UI problem.
+
+It does not invalidate the successful OTA and rollback cycles: subsequent update/install operations completed with the expected SHA-256 and booted v0.1.2 successfully. It remains the next technical hardening gate.
+
+Next measurement should include the largest internal free block immediately before TLS setup, not only total free heap.
 
 ## Evidence
 
@@ -143,9 +188,14 @@ VERIFIED HTTPS OTA DOWNLOAD              PASS
 SHA-256 / IMAGE VALIDATION               PASS
 BOOT INTO OTA CANDIDATE                  PASS
 NVS / SAVED WI-FI PRESERVATION           PASS
-800x480 LVGL9 DISPLAY                     PASS
-GT911 TOUCH                               PASS
-ON-DEVICE OTA CONTROL                     PASS
+800x480 LVGL9 DISPLAY                    PASS
+GT911 TOUCH                              PASS
+ON-DEVICE OTA CONTROL                    PASS
+EXPLICIT ROLLBACK                        PASS
+RETURN TO FACTORY                        PASS
+RE-INSTALL v0.1.2                        PASS
+INTENTIONAL-REBOOT RECONNECT SUPPRESSION PASS
 REPEATED FUNCTIONAL RUNS                 PASS
-KNOWN HEADER TEXT OVERLAP                 COSMETIC / DEFERRED
+KNOWN HEADER TEXT OVERLAP                COSMETIC / DEFERRED
+TLS ALLOCATION HEADROOM                  OPEN HARDENING ITEM
 ```
