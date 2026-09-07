@@ -188,7 +188,7 @@ static void create_ui(void)
     lv_obj_set_style_bg_opa(s_screen, LV_OPA_COVER, 0); lv_obj_set_style_border_width(s_screen, 0, 0);
     lv_obj_set_style_pad_all(s_screen, 0, 0);
     make_label(s_screen, 18, 14, "KONTAKTS", &lv_font_montserrat_24, 0xF0F6FC);
-    make_label(s_screen, 160, 18, "Platform Shell / Filesystem Widgets", &lv_font_montserrat_18, 0x8B949E);
+    make_label(s_screen, 160, 18, "Shell / Filesystem Widgets", &lv_font_montserrat_18, 0x8B949E);
     s_status_tab = make_button(s_screen, 476, 8, 100, 44, "STATUS", status_tab_cb);
     s_ota_tab = make_button(s_screen, 584, 8, 92, 44, "OTA", ota_tab_cb);
     s_widget_tab = make_button(s_screen, 684, 8, 100, 44, "WIDGET", widget_tab_cb);
@@ -217,7 +217,6 @@ static void create_ui(void)
     s_confirm_button = make_button(s_ota_panel, 496, 224, 220, 54, "CONFIRM", confirm_cb);
     s_rollback_button = make_button(s_ota_panel, 24, 300, 220, 54, "ROLLBACK", rollback_cb);
     s_recovery_button = make_button(s_ota_panel, 260, 300, 220, 54, "FACTORY RECOVERY", recovery_cb);
-
     s_widget_panel = make_panel();
     s_widget_header = make_label(s_widget_panel, 20, 12, "FILESYSTEM WIDGET", &lv_font_montserrat_18, 0x8B949E);
     s_widget_content = lv_obj_create(s_widget_panel); lv_obj_set_pos(s_widget_content, 12, 44); lv_obj_set_size(s_widget_content, 744, 344);
