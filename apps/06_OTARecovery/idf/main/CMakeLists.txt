@@ -3,6 +3,7 @@ idf_component_register(
         "main.c"
         "storage_credentials.c"
         "storage_fs.c"
+        "storage_web.c"
         "widget_runtime.c"
         "network_manager.c"
         "web_setup.c"
