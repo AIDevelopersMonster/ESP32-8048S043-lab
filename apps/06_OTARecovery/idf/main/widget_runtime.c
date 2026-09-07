@@ -22,8 +22,14 @@
 #define WIDGET_BACKUP_PATH STORAGE_FS_BASE "/widget.bak"
 
 static SemaphoreHandle_t s_lock;
-static widget_model_t s_model;
+static widget_model_t *s_model;
 static widget_info_t s_info;
+
+static void *psram_alloc(size_t size)
+{
+    void *p = heap_caps_calloc(1, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    return p ? p : calloc(1, size);
+}
 
 static void set_reason(char *reason, size_t len, const char *text)
 {
@@ -32,8 +38,8 @@ static void set_reason(char *reason, size_t len, const char *text)
 
 static bool valid_short_string(const cJSON *item, size_t max_len)
 {
-    return cJSON_IsString(item) && item->valuestring &&
-           item->valuestring[0] && strlen(item->valuestring) <= max_len;
+    return cJSON_IsString(item) && item->valuestring && item->valuestring[0] &&
+           strlen(item->valuestring) <= max_len;
 }
 
 static bool parse_hex_color(const cJSON *item, uint32_t fallback, uint32_t *out)
@@ -69,13 +75,8 @@ static bool binding_allowed(const char *binding)
 {
     if (!binding || !binding[0]) return true;
     static const char *allowed[] = {
-        "system.uptime",
-        "system.heap",
-        "system.psram",
-        "wifi.ip",
-        "wifi.rssi",
-        "firmware.version",
-        "ota.state",
+        "system.uptime", "system.heap", "system.psram", "wifi.ip",
+        "wifi.rssi", "firmware.version", "ota.state",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -85,11 +86,11 @@ static bool binding_allowed(const char *binding)
 
 static bool button_action_allowed(const char *action)
 {
-    return action &&
-           (strcmp(action, "show_status") == 0 || strcmp(action, "show_ota") == 0);
+    return action && (strcmp(action, "show_status") == 0 || strcmp(action, "show_ota") == 0);
 }
 
-static bool parse_widget(const char *json, size_t len, widget_model_t *out, char *reason, size_t reason_len)
+static bool parse_widget(const char *json, size_t len, widget_model_t *out,
+                         char *reason, size_t reason_len)
 {
     if (!json || !out || len == 0 || len > WIDGET_MAX_JSON_BYTES) {
         set_reason(reason, reason_len, "Widget must be 1..32768 bytes");
@@ -104,8 +105,8 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out, char
 
     memset(out, 0, sizeof(*out));
     out->background = 0x101820;
-
     bool ok = true;
+
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
     const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
     const cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
@@ -114,24 +115,18 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out, char
     const cJSON *objects = cJSON_GetObjectItemCaseSensitive(root, "objects");
 
     if (!cJSON_IsNumber(schema) || schema->valueint != 1) {
-        set_reason(reason, reason_len, "schema must equal 1");
-        ok = false;
+        set_reason(reason, reason_len, "schema must equal 1"); ok = false;
     } else if (!valid_short_string(id, 48)) {
-        set_reason(reason, reason_len, "id missing/too long");
-        ok = false;
+        set_reason(reason, reason_len, "id missing/too long"); ok = false;
     } else if (!valid_short_string(name, 64)) {
-        set_reason(reason, reason_len, "name missing/too long");
-        ok = false;
+        set_reason(reason, reason_len, "name missing/too long"); ok = false;
     } else if (!valid_short_string(version, 24)) {
-        set_reason(reason, reason_len, "version missing/too long");
-        ok = false;
+        set_reason(reason, reason_len, "version missing/too long"); ok = false;
     } else if (!parse_hex_color(background, 0x101820, &out->background)) {
-        set_reason(reason, reason_len, "background must be #RRGGBB");
-        ok = false;
+        set_reason(reason, reason_len, "background must be #RRGGBB"); ok = false;
     } else if (!cJSON_IsArray(objects) || cJSON_GetArraySize(objects) < 1 ||
                cJSON_GetArraySize(objects) > WIDGET_MAX_OBJECTS) {
-        set_reason(reason, reason_len, "objects must contain 1..24 items");
-        ok = false;
+        set_reason(reason, reason_len, "objects must contain 1..24 items"); ok = false;
     }
 
     if (ok) {
@@ -144,73 +139,56 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out, char
             const cJSON *object = cJSON_GetArrayItem(objects, (int)i);
             const cJSON *type = cJSON_GetObjectItemCaseSensitive(object, "type");
             if (!cJSON_IsObject(object) || !valid_short_string(type, 16)) {
-                set_reason(reason, reason_len, "object type missing");
-                ok = false;
-                break;
+                set_reason(reason, reason_len, "object type missing"); ok = false; break;
             }
 
             widget_object_t *dst = &out->objects[i];
-            memset(dst, 0, sizeof(*dst));
             dst->x = json_int(object, "x", 16);
             dst->y = json_int(object, "y", 16);
             dst->w = json_int(object, "w", 300);
             dst->h = json_int(object, "h", 36);
             dst->value = json_int(object, "value", 0);
 
-            if (dst->x < 0 || dst->x > 730 || dst->y < 0 || dst->y > 360 ||
-                dst->w < 20 || dst->w > 740 || dst->h < 18 || dst->h > 360) {
-                set_reason(reason, reason_len, "object geometry out of range");
-                ok = false;
-                break;
+            if (dst->x < 0 || dst->x > 730 || dst->y < 0 || dst->y > 350 ||
+                dst->w < 20 || dst->w > 740 || dst->h < 18 || dst->h > 350 ||
+                dst->x + dst->w > 744 || dst->y + dst->h > 365) {
+                set_reason(reason, reason_len, "object geometry out of range"); ok = false; break;
             }
 
-            const cJSON *color = cJSON_GetObjectItemCaseSensitive(object, "color");
-            if (!parse_hex_color(color, 0xFFFFFF, &dst->color)) {
-                set_reason(reason, reason_len, "object color must be #RRGGBB");
-                ok = false;
-                break;
+            if (!parse_hex_color(cJSON_GetObjectItemCaseSensitive(object, "color"), 0xFFFFFF, &dst->color)) {
+                set_reason(reason, reason_len, "object color must be #RRGGBB"); ok = false; break;
             }
 
             if (strcmp(type->valuestring, "label") == 0) {
                 dst->type = WIDGET_OBJECT_LABEL;
                 const char *text = json_string(object, "text");
                 const char *binding = json_string(object, "bind");
-                if (!text[0] && !binding[0]) {
-                    set_reason(reason, reason_len, "label requires text or bind");
-                    ok = false;
-                    break;
-                }
-                if (strlen(text) > 160 || strlen(binding) > 32 || !binding_allowed(binding)) {
-                    set_reason(reason, reason_len, "label text/binding invalid");
-                    ok = false;
-                    break;
+                const char *prefix = json_string(object, "prefix");
+                const char *suffix = json_string(object, "suffix");
+                if ((!text[0] && !binding[0]) || strlen(text) > 160 || strlen(binding) > 32 ||
+                    strlen(prefix) > 64 || strlen(suffix) > 64 || !binding_allowed(binding)) {
+                    set_reason(reason, reason_len, "label text/binding invalid"); ok = false; break;
                 }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->binding, binding, sizeof(dst->binding));
-                strlcpy(dst->prefix, json_string(object, "prefix"), sizeof(dst->prefix));
-                strlcpy(dst->suffix, json_string(object, "suffix"), sizeof(dst->suffix));
+                strlcpy(dst->prefix, prefix, sizeof(dst->prefix));
+                strlcpy(dst->suffix, suffix, sizeof(dst->suffix));
             } else if (strcmp(type->valuestring, "bar") == 0) {
                 dst->type = WIDGET_OBJECT_BAR;
                 if (dst->value < 0 || dst->value > 100) {
-                    set_reason(reason, reason_len, "bar value must be 0..100");
-                    ok = false;
-                    break;
+                    set_reason(reason, reason_len, "bar value must be 0..100"); ok = false; break;
                 }
             } else if (strcmp(type->valuestring, "button") == 0) {
                 dst->type = WIDGET_OBJECT_BUTTON;
                 const char *text = json_string(object, "text");
                 const char *action = json_string(object, "action");
                 if (!text[0] || strlen(text) > 64 || !button_action_allowed(action)) {
-                    set_reason(reason, reason_len, "button supports show_status/show_ota only");
-                    ok = false;
-                    break;
+                    set_reason(reason, reason_len, "button supports show_status/show_ota only"); ok = false; break;
                 }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->action, action, sizeof(dst->action));
             } else {
-                set_reason(reason, reason_len, "unsupported object type");
-                ok = false;
-                break;
+                set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
             }
         }
     }
@@ -221,40 +199,23 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out, char
     return ok;
 }
 
-static void *psram_alloc(size_t size)
-{
-    void *p = heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-    return p ? p : malloc(size);
-}
-
 static esp_err_t read_file(char **json_out, size_t *len_out)
 {
     if (!json_out || !len_out) return ESP_ERR_INVALID_ARG;
-    *json_out = NULL;
-    *len_out = 0;
-
+    *json_out = NULL; *len_out = 0;
     struct stat st;
     if (stat(WIDGET_PATH, &st) != 0) return ESP_ERR_NOT_FOUND;
     if (st.st_size <= 0 || st.st_size > WIDGET_MAX_JSON_BYTES) return ESP_ERR_INVALID_SIZE;
 
     FILE *f = fopen(WIDGET_PATH, "rb");
     if (!f) return ESP_FAIL;
-
     char *json = psram_alloc((size_t)st.st_size + 1);
-    if (!json) {
-        fclose(f);
-        return ESP_ERR_NO_MEM;
-    }
-
+    if (!json) { fclose(f); return ESP_ERR_NO_MEM; }
     size_t got = fread(json, 1, (size_t)st.st_size, f);
     fclose(f);
-    if (got != (size_t)st.st_size) {
-        free(json);
-        return ESP_FAIL;
-    }
+    if (got != (size_t)st.st_size) { free(json); return ESP_FAIL; }
     json[got] = '\0';
-    *json_out = json;
-    *len_out = got;
+    *json_out = json; *len_out = got;
     return ESP_OK;
 }
 
@@ -266,19 +227,14 @@ static esp_err_t commit_file(const char *json, size_t len)
     fflush(f);
     fsync(fileno(f));
     fclose(f);
-    if (written != len) {
-        remove(WIDGET_TEMP_PATH);
-        return ESP_FAIL;
-    }
+    if (written != len) { remove(WIDGET_TEMP_PATH); return ESP_FAIL; }
 
     remove(WIDGET_BACKUP_PATH);
     if (rename(WIDGET_PATH, WIDGET_BACKUP_PATH) != 0 && errno != ENOENT) {
-        remove(WIDGET_TEMP_PATH);
-        return ESP_FAIL;
+        remove(WIDGET_TEMP_PATH); return ESP_FAIL;
     }
     if (rename(WIDGET_TEMP_PATH, WIDGET_PATH) != 0) {
-        rename(WIDGET_BACKUP_PATH, WIDGET_PATH);
-        return ESP_FAIL;
+        rename(WIDGET_BACKUP_PATH, WIDGET_PATH); return ESP_FAIL;
     }
     remove(WIDGET_BACKUP_PATH);
     return ESP_OK;
@@ -287,7 +243,7 @@ static esp_err_t commit_file(const char *json, size_t len)
 static void publish_model(const widget_model_t *model, size_t file_size, const char *status)
 {
     xSemaphoreTake(s_lock, portMAX_DELAY);
-    s_model = *model;
+    *s_model = *model;
     s_info.installed = model->valid;
     s_info.generation++;
     s_info.file_size = file_size;
@@ -302,12 +258,12 @@ esp_err_t widget_runtime_init(void)
 {
     s_lock = xSemaphoreCreateMutex();
     if (!s_lock) return ESP_ERR_NO_MEM;
-    memset(&s_model, 0, sizeof(s_model));
+    s_model = psram_alloc(sizeof(*s_model));
+    if (!s_model) return ESP_ERR_NO_MEM;
     memset(&s_info, 0, sizeof(s_info));
     strlcpy(s_info.status, "No external widget installed", sizeof(s_info.status));
 
-    char *json = NULL;
-    size_t len = 0;
+    char *json = NULL; size_t len = 0;
     esp_err_t err = read_file(&json, &len);
     if (err == ESP_ERR_NOT_FOUND) {
         ESP_LOGI(TAG, "No persisted widget; firmware shell remains active");
@@ -318,20 +274,15 @@ esp_err_t widget_runtime_init(void)
         return ESP_OK;
     }
 
-    widget_model_t *model = psram_alloc(sizeof(widget_model_t));
-    if (!model) {
-        free(json);
-        return ESP_ERR_NO_MEM;
-    }
+    widget_model_t *model = psram_alloc(sizeof(*model));
+    if (!model) { free(json); return ESP_ERR_NO_MEM; }
     char reason[96];
     bool ok = parse_widget(json, len, model, reason, sizeof(reason));
     free(json);
     if (!ok) {
-        ESP_LOGW(TAG, "Persisted widget rejected: %s", reason);
-        free(model);
-        return ESP_OK;
+        ESP_LOGW(TAG, "Persisted widget rejected: %s; system shell remains available", reason);
+        free(model); return ESP_OK;
     }
-
     publish_model(model, len, "AUTOLOAD PASS");
     ESP_LOGI(TAG, "WIDGET AUTOLOAD PASS id=%s name=%s version=%s bytes=%u",
              model->id, model->name, model->version, (unsigned)len);
@@ -341,27 +292,17 @@ esp_err_t widget_runtime_init(void)
 
 esp_err_t widget_runtime_install_json(const char *json, size_t len, char *reason, size_t reason_len)
 {
-    widget_model_t *model = psram_alloc(sizeof(widget_model_t));
-    if (!model) {
-        set_reason(reason, reason_len, "No memory for widget model");
-        return ESP_ERR_NO_MEM;
-    }
-
-    if (!parse_widget(json, len, model, reason, reason_len)) {
-        free(model);
-        return ESP_ERR_INVALID_ARG;
-    }
+    widget_model_t *model = psram_alloc(sizeof(*model));
+    if (!model) { set_reason(reason, reason_len, "No memory for widget model"); return ESP_ERR_NO_MEM; }
+    if (!parse_widget(json, len, model, reason, reason_len)) { free(model); return ESP_ERR_INVALID_ARG; }
 
     esp_err_t err = commit_file(json, len);
     if (err != ESP_OK) {
-        set_reason(reason, reason_len, "Filesystem commit failed");
-        free(model);
-        return err;
+        set_reason(reason, reason_len, "Filesystem commit failed"); free(model); return err;
     }
-
     publish_model(model, len, "INSTALL PASS");
-    ESP_LOGI(TAG, "WIDGET INSTALL PASS id=%s name=%s version=%s bytes=%u",
-             model->id, model->name, model->version, (unsigned)len);
+    ESP_LOGI(TAG, "WIDGET INSTALL PASS id=%s name=%s version=%s bytes=%u generation=%u",
+             model->id, model->name, model->version, (unsigned)len, (unsigned)widget_runtime_generation());
     free(model);
     set_reason(reason, reason_len, "INSTALL PASS");
     return ESP_OK;
@@ -369,18 +310,12 @@ esp_err_t widget_runtime_install_json(const char *json, size_t len, char *reason
 
 esp_err_t widget_runtime_delete(void)
 {
-    remove(WIDGET_TEMP_PATH);
-    remove(WIDGET_BACKUP_PATH);
+    remove(WIDGET_TEMP_PATH); remove(WIDGET_BACKUP_PATH);
     if (remove(WIDGET_PATH) != 0 && errno != ENOENT) return ESP_FAIL;
-
     xSemaphoreTake(s_lock, portMAX_DELAY);
-    memset(&s_model, 0, sizeof(s_model));
-    s_info.installed = false;
-    s_info.generation++;
-    s_info.file_size = 0;
-    s_info.id[0] = '\0';
-    s_info.name[0] = '\0';
-    s_info.version[0] = '\0';
+    memset(s_model, 0, sizeof(*s_model));
+    s_info.installed = false; s_info.generation++; s_info.file_size = 0;
+    s_info.id[0] = s_info.name[0] = s_info.version[0] = '\0';
     strlcpy(s_info.status, "No external widget installed", sizeof(s_info.status));
     xSemaphoreGive(s_lock);
     ESP_LOGI(TAG, "Widget deleted; firmware shell remains available");
@@ -390,24 +325,17 @@ esp_err_t widget_runtime_delete(void)
 void widget_runtime_get_info(widget_info_t *out)
 {
     if (!out || !s_lock) return;
-    xSemaphoreTake(s_lock, portMAX_DELAY);
-    *out = s_info;
-    xSemaphoreGive(s_lock);
+    xSemaphoreTake(s_lock, portMAX_DELAY); *out = s_info; xSemaphoreGive(s_lock);
 }
 
 void widget_runtime_get_model(widget_model_t *out)
 {
-    if (!out || !s_lock) return;
-    xSemaphoreTake(s_lock, portMAX_DELAY);
-    *out = s_model;
-    xSemaphoreGive(s_lock);
+    if (!out || !s_lock || !s_model) return;
+    xSemaphoreTake(s_lock, portMAX_DELAY); *out = *s_model; xSemaphoreGive(s_lock);
 }
 
 uint32_t widget_runtime_generation(void)
 {
     if (!s_lock) return 0;
-    xSemaphoreTake(s_lock, portMAX_DELAY);
-    uint32_t generation = s_info.generation;
-    xSemaphoreGive(s_lock);
-    return generation;
+    xSemaphoreTake(s_lock, portMAX_DELAY); uint32_t g = s_info.generation; xSemaphoreGive(s_lock); return g;
 }

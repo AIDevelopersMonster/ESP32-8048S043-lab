@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "id": "demo.second-screen",
+  "name": "Second Widget",
+  "version": "1.0.0",
+  "background": "#251A32",
+  "objects": [
+    {"type":"label","x":32,"y":34,"w":620,"text":"WIDGET B - LOADED WITHOUT FIRMWARE OTA","color":"#FFCC80"},
+    {"type":"label","x":32,"y":96,"w":420,"bind":"system.uptime","prefix":"RUNNING: ","color":"#FFFFFF"},
+    {"type":"label","x":32,"y":142,"w":420,"bind":"ota.state","prefix":"OTA STATE: ","color":"#CE93D8"},
+    {"type":"bar","x":32,"y":210,"w":650,"h":28,"value":35},
+    {"type":"button","x":32,"y":286,"w":220,"h":54,"text":"STATUS","action":"show_status"},
+    {"type":"button","x":278,"y":286,"w":220,"h":54,"text":"OTA","action":"show_ota"}
+  ]
+}

@@ -1,9 +1,10 @@
-name: App 06 - GitHub OTA Recovery Build
+name: App 06/07 - Platform OTA + Widget Runtime Build
 
 on:
   push:
     branches:
       - agent/app06-ota-recovery
+      - agent/app07-widget-runtime
     paths:
       - 'apps/06_OTARecovery/**'
       - '.github/workflows/app06-build.yml'
@@ -16,19 +17,14 @@ jobs:
       image: espressif/idf:v5.5.5
     steps:
       - uses: actions/checkout@v4
-
-      - name: Resolve App06 version
+      - name: Resolve platform version
         id: version
         shell: bash
         run: |
           version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid semantic version: $version"
-            exit 1
-          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Build App06
+      - name: Build platform firmware
         working-directory: apps/06_OTARecovery/idf
         env:
           KONTAKTS_APP_VERSION: ${{ steps.version.outputs.version }}
@@ -36,8 +32,7 @@ jobs:
           . $IDF_PATH/export.sh
           idf.py set-target esp32s3
           idf.py build
-
-      - name: Assemble full-install and OTA images
+      - name: Assemble images
         working-directory: apps/06_OTARecovery/idf
         env:
           APP06_VERSION: ${{ steps.version.outputs.version }}
@@ -48,15 +43,12 @@ jobs:
           cd build
           esptool.py --chip esp32s3 merge_bin -o "../dist/app06-ota-recovery-v${APP06_VERSION}-full.bin" @flash_args
           cd ..
-          test -s "dist/app06-ota-v${APP06_VERSION}.bin"
-          test -s "dist/app06-ota-recovery-v${APP06_VERSION}-full.bin"
           sha256sum dist/*.bin
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: app06-github-ota-recovery-v${{ steps.version.outputs.version }}
+          name: app06-platform-v${{ steps.version.outputs.version }}
           path: |
             apps/06_OTARecovery/idf/dist/*.bin
             apps/06_OTARecovery/idf/partitions.csv
+            apps/06_OTARecovery/widgets/*.json
           if-no-files-found: error
