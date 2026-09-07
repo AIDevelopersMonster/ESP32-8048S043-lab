@@ -30,7 +30,7 @@
 #define LCD_V_RES 480
 #define LCD_PCLK_HZ (16 * 1000 * 1000)
 #define LCD_BOUNCE_LINES 10
-#define LVGL_BUF_LINES 60
+#define LVGL_BUF_LINES 32
 #define APP_UI_TASK_STACK_SIZE 16384
 #define APP_UI_TASK_PRIORITY 9
 #define APP_UI_TASK_CORE 1
@@ -361,6 +361,7 @@ static void init_lvgl(void)
     size_t bytes=LCD_H_RES*LVGL_BUF_LINES*sizeof(uint16_t);
     void *buf=heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT); if(!buf) abort();
     lv_display_set_buffers(display,buf,NULL,bytes,LV_DISPLAY_RENDER_MODE_PARTIAL);
+    ESP_LOGI(TAG,"LVGL draw buffer=%u bytes (%u lines internal)",(unsigned)bytes,(unsigned)LVGL_BUF_LINES);
     lv_indev_t *indev=lv_indev_create(); lv_indev_set_type(indev,LV_INDEV_TYPE_POINTER); lv_indev_set_read_cb(indev,touch_read_cb);
 }
 
