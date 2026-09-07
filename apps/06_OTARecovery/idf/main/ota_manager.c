@@ -9,6 +9,7 @@
 #include "cJSON.h"
 #include "esp_app_format.h"
 #include "esp_crt_bundle.h"
+#include "esp_heap_caps.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
@@ -64,6 +65,18 @@ static SemaphoreHandle_t s_lock;
 static ota_status_t s_status;
 static ota_action_t s_action;
 static TaskHandle_t s_task;
+
+static void log_https_heap(const char *stage)
+{
+    ESP_LOGI(TAG,
+             "HTTPS heap %s: internal_free=%u internal_largest=%u dma_free=%u dma_largest=%u psram_free=%u",
+             stage,
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_DMA),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_DMA),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+}
 
 static const char *image_state_name(esp_ota_img_states_t state)
 {
@@ -231,7 +244,7 @@ static esp_http_client_handle_t create_https_client(const char *url,
         .buffer_size_tx = 1024,
         .user_data = user_data,
         .crt_bundle_attach = esp_crt_bundle_attach,
-        .keep_alive_enable = true,
+        .keep_alive_enable = false,
     };
     return esp_http_client_init(&config);
 }
@@ -241,8 +254,19 @@ static esp_err_t fetch_manifest(ota_manifest_t *out)
     if (!out) return ESP_ERR_INVALID_ARG;
     memset(out, 0, sizeof(*out));
 
+    log_https_heap("before manifest buffer");
+
+    char *manifest_buffer = heap_caps_calloc(
+        1,
+        OTA_MANIFEST_MAX_BYTES + 1,
+        MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!manifest_buffer) {
+        ESP_LOGW(TAG, "PSRAM manifest buffer allocation failed; falling back to default heap");
+        manifest_buffer = calloc(1, OTA_MANIFEST_MAX_BYTES + 1);
+    }
+
     manifest_http_ctx_t ctx = {
-        .buffer = calloc(1, OTA_MANIFEST_MAX_BYTES + 1),
+        .buffer = manifest_buffer,
         .len = 0,
         .cap = OTA_MANIFEST_MAX_BYTES + 1,
         .error = ESP_OK,
@@ -256,9 +280,21 @@ static esp_err_t fetch_manifest(ota_manifest_t *out)
     }
 
     ESP_LOGI(TAG, "Checking GitHub manifest: %s", OTA_MANIFEST_URL);
+    log_https_heap("before perform");
+
     esp_err_t err = esp_http_client_perform(client);
     int status = esp_http_client_get_status_code(client);
-    esp_http_client_cleanup(client);
+
+    esp_err_t close_err = esp_http_client_close(client);
+    if (close_err != ESP_OK) {
+        ESP_LOGW(TAG, "HTTP client close returned %s", esp_err_to_name(close_err));
+    }
+    esp_err_t cleanup_err = esp_http_client_cleanup(client);
+    if (cleanup_err != ESP_OK) {
+        ESP_LOGW(TAG, "HTTP client cleanup returned %s", esp_err_to_name(cleanup_err));
+    }
+
+    log_https_heap("after cleanup");
 
     if (err == ESP_OK && ctx.error != ESP_OK) err = ctx.error;
     if (err == ESP_OK && status != 200) {
@@ -267,11 +303,13 @@ static esp_err_t fetch_manifest(ota_manifest_t *out)
     }
     if (err != ESP_OK) {
         free(ctx.buffer);
+        log_https_heap("after failed manifest free");
         return err;
     }
 
     cJSON *root = cJSON_Parse(ctx.buffer);
     free(ctx.buffer);
+    log_https_heap("after manifest free");
     if (!root) return ESP_ERR_INVALID_RESPONSE;
 
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
@@ -309,6 +347,7 @@ static esp_err_t fetch_manifest(ota_manifest_t *out)
     }
 
     cJSON_Delete(root);
+    log_https_heap("after manifest parse");
     return valid ? ESP_OK : ESP_ERR_INVALID_RESPONSE;
 }
 
@@ -394,9 +433,12 @@ static esp_err_t install_manifest(const ota_manifest_t *manifest)
         return ESP_ERR_NO_MEM;
     }
 
+    log_https_heap("before firmware perform");
     err = esp_http_client_perform(client);
     int status = esp_http_client_get_status_code(client);
+    esp_http_client_close(client);
     esp_http_client_cleanup(client);
+    log_https_heap("after firmware cleanup");
 
     if (err == ESP_OK && ctx.error != ESP_OK) err = ctx.error;
     if (err == ESP_OK && status != 200) err = ESP_FAIL;
