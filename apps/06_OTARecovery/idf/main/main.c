@@ -5,6 +5,7 @@
 #include "ota_manager.h"
 #include "storage_credentials.h"
 #include "storage_fs.h"
+#include "time_service.h"
 #include "web_setup.h"
 #include "widget_runtime.h"
 
@@ -19,10 +20,13 @@ void app_main(void)
     ESP_ERROR_CHECK(widget_runtime_init());
     ESP_ERROR_CHECK(ota_manager_init());
 
+    /* Network stack must exist before the platform SNTP service is initialized. */
+    ESP_ERROR_CHECK(network_manager_init());
+    ESP_ERROR_CHECK(time_service_init());
+
     /* Firmware-resident recovery/status/OTA shell remains independent from widget files. */
     ESP_ERROR_CHECK(display_ota_start());
 
-    ESP_ERROR_CHECK(network_manager_init());
     ESP_ERROR_CHECK(web_setup_start());
     ESP_ERROR_CHECK(network_manager_begin());
 
