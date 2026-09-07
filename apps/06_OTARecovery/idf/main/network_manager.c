@@ -62,8 +62,13 @@ static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, voi
         if (s_state == NETWORK_STATE_STA_CONNECTING) {
             if (s_retry_count < STA_RETRY_LIMIT) {
                 s_retry_count++;
-                ESP_LOGW(TAG, "STA disconnected; retry %d/%d", s_retry_count, STA_RETRY_LIMIT);
                 esp_err_t err = esp_wifi_connect();
+                if (err == ESP_ERR_WIFI_NOT_STARTED || err == ESP_ERR_WIFI_STOP_STATE) {
+                    /* Expected while esp_restart() tears Wi-Fi down after a verified OTA. */
+                    ESP_LOGI(TAG, "Wi-Fi is stopping for reboot; reconnect suppressed");
+                    return;
+                }
+                ESP_LOGW(TAG, "STA disconnected; retry %d/%d", s_retry_count, STA_RETRY_LIMIT);
                 if (err != ESP_OK) {
                     ESP_LOGE(TAG, "esp_wifi_connect failed: %s", esp_err_to_name(err));
                     signal_sta_failure();

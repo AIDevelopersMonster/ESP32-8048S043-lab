@@ -5,6 +5,7 @@ idf_component_register(
         "network_manager.c"
         "web_setup.c"
         "ota_manager.c"
+        "display_ota.c"
     INCLUDE_DIRS "."
     REQUIRES
         nvs_flash
@@ -17,4 +18,11 @@ idf_component_register(
         esp_partition
         mbedtls
         json
+        esp_lcd
+        esp_driver_i2c
+        esp_driver_gpio
+        esp_timer
+        lvgl__lvgl
+        espressif__esp_lcd_touch
+        espressif__esp_lcd_touch_gt911
 )
