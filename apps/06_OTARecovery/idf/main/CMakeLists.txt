@@ -6,6 +6,7 @@ idf_component_register(
         "storage_web.c"
         "widget_runtime.c"
         "network_manager.c"
+        "time_service.c"
         "web_setup.c"
         "ota_manager.c"
         "display_ota.c"
