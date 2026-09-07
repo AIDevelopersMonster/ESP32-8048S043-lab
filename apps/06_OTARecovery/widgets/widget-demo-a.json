@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "id": "demo.platform-status",
+  "name": "Platform Status",
+  "version": "1.0.0",
+  "background": "#101820",
+  "objects": [
+    {
+      "type": "label",
+      "x": 24,
+      "y": 22,
+      "w": 420,
+      "text": "KONTAKTS FILESYSTEM WIDGET",
+      "color": "#80CBC4"
+    },
+    {
+      "type": "label",
+      "x": 24,
+      "y": 72,
+      "w": 340,
+      "bind": "firmware.version",
+      "prefix": "FIRMWARE: ",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 24,
+      "y": 112,
+      "w": 340,
+      "bind": "system.uptime",
+      "prefix": "UPTIME: ",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 24,
+      "y": 152,
+      "w": 340,
+      "bind": "wifi.ip",
+      "prefix": "IP: ",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 390,
+      "y": 72,
+      "w": 300,
+      "bind": "system.heap",
+      "prefix": "HEAP: ",
+      "color": "#90CAF9"
+    },
+    {
+      "type": "label",
+      "x": 390,
+      "y": 112,
+      "w": 300,
+      "bind": "system.psram",
+      "prefix": "PSRAM: ",
+      "color": "#90CAF9"
+    },
+    {
+      "type": "label",
+      "x": 390,
+      "y": 152,
+      "w": 300,
+      "bind": "wifi.rssi",
+      "prefix": "RSSI: ",
+      "color": "#90CAF9"
+    },
+    {
+      "type": "bar",
+      "x": 24,
+      "y": 220,
+      "w": 680,
+      "h": 22,
+      "value": 72
+    },
+    {
+      "type": "button",
+      "x": 24,
+      "y": 292,
+      "w": 210,
+      "h": 52,
+      "text": "OPEN STATUS",
+      "action": "show_status"
+    },
+    {
+      "type": "button",
+      "x": 258,
+      "y": 292,
+      "w": 210,
+      "h": 52,
+      "text": "OPEN OTA",
+      "action": "show_ota"
+    }
+  ]
+}
