@@ -113,8 +113,9 @@ static esp_err_t youtube_refresh_post(httpd_req_t *req)
 {
     esp_err_t err = youtube_service_request_refresh();
     if (err != ESP_OK) {
-        httpd_resp_send_err(req, HTTPD_409_CONFLICT, "YouTube is not configured");
-        return ESP_OK;
+        httpd_resp_set_status(req, "409 Conflict");
+        httpd_resp_set_type(req, "text/plain");
+        return httpd_resp_sendstr(req, "YouTube is not configured");
     }
     return redirect_youtube(req);
 }
