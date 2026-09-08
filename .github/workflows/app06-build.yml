@@ -5,6 +5,7 @@ on:
     branches:
       - agent/app06-ota-recovery
       - agent/app07-widget-runtime
+      - agent/app07-v0.2.4-progressfix
     paths:
       - 'apps/06_OTARecovery/**'
       - '.github/workflows/app06-build.yml'
