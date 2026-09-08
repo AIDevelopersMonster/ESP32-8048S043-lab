@@ -1,10 +1,11 @@
-name: App 06/07 - Platform OTA + Widget Runtime Build
+name: App 06/07/08 - Platform OTA + Widget Runtime Build
 
 on:
   push:
     branches:
       - agent/app06-ota-recovery
       - agent/app07-widget-runtime
+      - agent/app08-youtube-dashboard
     paths:
       - 'apps/06_OTARecovery/**'
       - '.github/workflows/app06-build.yml'
