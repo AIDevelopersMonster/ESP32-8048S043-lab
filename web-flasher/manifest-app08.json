@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.2.5 - YouTube Dashboard",
+  "version": "0.2.5",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app08-kontakts-platform-v0.2.5-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
