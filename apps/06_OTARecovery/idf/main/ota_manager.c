@@ -57,6 +57,8 @@ typedef struct {
 typedef struct {
     esp_ota_handle_t handle;
     size_t received;
+    size_t expected;
+    int last_progress;
     esp_err_t error;
     mbedtls_sha256_context sha;
 } firmware_http_ctx_t;
@@ -225,6 +227,16 @@ static esp_err_t firmware_http_event(esp_http_client_event_t *evt)
             return ctx->error;
         }
         ctx->received += (size_t)evt->data_len;
+
+        if (ctx->expected > 0) {
+            int percent = (int)(((uint64_t)ctx->received * 100ULL) / (uint64_t)ctx->expected);
+            if (percent < 1) percent = 1;
+            if (percent > 99) percent = 99;
+            if (percent != ctx->last_progress) {
+                ctx->last_progress = percent;
+                set_progress(percent);
+            }
+        }
     }
     return ESP_OK;
 }
@@ -412,6 +424,8 @@ static esp_err_t install_manifest(const ota_manifest_t *manifest)
     firmware_http_ctx_t ctx = {
         .handle = handle,
         .received = 0,
+        .expected = manifest->size,
+        .last_progress = 0,
         .error = ESP_OK,
     };
     mbedtls_sha256_init(&ctx.sha);
