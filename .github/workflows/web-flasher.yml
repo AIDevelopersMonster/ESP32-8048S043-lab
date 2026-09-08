@@ -45,13 +45,17 @@ env:
   APP03_BIN_NAME: app03-live-dashboard-v0.1.0.bin
   APP05_PROJECT_DIR: apps/05_NetworkProvisioning/idf
   APP05_BIN_NAME: app05-network-provisioning-v0.1.1.bin
+  APP08_PROJECT_DIR: apps/06_OTARecovery/idf
+  APP08_BIN_NAME: app08-kontakts-platform-v0.2.5-full.bin
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout App08 candidate source
         uses: actions/checkout@v4
+        with:
+          ref: agent/app08-youtube-dashboard
 
       - name: Build and merge App 01 with ESP-IDF 5.5.5
         run: |
@@ -89,21 +93,28 @@ jobs:
             espressif/idf:v5.5.5 \
             bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP05_BIN_NAME}" @flash_args'
 
+      - name: Build and merge KONTAKTS Platform 0.2.5
+        run: |
+          docker run --rm \
+            -e APP08_BIN_NAME="${APP08_BIN_NAME}" \
+            -e KONTAKTS_APP_VERSION="0.2.5" \
+            -v "$PWD:/project" \
+            -w "/project/${APP08_PROJECT_DIR}" \
+            espressif/idf:v5.5.5 \
+            bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${APP08_BIN_NAME}" @flash_args'
+
       - name: Verify merged firmware images
         run: |
           test -s "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
           test -s "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           test -s "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}"
           test -s "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}"
+          test -s "${APP08_PROJECT_DIR}/build/${APP08_BIN_NAME}"
           sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
           sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           sha256sum "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}"
           sha256sum "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}"
-          ls -lh \
-            "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}" \
-            "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}" \
-            "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}" \
-            "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}"
+          sha256sum "${APP08_PROJECT_DIR}/build/${APP08_BIN_NAME}"
 
       - name: Assemble Web Flasher catalog
         run: |
@@ -114,6 +125,7 @@ jobs:
           cp "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}" "site/firmware/${APP02_BIN_NAME}"
           cp "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}" "site/firmware/${APP03_BIN_NAME}"
           cp "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}" "site/firmware/${APP05_BIN_NAME}"
+          cp "${APP08_PROJECT_DIR}/build/${APP08_BIN_NAME}" "site/firmware/${APP08_BIN_NAME}"
 
       - name: Upload firmware catalog for review
         uses: actions/upload-artifact@v4
@@ -124,10 +136,12 @@ jobs:
             ${{ env.APP02_PROJECT_DIR }}/build/${{ env.APP02_BIN_NAME }}
             ${{ env.APP03_PROJECT_DIR }}/build/${{ env.APP03_BIN_NAME }}
             ${{ env.APP05_PROJECT_DIR }}/build/${{ env.APP05_BIN_NAME }}
+            ${{ env.APP08_PROJECT_DIR }}/build/${{ env.APP08_BIN_NAME }}
             web-flasher/manifest-app01.json
             web-flasher/manifest-app02.json
             web-flasher/manifest-app03.json
             web-flasher/manifest-app05.json
+            web-flasher/manifest-app08.json
             web-flasher/firmware-list.json
           if-no-files-found: error
 
