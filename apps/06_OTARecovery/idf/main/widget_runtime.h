@@ -8,14 +8,16 @@
 
 #define WIDGET_MAX_JSON_BYTES 32768
 #define WIDGET_MAX_OBJECTS 24
-#define WIDGET_MAX_BOUND_LABELS 8
+#define WIDGET_MAX_BOUND_LABELS 12
 #define WIDGET_MAX_CLOCKS 2
+#define WIDGET_MAX_CHARTS 2
 
 typedef enum {
     WIDGET_OBJECT_LABEL = 0,
     WIDGET_OBJECT_BAR,
     WIDGET_OBJECT_BUTTON,
     WIDGET_OBJECT_CLOCK,
+    WIDGET_OBJECT_CHART,
 } widget_object_type_t;
 
 typedef struct {
@@ -27,10 +29,10 @@ typedef struct {
     int value;
     uint32_t color;
     char text[161];
-    char binding[33];
+    char binding[40];
     char prefix[65];
     char suffix[65];
-    char action[25];
+    char action[32];
 } widget_object_t;
 
 typedef struct {
