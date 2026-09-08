@@ -8,6 +8,7 @@ idf_component_register(
         "network_manager.c"
         "time_service.c"
         "youtube_service.c"
+        "youtube_web.c"
         "sevenseg_clock.c"
         "web_setup.c"
         "ota_manager.c"
