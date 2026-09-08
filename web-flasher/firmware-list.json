@@ -40,6 +40,15 @@
       "description": "Wi-Fi STA registration, KONTAKTS fallback access point, local setup page, saved NVS credentials, bounded reconnect, automatic AP recovery and automatic setup-AP shutdown after STA success.",
       "manifest": "./manifest-app05.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
+    },
+    {
+      "id": "app08",
+      "name": "KONTAKTS Platform / YouTube Dashboard",
+      "version": "0.2.5",
+      "status": "BUILD PASS / WEB FLASHER CANDIDATE",
+      "description": "Current KONTAKTS platform candidate with STATUS, OTA, persistent Widget Runtime, NTP clock support and the first YouTube Data API dashboard service with local history and browser configuration.",
+      "manifest": "./manifest-app08.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app08-youtube-dashboard/apps/06_OTARecovery"
     }
   ]
 }
