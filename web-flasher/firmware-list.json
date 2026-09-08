@@ -4,6 +4,15 @@
   "engineer": "Alex Malachevsky",
   "firmwares": [
     {
+      "id": "app07-v024",
+      "name": "KONTAKTS Platform Stable",
+      "version": "0.2.4-r1",
+      "status": "PHYSICAL PASS / RECOVERY BASELINE / WEB FLASHER CANDIDATE",
+      "description": "Known-good KONTAKTS platform baseline with firmware-resident STATUS and OTA, persistent filesystem Widget Runtime, NTP clock support, Storage Manager and physically verified live OTA percentage/progress bar. Use this to restore the platform after experimental builds.",
+      "manifest": "./manifest-app07-v024.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/8f054fe79798cd49ac5f0b9098d931811a0239dd/apps/06_OTARecovery"
+    },
+    {
       "id": "app01",
       "name": "Six-Card Serial Deck",
       "version": "1.0.0",
@@ -34,10 +43,10 @@
     },
     {
       "id": "app05",
-      "name": "Network Provisioning",
+      "name": "Network Provisioning (legacy test)",
       "version": "0.1.1",
-      "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
-      "description": "Wi-Fi STA registration, KONTAKTS fallback access point, local setup page, saved NVS credentials, bounded reconnect, automatic AP recovery and automatic setup-AP shutdown after STA success.",
+      "status": "PHYSICAL PASS / LEGACY TEST",
+      "description": "Earlier standalone Wi-Fi provisioning test. It is not the current KONTAKTS platform and is kept only as historical/diagnostic firmware.",
       "manifest": "./manifest-app05.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
     }
