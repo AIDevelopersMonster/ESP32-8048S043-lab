@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.2.4-r1 - Stable Recovery Baseline",
+  "version": "0.2.4-r1",
+  "new_install_prompt_erase": false,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/kontakts-platform-v0.2.4-r1-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
