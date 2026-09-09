@@ -34,6 +34,16 @@ Video evidence for the v0.1.2 display OTA interface:
 
 Known UI issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
 
+## App08 YouTube dashboard extension
+
+The `agent/app08-youtube-dashboard` branch extends this platform runtime with YouTube Data API channel statistics, a local `/youtube` configuration/status page, NVS-stored API credentials and local daily history.
+
+Current App08 v0.2.6 API + local web-dashboard stage is physically validated. Published video evidence:
+
+- https://youtube.com/shorts/cjgx2RB0l_A
+
+This video supports the YouTube API/service and local dashboard physical pass. The final TFT YouTube widget/chart, `youtube.*` runtime bindings and 7D/30D/90D/ALL on-screen graph controls remain a separate open gate.
+
 ## Controlled variable
 
 App06 does not invent a new OTA transport. It ports the GitHub Release OTA contract already physically validated in `AIDevelopersMonster/WT32-SC01-PLUS-Lab` Example 20 and adds the rollback/recovery gate plus the ESP32-8048S043 on-device touch UI.
@@ -178,6 +188,7 @@ Key App06 physical evidence files:
 - `evidence/app06-v0.1.1-github-check-physical.md`
 - `evidence/app06-v0.1.1-github-ota-physical-pass.md`
 - `evidence/app06-v0.1.2-display-ota-physical-pass.md`
+- `../../evidence/app08-youtube-dashboard-v0.2.6-api-physical-pass.md`
 
 ## Current classification
 
@@ -198,4 +209,6 @@ INTENTIONAL-REBOOT RECONNECT SUPPRESSION PASS
 REPEATED FUNCTIONAL RUNS                 PASS
 KNOWN HEADER TEXT OVERLAP                COSMETIC / DEFERRED
 TLS ALLOCATION HEADROOM                  OPEN HARDENING ITEM
+APP08 YOUTUBE API + LOCAL WEB DASHBOARD  PHYSICAL PASS
+APP08 FINAL TFT YOUTUBE CHART             OPEN
 ```
