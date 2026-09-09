@@ -45,7 +45,7 @@ typedef struct {
 
 static SemaphoreHandle_t s_lock;
 static youtube_status_t s_status;
-static youtube_sample_t s_history[YOUTUBE_HISTORY_MAX];
+static youtube_sample_t *s_history;
 static size_t s_history_count;
 static char s_api_key[96];
 static bool s_refresh_requested;
@@ -89,6 +89,7 @@ static void load_config(void)
 
 static void load_history(void)
 {
+    if (!s_history) return;
     FILE *f = fopen(YT_HISTORY_PATH, "rb");
     if (!f) return;
     size_t n = fread(s_history, sizeof(s_history[0]), YOUTUBE_HISTORY_MAX, f);
@@ -99,6 +100,7 @@ static void load_history(void)
 
 static void save_history(void)
 {
+    if (!s_history) return;
     FILE *f = fopen(YT_HISTORY_PATH, "wb");
     if (!f) return;
     fwrite(s_history, sizeof(s_history[0]), s_history_count, f);
@@ -115,6 +117,7 @@ static uint32_t current_epoch_day(void)
 
 static void record_sample_locked(uint64_t subscribers, uint64_t views, uint64_t videos)
 {
+    if (!s_history) return;
     uint32_t day = current_epoch_day();
     if (!day) return;
     youtube_sample_t sample = {.epoch_day = day, .subscribers = subscribers, .views = views, .videos = videos};
@@ -133,7 +136,7 @@ static void record_sample_locked(uint64_t subscribers, uint64_t views, uint64_t 
 
 static size_t first_index_for_period_locked(youtube_period_t period)
 {
-    if (!s_history_count || period == YOUTUBE_PERIOD_ALL) return 0;
+    if (!s_history || !s_history_count || period == YOUTUBE_PERIOD_ALL) return 0;
     uint32_t day = current_epoch_day();
     if (!day) return 0;
     uint32_t min_day = day >= (uint32_t)period - 1 ? day - ((uint32_t)period - 1) : 0;
@@ -144,7 +147,7 @@ static size_t first_index_for_period_locked(youtube_period_t period)
 
 static void recompute_period_locked(void)
 {
-    if (!s_status.has_data || !s_history_count) {
+    if (!s_status.has_data || !s_history || !s_history_count) {
         s_status.period_views_delta = 0;
         s_status.period_subscribers_delta = 0;
         return;
@@ -297,6 +300,15 @@ esp_err_t youtube_service_init(void)
     memset(&s_status, 0, sizeof(s_status));
     s_status.period = YOUTUBE_PERIOD_30D;
     status_message_locked("UNCONFIGURED", "Set Channel ID and YouTube Data API key");
+
+    size_t history_bytes = YOUTUBE_HISTORY_MAX * sizeof(*s_history);
+    s_history = heap_caps_calloc(YOUTUBE_HISTORY_MAX, sizeof(*s_history), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (s_history) {
+        ESP_LOGI(TAG, "YouTube history buffer allocated in PSRAM bytes=%u", (unsigned)history_bytes);
+    } else {
+        ESP_LOGW(TAG, "YouTube history PSRAM allocation failed; current statistics remain available without local history");
+    }
+
     load_config();
     load_history();
     if (s_status.configured) status_message_locked("WAITING", "Waiting for network");
@@ -399,7 +411,7 @@ void youtube_service_format_binding(const char *binding, char *out, size_t out_l
 size_t youtube_service_get_chart(const char *binding, int32_t *values, size_t max_values,
                                  int32_t *min_out, int32_t *max_out)
 {
-    if (!binding || !values || !max_values) return 0;
+    if (!binding || !values || !max_values || !s_history) return 0;
     xSemaphoreTake(s_lock, portMAX_DELAY);
     if (!s_history_count) { xSemaphoreGive(s_lock); return 0; }
     size_t first = first_index_for_period_locked(s_status.period);
