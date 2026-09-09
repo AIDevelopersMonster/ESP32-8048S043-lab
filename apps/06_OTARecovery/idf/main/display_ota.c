@@ -436,6 +436,14 @@ static void refresh_charts(void)
             continue;
         }
 
+        /* LVGL 9.3 line charts intentionally draw nothing for point_cnt < 2.
+         * Keep the service/history truthful, but duplicate a lone sample only in
+         * the renderer so a first-day dashboard shows a visible flat baseline. */
+        if (count == 1) {
+            view->values[1] = view->values[0];
+            count = 2;
+        }
+
         int64_t lo = minv;
         int64_t hi = maxv;
         int64_t span = hi - lo;
