@@ -4,12 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "esp_heap_caps.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
 
 #include "youtube_service.h"
 
 #define TAG "APP08_YT_WEB"
+#define YT_PAGE_BYTES 12288
 
 static void url_decode(char *dst, size_t dst_len, const char *src)
 {
@@ -53,8 +55,19 @@ static esp_err_t youtube_get(httpd_req_t *req)
 {
     youtube_status_t s;
     youtube_service_get_status(&s);
-    char html[8192];
-    int n = snprintf(html, sizeof(html),
+
+    char *html = heap_caps_calloc(1, YT_PAGE_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!html) html = calloc(1, YT_PAGE_BYTES);
+    if (!html) {
+        ESP_LOGE(TAG, "YouTube page allocation failed internal=%u largest_internal=%u psram=%u",
+                 (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+                 (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+                 (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "no memory for YouTube page");
+        return ESP_OK;
+    }
+
+    int n = snprintf(html, YT_PAGE_BYTES,
         "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>KONTAKTS YouTube</title><style>body{font-family:sans-serif;max-width:820px;margin:20px auto;padding:0 14px;background:#101418;color:#eef}"
         ".card{background:#182027;padding:16px;border-radius:14px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{background:#111820;padding:14px;border-radius:10px;text-align:center}.big{font-size:30px;font-weight:700}"
@@ -78,9 +91,23 @@ static esp_err_t youtube_get(httpd_req_t *req)
         s.period == YOUTUBE_PERIOD_ALL ? "ALL" : (s.period == YOUTUBE_PERIOD_7D ? "7D" : (s.period == YOUTUBE_PERIOD_90D ? "90D" : "30D")),
         (unsigned long long)s.period_views_delta, (long long)s.period_subscribers_delta,
         s.channel_id[0] ? s.channel_id : "UCplLC3QnAagQq2hw1G3RLvQ");
-    if (n < 0) return ESP_FAIL;
+
+    if (n < 0 || n >= YT_PAGE_BYTES) {
+        ESP_LOGE(TAG, "YouTube page render overflow n=%d cap=%d", n, YT_PAGE_BYTES);
+        free(html);
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "YouTube page render failed");
+        return ESP_OK;
+    }
+
+    ESP_LOGI(TAG, "YouTube page GET bytes=%d internal=%u largest_internal=%u psram=%u",
+             n,
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),
+             (unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     httpd_resp_set_type(req, "text/html");
-    return httpd_resp_send(req, html, n);
+    esp_err_t err = httpd_resp_send(req, html, n);
+    free(html);
+    return err;
 }
 
 static esp_err_t youtube_save_post(httpd_req_t *req)
