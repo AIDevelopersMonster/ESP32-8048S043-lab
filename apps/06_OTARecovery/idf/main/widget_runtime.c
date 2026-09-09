@@ -16,7 +16,7 @@
 
 #include "storage_fs.h"
 
-#define TAG "APP07_WIDGET"
+#define TAG "APP08_WIDGET"
 #define WIDGET_PATH STORAGE_FS_BASE "/widget.json"
 #define WIDGET_TEMP_PATH STORAGE_FS_BASE "/widget.tmp"
 #define WIDGET_BACKUP_PATH STORAGE_FS_BASE "/widget.bak"
@@ -79,6 +79,9 @@ static bool binding_allowed(const char *binding)
         "wifi.rssi", "firmware.version", "ota.state",
         "time.clock", "time.date", "time.year", "time.weekday",
         "time.sync_state", "time.last_sync",
+        "youtube.subscribers", "youtube.views", "youtube.videos",
+        "youtube.views_delta", "youtube.subscribers_delta", "youtube.channel",
+        "youtube.state", "youtube.period",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -86,11 +89,22 @@ static bool binding_allowed(const char *binding)
     return false;
 }
 
+static bool chart_binding_allowed(const char *binding)
+{
+    return binding && (strcmp(binding, "youtube.views_history") == 0 ||
+                       strcmp(binding, "youtube.subscribers_history") == 0);
+}
+
 static bool button_action_allowed(const char *action)
 {
     return action && (strcmp(action, "show_status") == 0 ||
                       strcmp(action, "show_ota") == 0 ||
-                      strcmp(action, "sync_time") == 0);
+                      strcmp(action, "sync_time") == 0 ||
+                      strcmp(action, "youtube_refresh") == 0 ||
+                      strcmp(action, "youtube_period_7d") == 0 ||
+                      strcmp(action, "youtube_period_30d") == 0 ||
+                      strcmp(action, "youtube_period_90d") == 0 ||
+                      strcmp(action, "youtube_period_all") == 0);
 }
 
 static bool parse_widget(const char *json, size_t len, widget_model_t *out,
@@ -111,6 +125,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
     out->background = 0x101820;
     bool ok = true;
     size_t clock_count = 0;
+    size_t chart_count = 0;
 
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
     const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
@@ -170,7 +185,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 const char *binding = json_string(object, "bind");
                 const char *prefix = json_string(object, "prefix");
                 const char *suffix = json_string(object, "suffix");
-                if ((!text[0] && !binding[0]) || strlen(text) > 160 || strlen(binding) > 32 ||
+                if ((!text[0] && !binding[0]) || strlen(text) > 160 || strlen(binding) > 39 ||
                     strlen(prefix) > 64 || strlen(suffix) > 64 || !binding_allowed(binding)) {
                     set_reason(reason, reason_len, "label text/binding invalid"); ok = false; break;
                 }
@@ -187,8 +202,8 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 dst->type = WIDGET_OBJECT_BUTTON;
                 const char *text = json_string(object, "text");
                 const char *action = json_string(object, "action");
-                if (!text[0] || strlen(text) > 64 || !button_action_allowed(action)) {
-                    set_reason(reason, reason_len, "button action must be show_status/show_ota/sync_time"); ok = false; break;
+                if (!text[0] || strlen(text) > 64 || strlen(action) >= sizeof(dst->action) || !button_action_allowed(action)) {
+                    set_reason(reason, reason_len, "button action invalid"); ok = false; break;
                 }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->action, action, sizeof(dst->action));
@@ -198,6 +213,15 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 if (clock_count > WIDGET_MAX_CLOCKS || dst->w < 320 || dst->h < 90) {
                     set_reason(reason, reason_len, "clock requires >=320x90 and max 2 instances"); ok = false; break;
                 }
+            } else if (strcmp(type->valuestring, "chart") == 0) {
+                dst->type = WIDGET_OBJECT_CHART;
+                const char *binding = json_string(object, "bind");
+                chart_count++;
+                if (chart_count > WIDGET_MAX_CHARTS || !chart_binding_allowed(binding) ||
+                    strlen(binding) >= sizeof(dst->binding) || dst->w < 180 || dst->h < 80) {
+                    set_reason(reason, reason_len, "chart requires YouTube history binding, >=180x80, max 2"); ok = false; break;
+                }
+                strlcpy(dst->binding, binding, sizeof(dst->binding));
             } else {
                 set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
             }
