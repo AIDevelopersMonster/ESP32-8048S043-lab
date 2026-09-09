@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS App08 - YouTube Dashboard LAB",
+  "version": "0.2.6",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app08-kontakts-platform-v0.2.6-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
