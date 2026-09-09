@@ -3,7 +3,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -26,8 +28,9 @@
 #include "sevenseg_clock.h"
 #include "time_service.h"
 #include "widget_runtime.h"
+#include "youtube_service.h"
 
-#define TAG "APP07_UI"
+#define TAG "APP08_UI"
 #define LCD_H_RES 800
 #define LCD_V_RES 480
 #define LCD_PCLK_HZ (16 * 1000 * 1000)
@@ -54,6 +57,13 @@ typedef struct {
     const widget_object_t *source;
 } bound_label_t;
 
+typedef struct {
+    lv_obj_t *chart;
+    lv_chart_series_t *series;
+    const widget_object_t *source;
+    int32_t *values;
+} bound_chart_t;
+
 static esp_lcd_panel_handle_t s_panel;
 static i2c_master_bus_handle_t s_i2c_bus;
 static esp_lcd_panel_io_handle_t s_touch_io;
@@ -69,6 +79,12 @@ static bound_label_t s_bound[WIDGET_MAX_BOUND_LABELS];
 static size_t s_bound_count;
 static sevenseg_clock_view_t *s_clocks[WIDGET_MAX_CLOCKS];
 static size_t s_clock_count;
+static bound_chart_t s_charts[WIDGET_MAX_CHARTS];
+static size_t s_chart_count;
+static time_t s_chart_last_update;
+static youtube_period_t s_chart_last_period = (youtube_period_t)-1;
+static size_t s_chart_last_history_count = (size_t)-1;
+static bool s_chart_force_refresh = true;
 static uint32_t s_widget_generation;
 static bool s_first_refresh = true;
 
@@ -174,6 +190,7 @@ static void widget_action_cb(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
     const char *action = (const char *)lv_event_get_user_data(e);
     if (!action) return;
+
     if (strcmp(action, "show_status") == 0) show_status_panel();
     else if (strcmp(action, "show_ota") == 0) show_ota_panel();
     else if (strcmp(action, "sync_time") == 0) {
@@ -181,6 +198,19 @@ static void widget_action_cb(lv_event_t *e)
         if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
             ESP_LOGW(TAG, "SYNC TIME rejected: %s", esp_err_to_name(err));
         }
+    } else if (strcmp(action, "youtube_refresh") == 0) {
+        esp_err_t err = youtube_service_request_refresh();
+        if (err != ESP_OK) ESP_LOGW(TAG, "YOUTUBE REFRESH rejected: %s", esp_err_to_name(err));
+        else ESP_LOGI(TAG, "YOUTUBE REFRESH queued from widget");
+        s_chart_force_refresh = true;
+    } else if (strcmp(action, "youtube_period_7d") == 0) {
+        youtube_service_set_period(YOUTUBE_PERIOD_7D); s_chart_force_refresh = true;
+    } else if (strcmp(action, "youtube_period_30d") == 0) {
+        youtube_service_set_period(YOUTUBE_PERIOD_30D); s_chart_force_refresh = true;
+    } else if (strcmp(action, "youtube_period_90d") == 0) {
+        youtube_service_set_period(YOUTUBE_PERIOD_90D); s_chart_force_refresh = true;
+    } else if (strcmp(action, "youtube_period_all") == 0) {
+        youtube_service_set_period(YOUTUBE_PERIOD_ALL); s_chart_force_refresh = true;
     }
 }
 
@@ -227,6 +257,7 @@ static void create_ui(void)
     s_confirm_button = make_button(s_ota_panel, 496, 224, 220, 54, "CONFIRM", confirm_cb);
     s_rollback_button = make_button(s_ota_panel, 24, 300, 220, 54, "ROLLBACK", rollback_cb);
     s_recovery_button = make_button(s_ota_panel, 260, 300, 220, 54, "FACTORY RECOVERY", recovery_cb);
+
     s_widget_panel = make_panel();
     s_widget_header = make_label(s_widget_panel, 20, 12, "FILESYSTEM WIDGET", &lv_font_montserrat_18, 0x8B949E);
     s_widget_content = lv_obj_create(s_widget_panel); lv_obj_set_pos(s_widget_content, 12, 44); lv_obj_set_size(s_widget_content, 744, 344);
@@ -245,10 +276,70 @@ static void clear_clock_views(void)
     s_clock_count = 0;
 }
 
+static void clear_chart_views(void)
+{
+    for (size_t i = 0; i < s_chart_count; ++i) {
+        if (s_charts[i].chart) lv_obj_delete(s_charts[i].chart);
+        free(s_charts[i].values);
+        memset(&s_charts[i], 0, sizeof(s_charts[i]));
+    }
+    s_chart_count = 0;
+    s_chart_last_update = 0;
+    s_chart_last_period = (youtube_period_t)-1;
+    s_chart_last_history_count = (size_t)-1;
+    s_chart_force_refresh = true;
+}
+
+static void create_chart_view(const widget_object_t *o)
+{
+    if (!o || s_chart_count >= WIDGET_MAX_CHARTS) return;
+
+    bound_chart_t *view = &s_charts[s_chart_count];
+    memset(view, 0, sizeof(*view));
+    view->values = heap_caps_malloc(sizeof(int32_t) * YOUTUBE_CHART_MAX_POINTS,
+                                    MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!view->values) view->values = calloc(YOUTUBE_CHART_MAX_POINTS, sizeof(int32_t));
+    if (!view->values) {
+        ESP_LOGW(TAG, "Chart values allocation failed for %s", o->binding);
+        return;
+    }
+
+    view->chart = lv_chart_create(s_widget_content);
+    lv_obj_set_pos(view->chart, o->x, o->y);
+    lv_obj_set_size(view->chart, o->w, o->h);
+    lv_obj_set_style_radius(view->chart, 8, 0);
+    lv_obj_set_style_bg_color(view->chart, lv_color_hex(0x0D1117), 0);
+    lv_obj_set_style_border_color(view->chart, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_width(view->chart, 1, 0);
+    lv_obj_set_style_pad_all(view->chart, 6, 0);
+    make_decorative(view->chart);
+    lv_chart_set_type(view->chart, LV_CHART_TYPE_LINE);
+    lv_chart_set_div_line_count(view->chart, 4, 6);
+    lv_chart_set_update_mode(view->chart, LV_CHART_UPDATE_MODE_SHIFT);
+    lv_chart_set_point_count(view->chart, 2);
+    lv_chart_set_axis_range(view->chart, LV_CHART_AXIS_PRIMARY_Y, -1, 1);
+
+    view->series = lv_chart_add_series(view->chart, lv_color_hex(o->color), LV_CHART_AXIS_PRIMARY_Y);
+    if (!view->series) {
+        lv_obj_delete(view->chart);
+        free(view->values);
+        memset(view, 0, sizeof(*view));
+        ESP_LOGW(TAG, "Chart series allocation failed for %s", o->binding);
+        return;
+    }
+
+    view->values[0] = LV_CHART_POINT_NONE;
+    view->values[1] = LV_CHART_POINT_NONE;
+    lv_chart_set_series_ext_y_array(view->chart, view->series, view->values);
+    view->source = o;
+    s_chart_count++;
+}
+
 static void render_widget(void)
 {
     widget_info_t info; widget_runtime_get_info(&info);
     clear_clock_views();
+    clear_chart_views();
     lv_obj_clean(s_widget_content); s_bound_count = 0;
     if (!info.installed) {
         lv_obj_set_style_bg_color(s_widget_content, lv_color_hex(0x101820), 0);
@@ -280,10 +371,14 @@ static void render_widget(void)
         } else if (o->type == WIDGET_OBJECT_CLOCK && s_clock_count < WIDGET_MAX_CLOCKS) {
             sevenseg_clock_view_t *clock = sevenseg_clock_create(s_widget_content, o->x, o->y, o->w, o->h, o->color);
             if (clock) s_clocks[s_clock_count++] = clock;
+        } else if (o->type == WIDGET_OBJECT_CHART) {
+            create_chart_view(o);
         }
     }
-    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u clocks=%u generation=%u", s_widget_model->id,
-             (unsigned)s_widget_model->object_count, (unsigned)s_clock_count, (unsigned)s_widget_generation);
+    s_chart_force_refresh = true;
+    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u clocks=%u charts=%u generation=%u", s_widget_model->id,
+             (unsigned)s_widget_model->object_count, (unsigned)s_clock_count,
+             (unsigned)s_chart_count, (unsigned)s_widget_generation);
 }
 
 static void binding_value(const char *binding, char *out, size_t out_len)
@@ -291,6 +386,8 @@ static void binding_value(const char *binding, char *out, size_t out_len)
     ota_status_t ota; ota_manager_get_status(&ota);
     if (strncmp(binding, "time.", 5) == 0) {
         time_service_format_binding(binding, out, out_len);
+    } else if (strncmp(binding, "youtube.", 8) == 0) {
+        youtube_service_format_binding(binding, out, out_len);
     } else if (strcmp(binding, "system.uptime") == 0) {
         uint64_t total = (uint64_t)esp_timer_get_time() / 1000000ULL;
         snprintf(out, out_len, "%02llu:%02llu:%02llu", (unsigned long long)(total / 3600ULL),
@@ -312,6 +409,55 @@ static void binding_value(const char *binding, char *out, size_t out_len)
     } else strlcpy(out, "unsupported", out_len);
 }
 
+static void refresh_charts(void)
+{
+    if (!s_chart_count) return;
+
+    youtube_status_t status;
+    youtube_service_get_status(&status);
+    if (!s_chart_force_refresh && status.last_update == s_chart_last_update &&
+        status.period == s_chart_last_period && status.history_count == s_chart_last_history_count) {
+        return;
+    }
+
+    for (size_t i = 0; i < s_chart_count; ++i) {
+        bound_chart_t *view = &s_charts[i];
+        if (!view->chart || !view->series || !view->values || !view->source) continue;
+
+        int32_t minv = 0, maxv = 0;
+        size_t count = youtube_service_get_chart(view->source->binding, view->values,
+                                                 YOUTUBE_CHART_MAX_POINTS, &minv, &maxv);
+        if (!count) {
+            view->values[0] = LV_CHART_POINT_NONE;
+            view->values[1] = LV_CHART_POINT_NONE;
+            lv_chart_set_point_count(view->chart, 2);
+            lv_chart_set_axis_range(view->chart, LV_CHART_AXIS_PRIMARY_Y, -1, 1);
+            lv_chart_refresh(view->chart);
+            continue;
+        }
+
+        int64_t lo = minv;
+        int64_t hi = maxv;
+        int64_t span = hi - lo;
+        int64_t pad = span / 10;
+        if (pad < 1) pad = 1;
+        lo -= pad;
+        hi += pad;
+        if (lo < INT32_MIN) lo = INT32_MIN;
+        if (hi > INT32_MAX) hi = INT32_MAX;
+        if (lo >= hi) { lo = minv - 1LL; hi = maxv + 1LL; }
+
+        lv_chart_set_point_count(view->chart, (uint32_t)count);
+        lv_chart_set_axis_range(view->chart, LV_CHART_AXIS_PRIMARY_Y, (int32_t)lo, (int32_t)hi);
+        lv_chart_refresh(view->chart);
+    }
+
+    s_chart_last_update = status.last_update;
+    s_chart_last_period = status.period;
+    s_chart_last_history_count = status.history_count;
+    s_chart_force_refresh = false;
+}
+
 static void refresh_bindings(void)
 {
     for (size_t i = 0; i < s_bound_count; ++i) {
@@ -320,6 +466,7 @@ static void refresh_bindings(void)
         lv_label_set_text(s_bound[i].label, text);
     }
     for (size_t i = 0; i < s_clock_count; ++i) sevenseg_clock_update(s_clocks[i]);
+    refresh_charts();
 }
 
 static void refresh_ui(void)
@@ -350,7 +497,14 @@ static void refresh_ui(void)
     uint32_t generation = widget_runtime_generation();
     if (generation != s_widget_generation) { s_widget_generation = generation; render_widget(); }
     refresh_bindings();
-    if (ota.pending_verify && s_first_refresh) show_ota_panel();
+
+    if (s_first_refresh) {
+        if (ota.pending_verify) show_ota_panel();
+        else {
+            widget_info_t widget; widget_runtime_get_info(&widget);
+            if (widget.installed) show_widget_panel();
+        }
+    }
     s_first_refresh = false;
 }
 
@@ -407,6 +561,6 @@ static void ui_task(void *arg)
 
 esp_err_t display_ota_start(void)
 {
-    BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app07_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
+    BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app08_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
     return ok==pdPASS?ESP_OK:ESP_ERR_NO_MEM;
 }

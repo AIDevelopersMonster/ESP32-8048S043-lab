@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "id": "youtube-subscribers-focus",
+  "name": "YouTube Subscribers",
+  "version": "1.0.0",
+  "background": "#0D1117",
+  "objects": [
+    {"type":"label","x":12,"y":8,"w":430,"h":24,"bind":"youtube.channel","prefix":"CHANNEL  ","color":"#FF4D4D"},
+    {"type":"label","x":500,"y":8,"w":138,"h":24,"bind":"youtube.state","prefix":"API  ","color":"#8B949E"},
+    {"type":"label","x":646,"y":8,"w":86,"h":24,"bind":"youtube.period","color":"#58A6FF"},
+    {"type":"label","x":12,"y":42,"w":240,"h":28,"bind":"youtube.subscribers","prefix":"SUBSCRIBERS  ","color":"#F0F6FC"},
+    {"type":"label","x":300,"y":42,"w":300,"h":28,"bind":"youtube.subscribers_delta","prefix":"DELTA  ","color":"#3FB950"},
+    {"type":"label","x":12,"y":78,"w":720,"h":22,"text":"SUBSCRIBER GROWTH","color":"#8B949E"},
+    {"type":"chart","x":12,"y":104,"w":720,"h":168,"bind":"youtube.subscribers_history","color":"#3FB950"},
+    {"type":"button","x":12,"y":288,"w":82,"h":44,"text":"7D","action":"youtube_period_7d"},
+    {"type":"button","x":102,"y":288,"w":82,"h":44,"text":"30D","action":"youtube_period_30d"},
+    {"type":"button","x":192,"y":288,"w":82,"h":44,"text":"90D","action":"youtube_period_90d"},
+    {"type":"button","x":282,"y":288,"w":82,"h":44,"text":"ALL","action":"youtube_period_all"},
+    {"type":"button","x":382,"y":288,"w":170,"h":44,"text":"REFRESH","action":"youtube_refresh"}
+  ]
+}
