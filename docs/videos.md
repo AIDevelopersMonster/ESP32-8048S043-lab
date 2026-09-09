@@ -13,6 +13,7 @@
 | 07 | ESP32-8048S043 — read-only microSD / TF test from our Arduino library | https://youtube.com/shorts/vACvK85U0Lw | Show `08_SDCardTest` mounting a microSD card on the source-backed SPI pins CS=10, MOSI=11, CLK=12, MISO=13, reading SDHC/SDXC metadata and listing the root directory without write/format/delete operations. | SAMPLE A READ-ONLY SD PHYSICAL PASS CANDIDATE |
 | 08 | ESP32-8048S043 + LVGL 9 — Six-Card Serial Deck full profile demonstration | https://youtube.com/shorts/0I5JL6jt8e0 | Full demonstration of the current corrected App 01 firmware: HOME / MEDIA / SYSTEM profile switching, corrected PROFILE control, visible reassignment of all six cards, GT911 touch operation and matching `PROFILE:` / `CARD:` commands in Serial/COM. | APP 01 CURRENT FIRMWARE PHYSICAL PASS / PROFILE SWITCHING PASS / SERIAL COMMANDS PASS / STACK STABLE |
 | 09 | ESP32-8048S043 + LVGL 9 — App 02 Mixed Widgets | https://youtube.com/shorts/LwmW8UwDED0 | Physical demonstration of COMMAND, SWITCH, SLIDER, ARC, PROGRESS/STATUS and NAVIGATION on the App 01 hardware/runtime baseline. One cosmetic issue remains: the top-right `BACK TO CONTROLS` button is slightly too narrow. | APP 02 v0.1.0 PHYSICAL PASS / WIDGET INTERACTION PASS / COSMETIC BACK BUTTON FIX PENDING |
+| 10 | ESP32-8048S043 — YouTube channel statistics via YouTube Data API | https://youtube.com/shorts/cjgx2RB0l_A | Show App08 v0.2.6 retrieving real channel statistics through the YouTube Data API and displaying the local `/youtube` dashboard, with API key stored in NVS and first-day history captured. | APP 08 v0.2.6 YOUTUBE SERVICE + LOCAL WEB DASHBOARD PHYSICAL PASS / FINAL TFT CHART UI OPEN |
 
 ## Planned shooting sequence
 
@@ -35,6 +36,7 @@
 | 15 Widget Runtime | JSON UI without reflashing | OPEN |
 | 16 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
+| 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | API + LOCAL WEB PHYSICAL PASS / FINAL TFT CHART OPEN |
 
 ## Rule
 
