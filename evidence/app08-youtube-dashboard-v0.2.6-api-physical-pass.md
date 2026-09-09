@@ -39,6 +39,14 @@ The local dashboard reported:
 
 The zero deltas are expected on the first stored daily sample.
 
+## Video evidence
+
+Published physical demonstration:
+
+- https://youtube.com/shorts/cjgx2RB0l_A
+
+The video documents the App08 YouTube statistics/API and local dashboard stage. It does not by itself close the still-open final TFT widget/chart validation gate.
+
 ## Security note
 
 The API key was entered through the ESP32 local `/youtube` page and stored in NVS. The key is not recorded in this evidence file, source tree or widget JSON.
