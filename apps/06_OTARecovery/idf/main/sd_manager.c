@@ -24,11 +24,14 @@
 #define SD_PIN_MISO 13
 #define SD_FREQ_KHZ 10000
 #define SD_PACKAGE_NAME_MAX 63
+#define SD_MANIFEST_MAX 8192
 
 static sdmmc_card_t *s_card;
 static sdmmc_host_t s_host;
 static bool s_bus_initialized;
 static sd_manager_status_t s_status;
+static sd_manager_entry_t s_entries[SD_MANAGER_MAX_ENTRIES];
+static size_t s_entry_count;
 
 static void set_state(const char *state, const char *message)
 {
@@ -56,9 +59,36 @@ static bool safe_package_name(const char *name)
     return true;
 }
 
+static bool safe_manifest_file(const char *name)
+{
+    if (!name || !name[0] || strlen(name) > SD_PACKAGE_NAME_MAX) return false;
+    if (strchr(name, '/') || strchr(name, '\\') || strstr(name, "..")) return false;
+    return true;
+}
+
+static char *read_small_file(const char *path, size_t max_bytes)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
+    long size = ftell(f);
+    if (size <= 0 || (size_t)size > max_bytes) { fclose(f); return NULL; }
+    rewind(f);
+    char *buf = heap_caps_malloc((size_t)size + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!buf) buf = malloc((size_t)size + 1);
+    if (!buf) { fclose(f); return NULL; }
+    size_t got = fread(buf, 1, (size_t)size, f);
+    fclose(f);
+    if (got != (size_t)size) { free(buf); return NULL; }
+    buf[got] = '\0';
+    return buf;
+}
+
 esp_err_t sd_manager_init(void)
 {
     memset(&s_status, 0, sizeof(s_status));
+    memset(s_entries, 0, sizeof(s_entries));
+    s_entry_count = 0;
     s_status.frequency_khz = SD_FREQ_KHZ;
     set_state("NOT_MOUNTED", "SD is optional; use MOUNT / RESCAN after platform UI starts");
     ESP_LOGI(TAG, "SD manager ready; boot-time mount deferred to preserve UI internal RAM");
@@ -67,7 +97,7 @@ esp_err_t sd_manager_init(void)
 
 esp_err_t sd_manager_mount(void)
 {
-    if (s_status.mounted) return ESP_OK;
+    if (s_status.mounted) return sd_manager_rescan();
 
     s_host = (sdmmc_host_t)SDSPI_HOST_DEFAULT();
     s_host.max_freq_khz = SD_FREQ_KHZ;
@@ -120,7 +150,7 @@ esp_err_t sd_manager_mount(void)
              (unsigned long long)s_status.capacity_bytes,
              SD_PIN_CS, SD_PIN_MOSI, SD_PIN_CLK, SD_PIN_MISO,
              (unsigned)s_status.frequency_khz);
-    return ESP_OK;
+    return sd_manager_rescan();
 }
 
 esp_err_t sd_manager_unmount(void)
@@ -129,6 +159,8 @@ esp_err_t sd_manager_unmount(void)
     esp_err_t err = esp_vfs_fat_sdcard_unmount(SD_MANAGER_BASE_PATH, s_card);
     s_card = NULL;
     s_status.mounted = false;
+    s_entry_count = 0;
+    memset(s_entries, 0, sizeof(s_entries));
     if (s_bus_initialized) {
         esp_err_t bus_err = spi_bus_free(s_host.slot);
         s_bus_initialized = false;
@@ -148,6 +180,102 @@ void sd_manager_get_status(sd_manager_status_t *out)
     if (out) *out = s_status;
 }
 
+esp_err_t sd_manager_rescan(void)
+{
+    if (!s_status.mounted) return ESP_ERR_INVALID_STATE;
+    s_entry_count = 0;
+    memset(s_entries, 0, sizeof(s_entries));
+
+    DIR *dir = opendir(SD_MANAGER_WIDGET_ROOT);
+    if (!dir) {
+        set_state("MOUNTED", "SD mounted; /widgets directory not found");
+        ESP_LOGW(TAG, "SD catalog root missing: %s", SD_MANAGER_WIDGET_ROOT);
+        return ESP_OK;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && s_entry_count < SD_MANAGER_MAX_ENTRIES) {
+        if (entry->d_name[0] == '.' || !safe_package_name(entry->d_name)) continue;
+
+        char manifest_path[256];
+        int written = snprintf(manifest_path, sizeof(manifest_path), "%s/%.63s/package.json",
+                               SD_MANAGER_WIDGET_ROOT, entry->d_name);
+        if (written < 0 || (size_t)written >= sizeof(manifest_path)) continue;
+
+        struct stat st;
+        if (stat(manifest_path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
+
+        char *text = read_small_file(manifest_path, SD_MANIFEST_MAX);
+        if (!text) continue;
+        cJSON *root = cJSON_Parse(text);
+        free(text);
+        if (!root) {
+            ESP_LOGW(TAG, "Ignoring invalid package manifest: %s", manifest_path);
+            continue;
+        }
+
+        const cJSON *jid = cJSON_GetObjectItemCaseSensitive(root, "id");
+        const cJSON *jname = cJSON_GetObjectItemCaseSensitive(root, "name");
+        const cJSON *jentries = cJSON_GetObjectItemCaseSensitive(root, "entrypoints");
+        const char *package_id = cJSON_IsString(jid) && safe_package_name(jid->valuestring) ? jid->valuestring : entry->d_name;
+        const char *package_name = cJSON_IsString(jname) && jname->valuestring[0] ? jname->valuestring : package_id;
+
+        if (cJSON_IsArray(jentries)) {
+            const cJSON *je;
+            cJSON_ArrayForEach(je, jentries) {
+                if (s_entry_count >= SD_MANAGER_MAX_ENTRIES) break;
+                const cJSON *jeid = cJSON_GetObjectItemCaseSensitive(je, "id");
+                const cJSON *jename = cJSON_GetObjectItemCaseSensitive(je, "name");
+                const cJSON *jfile = cJSON_GetObjectItemCaseSensitive(je, "file");
+                if (!cJSON_IsString(jfile) || !safe_manifest_file(jfile->valuestring)) continue;
+
+                sd_manager_entry_t *dst = &s_entries[s_entry_count];
+                strlcpy(dst->package_id, package_id, sizeof(dst->package_id));
+                strlcpy(dst->package_name, package_name, sizeof(dst->package_name));
+                strlcpy(dst->entry_id,
+                        cJSON_IsString(jeid) && jeid->valuestring[0] ? jeid->valuestring : jfile->valuestring,
+                        sizeof(dst->entry_id));
+                strlcpy(dst->entry_name,
+                        cJSON_IsString(jename) && jename->valuestring[0] ? jename->valuestring : dst->entry_id,
+                        sizeof(dst->entry_name));
+                int n = snprintf(dst->relative_path, sizeof(dst->relative_path),
+                                 "widgets/%s/%s", entry->d_name, jfile->valuestring);
+                if (n < 0 || (size_t)n >= sizeof(dst->relative_path)) {
+                    memset(dst, 0, sizeof(*dst));
+                    continue;
+                }
+                s_entry_count++;
+            }
+        }
+        cJSON_Delete(root);
+    }
+    closedir(dir);
+
+    char msg[128];
+    snprintf(msg, sizeof(msg), "SD application catalog: %u entrypoint(s)", (unsigned)s_entry_count);
+    set_state("MOUNTED", msg);
+    ESP_LOGI(TAG, "SD catalog scan complete entries=%u", (unsigned)s_entry_count);
+    for (size_t i = 0; i < s_entry_count; ++i) {
+        ESP_LOGI(TAG, "CATALOG[%u] %s / %s -> %s", (unsigned)i,
+                 s_entries[i].package_name, s_entries[i].entry_name, s_entries[i].relative_path);
+    }
+    return ESP_OK;
+}
+
+size_t sd_manager_entry_count(void)
+{
+    return s_entry_count;
+}
+
+esp_err_t sd_manager_entry_get(size_t index, sd_manager_entry_t *out)
+{
+    if (!out) return ESP_ERR_INVALID_ARG;
+    if (!s_status.mounted) return ESP_ERR_INVALID_STATE;
+    if (index >= s_entry_count) return ESP_ERR_NOT_FOUND;
+    *out = s_entries[index];
+    return ESP_OK;
+}
+
 esp_err_t sd_manager_packages_json(char **out_json)
 {
     if (!out_json) return ESP_ERR_INVALID_ARG;
@@ -155,32 +283,21 @@ esp_err_t sd_manager_packages_json(char **out_json)
     if (!s_status.mounted) return ESP_ERR_INVALID_STATE;
 
     cJSON *root = cJSON_CreateObject();
-    cJSON *packages = cJSON_AddArrayToObject(root, "packages");
-    if (!root || !packages) {
+    cJSON *entries = root ? cJSON_AddArrayToObject(root, "entries") : NULL;
+    if (!root || !entries) {
         cJSON_Delete(root);
         return ESP_ERR_NO_MEM;
     }
-
-    DIR *dir = opendir(SD_MANAGER_WIDGET_ROOT);
-    if (dir) {
-        struct dirent *entry;
-        while ((entry = readdir(dir)) != NULL) {
-            if (entry->d_name[0] == '.' || !safe_package_name(entry->d_name)) continue;
-            char package_path[256];
-            int written = snprintf(package_path, sizeof(package_path), "%s/%.63s/package.json",
-                                   SD_MANAGER_WIDGET_ROOT, entry->d_name);
-            if (written < 0 || (size_t)written >= sizeof(package_path)) continue;
-            struct stat st;
-            if (stat(package_path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
-            cJSON *item = cJSON_CreateObject();
-            if (!item) continue;
-            cJSON_AddStringToObject(item, "id", entry->d_name);
-            cJSON_AddStringToObject(item, "manifest", package_path + strlen(SD_MANAGER_BASE_PATH) + 1);
-            cJSON_AddItemToArray(packages, item);
-        }
-        closedir(dir);
+    for (size_t i = 0; i < s_entry_count; ++i) {
+        cJSON *item = cJSON_CreateObject();
+        if (!item) continue;
+        cJSON_AddStringToObject(item, "package", s_entries[i].package_id);
+        cJSON_AddStringToObject(item, "package_name", s_entries[i].package_name);
+        cJSON_AddStringToObject(item, "entry", s_entries[i].entry_id);
+        cJSON_AddStringToObject(item, "name", s_entries[i].entry_name);
+        cJSON_AddStringToObject(item, "file", s_entries[i].relative_path);
+        cJSON_AddItemToArray(entries, item);
     }
-
     char *printed = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
     if (!printed) return ESP_ERR_NO_MEM;
