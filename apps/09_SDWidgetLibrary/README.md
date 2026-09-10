@@ -20,22 +20,37 @@ SYS | SD | WIDGET
 
 This navigation becomes project canon only after physical validation on the real ESP32-8048S043 hardware.
 
-## First SD scope
+## Canonical application rule
+
+The firmware shell must **not** contain application-specific launch buttons or application names. The platform knows only `SYS | SD | WIDGET`, the package contract and platform services/capabilities.
+
+Every compatible application is installed by copying a package directory to SD:
 
 ```text
 SD/
 ├── widgets/
-│   └── youtube/
-│       ├── package.json
-│       ├── dashboard.json
-│       ├── views.json
-│       └── subscribers.json
+│   ├── youtube/
+│   │   ├── package.json
+│   │   ├── dashboard.json
+│   │   ├── views.json
+│   │   └── subscribers.json
+│   ├── clock/
+│   │   ├── package.json
+│   │   └── clock.json
+│   ├── nalivator/
+│   │   └── package.json
+│   └── thermostat/
+│       └── package.json
 └── UPDATE/
     ├── platform/
     └── project-name/
 ```
 
-All YouTube display variants remain in **one YouTube subfolder**. App09 does not spread individual views across unrelated SD directories.
+`SD` scans `/sd/widgets/*/package.json`, builds its launcher dynamically from declared `entrypoints`, and starts the selected JSON through Widget Runtime. Therefore adding another compatible application must require **no firmware rebuild and no new C button**.
+
+A platform firmware update is justified only when an application requires a service/provider/driver that the installed platform does not yet expose.
+
+The earlier experimental build that added a dedicated `CLOCK` launcher in firmware is explicitly **non-canonical**. It proved that a second package could be carried on SD, but App09 replaces that pattern with manifest-driven discovery.
 
 ## Platform boundary
 
@@ -46,10 +61,13 @@ KONTAKTS Platform firmware
 │   ├── GitHub OTA
 │   ├── CONFIRM / ROLLBACK
 │   └── factory recovery
-├── SD Manager            <- App09
+├── SD Manager
+│   └── manifest-driven application catalog
+├── SD Launcher
+│   └── dynamic entrypoints from package.json
 ├── WIDGET Runtime
 ├── Wi-Fi / NVS
-├── YouTube service
+├── platform services/providers
 └── internal /storage rescue/persistence
 
 SD card
@@ -77,7 +95,7 @@ heap / PSRAM
 OTA state
 ```
 
-## First package
+## Package examples
 
 The first SD package is `youtube` and contains three presentations already derived from the App08 physical-pass widgets:
 
@@ -85,16 +103,16 @@ The first SD package is `youtube` and contains three presentations already deriv
 - Views — full-width views chart;
 - Subscribers — full-width subscribers chart.
 
+The second package is `clock`, using the already proven NTP seven-segment clock widget. It exists specifically to prove that application discovery is independent of YouTube.
+
 The YouTube API key is **not** stored on SD. It remains in NVS.
 
 ## Runtime rule
 
 A selected SD JSON must be read and validated by Widget Runtime. The file does not need to stay open after rendering.
 
-For the first implementation, `RUN` installs the selected validated SD widget into the existing internal active slot:
-
 ```text
-/sd/widgets/youtube/views.json
+/sd/widgets/<package>/<entrypoint>.json
       |
       | read + validate
       v
@@ -140,7 +158,7 @@ The following short video records the hardware stage where the SD card was first
 
 ## Application/service contract
 
-Future applications should depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
+Applications depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
 
 Examples:
 
@@ -177,9 +195,10 @@ Conceptually:
 
 The package should not need a separate firmware image for each supported sensor if the installed platform already exposes the matching provider.
 
-This model can later be used for:
+This model is intended for:
 
 - YouTube dashboards;
+- clocks;
 - weather station;
 - music station/player;
 - thermostat with selectable sensors and outputs;
@@ -193,17 +212,23 @@ Some future applications may require capabilities that the installed platform do
 The intended user flow is:
 
 ```text
-select project on SD
+copy project package to SD
+      |
+      v
+MOUNT / RESCAN
+      |
+      v
+read package.json + entrypoints
       |
       v
 check package requirements
       |
-      +-- compatible platform -> RUN
+      +-- compatible platform -> show in launcher -> RUN
       |
       +-- capability missing
               |
               v
-         offer verified update
+         offer verified platform update
               |
               +-- GitHub manifest
               |
@@ -225,7 +250,7 @@ firmware.required = false
 minimum platform  = 0.2.8
 ```
 
-because the required `youtube.*` bindings and chart renderer are already present in the App08 platform.
+because the required `youtube.*` bindings and chart renderer are already present in the platform.
 
 ## Firmware delivery channels
 
@@ -246,10 +271,12 @@ App09 is not PHYSICAL PASS until real hardware confirms at least:
 [ ] SYS remains usable without SD
 [ ] SD mounts without formatting
 [ ] missing SD leaves platform usable
-[ ] /widgets/youtube is enumerated
-[ ] Dashboard can be selected and run
-[ ] Views can be selected and run
-[ ] Subscribers can be selected and run
+[ ] launcher is generated from /widgets/*/package.json
+[ ] no application-specific launcher buttons exist in firmware
+[ ] YouTube package entrypoints appear dynamically
+[ ] Clock package appears dynamically without adding a firmware button
+[ ] arbitrary new compatible package appears after copy + RESCAN without reflashing
+[ ] selected widget can be run
 [ ] selected widget persists internally
 [ ] SD can be removed after selection without killing active widget
 [ ] reboot without SD restores persisted active widget
@@ -258,5 +285,5 @@ App09 is not PHYSICAL PASS until real hardware confirms at least:
 [ ] bad SHA / wrong board update is rejected
 [ ] successful SD update enters normal PENDING_VERIFY flow
 [ ] rollback remains functional
-[ ] YouTube API key never appears on SD
+[ ] secrets never appear on SD
 ```
