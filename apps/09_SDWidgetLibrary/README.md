@@ -30,17 +30,10 @@ Every compatible application is installed by copying a package directory to SD:
 SD/
 ├── widgets/
 │   ├── youtube/
-│   │   ├── package.json
-│   │   ├── dashboard.json
-│   │   ├── views.json
-│   │   └── subscribers.json
 │   ├── clock/
-│   │   ├── package.json
-│   │   └── clock.json
+│   ├── youtube-led/
 │   ├── nalivator/
-│   │   └── package.json
 │   └── thermostat/
-│       └── package.json
 └── UPDATE/
     ├── platform/
     └── project-name/
@@ -48,7 +41,7 @@ SD/
 
 `SD` scans `/sd/widgets/*/package.json`, builds its launcher dynamically from declared `entrypoints`, and starts the selected JSON through Widget Runtime. Therefore adding another compatible application must require **no firmware rebuild and no new C button**.
 
-A platform firmware update is justified only when an application requires a service/provider/driver that the installed platform does not yet expose.
+A platform firmware update is justified only when an application requires a service/provider/driver or generic UI capability that the installed platform does not yet expose.
 
 The earlier experimental build that added a dedicated `CLOCK` launcher in firmware is explicitly **non-canonical**. It proved that a second package could be carried on SD, but App09 replaces that pattern with manifest-driven discovery.
 
@@ -66,6 +59,8 @@ KONTAKTS Platform firmware
 ├── SD Launcher
 │   └── dynamic entrypoints from package.json
 ├── WIDGET Runtime
+├── generic UI capabilities
+│   └── metric_carousel
 ├── Wi-Fi / NVS
 ├── platform services/providers
 └── internal /storage rescue/persistence
@@ -76,6 +71,38 @@ SD card
 ```
 
 The application package supplies presentation and declares required capabilities. The platform supplies hardware drivers, networking, NVS secrets, service bindings, OTA, rollback and recovery.
+
+## Demonstration package — YouTube LED Carousel
+
+Platform `0.3.1` adds a generic `metric_carousel` object. It is not YouTube-specific: any compatible widget can cycle allowed bindings at a declared interval.
+
+The demonstration SD package is:
+
+```text
+widgets/youtube-led/
+├── package.json
+└── main.json
+```
+
+Its first demo cycles every 5 seconds through:
+
+```text
+Subscribers -> Views -> Videos -> Time -> ...
+```
+
+The physical demonstration procedure is intentionally SD-only after installing platform `0.3.1`:
+
+```text
+1. boot platform without widgets/youtube-led
+2. open SD and show that YouTube LED Carousel is absent
+3. copy only widgets/youtube-led to the SD card
+4. press MOUNT / RESCAN
+5. launcher discovers YouTube LED Carousel from package.json
+6. run it from SD
+7. observe metrics changing automatically every 5 seconds
+```
+
+This is the acceptance proof that a new compatible application can be added by copying files to SD without adding a firmware application button.
 
 ## SYS recovery invariant
 
@@ -104,6 +131,8 @@ The first SD package is `youtube` and contains three presentations already deriv
 - Subscribers — full-width subscribers chart.
 
 The second package is `clock`, using the already proven NTP seven-segment clock widget. It exists specifically to prove that application discovery is independent of YouTube.
+
+The third demonstration package is `youtube-led`, using the generic metric carousel capability.
 
 The YouTube API key is **not** stored on SD. It remains in NVS.
 
@@ -177,22 +206,6 @@ mqtt
 
 A thermostat package, for example, can require `temperature + relay` while allowing the temperature provider to be selected from available implementations such as DS18B20, NTC or BME280.
 
-Conceptually:
-
-```json
-{
-  "requires": {
-    "services": ["temperature", "relay"]
-  },
-  "providers": {
-    "temperature": {
-      "selectable": true,
-      "accepted": ["ds18b20", "ntc", "bme280"]
-    }
-  }
-}
-```
-
 The package should not need a separate firmware image for each supported sensor if the installed platform already exposes the matching provider.
 
 This model is intended for:
@@ -243,15 +256,6 @@ check package requirements
 
 The widget/package itself never writes flash directly.
 
-For the current YouTube package:
-
-```text
-firmware.required = false
-minimum platform  = 0.2.8
-```
-
-because the required `youtube.*` bindings and chart renderer are already present in the platform.
-
 ## Firmware delivery channels
 
 ```text
@@ -275,6 +279,8 @@ App09 is not PHYSICAL PASS until real hardware confirms at least:
 [ ] no application-specific launcher buttons exist in firmware
 [ ] YouTube package entrypoints appear dynamically
 [ ] Clock package appears dynamically without adding a firmware button
+[ ] youtube-led appears after copy + RESCAN without reflashing
+[ ] metric carousel changes value every 5 seconds
 [ ] arbitrary new compatible package appears after copy + RESCAN without reflashing
 [ ] selected widget can be run
 [ ] selected widget persists internally
