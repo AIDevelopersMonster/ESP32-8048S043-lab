@@ -52,6 +52,8 @@ jobs:
           name: app06-platform-v${{ steps.version.outputs.version }}
           path: |
             apps/06_OTARecovery/idf/dist/*.bin
+            apps/06_OTARecovery/idf/build/app06_ota_recovery.elf
+            apps/06_OTARecovery/idf/build/app06_ota_recovery.map
             apps/06_OTARecovery/idf/partitions.csv
             apps/06_OTARecovery/widgets/*.json
             apps/09_SDWidgetLibrary/sd/**
