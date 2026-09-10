@@ -6,39 +6,76 @@
 
 ## Goal
 
-App09 extends the physically validated App08 platform with an SD-backed application library while preserving the existing firmware-resident recovery surface.
+App09 extends the physically validated App08 platform with an SD-backed application library while preserving a firmware-resident recovery surface.
 
-The first scope is deliberately narrow:
+The canonical navigation candidate for App09 is:
 
 ```text
-SD
-└── widgets
-    └── youtube
-        ├── package.json
-        ├── dashboard.json
-        ├── views.json
-        └── subscribers.json
+SYS | SD | WIDGET
 ```
 
-All YouTube display variants remain in **one YouTube subfolder**. App09 does not yet spread individual views across unrelated SD directories.
+- `SYS` — emergency status, diagnostics, OTA, rollback and recovery;
+- `SD` — application library and manual offline update source;
+- `WIDGET` — currently active application UI.
+
+This navigation becomes project canon only after physical validation on the real ESP32-8048S043 hardware.
+
+## First SD scope
+
+```text
+SD/
+├── widgets/
+│   └── youtube/
+│       ├── package.json
+│       ├── dashboard.json
+│       ├── views.json
+│       └── subscribers.json
+└── UPDATE/
+    ├── platform/
+    └── project-name/
+```
+
+All YouTube display variants remain in **one YouTube subfolder**. App09 does not spread individual views across unrelated SD directories.
 
 ## Platform boundary
 
 ```text
 KONTAKTS Platform firmware
-├── STATUS
-├── OTA
-├── WIDGET
+├── SYS
+│   ├── emergency status
+│   ├── GitHub OTA
+│   ├── CONFIRM / ROLLBACK
+│   └── factory recovery
+├── SD Manager            <- App09
+├── WIDGET Runtime
 ├── Wi-Fi / NVS
 ├── YouTube service
-├── internal /storage rescue/persistence
-└── SD Manager            <- App09
+└── internal /storage rescue/persistence
 
 SD card
-└── widgets/youtube       <- application package
+├── widgets/...           <- application packages
+└── UPDATE/...            <- explicit/manual offline update packages
 ```
 
-The application package supplies presentation. The platform supplies hardware drivers, networking, NVS secrets, service bindings, OTA, rollback and recovery.
+The application package supplies presentation and declares required capabilities. The platform supplies hardware drivers, networking, NVS secrets, service bindings, OTA, rollback and recovery.
+
+## SYS recovery invariant
+
+The old separate top-level `STATUS` and `OTA` concepts are folded into `SYS`.
+
+A small emergency status remains firmware-resident and must work even if the SD card is missing, unreadable or corrupt. A richer `status` application may later be supplied as an SD widget, but it must not replace the emergency recovery path.
+
+Minimum firmware-resident SYS information should include:
+
+```text
+firmware version
+running partition
+image state
+Wi-Fi state / IP
+SD state
+heap / PSRAM
+OTA state
+```
 
 ## First package
 
@@ -52,9 +89,9 @@ The YouTube API key is **not** stored on SD. It remains in NVS.
 
 ## Runtime rule
 
-A selected SD JSON must be read and validated by Widget Runtime. The file should not need to stay open after rendering.
+A selected SD JSON must be read and validated by Widget Runtime. The file does not need to stay open after rendering.
 
-For the first implementation it is acceptable for `RUN` to install the selected validated SD widget into the existing internal active slot:
+For the first implementation, `RUN` installs the selected validated SD widget into the existing internal active slot:
 
 ```text
 /sd/widgets/youtube/views.json
@@ -75,8 +112,7 @@ This gives an important failure property: removing the SD card after a successfu
 SD is optional application storage. Failure to mount SD must not block:
 
 - boot;
-- STATUS;
-- OTA/recovery;
+- SYS / recovery;
 - Wi-Fi provisioning;
 - the currently persisted `/storage/widget.json`.
 
@@ -93,21 +129,59 @@ CLK  = GPIO12
 MISO = GPIO13
 ```
 
-App09 must reproduce this mapping in ESP-IDF before any write-capable SD feature is accepted.
+Initial App09 frequency is `10 MHz`, matching the prior physical read-only SD test.
 
-## Future package-to-firmware contract
+## Application/service contract
 
-Some future applications may require firmware capabilities that the installed platform does not contain: for example a new hardware driver, protocol stack or firmware-resident service.
+Future applications should depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
 
-The package format is therefore intentionally designed to grow an **optional firmware requirement**:
+Examples:
 
 ```text
-project package
-├── presentation/resources on SD
-└── optional firmware requirement
-       ├── minimum platform/version
-       └── verified OTA manifest URL
+time
+wifi
+youtube
+weather
+temperature
+relay
+flow-meter
+audio
+storage
+mqtt
 ```
+
+A thermostat package, for example, can require `temperature + relay` while allowing the temperature provider to be selected from available implementations such as DS18B20, NTC or BME280.
+
+Conceptually:
+
+```json
+{
+  "requires": {
+    "services": ["temperature", "relay"]
+  },
+  "providers": {
+    "temperature": {
+      "selectable": true,
+      "accepted": ["ds18b20", "ntc", "bme280"]
+    }
+  }
+}
+```
+
+The package should not need a separate firmware image for each supported sensor if the installed platform already exposes the matching provider.
+
+This model can later be used for:
+
+- YouTube dashboards;
+- weather station;
+- music station/player;
+- thermostat with selectable sensors and outputs;
+- liquid dispenser / filling controller ("наливатор") using flow-meter, valve/pump and recipe services;
+- MQTT and generic sensor dashboards.
+
+## Package-to-firmware contract
+
+Some future applications may require capabilities that the installed platform does not contain. The package format therefore supports an **optional firmware requirement**.
 
 The intended user flow is:
 
@@ -119,19 +193,23 @@ check package requirements
       |
       +-- compatible platform -> RUN
       |
-      +-- firmware capability missing
+      +-- capability missing
               |
               v
-         offer verified OTA update
+         offer verified update
+              |
+              +-- GitHub manifest
+              |
+              +-- SD /UPDATE package
               |
               v
-         normal PENDING_VERIFY / CONFIRM / ROLLBACK contract
+         normal PENDING_VERIFY / CONFIRM / ROLLBACK
               |
               v
          return to project package
 ```
 
-This must reuse the platform's verified OTA machinery rather than let an SD package directly flash arbitrary binary data.
+The widget/package itself never writes flash directly.
 
 For the current YouTube package:
 
@@ -142,11 +220,23 @@ minimum platform  = 0.2.8
 
 because the required `youtube.*` bindings and chart renderer are already present in the App08 platform.
 
+## Firmware delivery channels
+
+```text
+GitHub Release OTA  -> normal network update
+SD /UPDATE          -> normal offline/manual update
+Web Flasher         -> initial install / recovery
+```
+
+All firmware paths must converge on the same verification policy: board/application compatibility, size, SHA-256, ESP image descriptor/version checks, inactive OTA slot, then `PENDING_VERIFY / CONFIRM / ROLLBACK`.
+
 ## Acceptance gates
 
 App09 is not PHYSICAL PASS until real hardware confirms at least:
 
 ```text
+[ ] top navigation is SYS | SD | WIDGET
+[ ] SYS remains usable without SD
 [ ] SD mounts without formatting
 [ ] missing SD leaves platform usable
 [ ] /widgets/youtube is enumerated
@@ -156,6 +246,10 @@ App09 is not PHYSICAL PASS until real hardware confirms at least:
 [ ] selected widget persists internally
 [ ] SD can be removed after selection without killing active widget
 [ ] reboot without SD restores persisted active widget
-[ ] STATUS / OTA / WIDGET remain stable
+[ ] SD /UPDATE package is discovered
+[ ] SD update requires explicit user action
+[ ] bad SHA / wrong board update is rejected
+[ ] successful SD update enters normal PENDING_VERIFY flow
+[ ] rollback remains functional
 [ ] YouTube API key never appears on SD
 ```
