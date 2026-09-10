@@ -25,12 +25,13 @@
 
 #include "network_manager.h"
 #include "ota_manager.h"
+#include "sd_manager.h"
 #include "sevenseg_clock.h"
 #include "time_service.h"
 #include "widget_runtime.h"
 #include "youtube_service.h"
 
-#define TAG "APP08_UI"
+#define TAG "APP09_UI"
 #define LCD_H_RES 800
 #define LCD_V_RES 480
 #define LCD_PCLK_HZ (16 * 1000 * 1000)
@@ -68,11 +69,13 @@ static esp_lcd_panel_handle_t s_panel;
 static i2c_master_bus_handle_t s_i2c_bus;
 static esp_lcd_panel_io_handle_t s_touch_io;
 static esp_lcd_touch_handle_t s_touch;
-static lv_obj_t *s_screen, *s_status_panel, *s_ota_panel, *s_widget_panel;
-static lv_obj_t *s_status_tab, *s_ota_tab, *s_widget_tab;
+static lv_obj_t *s_screen, *s_sys_panel, *s_sd_panel, *s_widget_panel;
+static lv_obj_t *s_sys_tab, *s_sd_tab, *s_widget_tab;
 static lv_obj_t *s_status_version, *s_status_network, *s_status_ip, *s_status_partition, *s_status_image, *s_status_hint;
 static lv_obj_t *s_ota_versions, *s_ota_state, *s_ota_message, *s_ota_progress, *s_ota_progress_label;
 static lv_obj_t *s_check_button, *s_install_button, *s_confirm_button, *s_rollback_button, *s_recovery_button;
+static lv_obj_t *s_sd_state, *s_sd_card, *s_sd_paths, *s_sd_packages, *s_sd_message;
+static lv_obj_t *s_sd_mount_button, *s_sd_dashboard_button, *s_sd_views_button, *s_sd_subscribers_button;
 static lv_obj_t *s_widget_header, *s_widget_content;
 static widget_model_t *s_widget_model;
 static bound_label_t s_bound[WIDGET_MAX_BOUND_LABELS];
@@ -87,6 +90,9 @@ static size_t s_chart_last_history_count = (size_t)-1;
 static bool s_chart_force_refresh = true;
 static uint32_t s_widget_generation;
 static bool s_first_refresh = true;
+static bool s_sd_packages_scanned;
+
+static void render_widget(void);
 
 static uint16_t scale_touch(uint16_t value, uint16_t in_max, uint16_t out_max)
 {
@@ -156,21 +162,21 @@ static void set_button_enabled(lv_obj_t *button, bool enabled)
 
 static void select_panel(lv_obj_t *panel)
 {
-    lv_obj_t *panels[] = {s_status_panel, s_ota_panel, s_widget_panel};
+    lv_obj_t *panels[] = {s_sys_panel, s_sd_panel, s_widget_panel};
     for (size_t i = 0; i < 3; ++i) {
         if (panels[i] == panel) lv_obj_remove_flag(panels[i], LV_OBJ_FLAG_HIDDEN);
         else lv_obj_add_flag(panels[i], LV_OBJ_FLAG_HIDDEN);
     }
-    lv_obj_set_style_bg_color(s_status_tab, lv_color_hex(panel == s_status_panel ? 0x1F6FEB : 0x21262D), 0);
-    lv_obj_set_style_bg_color(s_ota_tab, lv_color_hex(panel == s_ota_panel ? 0x1F6FEB : 0x21262D), 0);
+    lv_obj_set_style_bg_color(s_sys_tab, lv_color_hex(panel == s_sys_panel ? 0x1F6FEB : 0x21262D), 0);
+    lv_obj_set_style_bg_color(s_sd_tab, lv_color_hex(panel == s_sd_panel ? 0x1F6FEB : 0x21262D), 0);
     lv_obj_set_style_bg_color(s_widget_tab, lv_color_hex(panel == s_widget_panel ? 0x1F6FEB : 0x21262D), 0);
 }
 
-static void show_status_panel(void) { select_panel(s_status_panel); }
-static void show_ota_panel(void) { select_panel(s_ota_panel); }
+static void show_sys_panel(void) { select_panel(s_sys_panel); }
+static void show_sd_panel(void) { select_panel(s_sd_panel); }
 static void show_widget_panel(void) { select_panel(s_widget_panel); }
-static void status_tab_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_status_panel(); }
-static void ota_tab_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_ota_panel(); }
+static void sys_tab_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_sys_panel(); }
+static void sd_tab_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_sd_panel(); }
 static void widget_tab_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_widget_panel(); }
 
 static void show_action_error(const char *action, esp_err_t err)
@@ -185,14 +191,54 @@ static void confirm_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLI
 static void rollback_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_action_error("ROLLBACK", ota_manager_start_rollback()); }
 static void recovery_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_action_error("FACTORY", ota_manager_start_recovery()); }
 
+static void sd_mount_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    esp_err_t err = sd_manager_mount();
+    s_sd_packages_scanned = false;
+    if (err == ESP_OK) lv_label_set_text(s_sd_message, "SD mounted. Scanning /sd/widgets...");
+    else lv_label_set_text_fmt(s_sd_message, "Mount failed: %s", esp_err_to_name(err));
+}
+
+static void sd_run_widget(const char *path, const char *name)
+{
+    char reason[160] = {0};
+    esp_err_t err = sd_manager_run_widget(path, reason, sizeof(reason));
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "SD widget %s rejected: %s | %s", name, esp_err_to_name(err), reason);
+        lv_label_set_text_fmt(s_sd_message, "%s failed: %s", name, reason[0] ? reason : esp_err_to_name(err));
+        return;
+    }
+    ESP_LOGI(TAG, "SD widget loaded: %s from %s", name, path);
+    lv_label_set_text_fmt(s_sd_message, "%s installed to internal storage", name);
+    s_widget_generation = widget_runtime_generation();
+    render_widget();
+    show_widget_panel();
+}
+
+static void sd_dashboard_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+        sd_run_widget("widgets/youtube/dashboard.json", "Dashboard");
+}
+static void sd_views_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+        sd_run_widget("widgets/youtube/views.json", "Views");
+}
+static void sd_subscribers_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) == LV_EVENT_CLICKED)
+        sd_run_widget("widgets/youtube/subscribers.json", "Subscribers");
+}
+
 static void widget_action_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
     const char *action = (const char *)lv_event_get_user_data(e);
     if (!action) return;
 
-    if (strcmp(action, "show_status") == 0) show_status_panel();
-    else if (strcmp(action, "show_ota") == 0) show_ota_panel();
+    if (strcmp(action, "show_status") == 0 || strcmp(action, "show_ota") == 0) show_sys_panel();
     else if (strcmp(action, "sync_time") == 0) {
         esp_err_t err = time_service_request_sync();
         if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) {
@@ -228,35 +274,48 @@ static void create_ui(void)
     lv_obj_set_style_bg_opa(s_screen, LV_OPA_COVER, 0); lv_obj_set_style_border_width(s_screen, 0, 0);
     lv_obj_set_style_pad_all(s_screen, 0, 0);
     make_label(s_screen, 18, 14, "KONTAKTS", &lv_font_montserrat_24, 0xF0F6FC);
-    make_label(s_screen, 160, 18, "Shell / Filesystem Widgets", &lv_font_montserrat_18, 0x8B949E);
-    s_status_tab = make_button(s_screen, 476, 8, 100, 44, "STATUS", status_tab_cb);
-    s_ota_tab = make_button(s_screen, 584, 8, 92, 44, "OTA", ota_tab_cb);
+    make_label(s_screen, 160, 18, "Platform / SD Applications", &lv_font_montserrat_18, 0x8B949E);
+    s_sys_tab = make_button(s_screen, 476, 8, 100, 44, "SYS", sys_tab_cb);
+    s_sd_tab = make_button(s_screen, 584, 8, 92, 44, "SD", sd_tab_cb);
     s_widget_tab = make_button(s_screen, 684, 8, 100, 44, "WIDGET", widget_tab_cb);
 
-    s_status_panel = make_panel();
-    make_label(s_status_panel, 24, 18, "DEVICE STATUS", &lv_font_montserrat_18, 0x8B949E);
-    s_status_version = make_label(s_status_panel, 24, 54, "Version --", &lv_font_montserrat_36, 0xF0F6FC);
-    s_status_network = make_label(s_status_panel, 28, 124, "Network: BOOT", &lv_font_montserrat_24, 0x58A6FF);
-    s_status_ip = make_label(s_status_panel, 28, 166, "IP: 0.0.0.0", &lv_font_montserrat_24, 0xF0F6FC);
-    s_status_partition = make_label(s_status_panel, 28, 208, "Partition: --", &lv_font_montserrat_24, 0xF0F6FC);
-    s_status_image = make_label(s_status_panel, 28, 250, "Image: --", &lv_font_montserrat_24, 0xF0F6FC);
-    s_status_hint = make_label(s_status_panel, 28, 316, "", &lv_font_montserrat_18, 0x8B949E);
-    lv_obj_set_width(s_status_hint, 710); lv_label_set_long_mode(s_status_hint, LV_LABEL_LONG_WRAP);
+    s_sys_panel = make_panel();
+    make_label(s_sys_panel, 24, 12, "SYSTEM CONTROL", &lv_font_montserrat_18, 0x8B949E);
+    s_status_version = make_label(s_sys_panel, 24, 40, "Firmware --", &lv_font_montserrat_24, 0xF0F6FC);
+    s_status_network = make_label(s_sys_panel, 24, 76, "Network: BOOT", &lv_font_montserrat_18, 0x58A6FF);
+    s_status_ip = make_label(s_sys_panel, 370, 76, "IP: 0.0.0.0", &lv_font_montserrat_18, 0xF0F6FC);
+    s_status_partition = make_label(s_sys_panel, 24, 106, "Partition: --", &lv_font_montserrat_18, 0xF0F6FC);
+    s_status_image = make_label(s_sys_panel, 370, 106, "Image: --", &lv_font_montserrat_18, 0xF0F6FC);
+    s_status_hint = make_label(s_sys_panel, 24, 134, "", &lv_font_montserrat_18, 0x8B949E);
+    lv_obj_set_width(s_status_hint, 714); lv_label_set_long_mode(s_status_hint, LV_LABEL_LONG_WRAP);
 
-    s_ota_panel = make_panel();
-    make_label(s_ota_panel, 24, 16, "GITHUB OTA CONTROL", &lv_font_montserrat_18, 0x8B949E);
-    s_ota_versions = make_label(s_ota_panel, 24, 48, "Installed -- | Available --", &lv_font_montserrat_24, 0xF0F6FC);
-    s_ota_state = make_label(s_ota_panel, 24, 84, "IDLE", &lv_font_montserrat_24, 0x58A6FF);
-    s_ota_message = make_label(s_ota_panel, 24, 120, "Ready", &lv_font_montserrat_18, 0xC9D1D9);
-    lv_obj_set_width(s_ota_message, 714); lv_label_set_long_mode(s_ota_message, LV_LABEL_LONG_WRAP);
-    s_ota_progress = lv_bar_create(s_ota_panel); lv_obj_set_pos(s_ota_progress, 24, 174); lv_obj_set_size(s_ota_progress, 610, 22);
+    s_ota_versions = make_label(s_sys_panel, 24, 174, "Installed -- | Available --", &lv_font_montserrat_18, 0xF0F6FC);
+    s_ota_state = make_label(s_sys_panel, 24, 202, "IDLE", &lv_font_montserrat_18, 0x58A6FF);
+    s_ota_message = make_label(s_sys_panel, 300, 202, "Ready", &lv_font_montserrat_18, 0xC9D1D9);
+    lv_obj_set_width(s_ota_message, 438); lv_label_set_long_mode(s_ota_message, LV_LABEL_LONG_DOT);
+    s_ota_progress = lv_bar_create(s_sys_panel); lv_obj_set_pos(s_ota_progress, 24, 236); lv_obj_set_size(s_ota_progress, 610, 18);
     lv_bar_set_range(s_ota_progress, 0, 100); make_decorative(s_ota_progress);
-    s_ota_progress_label = make_label(s_ota_panel, 650, 170, "0%", &lv_font_montserrat_18, 0xF0F6FC);
-    s_check_button = make_button(s_ota_panel, 24, 224, 220, 54, "CHECK GITHUB", check_cb);
-    s_install_button = make_button(s_ota_panel, 260, 224, 220, 54, "INSTALL UPDATE", install_cb);
-    s_confirm_button = make_button(s_ota_panel, 496, 224, 220, 54, "CONFIRM", confirm_cb);
-    s_rollback_button = make_button(s_ota_panel, 24, 300, 220, 54, "ROLLBACK", rollback_cb);
-    s_recovery_button = make_button(s_ota_panel, 260, 300, 220, 54, "FACTORY RECOVERY", recovery_cb);
+    s_ota_progress_label = make_label(s_sys_panel, 650, 232, "0%", &lv_font_montserrat_18, 0xF0F6FC);
+    s_check_button = make_button(s_sys_panel, 24, 272, 214, 48, "CHECK GITHUB", check_cb);
+    s_install_button = make_button(s_sys_panel, 252, 272, 214, 48, "INSTALL UPDATE", install_cb);
+    s_confirm_button = make_button(s_sys_panel, 480, 272, 214, 48, "CONFIRM", confirm_cb);
+    s_rollback_button = make_button(s_sys_panel, 24, 334, 214, 46, "ROLLBACK", rollback_cb);
+    s_recovery_button = make_button(s_sys_panel, 252, 334, 270, 46, "FACTORY RECOVERY", recovery_cb);
+
+    s_sd_panel = make_panel();
+    make_label(s_sd_panel, 24, 16, "SD APPLICATION LIBRARY", &lv_font_montserrat_18, 0x8B949E);
+    s_sd_state = make_label(s_sd_panel, 24, 48, "State: --", &lv_font_montserrat_24, 0x58A6FF);
+    s_sd_card = make_label(s_sd_panel, 24, 88, "Card: --", &lv_font_montserrat_18, 0xF0F6FC);
+    s_sd_paths = make_label(s_sd_panel, 24, 120, "Widgets: /sd/widgets | Update: /sd/UPDATE", &lv_font_montserrat_18, 0xC9D1D9);
+    s_sd_packages = make_label(s_sd_panel, 24, 152, "Packages: not scanned", &lv_font_montserrat_18, 0xC9D1D9);
+    lv_obj_set_width(s_sd_packages, 714); lv_label_set_long_mode(s_sd_packages, LV_LABEL_LONG_WRAP);
+    s_sd_message = make_label(s_sd_panel, 24, 202, "Insert FAT32 SD and mount.", &lv_font_montserrat_18, 0x8B949E);
+    lv_obj_set_width(s_sd_message, 714); lv_label_set_long_mode(s_sd_message, LV_LABEL_LONG_DOT);
+    s_sd_mount_button = make_button(s_sd_panel, 24, 238, 214, 52, "MOUNT / RESCAN", sd_mount_cb);
+    s_sd_dashboard_button = make_button(s_sd_panel, 252, 238, 214, 52, "DASHBOARD", sd_dashboard_cb);
+    s_sd_views_button = make_button(s_sd_panel, 480, 238, 214, 52, "VIEWS", sd_views_cb);
+    s_sd_subscribers_button = make_button(s_sd_panel, 24, 304, 214, 52, "SUBSCRIBERS", sd_subscribers_cb);
+    make_label(s_sd_panel, 252, 314, "SD UPDATE: manifest contract only; flash writes disabled in this test.", &lv_font_montserrat_18, 0x8B949E);
 
     s_widget_panel = make_panel();
     s_widget_header = make_label(s_widget_panel, 20, 12, "FILESYSTEM WIDGET", &lv_font_montserrat_18, 0x8B949E);
@@ -264,7 +323,7 @@ static void create_ui(void)
     lv_obj_set_style_border_width(s_widget_content, 0, 0); lv_obj_set_style_pad_all(s_widget_content, 0, 0);
     lv_obj_remove_flag(s_widget_content, LV_OBJ_FLAG_SCROLLABLE);
 
-    select_panel(s_status_panel); lv_screen_load(s_screen);
+    select_panel(s_sys_panel); lv_screen_load(s_screen);
 }
 
 static void clear_clock_views(void)
@@ -345,7 +404,7 @@ static void render_widget(void)
         lv_obj_set_style_bg_color(s_widget_content, lv_color_hex(0x101820), 0);
         lv_label_set_text(s_widget_header, "FILESYSTEM WIDGET | none installed");
         make_label(s_widget_content, 24, 36, "No external widget installed.", &lv_font_montserrat_24, 0xF0F6FC);
-        make_label(s_widget_content, 24, 86, "Open the device web page and choose a JSON widget.\nSTATUS and OTA remain firmware-resident.", &lv_font_montserrat_18, 0x8B949E);
+        make_label(s_widget_content, 24, 86, "Install from SD or the local web page.\nSYS remains firmware-resident without SD.", &lv_font_montserrat_18, 0x8B949E);
         return;
     }
 
@@ -477,6 +536,40 @@ static void refresh_bindings(void)
     refresh_charts();
 }
 
+static void refresh_sd(void)
+{
+    sd_manager_status_t sd;
+    sd_manager_get_status(&sd);
+    lv_label_set_text_fmt(s_sd_state, "State: %s", sd.state[0] ? sd.state : "--");
+    if (sd.mounted) {
+        lv_label_set_text_fmt(s_sd_card, "Card: %s | %llu MiB | SPI %u kHz",
+                              sd.card_name[0] ? sd.card_name : "SD",
+                              (unsigned long long)(sd.capacity_bytes / (1024ULL * 1024ULL)),
+                              (unsigned)sd.frequency_khz);
+        set_button_enabled(s_sd_dashboard_button, true);
+        set_button_enabled(s_sd_views_button, true);
+        set_button_enabled(s_sd_subscribers_button, true);
+        if (!s_sd_packages_scanned) {
+            char *packages = NULL;
+            esp_err_t err = sd_manager_packages_json(&packages);
+            if (err == ESP_OK && packages) {
+                lv_label_set_text_fmt(s_sd_packages, "Packages: %s", packages);
+                free(packages);
+            } else {
+                lv_label_set_text_fmt(s_sd_packages, "Packages scan failed: %s", esp_err_to_name(err));
+            }
+            s_sd_packages_scanned = true;
+        }
+    } else {
+        lv_label_set_text_fmt(s_sd_card, "Card: -- | %s", sd.message[0] ? sd.message : "not mounted");
+        lv_label_set_text(s_sd_packages, "Packages: unavailable until SD is mounted");
+        set_button_enabled(s_sd_dashboard_button, false);
+        set_button_enabled(s_sd_views_button, false);
+        set_button_enabled(s_sd_subscribers_button, false);
+    }
+    set_button_enabled(s_sd_mount_button, true);
+}
+
 static void refresh_ui(void)
 {
     ota_status_t ota; ota_manager_get_status(&ota);
@@ -488,10 +581,10 @@ static void refresh_ui(void)
     lv_label_set_text_fmt(s_status_image, "Image: %s", ota.image_state);
     if (network == NETWORK_STATE_AP_SETUP)
         lv_label_set_text_fmt(s_status_hint, "Provisioning AP: %s | http://192.168.4.1/", network_manager_ap_ssid());
-    else if (online) lv_label_set_text(s_status_hint, "STA online. STATUS/OTA are firmware-resident; WIDGET content comes from /storage/widget.json.");
+    else if (online) lv_label_set_text(s_status_hint, "STA online. SYS is firmware-resident; SD supplies installable widgets.");
     else lv_label_set_text(s_status_hint, "Waiting for network manager...");
 
-    lv_label_set_text_fmt(s_ota_versions, "Installed %s | Available %s", ota.current_version,
+    lv_label_set_text_fmt(s_ota_versions, "GitHub OTA | Installed %s | Available %s", ota.current_version,
                           ota.available_version[0] ? ota.available_version : "-");
     lv_label_set_text_fmt(s_ota_state, "%s | %s / %s", ota.state, ota.running_partition, ota.image_state);
     lv_label_set_text(s_ota_message, ota.message); lv_bar_set_value(s_ota_progress, ota.progress_percent, LV_ANIM_OFF);
@@ -502,15 +595,18 @@ static void refresh_ui(void)
     set_button_enabled(s_rollback_button, ota.pending_verify && !ota.busy);
     set_button_enabled(s_recovery_button, !ota.busy && strcmp(ota.running_partition, "factory") != 0);
 
+    refresh_sd();
+
     uint32_t generation = widget_runtime_generation();
     if (generation != s_widget_generation) { s_widget_generation = generation; render_widget(); }
     refresh_bindings();
 
     if (s_first_refresh) {
-        if (ota.pending_verify) show_ota_panel();
+        if (ota.pending_verify) show_sys_panel();
         else {
             widget_info_t widget; widget_runtime_get_info(&widget);
             if (widget.installed) show_widget_panel();
+            else show_sys_panel();
         }
     }
     s_first_refresh = false;
@@ -569,6 +665,6 @@ static void ui_task(void *arg)
 
 esp_err_t display_ota_start(void)
 {
-    BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app08_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
+    BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app09_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
     return ok==pdPASS?ESP_OK:ESP_ERR_NO_MEM;
 }
