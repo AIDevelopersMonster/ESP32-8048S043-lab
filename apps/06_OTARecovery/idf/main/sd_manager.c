@@ -60,8 +60,9 @@ esp_err_t sd_manager_init(void)
 {
     memset(&s_status, 0, sizeof(s_status));
     s_status.frequency_khz = SD_FREQ_KHZ;
-    set_state("NOT_MOUNTED", "SD is optional; platform remains usable without card");
-    return sd_manager_mount();
+    set_state("NOT_MOUNTED", "SD is optional; use MOUNT / RESCAN after platform UI starts");
+    ESP_LOGI(TAG, "SD manager ready; boot-time mount deferred to preserve UI internal RAM");
+    return ESP_OK;
 }
 
 esp_err_t sd_manager_mount(void)
