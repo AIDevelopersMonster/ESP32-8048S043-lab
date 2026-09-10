@@ -178,12 +178,21 @@ MISO = GPIO13
 
 Initial App09 frequency is `10 MHz`, matching the prior physical read-only SD test.
 
-## Physical evidence — first SD integration
+## Physical evidence
+
+### 1. First SD integration
 
 The following short video records the hardware stage where the SD card was first added to the ESP32-8048S043 project and tested on the real board:
 
 - **Video:** [ESP32-8048S043 — first SD integration](https://youtube.com/shorts/TMS2s1jirdw)
 - **Scope:** physical SD integration baseline; this video documents the stage before the later App09 SD application-library work and should not be treated as a full App09 acceptance test.
+
+### 2. SD application-library demonstration
+
+The following short records the next physical milestone: the board is already working with the SD application library and the SD launcher is being demonstrated on real hardware.
+
+- **Video:** [ESP32-8048S043 — working with the SD application library](https://youtube.com/shorts/FdH1dvEePZg)
+- **Scope:** demonstrates the App09 stage where the SD card is mounted and application entries from the SD library are presented for selection/launch. This is the bridge between the basic SD hardware test above and the upcoming SD-only `youtube-led` package demonstration.
 
 ## Application/service contract
 
