@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "youtube",
+  "name": "YouTube",
+  "version": "1.0.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {"id": "dashboard", "name": "YouTube Dashboard", "file": "dashboard.json"},
+    {"id": "views", "name": "YouTube Views", "file": "views.json"},
+    {"id": "subscribers", "name": "YouTube Subscribers", "file": "subscribers.json"}
+  ],
+  "requires": {
+    "minimum_platform": "0.2.8",
+    "services": ["youtube"]
+  },
+  "firmware": {
+    "required": false
+  },
+  "secrets": {
+    "storage": "nvs",
+    "sd_allowed": false
+  }
+}
