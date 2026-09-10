@@ -4,6 +4,7 @@ idf_component_register(
         "storage_credentials.c"
         "storage_fs.c"
         "storage_web.c"
+        "sd_manager.c"
         "widget_runtime.c"
         "network_manager.c"
         "time_service.c"
@@ -17,6 +18,9 @@ idf_component_register(
     REQUIRES
         nvs_flash
         spiffs
+        fatfs
+        sdmmc
+        esp_driver_spi
         esp_wifi
         esp_event
         esp_netif
