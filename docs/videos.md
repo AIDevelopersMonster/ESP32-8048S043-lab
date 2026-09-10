@@ -1,5 +1,12 @@
 # Video plan and evidence registry
 
+This file serves two roles:
+
+1. physical-evidence registry for the ESP32-8048S043 laboratory;
+2. practical video catalog for later search, systematization, documentation and cross-reference from technical work.
+
+For new published videos, preserve not only the URL and PASS status but also the public title/description, related app/branch, tags and the practical engineering point demonstrated by the video.
+
 ## Published videos
 
 | # | Video | Link | Purpose | Evidence status |
@@ -15,6 +22,63 @@
 | 09 | ESP32-8048S043 + LVGL 9 — App 02 Mixed Widgets | https://youtube.com/shorts/LwmW8UwDED0 | Physical demonstration of COMMAND, SWITCH, SLIDER, ARC, PROGRESS/STATUS and NAVIGATION on the App 01 hardware/runtime baseline. One cosmetic issue remains: the top-right `BACK TO CONTROLS` button is slightly too narrow. | APP 02 v0.1.0 PHYSICAL PASS / WIDGET INTERACTION PASS / COSMETIC BACK BUTTON FIX PENDING |
 | 10 | ESP32-8048S043 — YouTube channel statistics via YouTube Data API | https://youtube.com/shorts/cjgx2RB0l_A | Show App08 v0.2.6 retrieving real channel statistics through the YouTube Data API and displaying the local `/youtube` dashboard, with API key stored in NVS and first-day history captured. | APP 08 v0.2.6 YOUTUBE SERVICE + LOCAL WEB DASHBOARD PHYSICAL PASS |
 | 11 | ESP32-8048S043 — App08 v0.2.8 YouTube TFT widget | https://youtube.com/shorts/lkSPy2Qc6TU | Show the v0.2.8 YouTube dashboard running as an external filesystem widget on the physical TFT. Current data/rendering are working well; naturally accumulated multi-day history will be documented after additional daily samples exist. | APP 08 v0.2.8 TFT YOUTUBE WIDGET PHYSICAL PASS / MULTI-DAY HISTORY OBSERVATION PENDING |
+
+## Detailed practical catalog
+
+### VIDEO-11 — App08 v0.2.8 YouTube TFT widget
+
+**URL:** https://youtube.com/shorts/lkSPy2Qc6TU  
+**Date:** 2026-09-10  
+**Project stage:** App08 / YouTube Dashboard  
+**Branch:** `agent/app08-youtube-dashboard`  
+**Firmware:** v0.2.8  
+**Widget:** `widget-youtube-dashboard.json`  
+**Tags:** `ESP32-S3`, `ESP32-8048S043`, `LVGL9`, `Widget Runtime`, `YouTube Data API`, `TFT`, `JSON widget`, `SPIFFS`, `practical evidence`
+
+**Recommended public title:**
+
+```text
+ESP32-8048S043: YouTube-статистика на TFT без перепрошивки — JSON-виджет работает!
+```
+
+**Recommended public description:**
+
+```text
+Практика, а не макет: на ESP32-8048S043 уже работает YouTube Dashboard как внешний JSON-виджет.
+
+Базовая KONTAKTS Platform остаётся в прошивке, а экран приложения устанавливается отдельно через браузер — без новой перепрошивки ESP32. Виджет получает реальные данные YouTube Data API: канал, подписчиков, просмотры, видео и локальную историю для графиков.
+
+В этом тесте подтверждена работа App08 v0.2.8 на реальном ESP32-S3 с дисплеем 800x480 и GT911. API key хранится отдельно в NVS и не попадает в JSON-виджет.
+
+Сейчас история только начинает накапливаться. Когда появятся реальные данные за несколько дней, отдельно покажу работу графиков и периодов 7D / 30D / 90D / ALL.
+
+Практический смысл этой архитектуры: прошивка платформы устанавливается один раз, а совместимые интерфейсы и приложения можно менять как файлы. Следующий этап — библиотека таких виджетов на SD-карте.
+
+Проект и исходники: AIDevelopersMonster/ESP32-8048S043-lab
+```
+
+**Practical reference:**
+
+This video is a practical reference for the architecture:
+
+```text
+firmware-resident platform
+        +
+external validated JSON presentation
+        =
+application change without ESP32 reflashing
+```
+
+It can later be referenced from documentation, troubleshooting, SD-library design, release notes or comparisons with conventional firmware-per-application ESP32 projects.
+
+**Related project records:**
+
+- `apps/06_OTARecovery/evidence/app08-v0.2.8-youtube-tft-widget-physical-pass.md`
+- `apps/06_OTARecovery/widgets/widget-youtube-dashboard.json`
+- `docs/manuals/storage-manager.md`
+- future `apps/09_SDWidgetLibrary/`
+
+**Remaining observation:** natural multi-day YouTube history and real multi-point 7D/30D/90D/ALL curves.
 
 ## Planned shooting sequence
 
@@ -40,7 +104,27 @@
 | 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | TFT WIDGET PHYSICAL PASS / MULTI-DAY NATURAL HISTORY OBSERVATION PENDING |
 | 19 SD Widget Library | select and run widget packages from SD without compiling each UI into firmware | NEXT DEVELOPMENT STAGE |
 
-## Rule
+## Catalog rule
+
+For every new published project video, record when available:
+
+```text
+URL
+publication date
+public title
+public description
+project stage / app
+branch / firmware / widget
+technical tags
+physical evidence status
+practical engineering point
+related source/evidence files
+open observation or limitation
+```
+
+This makes the video collection searchable engineering evidence rather than a list of media links.
+
+## Evidence rule
 
 A video can support PHYSICAL PASS only when it clearly identifies the specimen and the firmware/example being demonstrated. Overview videos may document intent, repository structure and project direction, but they do not create hardware PASS status by themselves.
 
