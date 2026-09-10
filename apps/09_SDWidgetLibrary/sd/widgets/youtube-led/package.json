@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "id": "youtube-led",
+  "name": "YouTube LED Carousel",
+  "version": "1.0.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {"id": "main", "name": "YouTube LED Carousel", "file": "main.json"}
+  ],
+  "requires": {
+    "minimum_platform": "0.3.1",
+    "services": ["youtube", "time"]
+  },
+  "firmware": {
+    "required": false
+  },
+  "secrets": {
+    "storage": "nvs",
+    "sd_allowed": false
+  }
+}

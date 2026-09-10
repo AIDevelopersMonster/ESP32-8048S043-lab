@@ -11,6 +11,8 @@
 #define WIDGET_MAX_BOUND_LABELS 12
 #define WIDGET_MAX_CLOCKS 2
 #define WIDGET_MAX_CHARTS 2
+#define WIDGET_MAX_METRIC_CAROUSELS 2
+#define WIDGET_MAX_CAROUSEL_ITEMS 8
 
 typedef enum {
     WIDGET_OBJECT_LABEL = 0,
@@ -18,7 +20,14 @@ typedef enum {
     WIDGET_OBJECT_BUTTON,
     WIDGET_OBJECT_CLOCK,
     WIDGET_OBJECT_CHART,
+    WIDGET_OBJECT_METRIC_CAROUSEL,
 } widget_object_type_t;
+
+typedef struct {
+    char binding[40];
+    char label[33];
+    uint32_t color;
+} widget_carousel_item_t;
 
 typedef struct {
     widget_object_type_t type;
@@ -27,12 +36,15 @@ typedef struct {
     int w;
     int h;
     int value;
+    int interval_ms;
     uint32_t color;
     char text[161];
     char binding[40];
     char prefix[65];
     char suffix[65];
     char action[32];
+    size_t carousel_item_count;
+    widget_carousel_item_t carousel_items[WIDGET_MAX_CAROUSEL_ITEMS];
 } widget_object_t;
 
 typedef struct {

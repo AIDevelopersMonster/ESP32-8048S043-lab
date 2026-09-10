@@ -126,6 +126,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
     bool ok = true;
     size_t clock_count = 0;
     size_t chart_count = 0;
+    size_t carousel_count = 0;
 
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
     const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
@@ -158,7 +159,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
         for (size_t i = 0; i < out->object_count && ok; ++i) {
             const cJSON *object = cJSON_GetArrayItem(objects, (int)i);
             const cJSON *type = cJSON_GetObjectItemCaseSensitive(object, "type");
-            if (!cJSON_IsObject(object) || !valid_short_string(type, 16)) {
+            if (!cJSON_IsObject(object) || !valid_short_string(type, 20)) {
                 set_reason(reason, reason_len, "object type missing"); ok = false; break;
             }
 
@@ -168,6 +169,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
             dst->w = json_int(object, "w", 300);
             dst->h = json_int(object, "h", 36);
             dst->value = json_int(object, "value", 0);
+            dst->interval_ms = json_int(object, "interval_ms", 5000);
 
             if (dst->x < 0 || dst->x > 730 || dst->y < 0 || dst->y > 350 ||
                 dst->w < 20 || dst->w > 740 || dst->h < 18 || dst->h > 350 ||
@@ -222,6 +224,34 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                     set_reason(reason, reason_len, "chart requires YouTube history binding, >=180x80, max 2"); ok = false; break;
                 }
                 strlcpy(dst->binding, binding, sizeof(dst->binding));
+            } else if (strcmp(type->valuestring, "metric_carousel") == 0) {
+                dst->type = WIDGET_OBJECT_METRIC_CAROUSEL;
+                carousel_count++;
+                const char *title = json_string(object, "text");
+                const cJSON *items = cJSON_GetObjectItemCaseSensitive(object, "items");
+                int item_count = cJSON_IsArray(items) ? cJSON_GetArraySize(items) : 0;
+                if (carousel_count > WIDGET_MAX_METRIC_CAROUSELS || dst->w < 320 || dst->h < 150 ||
+                    dst->interval_ms < 1000 || dst->interval_ms > 60000 || item_count < 2 ||
+                    item_count > WIDGET_MAX_CAROUSEL_ITEMS || strlen(title) > 64) {
+                    set_reason(reason, reason_len, "metric_carousel requires 2..8 items, >=320x150, interval 1..60s");
+                    ok = false; break;
+                }
+                strlcpy(dst->text, title, sizeof(dst->text));
+                dst->carousel_item_count = (size_t)item_count;
+                for (int ci = 0; ci < item_count && ok; ++ci) {
+                    const cJSON *item = cJSON_GetArrayItem(items, ci);
+                    const char *binding = cJSON_IsObject(item) ? json_string(item, "bind") : "";
+                    const char *label = cJSON_IsObject(item) ? json_string(item, "label") : "";
+                    widget_carousel_item_t *dst_item = &dst->carousel_items[ci];
+                    if (!binding[0] || strlen(binding) >= sizeof(dst_item->binding) || !binding_allowed(binding) ||
+                        !label[0] || strlen(label) >= sizeof(dst_item->label) ||
+                        !parse_hex_color(cJSON_GetObjectItemCaseSensitive(item, "color"), dst->color, &dst_item->color)) {
+                        set_reason(reason, reason_len, "metric_carousel item binding/label/color invalid");
+                        ok = false; break;
+                    }
+                    strlcpy(dst_item->binding, binding, sizeof(dst_item->binding));
+                    strlcpy(dst_item->label, label, sizeof(dst_item->label));
+                }
             } else {
                 set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
             }

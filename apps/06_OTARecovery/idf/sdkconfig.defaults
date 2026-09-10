@@ -14,18 +14,14 @@ CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
 
-# App07 TLS hardening: the board has 8 MiB Octal PSRAM.  Move mbedTLS dynamic
+# App07 TLS hardening: the board has 8 MiB Octal PSRAM. Move mbedTLS dynamic
 # allocations out of scarce internal DRAM and free TLS TX/RX/config buffers when possible.
-# This directly targets the physically observed mbedtls_ssl_setup -0x7F00 allocation failure.
 CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC=y
 CONFIG_MBEDTLS_DYNAMIC_BUFFER=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_CONFIG_DATA=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_CA_CERT=y
 
-# App09 SD library uses human-readable JSON package names such as package.json,
-# dashboard.json and subscribers.json. ESP-IDF 5.5.x defaults FatFs to 8.3-only
-# names, so enable long filenames. Keep the working buffer on the heap and cap
-# the component name length to limit transient RAM use on the display platform.
+# App09 SD library uses human-readable JSON package names.
 CONFIG_FATFS_LFN_HEAP=y
 CONFIG_FATFS_MAX_LFN=64
 
@@ -40,3 +36,4 @@ CONFIG_LV_THEME_DEFAULT_DARK=y
 CONFIG_LV_FONT_MONTSERRAT_18=y
 CONFIG_LV_FONT_MONTSERRAT_24=y
 CONFIG_LV_FONT_MONTSERRAT_36=y
+CONFIG_LV_FONT_MONTSERRAT_48=y
