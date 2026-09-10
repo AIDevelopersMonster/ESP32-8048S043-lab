@@ -2,7 +2,7 @@
 
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Branch:** `agent/app09-sd-widget-library`  
-**Status:** DESIGN / IMPLEMENTATION STARTED
+**Status:** PHYSICAL SD APPLICATION PASS / UX ITERATION
 
 ## Goal
 
@@ -18,7 +18,7 @@ SYS | SD | WIDGET
 - `SD` — application library and manual offline update source;
 - `WIDGET` — currently active application UI.
 
-This navigation becomes project canon only after physical validation on the real ESP32-8048S043 hardware.
+The SD application-library path is now physically validated on the real ESP32-8048S043 hardware. UX refinement and the offline `/UPDATE` acceptance path remain open.
 
 ## Canonical application rule
 
@@ -90,7 +90,7 @@ Its first demo cycles every 5 seconds through:
 Subscribers -> Views -> Videos -> Time -> ...
 ```
 
-The physical demonstration procedure is intentionally SD-only after installing platform `0.3.1`:
+The intended SD-only demonstration procedure after installing platform `0.3.1` is:
 
 ```text
 1. boot platform without widgets/youtube-led
@@ -102,7 +102,7 @@ The physical demonstration procedure is intentionally SD-only after installing p
 7. observe metrics changing automatically every 5 seconds
 ```
 
-This is the acceptance proof that a new compatible application can be added by copying files to SD without adding a firmware application button.
+The September 10 physical test loaded the prepared SD content in one pass rather than filming the absence/copy/rescan sequence separately, but it physically confirmed the resulting architecture: the package is discovered from SD, launches through Widget Runtime and the metric carousel cycles on real hardware.
 
 ## SYS recovery invariant
 
@@ -192,7 +192,15 @@ The following short video records the hardware stage where the SD card was first
 The following short records the next physical milestone: the board is already working with the SD application library and the SD launcher is being demonstrated on real hardware.
 
 - **Video:** [ESP32-8048S043 — working with the SD application library](https://youtube.com/shorts/FdH1dvEePZg)
-- **Scope:** demonstrates the App09 stage where the SD card is mounted and application entries from the SD library are presented for selection/launch. This is the bridge between the basic SD hardware test above and the upcoming SD-only `youtube-led` package demonstration.
+- **Scope:** demonstrates the App09 stage where the SD card is mounted and application entries from the SD library are presented for selection/launch.
+
+### 3. SD-only YouTube LED Carousel — physical pass
+
+This video records the platform `0.3.1` milestone on the real ESP32-8048S043: the `youtube-led` package is present on SD, is discovered by the manifest-driven launcher, launches as a widget and automatically rotates live presentation pages every five seconds.
+
+- **Video:** [ESP32-8048S043 — YouTube LED Carousel from SD](https://youtu.be/3v70lNIPW4E)
+- **Scope confirmed:** SD package discovery, generic launcher, Widget Runtime install/run and `metric_carousel` operation on physical hardware.
+- **UX note:** functionality passed; launcher/widget visual design remains an active refinement item.
 
 ## Application/service contract
 
@@ -277,28 +285,41 @@ All firmware paths must converge on the same verification policy: board/applicat
 
 ## Acceptance gates
 
-App09 is not PHYSICAL PASS until real hardware confirms at least:
+App09 is not a full PHYSICAL PASS until the remaining recovery and offline-update paths are also exercised on real hardware.
 
 ```text
-[ ] top navigation is SYS | SD | WIDGET
+[x] top navigation is SYS | SD | WIDGET
 [ ] SYS remains usable without SD
-[ ] SD mounts without formatting
+[x] SD mounts without formatting
 [ ] missing SD leaves platform usable
-[ ] launcher is generated from /widgets/*/package.json
-[ ] no application-specific launcher buttons exist in firmware
-[ ] YouTube package entrypoints appear dynamically
-[ ] Clock package appears dynamically without adding a firmware button
-[ ] youtube-led appears after copy + RESCAN without reflashing
-[ ] metric carousel changes value every 5 seconds
-[ ] arbitrary new compatible package appears after copy + RESCAN without reflashing
-[ ] selected widget can be run
-[ ] selected widget persists internally
+[x] launcher is generated from /widgets/*/package.json
+[x] no application-specific launcher buttons exist in firmware
+[x] YouTube package entrypoints appear dynamically
+[x] Clock package appears dynamically without adding a firmware button
+[x] youtube-led is discovered from SD and launches without an application-specific firmware button
+[x] metric carousel changes value every 5 seconds
+[x] a new compatible package can be added through the manifest-driven SD library
+[x] selected widget can be run
+[ ] selected widget persists internally after explicit SD removal test
 [ ] SD can be removed after selection without killing active widget
 [ ] reboot without SD restores persisted active widget
 [ ] SD /UPDATE package is discovered
 [ ] SD update requires explicit user action
 [ ] bad SHA / wrong board update is rejected
 [ ] successful SD update enters normal PENDING_VERIFY flow
-[ ] rollback remains functional
-[ ] secrets never appear on SD
+[ ] rollback remains functional after SD update
+[x] secrets are not stored in the SD application package
+```
+
+## Open UX work
+
+The SD application path is functionally working, but visual polish is intentionally not considered finished. The next UI pass should focus on a product-style SD launcher rather than a debug surface:
+
+```text
+compact SD status
+application list / selector
+selected application summary
+clear RUN action
+separate SYSTEM UPDATE area
+no raw package JSON on the normal user screen
 ```
