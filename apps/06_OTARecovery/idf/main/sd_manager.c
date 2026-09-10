@@ -1,5 +1,6 @@
 #include "sd_manager.h"
 
+#include <ctype.h>
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@
 #define SD_PIN_CLK 12
 #define SD_PIN_MISO 13
 #define SD_FREQ_KHZ 10000
+#define SD_PACKAGE_NAME_MAX 63
 
 static sdmmc_card_t *s_card;
 static sdmmc_host_t s_host;
@@ -39,6 +41,17 @@ static bool safe_relative_path(const char *path)
     if (!path || !path[0] || path[0] == '/' || strstr(path, "..")) return false;
     for (const char *p = path; *p; ++p) {
         if (*p == '\\') return false;
+    }
+    return true;
+}
+
+static bool safe_package_name(const char *name)
+{
+    if (!name || !name[0]) return false;
+    size_t len = strnlen(name, SD_PACKAGE_NAME_MAX + 1);
+    if (len == 0 || len > SD_PACKAGE_NAME_MAX) return false;
+    for (const unsigned char *p = (const unsigned char *)name; *p; ++p) {
+        if (!(isalnum(*p) || *p == '-' || *p == '_' || *p == '.')) return false;
     }
     return true;
 }
@@ -151,9 +164,11 @@ esp_err_t sd_manager_packages_json(char **out_json)
     if (dir) {
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
-            if (entry->d_name[0] == '.') continue;
+            if (entry->d_name[0] == '.' || !safe_package_name(entry->d_name)) continue;
             char package_path[256];
-            snprintf(package_path, sizeof(package_path), "%s/%s/package.json", SD_MANAGER_WIDGET_ROOT, entry->d_name);
+            int written = snprintf(package_path, sizeof(package_path), "%s/%.63s/package.json",
+                                   SD_MANAGER_WIDGET_ROOT, entry->d_name);
+            if (written < 0 || (size_t)written >= sizeof(package_path)) continue;
             struct stat st;
             if (stat(package_path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
             cJSON *item = cJSON_CreateObject();
@@ -184,7 +199,11 @@ esp_err_t sd_manager_run_widget(const char *relative_path, char *reason, size_t 
     }
 
     char path[320];
-    snprintf(path, sizeof(path), "%s/%s", SD_MANAGER_BASE_PATH, relative_path);
+    int written = snprintf(path, sizeof(path), "%s/%s", SD_MANAGER_BASE_PATH, relative_path);
+    if (written < 0 || (size_t)written >= sizeof(path)) {
+        if (reason && reason_len) strlcpy(reason, "SD path too long", reason_len);
+        return ESP_ERR_INVALID_SIZE;
+    }
     FILE *f = fopen(path, "rb");
     if (!f) {
         if (reason && reason_len) strlcpy(reason, "SD widget file not found", reason_len);
