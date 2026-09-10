@@ -38,10 +38,10 @@ bool sd_manager_is_mounted(void);
 void sd_manager_get_status(sd_manager_status_t *out);
 
 /*
- * Rebuild the application catalog by reading /sd/widgets/*/package.json.
- * The platform UI must use this catalog rather than hard-coded application
- * launchers. Adding a compatible application therefore requires only copying
- * its package directory to SD.
+ * Rebuild the application catalog by reading package.json from every direct
+ * child directory under /sd/widgets. The platform UI must use this catalog
+ * rather than hard-coded application launchers. Adding a compatible
+ * application therefore requires only copying its package directory to SD.
  */
 esp_err_t sd_manager_rescan(void);
 size_t sd_manager_entry_count(void);
