@@ -1,4 +1,4 @@
-name: App 06/07/08 - Platform OTA + Widget Runtime Build
+name: App 06/07/08/09 - Platform OTA + Widget Runtime Build
 
 on:
   push:
@@ -6,8 +6,10 @@ on:
       - agent/app06-ota-recovery
       - agent/app07-widget-runtime
       - agent/app08-youtube-dashboard
+      - agent/app09-sd-widget-library
     paths:
       - 'apps/06_OTARecovery/**'
+      - 'apps/09_SDWidgetLibrary/**'
       - '.github/workflows/app06-build.yml'
   workflow_dispatch:
 
@@ -52,4 +54,5 @@ jobs:
             apps/06_OTARecovery/idf/dist/*.bin
             apps/06_OTARecovery/idf/partitions.csv
             apps/06_OTARecovery/widgets/*.json
+            apps/09_SDWidgetLibrary/sd/**
           if-no-files-found: error
