@@ -22,6 +22,13 @@ CONFIG_MBEDTLS_DYNAMIC_BUFFER=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_CONFIG_DATA=y
 CONFIG_MBEDTLS_DYNAMIC_FREE_CA_CERT=y
 
+# App09 SD library uses human-readable JSON package names such as package.json,
+# dashboard.json and subscribers.json. ESP-IDF 5.5.x defaults FatFs to 8.3-only
+# names, so enable long filenames. Keep the working buffer on the heap and cap
+# the component name length to limit transient RAM use on the display platform.
+CONFIG_FATFS_LFN_HEAP=y
+CONFIG_FATFS_MAX_LFN=64
+
 # Physically validated App03 display baseline reused by the platform shell.
 CONFIG_SPIRAM=y
 CONFIG_SPIRAM_MODE_OCT=y
