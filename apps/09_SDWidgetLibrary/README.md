@@ -198,7 +198,7 @@ The following short records the next physical milestone: the board is already wo
 
 This video records the platform `0.3.1` milestone on the real ESP32-8048S043: the `youtube-led` package is present on SD, is discovered by the manifest-driven launcher, launches as a widget and automatically rotates live presentation pages every five seconds.
 
-- **Video:** [ESP32-8048S043 — YouTube LED Carousel from SD](https://youtu.be/3v70lNIPW4E)
+- **Video:** [ESP32-8048S043 — YouTube LED Carousel from SD](https://youtube.com/shorts/i0kHp_BlsIQ)
 - **Scope confirmed:** SD package discovery, generic launcher, Widget Runtime install/run and `metric_carousel` operation on physical hardware.
 - **UX note:** functionality passed; launcher/widget visual design remains an active refinement item.
 
