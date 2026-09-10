@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "board": "esp32-8048s043-lab-n16r8",
+  "app": "app06-ota-recovery",
+  "version": "0.3.0",
+  "channel": "manual-sd",
+  "firmware": "firmware.bin",
+  "size": 0,
+  "sha256": "REPLACE_WITH_64_HEX_SHA256",
+  "policy": {
+    "explicit_install_required": true,
+    "inactive_ota_slot_only": true,
+    "pending_verify_required": true
+  }
+}
