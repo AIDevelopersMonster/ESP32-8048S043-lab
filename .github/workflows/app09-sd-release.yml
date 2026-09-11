@@ -1,0 +1,86 @@
+name: App 09 - SD Library Bundle
+
+on:
+  push:
+    branches:
+      - agent/app09-sd-widget-library
+    paths:
+      - 'apps/09_SDWidgetLibrary/sd/**'
+      - '.github/workflows/app09-sd-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-sd-library:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate SD tree
+        shell: bash
+        run: |
+          test -d apps/09_SDWidgetLibrary/sd/widgets
+          test -d apps/09_SDWidgetLibrary/sd/wiki
+          find apps/09_SDWidgetLibrary/sd -type f -print | sort
+
+      - name: Build SD archive and manifest
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .sd-release
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+
+          root = Path('apps/09_SDWidgetLibrary/sd')
+          target = Path('.sd-release/kontakts-sd-library.zip')
+          with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+              for path in sorted(root.rglob('*')):
+                  if path.is_file():
+                      archive.write(path, path.relative_to(root).as_posix())
+          PY
+          sha="$(sha256sum .sd-release/kontakts-sd-library.zip | awk '{print $1}')"
+          size="$(stat -c '%s' .sd-release/kontakts-sd-library.zip)"
+          short_sha="${GITHUB_SHA::12}"
+          archive_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/app09-sd-current/kontakts-sd-library.zip"
+          cat > .sd-release/kontakts-sd-library.json <<EOF
+          {"schema":1,"kind":"kontakts-sd-library","source_branch":"${GITHUB_REF_NAME}","source_commit":"${GITHUB_SHA}","snapshot":"${short_sha}","archive":"${archive_url}","size":${size},"sha256":"${sha}","install":"extract-to-sd-root"}
+          EOF
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          echo "snapshot=$short_sha" >> "$GITHUB_OUTPUT"
+          sha256sum .sd-release/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app09-sd-library-${{ steps.bundle.outputs.snapshot }}
+          path: .sd-release/*
+          if-no-files-found: error
+
+      - name: Publish current SD bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SD_SHA256: ${{ steps.bundle.outputs.sha256 }}
+          SD_SIZE: ${{ steps.bundle.outputs.size }}
+          SD_SNAPSHOT: ${{ steps.bundle.outputs.snapshot }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="app09-sd-current"
+          notes="KONTAKTS SD Application Library snapshot ${SD_SNAPSHOT}. Source: ${GITHUB_REF_NAME} at ${GITHUB_SHA}. Archive SHA-256 ${SD_SHA256}, size ${SD_SIZE}. Extract the ZIP into the root of the FAT32 SD card; do not flash this archive to ESP32. Package versions remain defined by each widgets/<package>/package.json."
+
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -f "$tag" "$GITHUB_SHA"
+            git push origin "refs/tags/$tag" --force
+            gh release upload "$tag" .sd-release/* --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag" --title "KONTAKTS SD Application Library — Current" --notes "$notes" --prerelease --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" .sd-release/* --target "$GITHUB_SHA" --title "KONTAKTS SD Application Library — Current" --notes "$notes" --prerelease --repo "$GITHUB_REPOSITORY"
+          fi
