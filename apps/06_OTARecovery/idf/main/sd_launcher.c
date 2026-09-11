@@ -13,7 +13,47 @@ struct sd_launcher_view {
     lv_obj_t *empty_label;
     sd_launcher_run_cb_t run_cb;
     void *user_data;
+    char selected_package_id[SD_MANAGER_ENTRY_TEXT_MAX + 1];
+    char selected_package_name[SD_MANAGER_ENTRY_TEXT_MAX + 1];
 };
+
+static void style_button(lv_obj_t *button)
+{
+    lv_obj_set_width(button, lv_pct(100));
+    lv_obj_set_height(button, 56);
+    lv_obj_set_flex_grow(button, 0);
+    lv_obj_set_style_radius(button, 10, 0);
+    lv_obj_set_style_bg_color(button, lv_color_hex(0x21262D), 0);
+    lv_obj_set_style_border_width(button, 1, 0);
+    lv_obj_set_style_border_color(button, lv_color_hex(0x30363D), 0);
+}
+
+static lv_obj_t *button_label(lv_obj_t *button, const char *text)
+{
+    lv_obj_t *label = lv_label_create(button);
+    if (!label) return NULL;
+    lv_label_set_text(label, text ? text : "");
+    lv_obj_set_width(label, lv_pct(92));
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_18, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xF0F6FC), 0);
+    lv_obj_center(label);
+    return label;
+}
+
+static bool package_is_first(size_t index, const sd_manager_entry_t *entry)
+{
+    if (!entry) return false;
+    for (size_t i = 0; i < index; ++i) {
+        sd_manager_entry_t previous;
+        if (sd_manager_entry_get(i, &previous) != ESP_OK) continue;
+        if (strcmp(previous.package_id, entry->package_id) == 0) return false;
+    }
+    return true;
+}
+
+static esp_err_t render_package_list(sd_launcher_view_t *view);
+static esp_err_t render_entry_list(sd_launcher_view_t *view);
 
 static void entry_button_cb(lv_event_t *e)
 {
@@ -38,6 +78,143 @@ static void entry_button_cb(lv_event_t *e)
     view->run_cb(&entry, view->user_data);
 }
 
+static void package_button_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+
+    sd_launcher_view_t *view = (sd_launcher_view_t *)lv_event_get_user_data(e);
+    lv_obj_t *button = (lv_obj_t *)lv_event_get_target(e);
+    if (!view || !button) return;
+
+    uintptr_t encoded = (uintptr_t)lv_obj_get_user_data(button);
+    if (encoded == 0) return;
+    size_t index = (size_t)(encoded - 1U);
+
+    sd_manager_entry_t entry;
+    if (sd_manager_entry_get(index, &entry) != ESP_OK) return;
+
+    strlcpy(view->selected_package_id, entry.package_id, sizeof(view->selected_package_id));
+    strlcpy(view->selected_package_name, entry.package_name, sizeof(view->selected_package_name));
+    render_entry_list(view);
+}
+
+static void back_button_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    sd_launcher_view_t *view = (sd_launcher_view_t *)lv_event_get_user_data(e);
+    if (!view) return;
+    view->selected_package_id[0] = '\0';
+    view->selected_package_name[0] = '\0';
+    render_package_list(view);
+}
+
+static esp_err_t render_package_list(sd_launcher_view_t *view)
+{
+    if (!view || !view->container) return ESP_ERR_INVALID_ARG;
+
+    lv_obj_clean(view->container);
+    view->empty_label = NULL;
+    view->selected_package_id[0] = '\0';
+    view->selected_package_name[0] = '\0';
+
+    size_t count = sd_manager_entry_count();
+    if (count == 0) {
+        view->empty_label = lv_label_create(view->container);
+        if (!view->empty_label) return ESP_ERR_NO_MEM;
+        lv_label_set_text(view->empty_label, "No applications found");
+        lv_obj_set_style_text_font(view->empty_label, &lv_font_montserrat_18, 0);
+        lv_obj_set_style_text_color(view->empty_label, lv_color_hex(0x8B949E), 0);
+        lv_obj_set_width(view->empty_label, lv_pct(100));
+        return ESP_OK;
+    }
+
+    size_t packages = 0;
+    for (size_t i = 0; i < count; ++i) {
+        sd_manager_entry_t entry;
+        if (sd_manager_entry_get(i, &entry) != ESP_OK || !package_is_first(i, &entry)) continue;
+
+        lv_obj_t *button = lv_button_create(view->container);
+        if (!button) return ESP_ERR_NO_MEM;
+        style_button(button);
+        lv_obj_set_user_data(button, (void *)(uintptr_t)(i + 1U));
+        lv_obj_add_event_cb(button, package_button_cb, LV_EVENT_CLICKED, view);
+
+        char text[SD_MANAGER_ENTRY_TEXT_MAX + 8];
+        snprintf(text, sizeof(text), "%s   >", entry.package_name);
+        if (!button_label(button, text)) return ESP_ERR_NO_MEM;
+        packages++;
+    }
+
+    ESP_LOGI(TAG, "launcher package view rebuilt packages=%u entries=%u",
+             (unsigned)packages, (unsigned)count);
+    return ESP_OK;
+}
+
+static esp_err_t render_entry_list(sd_launcher_view_t *view)
+{
+    if (!view || !view->container || !view->selected_package_id[0]) return ESP_ERR_INVALID_ARG;
+
+    lv_obj_clean(view->container);
+    view->empty_label = NULL;
+
+    lv_obj_t *header = lv_obj_create(view->container);
+    if (!header) return ESP_ERR_NO_MEM;
+    lv_obj_set_width(header, lv_pct(100));
+    lv_obj_set_height(header, 48);
+    lv_obj_set_flex_grow(header, 0);
+    lv_obj_set_style_pad_all(header, 0, 0);
+    lv_obj_set_style_border_width(header, 0, 0);
+    lv_obj_set_style_bg_opa(header, LV_OPA_TRANSP, 0);
+    lv_obj_remove_flag(header, LV_OBJ_FLAG_SCROLLABLE);
+
+    lv_obj_t *back = lv_button_create(header);
+    if (!back) return ESP_ERR_NO_MEM;
+    lv_obj_set_pos(back, 0, 2);
+    lv_obj_set_size(back, 96, 42);
+    lv_obj_set_style_radius(back, 10, 0);
+    lv_obj_set_style_bg_color(back, lv_color_hex(0x30363D), 0);
+    lv_obj_add_event_cb(back, back_button_cb, LV_EVENT_CLICKED, view);
+    if (!button_label(back, "< BACK")) return ESP_ERR_NO_MEM;
+
+    lv_obj_t *title = lv_label_create(header);
+    if (!title) return ESP_ERR_NO_MEM;
+    lv_label_set_text(title, view->selected_package_name);
+    lv_obj_set_pos(title, 116, 12);
+    lv_obj_set_width(title, lv_pct(75));
+    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xF0F6FC), 0);
+
+    size_t count = sd_manager_entry_count();
+    size_t entries = 0;
+    for (size_t i = 0; i < count; ++i) {
+        sd_manager_entry_t entry;
+        if (sd_manager_entry_get(i, &entry) != ESP_OK) continue;
+        if (strcmp(entry.package_id, view->selected_package_id) != 0) continue;
+
+        lv_obj_t *button = lv_button_create(view->container);
+        if (!button) return ESP_ERR_NO_MEM;
+        style_button(button);
+        lv_obj_set_style_bg_color(button, lv_color_hex(0x1F6FEB), 0);
+        lv_obj_set_user_data(button, (void *)(uintptr_t)(i + 1U));
+        lv_obj_add_event_cb(button, entry_button_cb, LV_EVENT_CLICKED, view);
+        if (!button_label(button, entry.entry_name)) return ESP_ERR_NO_MEM;
+        entries++;
+    }
+
+    if (entries == 0) {
+        view->empty_label = lv_label_create(view->container);
+        if (!view->empty_label) return ESP_ERR_NO_MEM;
+        lv_label_set_text(view->empty_label, "No screens in this application");
+        lv_obj_set_style_text_font(view->empty_label, &lv_font_montserrat_18, 0);
+        lv_obj_set_style_text_color(view->empty_label, lv_color_hex(0x8B949E), 0);
+    }
+
+    ESP_LOGI(TAG, "launcher entry view package=%s entries=%u",
+             view->selected_package_id, (unsigned)entries);
+    return ESP_OK;
+}
+
 sd_launcher_view_t *sd_launcher_create(lv_obj_t *parent,
                                        int32_t x, int32_t y,
                                        int32_t w, int32_t h,
@@ -59,9 +236,10 @@ sd_launcher_view_t *sd_launcher_create(lv_obj_t *parent,
 
     lv_obj_set_pos(view->container, x, y);
     lv_obj_set_size(view->container, w, h);
-    lv_obj_set_style_pad_all(view->container, 8, 0);
+    lv_obj_set_style_pad_all(view->container, 0, 0);
     lv_obj_set_style_pad_row(view->container, 8, 0);
-    lv_obj_set_style_border_width(view->container, 1, 0);
+    lv_obj_set_style_border_width(view->container, 0, 0);
+    lv_obj_set_style_bg_opa(view->container, LV_OPA_TRANSP, 0);
     lv_obj_set_flex_flow(view->container, LV_FLEX_FLOW_COLUMN);
     lv_obj_set_scroll_dir(view->container, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(view->container, LV_SCROLLBAR_MODE_AUTO);
@@ -71,46 +249,7 @@ sd_launcher_view_t *sd_launcher_create(lv_obj_t *parent,
 
 esp_err_t sd_launcher_refresh(sd_launcher_view_t *view)
 {
-    if (!view || !view->container) return ESP_ERR_INVALID_ARG;
-
-    lv_obj_clean(view->container);
-    view->empty_label = NULL;
-
-    size_t count = sd_manager_entry_count();
-    if (count == 0) {
-        view->empty_label = lv_label_create(view->container);
-        lv_label_set_text(view->empty_label, "No applications found in /sd/widgets");
-        lv_obj_set_width(view->empty_label, lv_pct(100));
-        return ESP_OK;
-    }
-
-    for (size_t i = 0; i < count; ++i) {
-        sd_manager_entry_t entry;
-        esp_err_t err = sd_manager_entry_get(i, &entry);
-        if (err != ESP_OK) continue;
-
-        lv_obj_t *button = lv_button_create(view->container);
-        if (!button) return ESP_ERR_NO_MEM;
-        lv_obj_set_width(button, lv_pct(100));
-        lv_obj_set_height(button, 54);
-        lv_obj_set_flex_grow(button, 0);
-        lv_obj_set_user_data(button, (void *)(uintptr_t)(i + 1U));
-        lv_obj_add_event_cb(button, entry_button_cb, LV_EVENT_CLICKED, view);
-
-        lv_obj_t *label = lv_label_create(button);
-        if (!label) return ESP_ERR_NO_MEM;
-        if (strcmp(entry.package_name, entry.entry_name) == 0) {
-            lv_label_set_text(label, entry.entry_name);
-        } else {
-            lv_label_set_text_fmt(label, "%s  |  %s", entry.package_name, entry.entry_name);
-        }
-        lv_obj_set_width(label, lv_pct(92));
-        lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
-        lv_obj_center(label);
-    }
-
-    ESP_LOGI(TAG, "launcher rebuilt from SD catalog entries=%u", (unsigned)count);
-    return ESP_OK;
+    return render_package_list(view);
 }
 
 void sd_launcher_destroy(sd_launcher_view_t *view)
