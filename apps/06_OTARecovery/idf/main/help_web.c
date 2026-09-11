@@ -110,8 +110,10 @@ static char *read_manifest(const char *path)
 
 static bool manifest_help(const char *folder, char *display_name, size_t display_len)
 {
+    if (!safe_package_name(folder)) return false;
     char manifest[256];
-    snprintf(manifest, sizeof(manifest), "%s/%s/package.json", SD_MANAGER_WIDGET_ROOT, folder);
+    int n = snprintf(manifest, sizeof(manifest), "%s/%.63s/package.json", SD_MANAGER_WIDGET_ROOT, folder);
+    if (n < 0 || (size_t)n >= sizeof(manifest)) return false;
     char *text = read_manifest(manifest);
     if (!text) return false;
     cJSON *root = cJSON_Parse(text);
@@ -179,12 +181,16 @@ static esp_err_t help_root_get(httpd_req_t *req)
             char display[96] = {0};
             if (!manifest_help(entry->d_name, display, sizeof(display))) continue;
             char doc_path[256];
-            snprintf(doc_path, sizeof(doc_path), "%s/%s/html/index.html", SD_MANAGER_WIDGET_ROOT, entry->d_name);
+            int path_n = snprintf(doc_path, sizeof(doc_path), "%s/%.63s/html/index.html",
+                                  SD_MANAGER_WIDGET_ROOT, entry->d_name);
+            if (path_n < 0 || (size_t)path_n >= sizeof(doc_path)) continue;
             struct stat st;
             if (stat(doc_path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
 
             char link[160];
-            snprintf(link, sizeof(link), "<a class='card' href='/help/app?name=%s'><b>", entry->d_name);
+            int link_n = snprintf(link, sizeof(link),
+                                  "<a class='card' href='/help/app?name=%.63s'><b>", entry->d_name);
+            if (link_n < 0 || (size_t)link_n >= sizeof(link)) continue;
             httpd_resp_sendstr_chunk(req, link);
             if (send_escaped(req, display) != ESP_OK) { closedir(dir); return ESP_FAIL; }
             httpd_resp_sendstr_chunk(req, "</b><span>Application help from SD package</span></a>");
@@ -237,7 +243,11 @@ static esp_err_t help_app_get(httpd_req_t *req)
         return ESP_OK;
     }
     char path[256];
-    snprintf(path, sizeof(path), "%s/%s/html/index.html", SD_MANAGER_WIDGET_ROOT, name);
+    int n = snprintf(path, sizeof(path), "%s/%.63s/html/index.html", SD_MANAGER_WIDGET_ROOT, name);
+    if (n < 0 || (size_t)n >= sizeof(path)) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "application help path too long");
+        return ESP_OK;
+    }
     return send_file(req, path, "text/html; charset=utf-8", true);
 }
 
