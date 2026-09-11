@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>KONTAKTS ESP32-8048S043 Firmware Catalog</title>
+  <title>KONTAKTS ESP32-8048S043 Platform & SD Catalog</title>
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
     :root {
@@ -23,14 +23,26 @@
     h2 { margin: 10px 0 8px; }
     p, li { line-height: 1.55; color: #cfd8dc; }
     .meta { color: #90caf9; font-weight: 600; }
+    .section-title { margin: 30px 0 14px; font-size: 24px; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
     .card { background: #182027; border: 1px solid #37474f; border-radius: 24px; padding: 24px; box-shadow: 0 18px 60px rgba(0,0,0,.25); }
+    .sd-card { border-color: #1565c0; }
     .status { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1b5e20; color: white; font-weight: 700; font-size: 13px; }
     .status.candidate { background: #7a4f00; }
     .version { color: #90a4ae; font-size: 14px; }
     .installer { margin: 22px 0; padding: 18px; background: #11171c; border-radius: 18px; text-align: center; }
     .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
     .links a { color: #90caf9; text-decoration: none; }
+    .download-button {
+      display: inline-block;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: #1565c0;
+      color: #fff;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .sd-note { margin-bottom: 0; }
     code { color: #ffcc80; }
     .warning { margin-top: 24px; border-left: 4px solid #ffb300; padding: 12px 0 12px 14px; color: #cfd8dc; }
     .catalog-error { padding: 18px; border: 1px solid #b71c1c; border-radius: 18px; background: #2a1111; color: #ffcdd2; }
@@ -41,10 +53,19 @@
   <main>
     <header>
       <div class="meta">Project KONTAKTS · Programmer Sol · Engineer Alex Malachevsky</div>
-      <h1>ESP32-8048S043 Firmware Catalog</h1>
-      <p>Choose a tested firmware and install it directly from Chrome or Edge through ESP Web Tools.</p>
+      <h1>ESP32-8048S043 Platform & SD Catalog</h1>
+      <p>Firmware and SD applications are separate layers: flash the platform when needed, then download or update the SD library independently.</p>
     </header>
 
+    <h2 class="section-title">SD Application Library</h2>
+    <section id="sd-library-slot" class="grid" aria-live="polite">
+      <article class="card sd-card">
+        <h2>Loading SD library…</h2>
+        <p>The catalog is resolving the current App09 SD snapshot.</p>
+      </article>
+    </section>
+
+    <h2 class="section-title">Platform Firmware</h2>
     <section id="firmware-grid" class="grid" aria-live="polite">
       <article class="card">
         <h2>Loading firmware catalog…</h2>
@@ -52,10 +73,10 @@
       </article>
     </section>
 
-    <p class="warning"><strong>Target hardware:</strong> the validated ESP32-8048S043 ESP32-S3 800×480 RGB / GT911 board profile used by this repository. Installing replaces the firmware currently stored on the connected board.</p>
+    <p class="warning"><strong>Target hardware:</strong> the validated ESP32-8048S043 ESP32-S3 800×480 RGB / GT911 board profile used by this repository. Firmware install writes the ESP32 flash. The SD Library ZIP is different: extract it to the FAT32 SD card and never flash the ZIP to the board.</p>
 
     <footer>
-      Firmware cards are generated from <code>firmware-list.json</code>. New validated apps and recovery images can be published by adding a catalog entry and manifest without rewriting this page.
+      Platform firmware and the App09 SD library are delivered independently. Individual SD application versions remain defined inside each package.json.
     </footer>
 
     <script src="./app.js"></script>
