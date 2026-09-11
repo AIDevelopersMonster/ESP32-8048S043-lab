@@ -209,6 +209,14 @@ This short records the next user-facing milestone: the physically validated Wind
 - **Video:** [ESP32-8048S043 — Windows flasher and new SD applications UI](https://youtube.com/shorts/T91Nbeij2r8)
 - **Scope:** helper flasher workflow plus the newer hierarchical SD launcher UX on the physical board.
 
+### 5. Platform 0.3.3 + SD Help Center — physical pass
+
+This short records the completed browser-help milestone after OTA to KONTAKTS Platform `0.3.3` and installation of the current SD application library. The existing local HTTP server remains the platform entry point, while the new `/help` route serves the Help Center directly from SD.
+
+- **Video:** [ESP32-8048S043 — KONTAKTS Platform 0.3.3, SD apps and Help Center](https://youtube.com/shorts/S5e_sCxy8Gc)
+- **Scope confirmed:** OTA to Platform 0.3.3, current SD library in use, local HTTP server available, `/help` route working, system documentation served from `/sd/wiki`, and application help served from `/sd/widgets/<package>/html/index.html`.
+- **Architecture confirmed:** documentation content can be updated on SD without reflashing the ESP32 firmware.
+
 ## Application/service contract
 
 Applications depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
@@ -316,6 +324,9 @@ App09 is not a full PHYSICAL PASS until the remaining recovery and offline-updat
 [ ] successful SD update enters normal PENDING_VERIFY flow
 [ ] rollback remains functional after SD update
 [x] secrets are not stored in the SD application package
+[x] browser Help Center opens at /help on the existing local HTTP server
+[x] system documentation is served from SD
+[x] application HTML help is served from SD packages
 ```
 
 ## Open UX work
