@@ -1,10 +1,12 @@
-name: App 06/07 - GitHub OTA Release
+name: App 06/07/08/09 - GitHub OTA Release
 
 on:
   push:
     branches:
       - agent/app06-ota-recovery
       - agent/app07-widget-runtime
+      - agent/app08-youtube-dashboard
+      - agent/app09-sd-widget-library
     paths:
       - 'apps/06_OTARecovery/release-version.txt'
       - '.github/workflows/app06-ota-release.yml'
@@ -70,7 +72,7 @@ jobs:
         shell: bash
         run: |
           tag="app06-v${APP06_VERSION}"
-          notes="KONTAKTS platform OTA ${APP06_VERSION}. Adds persistent filesystem Widget Runtime while keeping firmware-resident STATUS/OTA/recovery. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}."
+          notes="KONTAKTS Platform OTA ${APP06_VERSION}. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. SD application/library content is released independently from the platform firmware."
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$tag" .app06-ota/* --clobber --repo "$GITHUB_REPOSITORY"
           else
