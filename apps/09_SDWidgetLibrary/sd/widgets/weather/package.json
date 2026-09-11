@@ -13,6 +13,9 @@
     "minimum_platform": "0.3.2",
     "services": ["time"]
   },
+  "documentation": {
+    "entry": "html/index.html"
+  },
   "firmware": {"required": false},
   "secrets": {"storage": "nvs", "sd_allowed": false},
   "demo": {

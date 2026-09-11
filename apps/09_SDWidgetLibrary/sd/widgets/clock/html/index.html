@@ -1,0 +1,6 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Clock App Help</title><link rel="stylesheet" href="/help/style.css"></head><body><header><div class="eyebrow">APPLICATION HELP</div><h1>Clock</h1><div class="topnav"><a href="/help">Help Center</a></div><p>NTP seven-segment clock — независимый SD-пакет, демонстрирующий использование общего time service.</p></header><main><h2>Экран</h2><p><b>NTP Seven Segment Clock</b> показывает время крупным seven-segment представлением, дату, год, день недели, состояние NTP и время последней синхронизации.</p><h2>Bindings</h2><pre>time.clock
+time.date
+time.year
+time.weekday
+time.sync_state
+time.last_sync</pre><h2>Действие</h2><p>Кнопка <b>SYNC TIME</b> вызывает platform action <code>sync_time</code>. Сам пакет не реализует NTP.</p><h2>Установка</h2><pre>SD:\widgets\clock\</pre><p>После REFRESH пакет обнаруживается по <code>package.json</code>.</p></main><footer><a href="/help">← Help Center</a></footer></body></html>

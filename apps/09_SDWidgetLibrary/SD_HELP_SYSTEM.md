@@ -14,19 +14,23 @@ System programmer guide            package notes / troubleshooting
 Hardware reference
 ```
 
-The platform firmware provides only a safe HTTP file-serving capability. Documentation content lives on SD and can be updated without reflashing the ESP32.
+The platform firmware provides a safe read-only HTTP file-serving capability. Documentation content lives on SD and can be updated without reflashing the ESP32.
 
 ## Browser routes
 
+The first implementation intentionally uses four exact handlers so it stays inside the current ESP-IDF HTTP handler budget without enabling wildcard routing:
+
 ```text
 http://<board-ip>/help
-http://<board-ip>/help/system/
-http://<board-ip>/help/system/user/
-http://<board-ip>/help/system/application-programmer/
-http://<board-ip>/help/system/system-programmer/
-http://<board-ip>/help/system/hardware/
-http://<board-ip>/help/apps/<package>/
+http://<board-ip>/help/system?doc=user
+http://<board-ip>/help/system?doc=application-programmer
+http://<board-ip>/help/system?doc=system-programmer
+http://<board-ip>/help/system?doc=hardware
+http://<board-ip>/help/app?name=<package-folder>
+http://<board-ip>/help/style.css
 ```
+
+`/help` is generated dynamically. It always shows the system documentation cards and then discovers application documentation declared by SD package manifests.
 
 ## SD layout
 
@@ -34,8 +38,7 @@ http://<board-ip>/help/apps/<package>/
 SD:/
 ├── wiki/
 │   ├── index.html
-│   ├── assets/
-│   │   └── style.css
+│   ├── assets/style.css
 │   └── system/
 │       ├── index.html
 │       ├── user/index.html
@@ -46,13 +49,14 @@ SD:/
     └── <package>/
         ├── package.json
         ├── *.json
-        └── html/
-            └── index.html
+        └── html/index.html
 ```
+
+`wiki/index.html` is also useful when the SD card is opened directly on a PC. The normal network landing page is the dynamic `/help` catalog.
 
 ## Package contract
 
-A package may advertise its browser documentation with:
+A package advertises its browser documentation with:
 
 ```json
 "documentation": {
@@ -80,6 +84,10 @@ ESP-IDF platform architecture, SYS/SD/WIDGET boundary, boot/recovery, partitioni
 
 Named board/specimen identity, connectors, power, verified GPIO map, LCD RGB bus, GT911 touch, SD SPI, USB/UART, flash/PSRAM and links to authoritative datasheets/reference manuals.
 
+## Browser security boundary
+
+Application HTML is user-controlled SD content served on the same HTTP origin as platform control APIs. Help responses therefore apply a restrictive Content Security Policy: scripts, forms, frames, objects and network connections are disabled. Help HTML is documentation, not an executable application surface.
+
 ## Invariant
 
-The board display remains `SYS | SD | WIDGET`. Browser documentation is a separate platform capability. Adding or editing HTML must not require a firmware rebuild.
+The board display remains `SYS | SD | WIDGET`. Browser documentation is a separate platform capability. Adding or editing HTML must not require a firmware rebuild once platform 0.3.3 or later is installed.

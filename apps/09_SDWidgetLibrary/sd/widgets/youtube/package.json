@@ -13,6 +13,9 @@
     "minimum_platform": "0.2.8",
     "services": ["youtube"]
   },
+  "documentation": {
+    "entry": "html/index.html"
+  },
   "firmware": {
     "required": false
   },

@@ -137,6 +137,7 @@ idf_component_register(
         "storage_credentials.c"
         "storage_fs.c"
         "storage_web.c"
+        "help_web.c"
         "sd_manager.c"
         "sd_launcher.c"
         "metric_carousel.c"

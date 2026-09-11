@@ -11,6 +11,7 @@
 #include "esp_heap_caps.h"
 #include "esp_log.h"
 
+#include "help_web.h"
 #include "storage_fs.h"
 
 #define TAG "APP07_STORAGE_WEB"
@@ -259,6 +260,8 @@ esp_err_t storage_web_register(httpd_handle_t server)
         esp_err_t err = httpd_register_uri_handler(server, &handlers[i]);
         if (err != ESP_OK) return err;
     }
-    ESP_LOGI(TAG, "Web Storage Manager registered");
+    esp_err_t help_err = help_web_register(server);
+    if (help_err != ESP_OK) return help_err;
+    ESP_LOGI(TAG, "Web Storage Manager and SD Help registered");
     return ESP_OK;
 }

@@ -1,0 +1,23 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KONTAKTS Application Programmer Guide</title><link rel="stylesheet" href="/help/style.css"></head><body><header><div class="eyebrow">SYSTEM HELP</div><h1>Руководство прикладного программиста</h1><div class="topnav"><a href="/help">Help Center</a><a href="/help/system?doc=system-programmer">Системный программист</a></div></header><main><h2>Главное правило</h2><p>Совместимое приложение должно устанавливаться копированием каталога на SD без добавления C-кнопки и без пересборки firmware. Новая прошивка требуется только если приложению не хватает общего platform service/provider/driver/UI capability.</p><h2>Пакет</h2><pre>widgets/my-app/
+├── package.json
+├── main.json
+├── optional-screen.json
+└── html/
+    └── index.html</pre><p>На физическом уровне имя каталога ограничено ASCII-символами <code>A-Z a-z 0-9 . _ -</code>.</p><h2>package.json</h2><pre>{
+  "schema": 1,
+  "id": "my-app",
+  "name": "My App",
+  "version": "1.0.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {"id":"main","name":"Main","file":"main.json"}
+  ],
+  "requires": {
+    "minimum_platform": "0.3.3",
+    "services": ["time"]
+  },
+  "documentation": {
+    "entry": "html/index.html"
+  },
+  "firmware": {"required": false}
+}</pre><h2>Entry points</h2><p>Только элементы массива <code>entrypoints</code> появляются как экраны приложения на дисплее. Служебные JSON-файлы не становятся кнопками автоматически.</p><h2>Widget Runtime</h2><p>Текущий runtime понимает объекты <code>label</code>, <code>bar</code>, <code>button</code>, <code>clock</code>, <code>chart</code> и <code>metric_carousel</code>. Выбранный SD JSON валидируется и сохраняется в <code>/storage/widget.json</code>.</p><h2>Доступные bindings</h2><p>Текущий набор включает system/Wi-Fi/firmware/OTA, time и YouTube bindings. Приложение не должно придумывать binding, который платформа ещё не предоставляет.</p><h2>Services и capabilities</h2><p>Приложение объявляет зависимости на абстрактные сервисы: например <code>time</code>, <code>youtube</code>, в будущем <code>weather</code>, <code>temperature</code>, <code>relay</code>, <code>flow-meter</code>. Конкретный датчик или драйвер остаётся задачей platform provider.</p><h2>HTML-справка</h2><p>Поместите документацию в <code>html/index.html</code> и объявите её через <code>documentation.entry</code>. Она появится в browser Help Center, но никогда не попадёт в LVGL launcher.</p><p class="note">HTML help запускается с жёстким Content Security Policy: без JavaScript, форм, iframe и сетевых запросов. Это справка, а не способ получить доступ к системным HTTP API.</p></main><footer><a href="/help">← Help Center</a></footer></body></html>

@@ -11,6 +11,9 @@
     "minimum_platform": "0.3.0",
     "services": ["time"]
   },
+  "documentation": {
+    "entry": "html/index.html"
+  },
   "firmware": {
     "required": false
   },
