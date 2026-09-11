@@ -1,38 +1,51 @@
-# Pinout working document
+# ESP32-8048S043 Sample A — pinout and connector evidence
 
-This file separates **reported**, **source-backed** and **physically verified** pin mappings.
+This document separates **physically observed/validated**, **source-backed**, and **revision-dependent** mappings for the actual project board.
 
-Current status for Sample A:
+## Current Sample A status
 
 ```text
-RGB display runtime      PASS with factory LVGL Widgets Demo
-Touchscreen visual check PASS with factory LVGL Widgets Demo
-Exact touch IC identity  SOURCE-BACKED GT911, dedicated I2C scan still open
-Exact pin map            SOURCE-BACKED, not yet fully continuity-verified
+RGB display runtime      PHYSICAL PASS
+GT911 touchscreen        PHYSICAL PASS, I2C 0x5D
+microSD / TF             PHYSICAL PASS, SPI 10 MHz
+P2 PCB labels            PHYSICALLY OBSERVED: IO19 / IO11 / IO12 / IO13
+Flash                    16 MB
+PSRAM                    8 MB
 ```
+
+The user's actual Sample A PCB therefore follows the P2 variant whose four printed signals are:
+
+```text
+P2 / SPI
+pin 1 = IO19
+pin 2 = IO11
+pin 3 = IO12
+pin 4 = IO13
+```
+
+This overrides the earlier ambiguity for **Sample A**. Some external documents for older ESP32-8048S043 revisions show GPIO18 on P2 pin 1; that remains relevant only as a warning for other board revisions.
 
 ## Evidence sources
 
 Primary project evidence:
 
+- project macro photographs and visible PCB silkscreen;
 - factory firmware dump and partition analysis;
-- factory serial boot log;
-- factory LVGL Widgets Demo display PASS;
-- factory touchscreen visual PASS video;
-- project macro photographs.
+- physical RGB display tests;
+- physical GT911 touch tests;
+- physical microSD tests;
+- App09 SD application-library and browser Help Center acceptance tests.
 
 Source-backed reconstruction:
 
 - `hardware/SCHEMATIC_BOM_RESEARCH.md`;
 - JCZN1688 / Jingcai `ESP32-8048S043` support archive lead;
 - TinyTronics Jingcai ESP32-8048S043C-I documentation package lead;
-- same-layout annotated 2022-10-18 board reference.
+- same-layout annotated board references.
 
-## Source-backed 800x480 RGB panel mapping
+## 800x480 RGB panel mapping
 
-Status: `SOURCE-BACKED / FACTORY RUNTIME DISPLAY PASS`.
-
-The mapping below is backed by the recovered board documentation and is consistent with the factory LVGL display runtime PASS. It is not yet promoted to a full BSP pinout PASS until reproduced by our own minimal RGB example.
+Status: `SOURCE-BACKED / OWN RUNTIME PHYSICAL PASS`.
 
 | Signal | GPIO |
 |---|---:|
@@ -67,11 +80,9 @@ G0..G5 = 5, 6, 7, 15, 16, 4
 B0..B4 = 8, 3, 46, 9, 1
 ```
 
-## Source-backed GT911 capacitive touch mapping
+## GT911 capacitive touch mapping
 
-Status: `SOURCE-BACKED / FACTORY TOUCHSCREEN VISUAL PASS / CONTROLLER SCAN OPEN`.
-
-The factory demo responds to touch in the visual check, and the recovered documentation identifies GT911 for the capacitive-touch version. A dedicated I2C scanner and coordinate-target test are still required before marking the controller and coordinate transform as fully verified.
+Status: `PHYSICAL PASS`.
 
 | Signal | GPIO / value |
 |---|---:|
@@ -79,11 +90,13 @@ The factory demo responds to touch in the visual check, and the recovered docume
 | SCL | 20 |
 | RESET | 38 |
 | INT | 18, optional / link-dependent |
-| I2C address | 0x5D or 0x14 depending on reset/address strap sequence |
+| I2C address on Sample A | 0x5D |
 
-## Source-backed microSD / TF1 mapping
+GPIO19/20 are therefore not electrically free even though they are exposed on the connector area: they form the active GT911 I2C bus and may only be shared with compatible I2C devices.
 
-Status: `SOURCE-BACKED / NOT YET PHYSICALLY TESTED`.
+## microSD / TF1 mapping
+
+Status: `PHYSICAL PASS at 10 MHz`.
 
 | Signal | GPIO |
 |---|---:|
@@ -92,36 +105,56 @@ Status: `SOURCE-BACKED / NOT YET PHYSICALLY TESTED`.
 | CLK | 12 |
 | MISO | 13 |
 
-## Board-level interface notes
+GPIO11/12/13 exposed on P2 are the same shared SPI lines used by microSD.
 
-The TinyTronics/Jingcai documentation path identifies the capacitive-touch board as using:
+## External connector P2 — Sample A
+
+Status: `PHYSICALLY OBSERVED PCB LABELS + SD FUNCTION CROSS-CHECK`.
+
+The actual user's board is marked:
+
+| P2 pin | PCB marking | Current platform use | Expansion note |
+|---:|---|---|---|
+| 1 | IO19 | GT911 SDA | Shared I2C line; not a free SPI CS in the current platform |
+| 2 | IO11 | SD MOSI | Shared SPI MOSI |
+| 3 | IO12 | SD CLK | Shared SPI clock |
+| 4 | IO13 | SD MISO | Shared SPI MISO |
+
+So for this Sample A the exact sequence is:
 
 ```text
-ESP32-S3
-16 MB flash
-8 MB PSRAM
-CH340C USB-UART bridge
-GT911 capacitive-touch controller
+IO19 / IO11 / IO12 / IO13
 ```
 
-The PCB family may contain both the XPT2046 resistive-touch footprint/device and the GT911 capacitive-touch interface. For the current capacitive panel, do not assume XPT2046 is active.
+Do not substitute GPIO18 for P2.1 on this specimen.
+
+## Practical expansion implications
+
+- GPIO17 and GPIO18 remain the preferred general-purpose external signals when available on P3/P4.
+- GPIO19/20 form the live GT911 I2C bus and can be shared only as I2C with non-conflicting device addresses.
+- GPIO11/12/13 form the live SD SPI bus. A second SPI peripheral may share them if it has a separate CS and correctly tri-states MISO when deselected.
+- GPIO10 remains the SD card CS in the current platform.
+- GPIO43/44 are used for the UART0/CH340 console path and should not be treated as preferred expansion pins.
+- LCD RGB, sync, PCLK and backlight pins are platform-reserved.
+- OPI PSRAM pins on the N16R8 configuration are not available as ordinary expansion GPIO.
+
+## Electrical boundary
+
+All ESP32-S3 GPIO signals are 3.3 V logic. Do not apply 5 V directly to a GPIO. GPIO pins are control/signal outputs, not power outputs: relays, pumps, motors, solenoids and other substantial loads require an external driver and suitable power supply.
 
 ## Validation checklist
 
 - [x] factory firmware preserved by double-read SHA-256 match;
-- [x] factory LVGL Widgets Demo serial boot confirmed;
-- [x] factory LVGL Widgets Demo display visible on 800x480 panel;
-- [x] touchscreen visually responds in factory demo video;
-- [ ] minimal RGB color-bar example built and physically validated;
-- [ ] backlight PWM GPIO 2 confirmed by dedicated brightness test;
-- [ ] RGB data order confirmed by own color test;
-- [ ] PCLK polarity confirmed by own timing test;
-- [ ] GT911 detected by I2C scan at 0x5D or 0x14;
-- [ ] GT911 reset/address strap behavior documented;
-- [ ] touch coordinates match rendered targets;
-- [ ] orientation transform documented;
-- [ ] SD card initialized and read/write tested on GPIO 10/11/12/13.
+- [x] own RGB display path physically validated;
+- [x] GT911 detected and touchscreen physically validated at 0x5D;
+- [x] SD initialized and physically validated on GPIO10/11/12/13;
+- [x] Sample A P2 silk-screen sequence confirmed as IO19/IO11/IO12/IO13;
+- [x] App09 SD launcher physically validated;
+- [x] SD-backed browser Help Center physically validated;
+- [ ] continuity-test every external connector pin against the MCU/net before declaring a full connector-level electrical certificate;
+- [ ] measure available external 3.3 V current on the actual Sample A regulator under LCD + Wi-Fi + SD load;
+- [ ] confirm P1/P3/P4 pin order and connector pitch by measurement on Sample A.
 
 ## Boundary
 
-This document is now stronger than a vendor pinout copy, but still not the final BSP validation certificate. The next promotion step is to run our own minimal examples against this map and attach serial/video/photo evidence for each subsystem.
+For Sample A, P2 is no longer revision-ambiguous: the physical board itself identifies `IO19 / IO11 / IO12 / IO13`. Other ESP32-8048S043 revisions may differ, so published third-party pinouts must not be applied blindly.
