@@ -7,6 +7,10 @@
 #include "esp_log.h"
 
 #define TAG "APP09_LAUNCHER"
+#define CARD_W 338
+#define CARD_H 82
+#define CARD_GAP 10
+#define ENTRY_H 58
 
 struct sd_launcher_view {
     lv_obj_t *container;
@@ -17,27 +21,35 @@ struct sd_launcher_view {
     char selected_package_name[SD_MANAGER_ENTRY_TEXT_MAX + 1];
 };
 
-static void style_button(lv_obj_t *button)
+static void make_decorative(lv_obj_t *obj)
 {
-    lv_obj_set_width(button, lv_pct(100));
-    lv_obj_set_height(button, 56);
-    lv_obj_set_flex_grow(button, 0);
-    lv_obj_set_style_radius(button, 10, 0);
-    lv_obj_set_style_bg_color(button, lv_color_hex(0x21262D), 0);
-    lv_obj_set_style_border_width(button, 1, 0);
-    lv_obj_set_style_border_color(button, lv_color_hex(0x30363D), 0);
+    if (obj) lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE);
 }
 
-static lv_obj_t *button_label(lv_obj_t *button, const char *text)
+static void style_card(lv_obj_t *button, int32_t w, int32_t h, uint32_t bg)
 {
-    lv_obj_t *label = lv_label_create(button);
+    lv_obj_set_size(button, w, h);
+    lv_obj_set_flex_grow(button, 0);
+    lv_obj_set_style_radius(button, 14, 0);
+    lv_obj_set_style_bg_color(button, lv_color_hex(bg), 0);
+    lv_obj_set_style_bg_color(button, lv_color_hex(0x30363D), LV_PART_MAIN | LV_STATE_PRESSED);
+    lv_obj_set_style_border_width(button, 1, 0);
+    lv_obj_set_style_border_color(button, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_pad_all(button, 0, 0);
+}
+
+static lv_obj_t *make_text(lv_obj_t *parent, int32_t x, int32_t y, int32_t w,
+                           const char *text, const lv_font_t *font, uint32_t color)
+{
+    lv_obj_t *label = lv_label_create(parent);
     if (!label) return NULL;
     lv_label_set_text(label, text ? text : "");
-    lv_obj_set_width(label, lv_pct(92));
+    lv_obj_set_pos(label, x, y);
+    lv_obj_set_width(label, w);
     lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_18, 0);
-    lv_obj_set_style_text_color(label, lv_color_hex(0xF0F6FC), 0);
-    lv_obj_center(label);
+    lv_obj_set_style_text_font(label, font, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
+    make_decorative(label);
     return label;
 }
 
@@ -50,6 +62,18 @@ static bool package_is_first(size_t index, const sd_manager_entry_t *entry)
         if (strcmp(previous.package_id, entry->package_id) == 0) return false;
     }
     return true;
+}
+
+static size_t package_entry_count(const char *package_id)
+{
+    if (!package_id || !package_id[0]) return 0;
+    size_t matches = 0;
+    size_t count = sd_manager_entry_count();
+    for (size_t i = 0; i < count; ++i) {
+        sd_manager_entry_t entry;
+        if (sd_manager_entry_get(i, &entry) == ESP_OK && strcmp(entry.package_id, package_id) == 0) matches++;
+    }
+    return matches;
 }
 
 static esp_err_t render_package_list(sd_launcher_view_t *view);
@@ -103,8 +127,6 @@ static void back_button_cb(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
     sd_launcher_view_t *view = (sd_launcher_view_t *)lv_event_get_user_data(e);
     if (!view) return;
-    view->selected_package_id[0] = '\0';
-    view->selected_package_name[0] = '\0';
     render_package_list(view);
 }
 
@@ -116,13 +138,14 @@ static esp_err_t render_package_list(sd_launcher_view_t *view)
     view->empty_label = NULL;
     view->selected_package_id[0] = '\0';
     view->selected_package_name[0] = '\0';
+    lv_obj_set_flex_flow(view->container, LV_FLEX_FLOW_ROW_WRAP);
 
     size_t count = sd_manager_entry_count();
     if (count == 0) {
         view->empty_label = lv_label_create(view->container);
         if (!view->empty_label) return ESP_ERR_NO_MEM;
         lv_label_set_text(view->empty_label, "No applications found");
-        lv_obj_set_style_text_font(view->empty_label, &lv_font_montserrat_18, 0);
+        lv_obj_set_style_text_font(view->empty_label, &lv_font_montserrat_24, 0);
         lv_obj_set_style_text_color(view->empty_label, lv_color_hex(0x8B949E), 0);
         lv_obj_set_width(view->empty_label, lv_pct(100));
         return ESP_OK;
@@ -135,13 +158,26 @@ static esp_err_t render_package_list(sd_launcher_view_t *view)
 
         lv_obj_t *button = lv_button_create(view->container);
         if (!button) return ESP_ERR_NO_MEM;
-        style_button(button);
+        style_card(button, CARD_W, CARD_H, 0x1C2128);
         lv_obj_set_user_data(button, (void *)(uintptr_t)(i + 1U));
         lv_obj_add_event_cb(button, package_button_cb, LV_EVENT_CLICKED, view);
 
-        char text[SD_MANAGER_ENTRY_TEXT_MAX + 8];
-        snprintf(text, sizeof(text), "%s   >", entry.package_name);
-        if (!button_label(button, text)) return ESP_ERR_NO_MEM;
+        lv_obj_t *accent = lv_obj_create(button);
+        if (!accent) return ESP_ERR_NO_MEM;
+        lv_obj_set_pos(accent, 0, 0);
+        lv_obj_set_size(accent, 6, CARD_H);
+        lv_obj_set_style_radius(accent, 14, 0);
+        lv_obj_set_style_bg_color(accent, lv_color_hex(0x1F6FEB), 0);
+        lv_obj_set_style_border_width(accent, 0, 0);
+        make_decorative(accent);
+
+        if (!make_text(button, 20, 12, 270, entry.package_name, &lv_font_montserrat_24, 0xF0F6FC)) return ESP_ERR_NO_MEM;
+
+        size_t screens = package_entry_count(entry.package_id);
+        char meta[48];
+        snprintf(meta, sizeof(meta), "%u %s", (unsigned)screens, screens == 1 ? "screen" : "screens");
+        if (!make_text(button, 20, 49, 220, meta, &lv_font_montserrat_18, 0x8B949E)) return ESP_ERR_NO_MEM;
+        if (!make_text(button, 302, 28, 24, ">", &lv_font_montserrat_24, 0x58A6FF)) return ESP_ERR_NO_MEM;
         packages++;
     }
 
@@ -156,11 +192,11 @@ static esp_err_t render_entry_list(sd_launcher_view_t *view)
 
     lv_obj_clean(view->container);
     view->empty_label = NULL;
+    lv_obj_set_flex_flow(view->container, LV_FLEX_FLOW_ROW_WRAP);
 
     lv_obj_t *header = lv_obj_create(view->container);
     if (!header) return ESP_ERR_NO_MEM;
-    lv_obj_set_width(header, lv_pct(100));
-    lv_obj_set_height(header, 48);
+    lv_obj_set_size(header, 686, 52);
     lv_obj_set_flex_grow(header, 0);
     lv_obj_set_style_pad_all(header, 0, 0);
     lv_obj_set_style_border_width(header, 0, 0);
@@ -169,21 +205,15 @@ static esp_err_t render_entry_list(sd_launcher_view_t *view)
 
     lv_obj_t *back = lv_button_create(header);
     if (!back) return ESP_ERR_NO_MEM;
-    lv_obj_set_pos(back, 0, 2);
-    lv_obj_set_size(back, 96, 42);
-    lv_obj_set_style_radius(back, 10, 0);
+    lv_obj_set_pos(back, 0, 3);
+    lv_obj_set_size(back, 104, 44);
+    lv_obj_set_style_radius(back, 12, 0);
     lv_obj_set_style_bg_color(back, lv_color_hex(0x30363D), 0);
+    lv_obj_set_style_border_width(back, 0, 0);
     lv_obj_add_event_cb(back, back_button_cb, LV_EVENT_CLICKED, view);
-    if (!button_label(back, "< BACK")) return ESP_ERR_NO_MEM;
+    if (!make_text(back, 13, 11, 82, "< APPS", &lv_font_montserrat_18, 0xF0F6FC)) return ESP_ERR_NO_MEM;
 
-    lv_obj_t *title = lv_label_create(header);
-    if (!title) return ESP_ERR_NO_MEM;
-    lv_label_set_text(title, view->selected_package_name);
-    lv_obj_set_pos(title, 116, 12);
-    lv_obj_set_width(title, lv_pct(75));
-    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
-    lv_obj_set_style_text_color(title, lv_color_hex(0xF0F6FC), 0);
+    if (!make_text(header, 126, 10, 540, view->selected_package_name, &lv_font_montserrat_24, 0xF0F6FC)) return ESP_ERR_NO_MEM;
 
     size_t count = sd_manager_entry_count();
     size_t entries = 0;
@@ -194,11 +224,11 @@ static esp_err_t render_entry_list(sd_launcher_view_t *view)
 
         lv_obj_t *button = lv_button_create(view->container);
         if (!button) return ESP_ERR_NO_MEM;
-        style_button(button);
-        lv_obj_set_style_bg_color(button, lv_color_hex(0x1F6FEB), 0);
+        style_card(button, CARD_W, ENTRY_H, 0x1F6FEB);
         lv_obj_set_user_data(button, (void *)(uintptr_t)(i + 1U));
         lv_obj_add_event_cb(button, entry_button_cb, LV_EVENT_CLICKED, view);
-        if (!button_label(button, entry.entry_name)) return ESP_ERR_NO_MEM;
+        if (!make_text(button, 18, 17, 285, entry.entry_name, &lv_font_montserrat_18, 0xFFFFFF)) return ESP_ERR_NO_MEM;
+        if (!make_text(button, 304, 14, 22, ">", &lv_font_montserrat_24, 0xFFFFFF)) return ESP_ERR_NO_MEM;
         entries++;
     }
 
@@ -237,10 +267,11 @@ sd_launcher_view_t *sd_launcher_create(lv_obj_t *parent,
     lv_obj_set_pos(view->container, x, y);
     lv_obj_set_size(view->container, w, h);
     lv_obj_set_style_pad_all(view->container, 0, 0);
-    lv_obj_set_style_pad_row(view->container, 8, 0);
+    lv_obj_set_style_pad_row(view->container, CARD_GAP, 0);
+    lv_obj_set_style_pad_column(view->container, CARD_GAP, 0);
     lv_obj_set_style_border_width(view->container, 0, 0);
     lv_obj_set_style_bg_opa(view->container, LV_OPA_TRANSP, 0);
-    lv_obj_set_flex_flow(view->container, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_flow(view->container, LV_FLEX_FLOW_ROW_WRAP);
     lv_obj_set_scroll_dir(view->container, LV_DIR_VER);
     lv_obj_set_scrollbar_mode(view->container, LV_SCROLLBAR_MODE_AUTO);
 
