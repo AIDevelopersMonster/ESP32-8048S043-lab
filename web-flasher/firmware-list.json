@@ -2,7 +2,24 @@
   "project": "KONTAKTS / ESP32-8048S043 Lab",
   "programmer": "Sol",
   "engineer": "Alex Malachevsky",
+  "sd_library": {
+    "name": "KONTAKTS SD Application Library",
+    "status": "CURRENT SNAPSHOT",
+    "description": "Widgets, system wiki/help and offline UPDATE content. Download the ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32.",
+    "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
+    "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
+    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/09_SDWidgetLibrary/sd"
+  },
   "firmwares": [
+    {
+      "id": "app09",
+      "name": "KONTAKTS Platform / SD Application Library",
+      "version": "0.3.3",
+      "status": "BUILD PASS / WEB FLASHER CANDIDATE",
+      "description": "Current platform with SYS | SD | WIDGET, hierarchical SD application launcher, Widget Runtime, GitHub OTA/recovery and browser-only SD Help Center.",
+      "manifest": "./manifest-app09.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/06_OTARecovery"
+    },
     {
       "id": "app01",
       "name": "Six-Card Serial Deck",
@@ -46,7 +63,7 @@
       "name": "KONTAKTS Platform / YouTube Dashboard",
       "version": "0.2.5",
       "status": "BUILD PASS / WEB FLASHER CANDIDATE",
-      "description": "Current KONTAKTS platform candidate with STATUS, OTA, persistent Widget Runtime, NTP clock support and the first YouTube Data API dashboard service with local history and browser configuration.",
+      "description": "Earlier KONTAKTS platform candidate with STATUS, OTA, persistent Widget Runtime, NTP clock support and the first YouTube Data API dashboard service with local history and browser configuration.",
       "manifest": "./manifest-app08.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app08-youtube-dashboard/apps/06_OTARecovery"
     }
