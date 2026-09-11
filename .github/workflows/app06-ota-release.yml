@@ -29,17 +29,28 @@ jobs:
           version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           echo "version=$version" >> "$GITHUB_OUTPUT"
-      - name: Build OTA image
+      - name: Build OTA and full images
         env:
           APP06_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
         run: |
-          docker run --rm -e KONTAKTS_APP_VERSION="${APP06_VERSION}" -v "$PWD:/project" -w /project/apps/06_OTARecovery/idf espressif/idf:v5.5.5 bash -lc 'git config --global --add safe.directory /project && idf.py set-target esp32s3 && idf.py build'
+          mkdir -p .app06-ota
+          docker run --rm \
+            -e KONTAKTS_APP_VERSION="${APP06_VERSION}" \
+            -v "$PWD:/project" \
+            -w /project/apps/06_OTARecovery/idf \
+            espressif/idf:v5.5.5 bash -lc '
+              git config --global --add safe.directory /project &&
+              idf.py set-target esp32s3 &&
+              idf.py build &&
+              cp build/app06_ota_recovery.bin /project/.app06-ota/app06-ota.bin &&
+              cd build &&
+              esptool.py --chip esp32s3 merge_bin -o "/project/.app06-ota/app06-ota-recovery-v${KONTAKTS_APP_VERSION}-full.bin" @flash_args
+            '
       - name: Build manifest
         id: assets
         shell: bash
         run: |
-          mkdir -p .app06-ota
-          cp apps/06_OTARecovery/idf/build/app06_ota_recovery.bin .app06-ota/app06-ota.bin
           sha="$(sha256sum .app06-ota/app06-ota.bin | awk '{print $1}')"
           size="$(stat -c '%s' .app06-ota/app06-ota.bin)"
           version="${{ steps.version.outputs.version }}"
@@ -50,6 +61,7 @@ jobs:
           EOF
           echo "sha256=$sha" >> "$GITHUB_OUTPUT"
           echo "size=$size" >> "$GITHUB_OUTPUT"
+          sha256sum .app06-ota/app06-ota*.bin
       - name: Attach validated factory recovery
         env: {GH_TOKEN: '${{ github.token }}'}
         shell: bash
@@ -72,9 +84,10 @@ jobs:
         shell: bash
         run: |
           tag="app06-v${APP06_VERSION}"
-          notes="KONTAKTS Platform OTA ${APP06_VERSION}. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. SD application/library content is released independently from the platform firmware."
+          notes="KONTAKTS Platform OTA ${APP06_VERSION}. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes a merged full image for initial install/Web Flasher. SD application/library content is released independently from the platform firmware."
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$tag" .app06-ota/* --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
           fi
