@@ -49,17 +49,17 @@ static bool query_value(httpd_req_t *req, const char *key, char *out, size_t out
     return httpd_query_key_value(query, key, out, out_len) == ESP_OK;
 }
 
-static esp_err_t ensure_sd(httpd_req_t *req)
+static bool ensure_sd(httpd_req_t *req)
 {
-    if (sd_manager_is_mounted()) return ESP_OK;
-    esp_err_t err = sd_manager_mount();
-    if (err == ESP_OK) return ESP_OK;
+    if (sd_manager_is_mounted()) return true;
+    if (sd_manager_mount() == ESP_OK) return true;
     httpd_resp_set_status(req, "503 Service Unavailable");
     set_html_headers(req);
-    return httpd_resp_sendstr(req,
+    httpd_resp_sendstr(req,
         "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>KONTAKTS Help</title></head><body><h1>SD Help unavailable</h1>"
-        "<p>Insert the SD card and try again.</p></body></html>");
+        "<p>Insert the SD card and try again.</p><p><a href='/'>Back to platform home</a></p></body></html>");
+    return false;
 }
 
 static esp_err_t send_file(httpd_req_t *req, const char *path, const char *content_type, bool html)
@@ -69,22 +69,17 @@ static esp_err_t send_file(httpd_req_t *req, const char *path, const char *conte
         httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "help file not found");
         return ESP_OK;
     }
-
     if (html) set_html_headers(req);
     else {
         httpd_resp_set_type(req, content_type);
         httpd_resp_set_hdr(req, "Cache-Control", "no-cache");
         httpd_resp_set_hdr(req, "X-Content-Type-Options", "nosniff");
     }
-
     char buf[HELP_IO_CHUNK];
     size_t got;
     esp_err_t err = ESP_OK;
     while ((got = fread(buf, 1, sizeof(buf), f)) > 0) {
-        if (httpd_resp_send_chunk(req, buf, got) != ESP_OK) {
-            err = ESP_FAIL;
-            break;
-        }
+        if (httpd_resp_send_chunk(req, buf, got) != ESP_OK) { err = ESP_FAIL; break; }
     }
     fclose(f);
     if (err != ESP_OK) return err;
@@ -119,7 +114,6 @@ static bool manifest_help(const char *folder, char *display_name, size_t display
     cJSON *root = cJSON_Parse(text);
     free(text);
     if (!root) return false;
-
     const cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
     const cJSON *docs = cJSON_GetObjectItemCaseSensitive(root, "documentation");
     const cJSON *entry = cJSON_IsObject(docs) ? cJSON_GetObjectItemCaseSensitive(docs, "entry") : NULL;
@@ -156,21 +150,21 @@ static esp_err_t send_escaped(httpd_req_t *req, const char *text)
 
 static esp_err_t help_root_get(httpd_req_t *req)
 {
-    esp_err_t mount_err = ensure_sd(req);
-    if (mount_err != ESP_OK) return mount_err;
-
+    if (!ensure_sd(req)) return ESP_OK;
     set_html_headers(req);
     httpd_resp_sendstr_chunk(req,
         "<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>"
         "<title>KONTAKTS Help</title><link rel='stylesheet' href='/help/style.css'></head><body>"
         "<header><div class='eyebrow'>ESP32-8048S043 / KONTAKTS</div><h1>Help Center</h1>"
+        "<div class='topnav'><a href='/'>Platform Home</a><a href='#applications'>Project Pages</a>"
+        "<a href='https://github.com/AIDevelopersMonster/ESP32-8048S043-lab'>GitHub Project</a></div>"
         "<p>System documentation and help carried by applications on the SD card.</p></header>"
         "<main><h2>System</h2><div class='grid'>"
         "<a class='card' href='/help/system?doc=user'><b>User Guide</b><span>Setup, Wi-Fi, SD apps, OTA and recovery</span></a>"
         "<a class='card' href='/help/system?doc=application-programmer'><b>Application Programmer</b><span>Packages, JSON widgets, services and bindings</span></a>"
         "<a class='card' href='/help/system?doc=system-programmer'><b>System Programmer</b><span>Platform architecture, boot, HTTP and runtime internals</span></a>"
         "<a class='card' href='/help/system?doc=hardware'><b>Hardware Reference</b><span>Board, GPIO, connectors, display, touch, SD and datasheets</span></a>"
-        "</div><h2>Applications</h2><div class='grid'>");
+        "</div><h2 id='applications'>Project / Application Pages</h2><div class='grid'>");
 
     DIR *dir = opendir(SD_MANAGER_WIDGET_ROOT);
     size_t app_count = 0;
@@ -181,86 +175,67 @@ static esp_err_t help_root_get(httpd_req_t *req)
             char display[96] = {0};
             if (!manifest_help(entry->d_name, display, sizeof(display))) continue;
             char doc_path[256];
-            int path_n = snprintf(doc_path, sizeof(doc_path), "%s/%.63s/html/index.html",
-                                  SD_MANAGER_WIDGET_ROOT, entry->d_name);
+            int path_n = snprintf(doc_path, sizeof(doc_path), "%s/%.63s/html/index.html", SD_MANAGER_WIDGET_ROOT, entry->d_name);
             if (path_n < 0 || (size_t)path_n >= sizeof(doc_path)) continue;
             struct stat st;
             if (stat(doc_path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
-
             char link[160];
-            int link_n = snprintf(link, sizeof(link),
-                                  "<a class='card' href='/help/app?name=%.63s'><b>", entry->d_name);
+            int link_n = snprintf(link, sizeof(link), "<a class='card' href='/help/app?name=%.63s'><b>", entry->d_name);
             if (link_n < 0 || (size_t)link_n >= sizeof(link)) continue;
             httpd_resp_sendstr_chunk(req, link);
             if (send_escaped(req, display) != ESP_OK) { closedir(dir); return ESP_FAIL; }
-            httpd_resp_sendstr_chunk(req, "</b><span>Application help from SD package</span></a>");
+            httpd_resp_sendstr_chunk(req, "</b><span>Project page and application help from SD package</span></a>");
             app_count++;
         }
         closedir(dir);
     }
     if (!app_count) httpd_resp_sendstr_chunk(req, "<div class='note'>No application help packages found.</div>");
-
     httpd_resp_sendstr_chunk(req,
-        "</div></main><footer>Documentation is served from SD. HTML updates do not require reflashing.</footer>"
+        "</div></main><footer><a href='/'>Platform Home</a> · Documentation is served from SD. HTML updates do not require reflashing.</footer>"
         "</body></html>");
     return httpd_resp_sendstr_chunk(req, NULL);
 }
 
 static esp_err_t help_system_get(httpd_req_t *req)
 {
-    esp_err_t mount_err = ensure_sd(req);
-    if (mount_err != ESP_OK) return mount_err;
-
+    if (!ensure_sd(req)) return ESP_OK;
     char doc[64] = {0};
     if (!query_value(req, "doc", doc, sizeof(doc))) strlcpy(doc, "index", sizeof(doc));
-
     const char *path = NULL;
     if (strcmp(doc, "index") == 0) path = SD_MANAGER_BASE_PATH "/wiki/system/index.html";
     else if (strcmp(doc, "user") == 0) path = SD_MANAGER_BASE_PATH "/wiki/system/user/index.html";
     else if (strcmp(doc, "application-programmer") == 0) path = SD_MANAGER_BASE_PATH "/wiki/system/application-programmer/index.html";
     else if (strcmp(doc, "system-programmer") == 0) path = SD_MANAGER_BASE_PATH "/wiki/system/system-programmer/index.html";
     else if (strcmp(doc, "hardware") == 0) path = SD_MANAGER_BASE_PATH "/wiki/system/hardware/index.html";
-    else {
-        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "unknown system help page");
-        return ESP_OK;
-    }
+    else { httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "unknown system help page"); return ESP_OK; }
     return send_file(req, path, "text/html; charset=utf-8", true);
 }
 
 static esp_err_t help_app_get(httpd_req_t *req)
 {
-    esp_err_t mount_err = ensure_sd(req);
-    if (mount_err != ESP_OK) return mount_err;
-
+    if (!ensure_sd(req)) return ESP_OK;
     char name[HELP_NAME_MAX + 1] = {0};
     if (!query_value(req, "name", name, sizeof(name)) || !safe_package_name(name)) {
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "invalid application name");
-        return ESP_OK;
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "invalid application name"); return ESP_OK;
     }
     char display[96] = {0};
     if (!manifest_help(name, display, sizeof(display))) {
-        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "application does not declare HTML help");
-        return ESP_OK;
+        httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "application does not declare HTML help"); return ESP_OK;
     }
     char path[256];
     int n = snprintf(path, sizeof(path), "%s/%.63s/html/index.html", SD_MANAGER_WIDGET_ROOT, name);
     if (n < 0 || (size_t)n >= sizeof(path)) {
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "application help path too long");
-        return ESP_OK;
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "application help path too long"); return ESP_OK;
     }
     return send_file(req, path, "text/html; charset=utf-8", true);
 }
 
 static esp_err_t help_style_get(httpd_req_t *req)
 {
-    esp_err_t mount_err = ensure_sd(req);
-    if (mount_err != ESP_OK) return mount_err;
+    if (!ensure_sd(req)) return ESP_OK;
     const char *path = SD_MANAGER_BASE_PATH "/wiki/assets/style.css";
     FILE *probe = fopen(path, "rb");
-    if (probe) {
-        fclose(probe);
-        return send_file(req, path, "text/css; charset=utf-8", false);
-    }
+    if (probe) { fclose(probe); return send_file(req, path, "text/css; charset=utf-8", false); }
     httpd_resp_set_type(req, "text/css; charset=utf-8");
     return httpd_resp_sendstr(req, "body{font-family:sans-serif;max-width:900px;margin:auto;padding:20px}a{color:#0969da}");
 }
