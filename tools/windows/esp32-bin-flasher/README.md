@@ -42,3 +42,7 @@ The exact COM port varies by machine.
 ## Evidence status
 
 **PHYSICAL PASS** — the GUI was used successfully on the project board on 2026-09-11. The earlier blocking stdout/stderr implementation was replaced before this version was recorded here.
+
+Video demonstration of the validated flasher together with the newer SD application-library UI:
+
+- https://youtube.com/shorts/T91Nbeij2r8
