@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.3.3 - SD Application Library",
+  "version": "0.3.3",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.3/app06-ota-recovery-v0.3.3-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
