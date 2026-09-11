@@ -202,6 +202,13 @@ This video records the platform `0.3.1` milestone on the real ESP32-8048S043: th
 - **Scope confirmed:** SD package discovery, generic launcher, Widget Runtime install/run and `metric_carousel` operation on physical hardware.
 - **UX note:** functionality passed; launcher/widget visual design remains an active refinement item.
 
+### 4. Windows flasher + hierarchical SD launcher
+
+This short records the next user-facing milestone: the physically validated Windows ESP32 BIN Flasher v2 is used together with the newer SD application-library implementation where packages are presented as applications and package entrypoints open as a second-level menu.
+
+- **Video:** [ESP32-8048S043 — Windows flasher and new SD applications UI](https://youtube.com/shorts/T91Nbeij2r8)
+- **Scope:** helper flasher workflow plus the newer hierarchical SD launcher UX on the physical board.
+
 ## Application/service contract
 
 Applications depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
