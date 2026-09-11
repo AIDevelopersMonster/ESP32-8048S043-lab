@@ -10,118 +10,111 @@
 <header>
   <div class="eyebrow">SYSTEM HELP / HARDWARE</div>
   <h1>ESP32-8048S043 — разъёмы, GPIO и электрические пределы</h1>
-  <p>Практический справочник для проверенного образца KONTAKTS Sample A. Здесь отдельно указаны физические разъёмы платы, общие линии LCD/Touch/SD и ограничения ESP32-S3.</p>
-  <div class="topnav"><a href="/help">Help Center</a><a href="/help/system?doc=system-programmer">Системный программист</a></div>
+  <p>Практический справочник для проверенного образца KONTAKTS Sample A. Здесь жёстко разделены физически проверенные функции платы, видимая маркировка, внешние источники и возможности самого ESP32-S3.</p>
+  <div class="topnav"><a href="/">Platform Home</a><a href="/help">Help Center</a><a href="/help#applications">Project Pages</a><a href="/help/system?doc=system-programmer">Системный программист</a></div>
 </header>
 <main>
 
-<h2>Проверенный образец</h2>
+<h2>Статус Sample A</h2>
 <table>
-  <tr><th>Узел</th><th>Sample A</th></tr>
-  <tr><td>MCU</td><td>ESP32-S3 rev 0.2</td></tr>
-  <tr><td>Module / memory</td><td>ESP32-S3-WROOM-1 class, 16 MB Flash, 8 MB OPI PSRAM</td></tr>
-  <tr><td>LCD</td><td>4.3 inch, 800×480, RGB parallel</td></tr>
-  <tr><td>Touch</td><td>Goodix GT911, I²C, physical PASS at 0x5D</td></tr>
-  <tr><td>USB-C</td><td>5 V power + CH340C USB-UART console/programming path</td></tr>
-  <tr><td>TF / microSD</td><td>SPI on GPIO10/11/12/13, physical PASS at 10 MHz</td></tr>
+  <tr><th>Функция</th><th>Статус</th></tr>
+  <tr><td>LCD 800×480 RGB</td><td>PHYSICAL PASS</td></tr>
+  <tr><td>GT911 touch</td><td>PHYSICAL PASS, внутренний I²C, адрес 0x5D</td></tr>
+  <tr><td>microSD / TF</td><td>PHYSICAL PASS, SPI 10 MHz</td></tr>
+  <tr><td>P2 маркировка</td><td>PHYSICALLY OBSERVED: IO19 / IO11 / IO12 / IO13</td></tr>
+  <tr><td>Внешний I²C</td><td><b>NOT VERIFIED</b></td></tr>
+  <tr><td>Внешний ADC</td><td><b>NOT VERIFIED</b></td></tr>
+  <tr><td>P1/P3/P4 точная распиновка</td><td>SOURCE-BACKED, требуется continuity-test</td></tr>
 </table>
 
-<p class="note"><b>Главное правило:</b> вся логика GPIO — 3.3 V. Подача 5 V непосредственно на GPIO ESP32-S3 недопустима. 5 V разрешены только на предназначенной для питания линии P1/VIN или USB-C.</p>
+<p class="note"><b>Важно:</b> возможность ESP32-S3 назначить GPIO как I²C, ADC, UART, PWM или другую функцию ещё не означает, что такая функция гарантированно доступна на конкретном внешнем разъёме этой платы.</p>
 
-<h2>Карта внешних разъёмов P1–P4</h2>
-<p>На четырёхразъёмной ревизии ESP32-8048S043 используются 4-контактные разъёмы. P1–P3 документированы как Molex PicoBlade-compatible 1.25 mm. Малый P4 на исходной четырёхразъёмной версии — JST SH-compatible 1.0 mm. На более поздних ревизиях встречается другое расположение P4/P5, поэтому перед покупкой кабеля сравните шаг и маркировку именно своей платы.</p>
+<h2>Что подтверждено физически</h2>
 <table>
-  <tr><th>Разъём</th><th>Физический интерфейс</th><th>Pin 1</th><th>Pin 2</th><th>Pin 3</th><th>Pin 4</th><th>Практическое назначение</th></tr>
-  <tr><td><b>P1</b></td><td>PicoBlade 4P, 1.25 mm</td><td>5V / VIN</td><td>TXD / UART0</td><td>RXD / UART0</td><td>GND</td><td>Лучше всего: питание 5 V. UART0 совместно используется CH340C.</td></tr>
-  <tr><td><b>P2</b><br>маркировка <b>SPI</b></td><td>PicoBlade 4P, 1.25 mm</td><td>IO19 на v1.1; на ранних v1.0 встречается IO18</td><td>IO11 / SD MOSI</td><td>IO12 / SD CLK</td><td>IO13 / SD MISO</td><td>SPI-расширение, но GPIO11–13 уже заняты microSD.</td></tr>
-  <tr><td><b>P3</b><br>маркировки <b>UART1 / USB</b></td><td>PicoBlade 4P, 1.25 mm</td><td>IO17 / U1TXD</td><td>IO18 / U1RXD</td><td>IO19 / SDA / USB D−</td><td>IO20 / SCL / USB D+</td><td>Лучший разъём для UART1 и GPIO17/18. IO19/20 уже являются I²C шиной GT911.</td></tr>
-  <tr><td><b>P4</b></td><td>JST SH 4P, 1.0 mm на исходной 4-port PCB</td><td>GND</td><td>3.3V OUT</td><td>IO17</td><td>IO18</td><td>Самый удобный разъём для маломощного датчика: земля + 3.3 V + два GPIO.</td></tr>
+  <tr><th>Узел</th><th>GPIO</th><th>Статус</th></tr>
+  <tr><td>GT911 SDA / SCL</td><td>19 / 20</td><td>Внутренняя I²C-шина touch — PHYSICAL PASS</td></tr>
+  <tr><td>GT911 RESET</td><td>38</td><td>Используется touch</td></tr>
+  <tr><td>microSD CS / MOSI / CLK / MISO</td><td>10 / 11 / 12 / 13</td><td>PHYSICAL PASS at 10 MHz</td></tr>
+  <tr><td>P2 visible labels</td><td>IO19 / IO11 / IO12 / IO13</td><td>Подтверждено шелкографией Sample A</td></tr>
 </table>
 
-<p class="note"><b>Ревизия P2:</b> опубликованы как минимум две разводки. У v1.1 P2.1 указан как GPIO19, у ранней v1.0 встречается GPIO18. На Sample A перед подключением к P2.1 ориентируйтесь по шелкографии конкретной платы, а не только по интернет-pinout.</p>
-
-<h3>Какой кабель искать</h3>
+<h2>P2 — наш физически идентифицированный разъём</h2>
 <table>
-  <tr><th>Порт</th><th>Семейство</th><th>Пример ответной части</th><th>Номинал самого разъёма</th></tr>
-  <tr><td>P1 / P2 / P3</td><td>Molex PicoBlade-compatible, 1.25 mm, 4P</td><td>51021-0400 / 510210400 housing; contacts 50079/50058</td><td>Зависит от провода и числа цепей; семейство рассчитано до нескольких ампер в подходящей конфигурации. Это НЕ допустимый ток платы/GPIO.</td></tr>
-  <tr><td>P4, исходная 4-port PCB</td><td>JST SH-compatible, 1.0 mm, 4P</td><td>SHR-04V-S / SHR-04V-S-B; contact SSH-003T-P0.2-H</td><td>1 A AC/DC для семейства SH с AWG28. Это НЕ доступный ток 3.3 V шины платы.</td></tr>
-</table>
-<p class="muted">Разъём JST-SH физически похож на Qwiic. Но штатная распиновка P4 здесь GND / 3.3V / IO17 / IO18, а не заранее назначенные SDA/SCL. Использовать его как Qwiic можно только если программа явно назначит I²C на IO17/18.</p>
-
-<h2>Какие GPIO реально удобны</h2>
-<table>
-  <tr><th>GPIO</th><th>Где выведен</th><th>Функции ESP32-S3</th><th>Что уже подключено на плате</th><th>Рекомендация</th></tr>
-  <tr><td><b>17</b></td><td>P3.1, P4.3</td><td>Digital I/O, PWM, U1TXD, ADC2_CH6</td><td>Обычно свободен</td><td><b>ПЕРВЫЙ ВЫБОР.</b> UART TX, кнопка, датчик, PWM, управляющий сигнал.</td></tr>
-  <tr><td><b>18</b></td><td>P3.2, P4.4; на части v1.0 также P2.1</td><td>Digital I/O, PWM, U1RXD, ADC2_CH7</td><td>Линия GT911 INT только если установлен/замкнут R17</td><td><b>ХОРОШИЙ ВЫБОР</b>, пока R17/CTP_INT не используется.</td></tr>
-  <tr><td><b>19</b></td><td>P3.3; P2.1 на v1.1</td><td>Digital I/O, ADC2_CH8, U1RTS, native USB D−</td><td>GT911 SDA, 4.7 kΩ pull-up</td><td><b>SHARED.</b> Лучше использовать только как общую I²C SDA для датчиков с другим адресом.</td></tr>
-  <tr><td><b>20</b></td><td>P3.4</td><td>Digital I/O, ADC2_CH9, U1CTS, native USB D+</td><td>GT911 SCL, 4.7 kΩ pull-up</td><td><b>SHARED.</b> Лучше использовать только как общую I²C SCL.</td></tr>
-  <tr><td><b>11</b></td><td>P2.2</td><td>Digital I/O, PWM, ADC2_CH0, SPI MOSI</td><td>microSD MOSI</td><td><b>SHARED SD.</b> Допустим второй SPI device при отдельном CS и корректной tri-state MISO.</td></tr>
-  <tr><td><b>12</b></td><td>P2.3</td><td>Digital I/O, PWM, ADC2_CH1, SPI CLK</td><td>microSD CLK</td><td><b>SHARED SD.</b> Не переназначать, если нужна SD.</td></tr>
-  <tr><td><b>13</b></td><td>P2.4</td><td>Digital I/O, PWM, ADC2_CH2, SPI MISO</td><td>microSD MISO</td><td><b>SHARED SD.</b> Внешнее устройство обязано отпускать MISO, когда его CS не активен.</td></tr>
-  <tr><td><b>10</b></td><td>не выведен как обычный P-pin</td><td>Digital I/O, ADC1_CH9, SPI CS</td><td>microSD CS</td><td>Резерв платформы SD.</td></tr>
-  <tr><td><b>43 / 44</b></td><td>P1 TXD/RXD</td><td>UART0 TX/RX</td><td>CH340C USB-UART</td><td><b>НЕ ЛУЧШИЙ GPIO.</b> Не подключать внешний активный TX без понимания конфликта с CH340C.</td></tr>
+  <tr><th>Контакт</th><th>Маркировка Sample A</th><th>Текущее использование платформой</th><th>Внешний статус</th></tr>
+  <tr><td>1</td><td>IO19</td><td>GT911 SDA</td><td>Не гарантирован как внешний I²C/GPIO до continuity/coexistence test</td></tr>
+  <tr><td>2</td><td>IO11</td><td>SD MOSI</td><td>Не гарантирован как внешний shared-SPI до физического теста</td></tr>
+  <tr><td>3</td><td>IO12</td><td>SD CLK</td><td>Не гарантирован как внешний shared-SPI до физического теста</td></tr>
+  <tr><td>4</td><td>IO13</td><td>SD MISO</td><td>Не гарантирован как внешний shared-SPI до физического теста</td></tr>
 </table>
 
-<h2>Маркировка «USB» на P3 — важное уточнение</h2>
-<p>У самого ESP32-S3 GPIO19/20 действительно являются USB D−/D+. Поэтому на PCB рядом с P3 присутствует маркировка <b>USB</b>. Но на нашей capacitive-touch версии эти же линии уже подключены к GT911 как I²C SDA/SCL. Штатный USB-C платы работает через CH340C. Поэтому P3.3/P3.4 не следует считать готовым внешним USB-портом без аппаратной переделки и отключения конфликтующей нагрузки.</p>
-
-<h2>Электрические пределы</h2>
+<h2>P1 / P3 / P4 — пока не сертификат</h2>
+<p>По опубликованным схемам и исследованиям этой семьи плат имеются вероятные карты P1/P3/P4, но на нашем Sample A они ещё не прозвонены контакт-в-контакт. Поэтому Help Center не объявляет их гарантированными интерфейсами.</p>
 <table>
-  <tr><th>Параметр</th><th>Значение / правило</th></tr>
-  <tr><td>Питание платы</td><td>5 V. Для близких ESP32-8048S043C-I vendor variants указывается рабочий диапазон 4.75–5.25 V.</td></tr>
-  <tr><td>Типичное потребление похожей 4.3″ платы</td><td>Около 180 mA @ 5 V; до ~310 mA @ 5 V при максимальной яркости в vendor manual. Для нашего Sample A это ориентир, не измеренный сертификат.</td></tr>
-  <tr><td>GPIO logic</td><td>3.3 V. Нельзя подавать 5 V на GPIO.</td></tr>
-  <tr><td>GPIO input HIGH</td><td>не ниже 0.75×VDD ≈ 2.48 V при VDD=3.3 V</td></tr>
-  <tr><td>GPIO input LOW</td><td>не выше 0.25×VDD ≈ 0.83 V при VDD=3.3 V</td></tr>
-  <tr><td>GPIO input maximum</td><td>VDD + 0.3 V; при 3.3 V это 3.6 V абсолютный верх по DC table. Для проекта используем только 0–3.3 V.</td></tr>
-  <tr><td>GPIO source characteristic</td><td>до 40 mA при PAD_DRIVER=3 и VOH ≥ 2.64 V по DC characteristic.</td></tr>
-  <tr><td>GPIO sink characteristic</td><td>до 28 mA при PAD_DRIVER=3 и VOL = 0.495 V по DC characteristic.</td></tr>
-  <tr><td>Default drive-strength</td><td>GPIO17/18: 10 mA; GPIO19/20: 40 mA; большинство остальных: 20 mA. Это настройка drive-strength, а не разрешение питать такую нагрузку постоянно.</td></tr>
-  <tr><td>P4 3.3 V OUT</td><td>Точный доступный внешний ток производителем платы не нормирован. Использовать для маломощных датчиков/логики. Моторы, реле, сервоприводы, помпы и мощные LED от этой линии не питать.</td></tr>
+  <tr><th>Разъём</th><th>Источник</th><th>Текущий статус</th></tr>
+  <tr><td>P1</td><td>5V / UART0 / GND по внешним схемам</td><td>SOURCE-BACKED ONLY</td></tr>
+  <tr><td>P3</td><td>GPIO17/18/19/20 по внешним схемам</td><td>SOURCE-BACKED ONLY</td></tr>
+  <tr><td>P4</td><td>GND / 3.3V / GPIO17 / GPIO18 по внешним схемам</td><td>SOURCE-BACKED ONLY</td></tr>
 </table>
 
-<p class="note"><b>GPIO — это сигнал, не силовой выход.</b> Для реле, соленоида, мотора, насоса, ленты или мощного буззера используйте отдельное питание и MOSFET/транзистор/драйвер. Землю внешнего источника объединяйте с GND платы, если интерфейс не гальванически изолирован.</p>
+<h2>I²C — что мы знаем точно</h2>
+<p>Точно проверено только то, что GT911 работает на внутренней шине GPIO19/20 и отвечает по адресу 0x5D.</p>
+<pre>GPIO19 = GT911 SDA
+GPIO20 = GT911 SCL
+GT911 = 0x5D
+</pre>
+<p class="note"><b>Внешний I²C-порт пока НЕ гарантирован.</b> Нужно подтвердить, что нужные контакты разъёма действительно сидят на этих сетях, а затем физически проверить совместную работу внешнего I²C-устройства с GT911 без сбоев touch.</p>
 
-<h2>Готовые схемы использования разъёмов</h2>
+<h2>ADC — что мы знаем точно</h2>
+<p>ESP32-S3 как микроконтроллер имеет ADC-capable GPIO. Однако это лишь характеристика кристалла. Для нашей платы пока не подтверждено, что конкретный внешний контакт действительно пригоден как аналоговый вход с приемлемым диапазоном, импедансом и шумом.</p>
+<p class="note"><b>Внешний ADC пока НЕ гарантирован.</b> До теста известными напряжениями не используем формулировки вроде «GPIO17 = готовый ADC-вход» или «GPIO18 = готовый ADC-вход».</p>
+
+<h2>UART / GPIO / PWM</h2>
+<p>То же правило относится к UART1, PWM и произвольным GPIO-функциям на P1/P3/P4. ESP32-S3 умеет маршрутизировать многие периферийные функции через GPIO matrix, но для конкретной платы сначала требуется подтвердить саму электрическую связь разъёма с нужным GPIO и отсутствие конфликтующей обвязки.</p>
+
+<h2>Электрические границы</h2>
 <table>
-  <tr><th>Задача</th><th>Подключение</th><th>Комментарий</th></tr>
-  <tr><td>UART внешнего устройства</td><td>P3.1 IO17 = TX, P3.2 IO18 = RX + GND с P4/P1</td><td>3.3 V TTL. Это предпочтительнее P1, потому что P1 разделён с CH340C.</td></tr>
-  <tr><td>I²C датчик</td><td>P3.3 IO19 = SDA, P3.4 IO20 = SCL + питание с P4</td><td>Можно делить шину с GT911, если адрес датчика не конфликтует. Платы уже имеют pull-up на 19/20.</td></tr>
-  <tr><td>Аналоговый датчик</td><td>P4.3 IO17 или P4.4 IO18 + 3.3V/GND</td><td>ADC2_CH6/7. Не превышать 3.3 V; для точных измерений учитывать attenuation/calibration.</td></tr>
-  <tr><td>Кнопка / геркон / цифровой датчик</td><td>P4 IO17/18</td><td>Можно использовать вход, прерывание, internal pull-up/down при необходимости.</td></tr>
-  <tr><td>PWM управление</td><td>P4/P3 IO17 или IO18 → вход драйвера</td><td>Для яркости, вентилятора, насоса и т.п. GPIO управляет драйвером, не нагрузкой напрямую.</td></tr>
-  <tr><td>Дополнительное SPI устройство</td><td>P2 IO11/12/13 + отдельный CS на IO17/18 + GND</td><td>Шина общая с microSD. Требуются отдельный CS, совместимые уровни 3.3 V и корректное освобождение MISO.</td></tr>
+  <tr><th>Параметр</th><th>Правило</th></tr>
+  <tr><td>GPIO logic</td><td>3.3 V. 5 V непосредственно на GPIO не подавать.</td></tr>
+  <tr><td>Абсолютный входной предел</td><td>Не использовать выше VDD + 0.3 V; для проекта принимаем рабочее правило 0…3.3 V.</td></tr>
+  <tr><td>GPIO current</td><td>GPIO использовать как сигнальный/управляющий выход, а не как источник питания нагрузки.</td></tr>
+  <tr><td>3.3 V external rail</td><td>Доступный внешний ток на Sample A ещё не измерен.</td></tr>
 </table>
+<p class="note">Реле, насосы, соленоиды, моторы, сервоприводы и мощные LED требуют отдельного питания и MOSFET/транзисторного/релейного драйвера.</p>
 
-<h2>Занятые GPIO платформы — не использовать как expansion</h2>
+<h2>Занятые GPIO платформы</h2>
 <table>
   <tr><th>Функция</th><th>GPIO</th></tr>
   <tr><td>LCD DE / VSYNC / HSYNC / PCLK</td><td>40 / 41 / 39 / 42</td></tr>
-  <tr><td>LCD Backlight PWM</td><td>2</td></tr>
+  <tr><td>LCD Backlight</td><td>2</td></tr>
   <tr><td>RGB R0..R4</td><td>45, 48, 47, 21, 14</td></tr>
   <tr><td>RGB G0..G5</td><td>5, 6, 7, 15, 16, 4</td></tr>
   <tr><td>RGB B0..B4</td><td>8, 3, 46, 9, 1</td></tr>
   <tr><td>GT911 SDA / SCL / RESET / optional INT</td><td>19 / 20 / 38 / 18</td></tr>
   <tr><td>microSD CS / MOSI / CLK / MISO</td><td>10 / 11 / 12 / 13</td></tr>
-  <tr><td>PSRAM internal use on N16R8 board family</td><td>35 / 36 / 37 — не считать свободными GPIO</td></tr>
+  <tr><td>OPI PSRAM</td><td>35 / 36 / 37 — не считать свободными</td></tr>
 </table>
 
-<h2>Что ещё нужно измерить на Sample A</h2>
-<p>Распиновка и интерфейс теперь достаточно определены для разработки. Единственный важный электрический параметр, которого нет в надёжной документации платы, — реальный допустимый внешний ток 3.3 V на P4 при работающих LCD, Wi‑Fi и SD. Его следует определить отдельным физическим тестом с измерением напряжения и температуры стабилизатора, после чего добавить VERIFIED limit.</p>
-
-<h2>Источники и документация</h2>
+<h2>Что проверяем следующим этапом</h2>
 <ul>
-  <li><a href="https://macsbug.wordpress.com/2022/11/29/esp32-8048s043/">ESP32-8048S043 board reconstruction / 4280S043 layout</a> — P1–P4, LCD, GT911, TF wiring.</li>
-  <li><a href="https://htlab.net/electronics/mcu/esp32/esp32-arduino2-lvgl9-hmi-display-board/">HTLAB ESP32 HMI board study</a> — connector families, P1–P4 pin mapping, P2 revision warning and shared-line analysis.</li>
-  <li><a href="https://esp3d.io/esp3d-tft/version_1x/hardware/esp32-s3/sunton-43-8048/">ESP3D ESP32-8048S043C board reference</a> — independent connector/pin cross-check.</li>
-  <li><a href="https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf">Espressif ESP32-S3 Datasheet</a> — official GPIO voltage/current, ADC, UART and USB functions.</li>
-  <li><a href="https://documentation.espressif.com/esp-hardware-design-guidelines/en/latest/esp32s3/esp-hardware-design-guidelines-en-master-esp32s3.pdf">Espressif ESP32-S3 Hardware Design Guidelines</a> — ADC and hardware-interface recommendations.</li>
-  <li><a href="https://www.molex.com/en-us/products/series-chart/51021">Molex PicoBlade 51021</a> — 1.25 mm housing family.</li>
-  <li><a href="https://www.jst-mfg.com/product/index.php?lang=2&series=231">JST SH connector</a> — 1.0 mm connector family.</li>
+  <li>прозвонка всех контактов P1/P3/P4 до MCU/net;</li>
+  <li>GPIO17/18 как обычный digital input/output;</li>
+  <li>UART1 на внешнем разъёме;</li>
+  <li>внешнее I²C-устройство при одновременно работающем GT911;</li>
+  <li>ADC known-voltage test с измерением ошибки;</li>
+  <li>shared SPI через P2 при одновременно работающей SD;</li>
+  <li>максимально безопасный внешний ток 3.3 V rail под реальной нагрузкой LCD + Wi‑Fi + SD.</li>
 </ul>
-<p class="muted">Интернет-схемы относятся к нескольким ревизиям ESP32-8048S043. Там, где найдено расхождение, справочник сознательно сохраняет предупреждение о ревизии вместо ложной точности. Для Sample A финальный приоритет всегда имеют шелкография, фото и физическое измерение.</p>
+
+<h2>Источники</h2>
+<ul>
+  <li><a href="https://www.espressif.com/sites/default/files/documentation/esp32-s3_datasheet_en.pdf">Espressif ESP32-S3 Datasheet</a> — возможности самого MCU.</li>
+  <li><a href="https://macsbug.wordpress.com/2022/11/29/esp32-8048s043/">ESP32-8048S043 board reconstruction</a> — семейство платы и разводка.</li>
+  <li><a href="https://htlab.net/electronics/mcu/esp32/esp32-arduino2-lvgl9-hmi-display-board/">HTLAB ESP32 HMI board study</a> — варианты разъёмов и ревизий.</li>
+  <li><a href="https://esp3d.io/esp3d-tft/version_1x/hardware/esp32-s3/sunton-43-8048/">ESP3D board reference</a> — независимая сверка семейства.</li>
+</ul>
+<p class="muted">Для Sample A приоритет доказательств: физический тест → шелкография/прозвонка конкретной платы → надёжная схема той же ревизии → общая документация ESP32-S3.</p>
 
 </main>
-<footer><a href="/help">← Help Center</a></footer>
+<footer><a href="/">Platform Home</a> · <a href="/help">Help Center</a> · <a href="/help#applications">Project Pages</a></footer>
 </body>
 </html>
