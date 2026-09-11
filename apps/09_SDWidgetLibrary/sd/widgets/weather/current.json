@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "weather.current-demo",
+  "name": "Current Weather",
+  "version": "0.1.0",
+  "background": "#0B1726",
+  "objects": [
+    {"type":"label","x":28,"y":18,"w":260,"h":34,"text":"WEATHER","color":"#F0F6FC"},
+    {"type":"label","x":570,"y":18,"w":145,"h":30,"text":"DEMO DATA","color":"#FFB000"},
+    {"type":"label","x":28,"y":66,"w":250,"h":34,"text":"RIGA","color":"#58A6FF"},
+    {"type":"label","x":28,"y":112,"w":230,"h":40,"text":"12 C","color":"#FFFFFF"},
+    {"type":"label","x":286,"y":112,"w":390,"h":40,"text":"PARTLY CLOUDY","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":180,"w":220,"h":34,"text":"Humidity 68%","color":"#8B949E"},
+    {"type":"label","x":278,"y":180,"w":220,"h":34,"text":"Wind 4 m/s","color":"#8B949E"},
+    {"type":"label","x":528,"y":180,"w":190,"h":34,"text":"Pressure 1015","color":"#8B949E"},
+    {"type":"label","x":28,"y":252,"w":330,"h":34,"bind":"time.date","prefix":"DATE  ","color":"#F0F6FC"},
+    {"type":"label","x":390,"y":252,"w":300,"h":34,"bind":"time.clock","prefix":"TIME  ","color":"#F0F6FC"},
+    {"type":"label","x":28,"y":306,"w":670,"h":34,"text":"Live weather provider will replace demo values in the next platform step.","color":"#58A6FF"}
+  ]
+}

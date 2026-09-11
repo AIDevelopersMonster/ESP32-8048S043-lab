@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "id": "weather.today-demo",
+  "name": "Today",
+  "version": "0.1.0",
+  "background": "#111827",
+  "objects": [
+    {"type":"label","x":28,"y":18,"w":240,"h":34,"text":"TODAY","color":"#F0F6FC"},
+    {"type":"label","x":570,"y":18,"w":145,"h":30,"text":"DEMO DATA","color":"#FFB000"},
+    {"type":"label","x":28,"y":64,"w":330,"h":34,"bind":"time.weekday","color":"#58A6FF"},
+    {"type":"label","x":28,"y":110,"w":330,"h":34,"bind":"time.date","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":174,"w":210,"h":34,"text":"MORNING   10 C","color":"#C9D1D9"},
+    {"type":"label","x":266,"y":174,"w":210,"h":34,"text":"DAY       14 C","color":"#F0F6FC"},
+    {"type":"label","x":504,"y":174,"w":210,"h":34,"text":"EVENING   11 C","color":"#C9D1D9"},
+    {"type":"bar","x":28,"y":232,"w":686,"h":18,"value":35,"color":"#58A6FF"},
+    {"type":"label","x":28,"y":270,"w":300,"h":34,"text":"Rain chance 35%","color":"#8B949E"},
+    {"type":"label","x":368,"y":270,"w":330,"h":34,"text":"Sunset 19:34","color":"#8B949E"},
+    {"type":"label","x":28,"y":316,"w":650,"h":30,"text":"Static forecast for SD application-environment demonstration.","color":"#58A6FF"}
+  ]
+}

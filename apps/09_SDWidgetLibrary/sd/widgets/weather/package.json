@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "id": "weather",
+  "name": "Weather",
+  "version": "0.1.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {"id": "current", "name": "Current Weather", "file": "current.json"},
+    {"id": "today", "name": "Today", "file": "today.json"},
+    {"id": "week", "name": "7 Day Forecast", "file": "week.json"}
+  ],
+  "requires": {
+    "minimum_platform": "0.3.2",
+    "services": ["time"]
+  },
+  "firmware": {"required": false},
+  "secrets": {"storage": "nvs", "sd_allowed": false},
+  "demo": {
+    "data": "static",
+    "purpose": "SD-only application discovery and launcher demonstration"
+  }
+}

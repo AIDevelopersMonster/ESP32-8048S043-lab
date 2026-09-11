@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "weather.week-demo",
+  "name": "7 Day Forecast",
+  "version": "0.1.0",
+  "background": "#0F172A",
+  "objects": [
+    {"type":"label","x":28,"y":18,"w":300,"h":34,"text":"7 DAY FORECAST","color":"#F0F6FC"},
+    {"type":"label","x":570,"y":18,"w":145,"h":30,"text":"DEMO DATA","color":"#FFB000"},
+    {"type":"label","x":28,"y":66,"w":650,"h":30,"text":"MON   Partly cloudy        9 / 14 C","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":104,"w":650,"h":30,"text":"TUE   Light rain           8 / 12 C","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":142,"w":650,"h":30,"text":"WED   Cloudy               7 / 13 C","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":180,"w":650,"h":30,"text":"THU   Sunny                8 / 15 C","color":"#F0F6FC"},
+    {"type":"label","x":28,"y":218,"w":650,"h":30,"text":"FRI   Sunny               10 / 17 C","color":"#F0F6FC"},
+    {"type":"label","x":28,"y":256,"w":650,"h":30,"text":"SAT   Showers             11 / 16 C","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":294,"w":650,"h":30,"text":"SUN   Partly cloudy       10 / 15 C","color":"#C9D1D9"},
+    {"type":"label","x":28,"y":332,"w":670,"h":28,"text":"Live forecast service is intentionally not required for this SD-only demo.","color":"#58A6FF"}
+  ]
+}
