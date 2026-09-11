@@ -2,7 +2,24 @@
   "project": "KONTAKTS / ESP32-8048S043 Lab",
   "programmer": "Sol",
   "engineer": "Alex Malachevsky",
+  "sd_library": {
+    "name": "KONTAKTS SD Application Library",
+    "status": "SD RELEASE READY",
+    "description": "Widgets, system wiki/help and offline UPDATE content. Download the ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32.",
+    "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
+    "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
+    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/09_SDWidgetLibrary/sd"
+  },
   "firmwares": [
+    {
+      "id": "app09",
+      "name": "KONTAKTS Platform / SD Application Library",
+      "version": "0.3.3",
+      "status": "BUILD PASS / WEB FLASHER CANDIDATE",
+      "description": "Current platform with SYS | SD | WIDGET, hierarchical SD application launcher, Widget Runtime, GitHub OTA/recovery and browser-only SD Help Center.",
+      "manifest": "./manifest-app09.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/06_OTARecovery"
+    },
     {
       "id": "app07-v024",
       "name": "KONTAKTS Platform Stable",

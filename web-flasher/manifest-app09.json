@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.3.3 - SD Widget Library",
+  "version": "0.3.3",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app09-kontakts-platform-v0.3.3-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

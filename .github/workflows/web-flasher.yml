@@ -47,6 +47,9 @@ env:
   APP05_BIN_NAME: app05-network-provisioning-v0.1.1.bin
   STABLE_PROJECT_DIR: stable-app07/apps/06_OTARecovery/idf
   STABLE_BIN_NAME: kontakts-platform-v0.2.4-r1-full.bin
+  APP09_BIN_NAME: app09-kontakts-platform-v0.3.3-full.bin
+  APP09_RELEASE_URL: https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.3/app06-ota-recovery-v0.3.3-full.bin
+  APP09_SHA256: be29a3735d2e5612fa1861e13709c4c2bafbbf0e5e413383e36736bbe5decaba
 
 jobs:
   build:
@@ -107,18 +110,26 @@ jobs:
             espressif/idf:v5.5.5 \
             bash -lc 'git config --global --add safe.directory /project/stable-app07 && idf.py set-target esp32s3 && idf.py build && cd build && esptool.py --chip esp32s3 merge_bin -o "${STABLE_BIN_NAME}" @flash_args'
 
-      - name: Verify merged firmware images
+      - name: Fetch App09 Platform 0.3.3 release image
+        run: |
+          mkdir -p .web-flasher-downloads
+          curl -fL --retry 3 --retry-delay 2 "$APP09_RELEASE_URL" -o ".web-flasher-downloads/$APP09_BIN_NAME"
+          echo "$APP09_SHA256  .web-flasher-downloads/$APP09_BIN_NAME" | sha256sum -c -
+
+      - name: Verify firmware images
         run: |
           test -s "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
           test -s "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           test -s "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}"
           test -s "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}"
           test -s "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}"
+          test -s ".web-flasher-downloads/${APP09_BIN_NAME}"
           sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
           sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           sha256sum "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}"
           sha256sum "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}"
           sha256sum "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}"
+          sha256sum ".web-flasher-downloads/${APP09_BIN_NAME}"
 
       - name: Assemble Web Flasher catalog
         run: |
@@ -130,6 +141,7 @@ jobs:
           cp "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}" "site/firmware/${APP03_BIN_NAME}"
           cp "${APP05_PROJECT_DIR}/build/${APP05_BIN_NAME}" "site/firmware/${APP05_BIN_NAME}"
           cp "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}" "site/firmware/${STABLE_BIN_NAME}"
+          cp ".web-flasher-downloads/${APP09_BIN_NAME}" "site/firmware/${APP09_BIN_NAME}"
 
       - name: Upload firmware catalog for review
         uses: actions/upload-artifact@v4
@@ -141,13 +153,16 @@ jobs:
             ${{ env.APP03_PROJECT_DIR }}/build/${{ env.APP03_BIN_NAME }}
             ${{ env.APP05_PROJECT_DIR }}/build/${{ env.APP05_BIN_NAME }}
             ${{ env.STABLE_PROJECT_DIR }}/build/${{ env.STABLE_BIN_NAME }}
+            .web-flasher-downloads/${{ env.APP09_BIN_NAME }}
             web-flasher/manifest-app01.json
             web-flasher/manifest-app02.json
             web-flasher/manifest-app03.json
             web-flasher/manifest-app05.json
             web-flasher/manifest-app07-v024.json
+            web-flasher/manifest-app09.json
             web-flasher/firmware-list.json
           if-no-files-found: error
+          include-hidden-files: true
 
       - name: Configure GitHub Pages
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.deploy && github.ref == 'refs/heads/main') }}
