@@ -48,24 +48,37 @@ string(REPLACE
     "${DISPLAY_OTA_TEXT}"
 )
 
-# Product-style SD screen: no raw manifest JSON in the user surface. Keep
-# application launchers on the right and reserve the left column for card and
-# explicit offline update information.
+# v0.3.2 user-facing SD screen: it is an application library, not a filesystem
+# or storage diagnostic page. Keep only a short card state, REFRESH, application
+# count, launcher, and concise human-readable feedback. Technical details remain
+# in SYS and ESP-IDF logs.
 string(REPLACE
-    "    s_sd_packages = make_label(s_sd_panel, 24, 152, \"Packages: not scanned\", &lv_font_montserrat_18, 0xC9D1D9);"
-    "    s_sd_packages = make_label(s_sd_panel, 24, 152, \"Applications: waiting for scan\", &lv_font_montserrat_18, 0xC9D1D9);"
+    "    make_label(s_sd_panel, 24, 16, \"SD APPLICATION LIBRARY\", &lv_font_montserrat_18, 0x8B949E);\n    s_sd_state = make_label(s_sd_panel, 24, 48, \"State: --\", &lv_font_montserrat_24, 0x58A6FF);\n    s_sd_card = make_label(s_sd_panel, 24, 88, \"Card: --\", &lv_font_montserrat_18, 0xF0F6FC);\n    s_sd_paths = make_label(s_sd_panel, 24, 120, \"Widgets: /sd/widgets | Update: /sd/UPDATE\", &lv_font_montserrat_18, 0xC9D1D9);\n    s_sd_packages = make_label(s_sd_panel, 24, 152, \"Packages: not scanned\", &lv_font_montserrat_18, 0xC9D1D9);\n    lv_obj_set_width(s_sd_packages, 714); lv_label_set_long_mode(s_sd_packages, LV_LABEL_LONG_WRAP);\n    s_sd_message = make_label(s_sd_panel, 24, 202, \"Insert FAT32 SD and mount.\", &lv_font_montserrat_18, 0x8B949E);\n    lv_obj_set_width(s_sd_message, 714); lv_label_set_long_mode(s_sd_message, LV_LABEL_LONG_DOT);\n    s_sd_mount_button = make_button(s_sd_panel, 24, 238, 214, 52, \"MOUNT / RESCAN\", sd_mount_cb);\n    s_sd_dashboard_button = make_button(s_sd_panel, 252, 238, 214, 52, \"DASHBOARD\", sd_dashboard_cb);\n    s_sd_views_button = make_button(s_sd_panel, 480, 238, 214, 52, \"VIEWS\", sd_views_cb);\n    s_sd_subscribers_button = make_button(s_sd_panel, 24, 304, 214, 52, \"SUBSCRIBERS\", sd_subscribers_cb);\n    make_label(s_sd_panel, 252, 314, \"SD UPDATE: manifest contract only; flash writes disabled in this test.\", &lv_font_montserrat_18, 0x8B949E);"
+    "    make_label(s_sd_panel, 24, 16, \"APPLICATIONS\", &lv_font_montserrat_24, 0xF0F6FC);\n    s_sd_state = make_label(s_sd_panel, 24, 58, \"SD card not ready\", &lv_font_montserrat_18, 0x8B949E);\n    s_sd_packages = make_label(s_sd_panel, 24, 92, \"Available: 0\", &lv_font_montserrat_18, 0xC9D1D9);\n    s_sd_card = make_label(s_sd_panel, 24, 120, \"\", &lv_font_montserrat_18, 0xF0F6FC);\n    s_sd_paths = make_label(s_sd_panel, 24, 146, \"\", &lv_font_montserrat_18, 0xC9D1D9);\n    s_sd_message = make_label(s_sd_panel, 24, 354, \"Insert SD card and press REFRESH\", &lv_font_montserrat_18, 0x8B949E);\n    lv_obj_set_width(s_sd_message, 500); lv_label_set_long_mode(s_sd_message, LV_LABEL_LONG_DOT);\n    s_sd_mount_button = make_button(s_sd_panel, 584, 44, 154, 48, \"REFRESH\", sd_mount_cb);\n    s_sd_launcher = sd_launcher_create(s_sd_panel, 24, 128, 714, 214, sd_catalog_run_cb, NULL);"
     DISPLAY_OTA_TEXT
     "${DISPLAY_OTA_TEXT}"
 )
 string(REPLACE
-    "    lv_obj_set_width(s_sd_message, 714); lv_label_set_long_mode(s_sd_message, LV_LABEL_LONG_DOT);"
-    "    lv_obj_set_width(s_sd_message, 210); lv_label_set_long_mode(s_sd_message, LV_LABEL_LONG_WRAP);"
+    "    if (err == ESP_OK) lv_label_set_text(s_sd_message, \"SD mounted. Scanning /sd/widgets...\");\n    else lv_label_set_text_fmt(s_sd_message, \"Mount failed: %s\", esp_err_to_name(err));"
+    "    if (err == ESP_OK) lv_label_set_text(s_sd_message, \"Applications refreshed\");\n    else lv_label_set_text(s_sd_message, \"SD card unavailable\");"
     DISPLAY_OTA_TEXT
     "${DISPLAY_OTA_TEXT}"
 )
 string(REPLACE
-    "    s_sd_mount_button = make_button(s_sd_panel, 24, 238, 214, 52, \"MOUNT / RESCAN\", sd_mount_cb);\n    s_sd_dashboard_button = make_button(s_sd_panel, 252, 238, 214, 52, \"DASHBOARD\", sd_dashboard_cb);\n    s_sd_views_button = make_button(s_sd_panel, 480, 238, 214, 52, \"VIEWS\", sd_views_cb);\n    s_sd_subscribers_button = make_button(s_sd_panel, 24, 304, 214, 52, \"SUBSCRIBERS\", sd_subscribers_cb);\n    make_label(s_sd_panel, 252, 314, \"SD UPDATE: manifest contract only; flash writes disabled in this test.\", &lv_font_montserrat_18, 0x8B949E);"
-    "    s_sd_mount_button = make_button(s_sd_panel, 24, 238, 214, 52, \"MOUNT / RESCAN\", sd_mount_cb);\n    s_sd_launcher = sd_launcher_create(s_sd_panel, 252, 190, 442, 182, sd_catalog_run_cb, NULL);\n    make_label(s_sd_panel, 24, 304, \"SYSTEM UPDATE\", &lv_font_montserrat_18, 0x58A6FF);\n    make_label(s_sd_panel, 24, 332, \"/sd/UPDATE  |  explicit install only\", &lv_font_montserrat_18, 0x8B949E);"
+    "        lv_label_set_text_fmt(s_sd_message, \"%s failed: %s\", name, reason[0] ? reason : esp_err_to_name(err));"
+    "        lv_label_set_text_fmt(s_sd_message, \"Could not open %s\", name);"
+    DISPLAY_OTA_TEXT
+    "${DISPLAY_OTA_TEXT}"
+)
+string(REPLACE
+    "    lv_label_set_text_fmt(s_sd_message, \"%s installed to internal storage\", name);"
+    "    lv_label_set_text_fmt(s_sd_message, \"Opening %s\", name);"
+    DISPLAY_OTA_TEXT
+    "${DISPLAY_OTA_TEXT}"
+)
+string(REPLACE
+    "    lv_label_set_text_fmt(s_sd_state, \"State: %s\", sd.state[0] ? sd.state : \"--\");\n    if (sd.mounted) {\n        lv_label_set_text_fmt(s_sd_card, \"Card: %s | %llu MiB | SPI %u kHz\",\n                              sd.card_name[0] ? sd.card_name : \"SD\",\n                              (unsigned long long)(sd.capacity_bytes / (1024ULL * 1024ULL)),\n                              (unsigned)sd.frequency_khz);"
+    "    if (sd.mounted) {\n        lv_label_set_text(s_sd_state, \"SD card ready\");\n        lv_label_set_text(s_sd_card, \"\");\n        lv_label_set_text(s_sd_paths, \"\");"
     DISPLAY_OTA_TEXT
     "${DISPLAY_OTA_TEXT}"
 )
@@ -77,19 +90,13 @@ string(REPLACE
 )
 string(REPLACE
     "        if (!s_sd_packages_scanned) {\n            char *packages = NULL;\n            esp_err_t err = sd_manager_packages_json(&packages);\n            if (err == ESP_OK && packages) {\n                lv_label_set_text_fmt(s_sd_packages, \"Packages: %s\", packages);\n                free(packages);\n            } else {\n                lv_label_set_text_fmt(s_sd_packages, \"Packages scan failed: %s\", esp_err_to_name(err));\n            }\n            s_sd_packages_scanned = true;\n        }"
-    "        if (!s_sd_packages_scanned) {\n            size_t count = sd_manager_entry_count();\n            lv_label_set_text_fmt(s_sd_packages, \"Applications: %u launcher(s) discovered\", (unsigned)count);\n            if (s_sd_launcher) sd_launcher_refresh(s_sd_launcher);\n            s_sd_packages_scanned = true;\n        }"
+    "        if (!s_sd_packages_scanned) {\n            size_t count = sd_manager_entry_count();\n            size_t packages = 0;\n            for (size_t i = 0; i < count; ++i) {\n                sd_manager_entry_t entry;\n                if (sd_manager_entry_get(i, &entry) != ESP_OK) continue;\n                bool first = true;\n                for (size_t j = 0; j < i; ++j) {\n                    sd_manager_entry_t previous;\n                    if (sd_manager_entry_get(j, &previous) == ESP_OK && strcmp(previous.package_id, entry.package_id) == 0) { first = false; break; }\n                }\n                if (first) packages++;\n            }\n            lv_label_set_text_fmt(s_sd_packages, \"Available: %u\", (unsigned)packages);\n            if (s_sd_launcher) sd_launcher_refresh(s_sd_launcher);\n            s_sd_packages_scanned = true;\n        }"
     DISPLAY_OTA_TEXT
     "${DISPLAY_OTA_TEXT}"
 )
 string(REPLACE
-    "        lv_label_set_text(s_sd_packages, \"Packages: unavailable until SD is mounted\");"
-    "        lv_label_set_text(s_sd_packages, \"Applications: mount SD to scan\");"
-    DISPLAY_OTA_TEXT
-    "${DISPLAY_OTA_TEXT}"
-)
-string(REPLACE
-    "        set_button_enabled(s_sd_dashboard_button, false);\n        set_button_enabled(s_sd_views_button, false);\n        set_button_enabled(s_sd_subscribers_button, false);\n"
-    ""
+    "        lv_label_set_text_fmt(s_sd_card, \"Card: -- | %s\", sd.message[0] ? sd.message : \"not mounted\");\n        lv_label_set_text(s_sd_packages, \"Packages: unavailable until SD is mounted\");\n        set_button_enabled(s_sd_dashboard_button, false);\n        set_button_enabled(s_sd_views_button, false);\n        set_button_enabled(s_sd_subscribers_button, false);"
+    "        lv_label_set_text(s_sd_state, \"SD card not ready\");\n        lv_label_set_text(s_sd_card, \"\");\n        lv_label_set_text(s_sd_paths, \"\");\n        lv_label_set_text(s_sd_packages, \"Available: 0\");"
     DISPLAY_OTA_TEXT
     "${DISPLAY_OTA_TEXT}"
 )
