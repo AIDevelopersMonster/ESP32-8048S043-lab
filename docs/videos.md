@@ -16,6 +16,7 @@
 | 10 | ESP32-8048S043 — YouTube channel statistics via YouTube Data API | https://youtube.com/shorts/cjgx2RB0l_A | Show App08 v0.2.6 retrieving real channel statistics through the YouTube Data API and displaying the local `/youtube` dashboard, with API key stored in NVS and first-day history captured. | APP 08 v0.2.6 YOUTUBE SERVICE + LOCAL WEB DASHBOARD PHYSICAL PASS |
 | 11 | ESP32-8048S043 — App08 v0.2.8 YouTube TFT widget | https://youtube.com/shorts/lkSPy2Qc6TU | Show the v0.2.8 YouTube dashboard running as an external filesystem widget on the physical TFT. Current data/rendering are working well; naturally accumulated multi-day history will be documented after additional daily samples exist. | APP 08 v0.2.8 TFT YOUTUBE WIDGET PHYSICAL PASS / MULTI-DAY HISTORY OBSERVATION PENDING |
 | 12 | ESP32-8048S043 — KONTAKTS Platform 0.3.3, SD apps and browser Help Center | https://youtube.com/shorts/S5e_sCxy8Gc | Physical demonstration after OTA to Platform 0.3.3 with the SD application library installed: the existing local HTTP server remains available and the new `/help` route serves system documentation plus application help directly from the SD card. | APP 09 PLATFORM 0.3.3 OTA PASS / SD LIBRARY PASS / SD BROWSER HELP CENTER PHYSICAL PASS |
+| 13 | ESP32-8048S043 — какие GPIO реально свободны? I2C + 2 порта и ещё 3 без SD | https://youtu.be/5Nu9Fmwf4qA | Document the Sample A connector investigation and practical external resource map: GT911 keeps GPIO19/20 occupied as the system I2C bus, GPIO17/18 are the two primary exposed user-GPIO candidates, and GPIO11/12/13 become additional candidates only when microSD is deliberately not used. Also distinguishes the CH340C-linked TXD0/RXD0 service UART from normal application GPIO. | SAMPLE A CONNECTOR / CONTINUITY EVIDENCE VIDEO; GPIO17/18 AND I2C RESOURCE MAP DOCUMENTED; DIGITAL FUNCTIONAL ACCEPTANCE STILL PENDING |
 
 ## Planned shooting sequence
 
@@ -40,6 +41,7 @@
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
 | 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | TFT WIDGET PHYSICAL PASS / MULTI-DAY NATURAL HISTORY OBSERVATION PENDING |
 | 19 SD Widget Library | select and run widget packages from SD without compiling each UI into firmware, and serve system/application documentation from SD through `/help` | PHYSICAL SD LIBRARY PASS / BROWSER HELP CENTER PASS |
+| 20 Free GPIO / connector map | show measured Sample A connector routing and explain the practical `I2C + GPIO17/18`, plus GPIO11/12/13 when SD is disabled | PUBLISHED / CONNECTOR-CONTINUITY EVIDENCE RECORDED / FUNCTIONAL GPIO TESTS PENDING |
 
 ## Rule
 
