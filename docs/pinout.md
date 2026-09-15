@@ -13,12 +13,13 @@ P3 PCB labels            PHYSICALLY OBSERVED: IO17 / IO18 / IO19 / IO20
 P4 PCB labels            PHYSICALLY OBSERVED: GND / 3.3V / IO17 / IO18
 GPIO19/20 silk group     PHYSICALLY OBSERVED: USB
 GPIO17/18 silk group     PHYSICALLY OBSERVED: UART1
-R17                      PHYSICALLY OBSERVED: DNP / not fitted
+R17                      PHYSICALLY OBSERVED: DNP / not fitted; GPIO18 net
 P3 IO17 <-> P4 IO17      CONTINUITY PASS
 P3 IO18 <-> P4 IO18      CONTINUITY PASS
 P3 IO19 <-> P2 IO19      CONTINUITY PASS
 P3 IO19 <-> R4           CONTINUITY PASS
 P3 IO20 <-> R3           CONTINUITY PASS
+GPIO17 <-> ESP module pin 10 from dot   CONTINUITY PASS
 R7 <-> CH340C pin 2      CONTINUITY PASS
 R6 <-> CH340C pin 3      CONTINUITY PASS
 Flash                    16 MB
@@ -103,27 +104,30 @@ Status: `PHYSICAL PASS FOR BOARD-INTERNAL TOUCH BUS`.
 | SDA | 19 | PHYSICAL PASS; P3 IO19 continuity to P2 IO19 and R4 |
 | SCL | 20 | PHYSICAL PASS; P3 IO20 continuity to R3 |
 | RESET | 38 | PHYSICAL PASS |
-| INT | not required by current firmware | current driver uses `GPIO_NUM_NC` |
+| INT option | 18 through R17 | R17 physically DNP / open on Sample A; current driver does not use INT |
 | I2C address | 0x5D | PHYSICAL PASS |
 
-The project has proved that **GT911 uses I2C on GPIO19/20**. Current App09 creates one ESP32-S3 I2C master bus on those pins and attaches GT911 as a slave at `0x5D`.
+The project has proved that **GT911 uses I2C on GPIO19/20**. Current App09 creates one ESP32-S3 I2C master bus on those pins and attaches GT911 as a slave at `0x5D`; current touch configuration uses no interrupt GPIO (`GPIO_NUM_NC`).
 
-### Correction after Sample A continuity measurements
+### Sample A GPIO17 / GPIO18 continuity correction
 
-Earlier project notes associated the open option resistor **R17** with a possible GPIO18/GT911-INT path based on third-party board reconstruction. The Sample A meter results override that inference:
+Direct re-check on Sample A establishes:
 
 ```text
-P3 IO17 <-> P4 IO17 <-> one side of R17
-P3 IO18 <-> P4 IO18
+P3 IO17 <-> P4 IO17 <-> ESP32-S3-WROOM-1 physical pin 10 counted from the module pin-1 dot
+P3 IO18 <-> P4 IO18 <-> R17-side net
+R17 = DNP / not fitted
 ```
 
-Therefore, on Sample A **R17 is on the GPIO17 net, not the GPIO18 net**. R17 remains physically DNP/open. The far side of R17 has not yet been traced in this measurement set, so this document does not assign it to GT911 INT until that path is physically proved.
+Therefore **R17 belongs to the GPIO18 path, not GPIO17**. The previous project note that placed R17 on GPIO17 was a measurement transcription error and is superseded by this correction.
 
-This leaves both GPIO17 and GPIO18 as strong free-pin candidates in the current KONTAKTS firmware, but the final digital I/O functional test is still required.
+No external pull-up/pull-down component for GPIO17 has yet been identified by continuity inspection. Record this as **not found**, not as proof that no such bias network exists anywhere on the board.
+
+With R17 open, GPIO18 is not connected through that option link to the downstream INT path. GPIO17 has direct continuity to the ESP module pin corresponding to its net and is not currently tied to any identified option resistor.
 
 ## GPIO19/20: P3 exposes the active touch I2C nets
 
-The actual Sample A silkscreen labels the P3 lower pair `IO19 / IO20` as **USB**, consistent with the ESP32-S3 native USB D- / D+ capability. Runtime and continuity evidence now show that, in this capacitive-touch assembly, those same physical nets are the GT911 I2C bus:
+The actual Sample A silkscreen labels the P3 lower pair `IO19 / IO20` as **USB**, consistent with the ESP32-S3 native USB D- / D+ capability. Runtime and continuity evidence show that, in this capacitive-touch assembly, those same physical nets are the GT911 I2C bus:
 
 ```text
 P3 IO19 -> P2 IO19 -> R4 -> GPIO19 / active GT911 SDA net
@@ -131,7 +135,7 @@ P3 IO20 -> R3              -> GPIO20 / active GT911 SCL net
 GT911 = slave 0x5D
 ```
 
-Thus P3 physically exposes the already-running system I2C nets. The remaining acceptance step is not continuity; it is a **functional coexistence test with an external I2C slave while touch remains operational**.
+Thus P3 physically exposes the already-running system I2C nets. The remaining acceptance step is a **functional coexistence test with an external I2C slave while touch remains operational**.
 
 The `USB` silk identifies the alternate native MCU function. Native USB cannot be used simultaneously on these pins while the GT911 I2C wiring and pull-ups remain active.
 
@@ -183,8 +187,8 @@ IO20   USB
 Continuity measurements:
 
 ```text
-P3 IO17 <-> P4 IO17 <-> R17-side pad
-P3 IO18 <-> P4 IO18
+P3 IO17 <-> P4 IO17 <-> ESP module physical pin 10 from pin-1 dot
+P3 IO18 <-> P4 IO18 <-> R17 net
 P3 IO19 <-> P2 IO19 <-> R4
 P3 IO20 <-> R3
 ```
@@ -192,6 +196,8 @@ P3 IO20 <-> R3
 Current KONTAKTS interpretation:
 
 - `IO17/IO18`: general-purpose candidates; also UART1-capable at MCU level / silk intent;
+- `IO18`: optional R17 branch is open because R17 is DNP;
+- `IO17`: no external pull-up/pull-down component has yet been located;
 - `IO19/IO20`: active system I2C bus for GT911, physically exposed on P3;
 - `USB` is an alternate ESP32-S3 function and is not simultaneously available with the current touch wiring.
 
@@ -223,7 +229,7 @@ The board silk at the service connector shows:
 5V / TXD0 / RXD0 / GND
 ```
 
-Sample A continuity measurements now prove:
+Sample A continuity measurements prove:
 
 ```text
 R7 <-> CH340C pin 2
@@ -237,11 +243,11 @@ This is consistent with the CH340C UART service circuitry. The exact header-to-r
 Current engineering classification:
 
 ```text
-GPIO17   LIKELY FREE in current firmware; P3/P4 continuity confirmed; one side reaches open R17
-GPIO18   LIKELY FREE in current firmware; P3/P4 continuity confirmed
+GPIO17   LIKELY FREE in current firmware; P3/P4 and ESP module continuity confirmed; no external bias resistor found yet
+GPIO18   LIKELY FREE in current firmware; P3/P4 continuity confirmed; R17 option link is DNP/open
 ```
 
-Neither is used by the current App09 firmware for LCD, SD, GT911 SDA/SCL/reset, flash or PSRAM. The earlier GPIO18/R17 concern is removed by the new continuity result: R17 is physically on the GPIO17 net on Sample A.
+Neither is used by the current App09 firmware for LCD, SD, GT911 SDA/SCL/reset, flash or PSRAM. GPIO18 has an optional hardware branch through R17, but R17 is physically not fitted on Sample A.
 
 Next acceptance step: drive/read each pin digitally while LCD, touch, Wi-Fi and SD remain operational.
 
@@ -253,7 +259,7 @@ The ESP32-S3 silicon contains ADC channels, and GPIO17/18 are interesting candid
 
 ## I2C boundary
 
-Sample A now has stronger evidence than the earlier documentation state:
+Sample A evidence:
 
 ```text
 GT911 runtime on GPIO19/20             PHYSICAL PASS
@@ -281,16 +287,18 @@ The exact available external current from any 3.3 V connector rail on Sample A i
 - [x] Sample A P4 silk-screen sequence confirmed as GND/3.3V/IO17/IO18;
 - [x] Sample A P3 IO17 <-> P4 IO17 continuity;
 - [x] Sample A P3 IO18 <-> P4 IO18 continuity;
+- [x] Sample A GPIO17 <-> ESP module physical pin 10 from pin-1 dot continuity;
+- [x] Sample A GPIO18 <-> R17 net continuity;
+- [x] Sample A R17 physically confirmed DNP / not fitted;
 - [x] Sample A P3 IO19 <-> P2 IO19 continuity;
 - [x] Sample A P3 IO19 <-> R4 continuity;
 - [x] Sample A P3 IO20 <-> R3 continuity;
-- [x] Sample A R17 physically confirmed DNP / not fitted;
-- [x] Sample A one side of R17 confirmed on GPIO17 net;
 - [x] Sample A R7 <-> CH340C pin 2 continuity;
 - [x] Sample A R6 <-> CH340C pin 3 continuity;
 - [x] App09 SD launcher physically validated;
 - [x] SD-backed browser Help Center physically validated;
-- [ ] trace far side of R17 before assigning its optional function;
+- [ ] identify the far side/function of R17 if needed;
+- [ ] locate/verify any external bias network for GPIO17; none found so far;
 - [ ] record P4 GND/3.3V rail continuity/voltage;
 - [ ] record complete service-header-to-R6/R7 continuity if desired;
 - [ ] validate GPIO17/18 as digital input/output;
@@ -301,4 +309,4 @@ The exact available external current from any 3.3 V connector rail on Sample A i
 
 ## Boundary
 
-For Sample A, the connector silk and several critical nets are now directly confirmed by continuity measurements. P3 IO19/IO20 physically expose the same active GPIO19/20 region used by the GT911 I2C bus; P3/P4 share GPIO17/18; P2 IO19 is the same net as P3 IO19. The new measurement also corrects an earlier reconstruction assumption: **R17 is on the GPIO17 net on Sample A, not GPIO18**. Functional external-I2C, digital-GPIO and ADC tests remain separate acceptance steps.
+For Sample A, the connector silk and several critical nets are directly confirmed by continuity measurements. P3 IO19/IO20 physically expose the active GPIO19/20 GT911 I2C bus; P3/P4 share GPIO17/18; P2 IO19 is the same net as P3 IO19. **R17 is confirmed on GPIO18, not GPIO17, and is physically DNP/open. GPIO17 has direct continuity to ESP32-S3-WROOM-1 physical pin 10 counted from the pin-1 dot; no external pull-up/pull-down for GPIO17 has yet been located.** Functional external-I2C, digital-GPIO and ADC tests remain separate acceptance steps.
