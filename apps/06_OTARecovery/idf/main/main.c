@@ -4,6 +4,7 @@
 #include "network_manager.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
+#include "serial_service.h"
 #include "storage_credentials.h"
 #include "storage_fs.h"
 #include "time_service.h"
@@ -20,6 +21,7 @@ void app_main(void)
     ESP_ERROR_CHECK(storage_credentials_init());
     ESP_ERROR_CHECK(storage_fs_init());
     ESP_ERROR_CHECK(widget_runtime_init());
+    ESP_ERROR_CHECK(serial_service_init());
     ESP_ERROR_CHECK(ota_manager_init());
 
     /* SD is optional. Mount failure must never block boot/recovery/widget restore. */
