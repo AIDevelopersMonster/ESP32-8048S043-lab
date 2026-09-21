@@ -134,6 +134,8 @@ The second package is `clock`, using the already proven NTP seven-segment clock 
 
 The third demonstration package is `youtube-led`, using the generic metric carousel capability.
 
+The fourth experimental package is `usb-serial-terminal`. It uses the generic `serial` platform service to display UART0 RX text and counters and to send a fixed test line through the normal CH340C/USB path. Its first version intentionally has no on-screen keyboard; `textarea + keyboard` are planned as generic Widget Runtime capabilities after the bidirectional USB serial path passes on Sample A.
+
 The YouTube API key is **not** stored on SD. It remains in NVS.
 
 ## Runtime rule
@@ -232,6 +234,7 @@ temperature
 relay
 flow-meter
 audio
+serial
 storage
 mqtt
 ```
