@@ -82,6 +82,7 @@ static bool binding_allowed(const char *binding)
         "youtube.subscribers", "youtube.views", "youtube.videos",
         "youtube.views_delta", "youtube.subscribers_delta", "youtube.channel",
         "youtube.state", "youtube.period",
+        "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -104,7 +105,9 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "youtube_period_7d") == 0 ||
                       strcmp(action, "youtube_period_30d") == 0 ||
                       strcmp(action, "youtube_period_90d") == 0 ||
-                      strcmp(action, "youtube_period_all") == 0);
+                      strcmp(action, "youtube_period_all") == 0 ||
+                      strcmp(action, "serial_send_test") == 0 ||
+                      strcmp(action, "serial_clear") == 0);
 }
 
 static bool parse_widget(const char *json, size_t len, widget_model_t *out,
