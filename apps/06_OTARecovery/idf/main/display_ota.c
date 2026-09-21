@@ -26,6 +26,7 @@
 #include "network_manager.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
+#include "serial_service.h"
 #include "sevenseg_clock.h"
 #include "time_service.h"
 #include "widget_runtime.h"
@@ -257,6 +258,12 @@ static void widget_action_cb(lv_event_t *e)
         youtube_service_set_period(YOUTUBE_PERIOD_90D); s_chart_force_refresh = true;
     } else if (strcmp(action, "youtube_period_all") == 0) {
         youtube_service_set_period(YOUTUBE_PERIOD_ALL); s_chart_force_refresh = true;
+    } else if (strcmp(action, "serial_send_test") == 0) {
+        esp_err_t err = serial_service_send_test();
+        if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL SEND TEST rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "serial_clear") == 0) {
+        esp_err_t err = serial_service_clear();
+        if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
     }
 }
 
@@ -461,6 +468,8 @@ static void binding_value(const char *binding, char *out, size_t out_len)
         wifi_ap_record_t ap = {0};
         if (esp_wifi_sta_get_ap_info(&ap) == ESP_OK) snprintf(out, out_len, "%d dBm", ap.rssi);
         else strlcpy(out, "offline", out_len);
+    } else if (strncmp(binding, "serial.", 7) == 0) {
+        serial_service_format_binding(binding, out, out_len);
     } else if (strcmp(binding, "firmware.version") == 0) {
         strlcpy(out, ota.current_version, out_len);
     } else if (strcmp(binding, "ota.state") == 0) {
@@ -528,7 +537,7 @@ static void refresh_charts(void)
 static void refresh_bindings(void)
 {
     for (size_t i = 0; i < s_bound_count; ++i) {
-        char value[96], text[240]; binding_value(s_bound[i].source->binding, value, sizeof(value));
+        char value[512], text[640]; binding_value(s_bound[i].source->binding, value, sizeof(value));
         snprintf(text, sizeof(text), "%s%s%s", s_bound[i].source->prefix, value, s_bound[i].source->suffix);
         lv_label_set_text(s_bound[i].label, text);
     }
