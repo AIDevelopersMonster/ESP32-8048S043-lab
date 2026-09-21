@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>USB Serial Terminal</title>
+</head>
+<body>
+  <h1>USB Serial Terminal</h1>
+  <p>Stage 1 tests the normal ESP32-8048S043 USB serial path through the onboard CH340C and UART0.</p>
+  <pre>PC -> USB -> CH340C -> UART0 -> ESP32-S3 -> TFT</pre>
+  <p>Open the board COM port at 115200 baud. Text typed on the PC should appear in the RX area.</p>
+  <p>Press <strong>SEND TEST</strong> on the TFT. The PC should receive <code>KONTAKTS USB SERIAL TEST</code>.</p>
+  <p><strong>CLEAR</strong> resets the displayed RX buffer and the widget counters.</p>
+  <p>This first version intentionally has no on-screen keyboard. Keyboard and textarea support are the next generic Widget Runtime capabilities after the bidirectional path passes on hardware.</p>
+  <p>P1 is not part of this first test.</p>
+</body>
+</html>
