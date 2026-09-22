@@ -77,9 +77,6 @@ jobs:
               if not manifest.is_file():
                   continue
               data = json.loads(manifest.read_text(encoding='utf-8'))
-              if data.get('disabled') is True or not data.get('entrypoints'):
-                  print(f"skip tombstone/empty package: {package_dir.name}")
-                  continue
               package_id = data.get('id', package_dir.name)
               target = out / f'widget-{package_id}.zip'
               with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
