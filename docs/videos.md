@@ -18,6 +18,8 @@
 | 12 | ESP32-8048S043 — KONTAKTS Platform 0.3.3, SD apps and browser Help Center | https://youtube.com/shorts/S5e_sCxy8Gc | Physical demonstration after OTA to Platform 0.3.3 with the SD application library installed: the existing local HTTP server remains available and the new `/help` route serves system documentation plus application help directly from the SD card. | APP 09 PLATFORM 0.3.3 OTA PASS / SD LIBRARY PASS / SD BROWSER HELP CENTER PHYSICAL PASS |
 | 13 | ESP32-8048S043 — какие GPIO реально свободны? I2C + 2 порта и ещё 3 без SD | https://youtu.be/5Nu9Fmwf4qA | Document the Sample A connector investigation and practical external resource map: GT911 keeps GPIO19/20 occupied as the system I2C bus, GPIO17/18 are the two primary exposed user-GPIO candidates, and GPIO11/12/13 become additional candidates only when microSD is deliberately not used. Also distinguishes the CH340C-linked TXD0/RXD0 service UART from normal application GPIO. | SAMPLE A CONNECTOR / CONTINUITY EVIDENCE VIDEO; GPIO17/18 AND I2C RESOURCE MAP DOCUMENTED; DIGITAL FUNCTIONAL ACCEPTANCE STILL PENDING |
 
+| 14 | ESP32-8048S043 — KONTAKTS Platform 0.3.5 через Web Flasher | https://youtube.com/shorts/eH-FXkjYH6s | Physical demonstration of installing KONTAKTS Platform 0.3.5 from the browser Web Flasher using the released full image, followed by normal boot on Sample A. The full install is a clean flash path, so Wi-Fi credentials must be configured again afterward. | APP 11 PLATFORM 0.3.5 WEB FLASHER PHYSICAL PASS / NORMAL BOOT PASS |
+
 ## Planned shooting sequence
 
 | Video | Goal | Evidence status |

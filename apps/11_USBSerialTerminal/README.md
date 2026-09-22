@@ -83,6 +83,12 @@ Validated on hardware:
 
 P1 is explicitly outside this acceptance and remains a separate service/UART0 investigation.
 
+## Video evidence
+
+Web Flasher installation of KONTAKTS Platform 0.3.5 on Sample A:
+
+https://youtube.com/shorts/eH-FXkjYH6s
+
 ## Stage 2
 
 After Stage 1, add generic LVGL 9 Widget Runtime capabilities:
