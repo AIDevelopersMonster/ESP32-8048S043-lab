@@ -5,18 +5,27 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Widgets, system wiki/help and offline UPDATE content. Download the ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32.",
+    "description": "Widgets, system wiki/help and offline UPDATE content. Download the ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. The current App11 snapshot includes USB Serial Terminal and its HTML Help pages.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
-    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/09_SDWidgetLibrary/sd"
+    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/09_SDWidgetLibrary/sd"
   },
   "firmwares": [
+    {
+      "id": "app11",
+      "name": "KONTAKTS Platform / USB Serial Terminal",
+      "version": "0.3.5",
+      "status": "PHYSICAL PASS / WEB FLASHER CANDIDATE",
+      "description": "Current KONTAKTS platform with SYS | SD | WIDGET, SD Help Center, Widget Runtime and the generic UART0 serial service used by USB Serial Terminal. On Sample A the normal USB -> CH340C -> UART0 path was physically exercised in both directions; browser flashing remains a separate acceptance item.",
+      "manifest": "./manifest-app11.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/06_OTARecovery"
+    },
     {
       "id": "app09",
       "name": "KONTAKTS Platform / SD Application Library",
       "version": "0.3.3",
       "status": "BUILD PASS / WEB FLASHER CANDIDATE",
-      "description": "Current platform with SYS | SD | WIDGET, hierarchical SD application launcher, Widget Runtime, GitHub OTA/recovery and browser-only SD Help Center.",
+      "description": "Earlier platform with SYS | SD | WIDGET, hierarchical SD application launcher, Widget Runtime, GitHub OTA/recovery and browser-only SD Help Center.",
       "manifest": "./manifest-app09.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/06_OTARecovery"
     },

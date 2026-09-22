@@ -1,4 +1,4 @@
-name: App 06/07/08/09 - GitHub OTA Release
+name: App 06/07/08/09/11 - GitHub OTA Release
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
       - agent/app07-widget-runtime
       - agent/app08-youtube-dashboard
       - agent/app09-sd-widget-library
+      - agent/app11-usb-serial-terminal
     paths:
       - 'apps/06_OTARecovery/release-version.txt'
       - '.github/workflows/app06-ota-release.yml'
