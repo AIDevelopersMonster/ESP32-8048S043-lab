@@ -13,11 +13,15 @@
 #define WIDGET_MAX_CHARTS 2
 #define WIDGET_MAX_METRIC_CAROUSELS 2
 #define WIDGET_MAX_CAROUSEL_ITEMS 8
+#define WIDGET_MAX_TEXTAREAS 4
+#define WIDGET_MAX_KEYBOARDS 2
 
 typedef enum {
     WIDGET_OBJECT_LABEL = 0,
     WIDGET_OBJECT_BAR,
     WIDGET_OBJECT_BUTTON,
+    WIDGET_OBJECT_TEXTAREA,
+    WIDGET_OBJECT_KEYBOARD,
     WIDGET_OBJECT_CLOCK,
     WIDGET_OBJECT_CHART,
     WIDGET_OBJECT_METRIC_CAROUSEL,
@@ -39,6 +43,11 @@ typedef struct {
     int interval_ms;
     uint32_t color;
     char text[161];
+    char id[33];
+    char target[33];
+    char placeholder[81];
+    int max_length;
+    bool one_line;
     char binding[40];
     char prefix[65];
     char suffix[65];

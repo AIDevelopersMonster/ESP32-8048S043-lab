@@ -66,6 +66,11 @@ typedef struct {
     int32_t *values;
 } bound_chart_t;
 
+typedef struct {
+    lv_obj_t *textarea;
+    const widget_object_t *source;
+} text_input_view_t;
+
 static esp_lcd_panel_handle_t s_panel;
 static i2c_master_bus_handle_t s_i2c_bus;
 static esp_lcd_panel_io_handle_t s_touch_io;
@@ -85,6 +90,10 @@ static sevenseg_clock_view_t *s_clocks[WIDGET_MAX_CLOCKS];
 static size_t s_clock_count;
 static bound_chart_t s_charts[WIDGET_MAX_CHARTS];
 static size_t s_chart_count;
+static text_input_view_t s_textareas[WIDGET_MAX_TEXTAREAS];
+static size_t s_textarea_count;
+static lv_obj_t *s_keyboards[WIDGET_MAX_KEYBOARDS];
+static size_t s_keyboard_count;
 static time_t s_chart_last_update;
 static youtube_period_t s_chart_last_period = (youtube_period_t)-1;
 static size_t s_chart_last_history_count = (size_t)-1;
@@ -186,6 +195,17 @@ static void show_action_error(const char *action, esp_err_t err)
     ESP_LOGW(TAG, "%s rejected: %s", action, esp_err_to_name(err));
     lv_label_set_text_fmt(s_ota_message, "%s rejected: %s", action, esp_err_to_name(err));
 }
+
+static lv_obj_t *find_textarea(const char *id)
+{
+    if (!id || !id[0]) return NULL;
+    for (size_t i = 0; i < s_textarea_count; ++i) {
+        if (s_textareas[i].source && strcmp(s_textareas[i].source->id, id) == 0) {
+            return s_textareas[i].textarea;
+        }
+    }
+    return NULL;
+}
 static void check_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_action_error("CHECK", ota_manager_start_check()); }
 static void install_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_action_error("INSTALL", ota_manager_start_install()); }
 static void confirm_cb(lv_event_t *e) { if (lv_event_get_code(e) == LV_EVENT_CLICKED) show_action_error("CONFIRM", ota_manager_confirm_running()); }
@@ -236,8 +256,10 @@ static void sd_subscribers_cb(lv_event_t *e)
 static void widget_action_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
-    const char *action = (const char *)lv_event_get_user_data(e);
-    if (!action) return;
+    const widget_object_t *source = (const widget_object_t *)lv_event_get_user_data(e);
+    if (!source) return;
+    const char *action = source->action;
+    if (!action || !action[0]) return;
 
     if (strcmp(action, "show_status") == 0 || strcmp(action, "show_ota") == 0) show_sys_panel();
     else if (strcmp(action, "sync_time") == 0) {
@@ -261,6 +283,15 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_send_test") == 0) {
         esp_err_t err = serial_service_send_test();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL SEND TEST rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "serial_send_text") == 0) {
+        lv_obj_t *textarea = find_textarea(source->target);
+        if (!textarea) {
+            ESP_LOGW(TAG, "SERIAL SEND TEXT rejected: textarea target %s not found", source->target);
+        } else {
+            const char *text = lv_textarea_get_text(textarea);
+            esp_err_t err = serial_service_send_text(text);
+            if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL SEND TEXT rejected: %s", esp_err_to_name(err));
+        }
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
@@ -407,6 +438,10 @@ static void render_widget(void)
     clear_clock_views();
     clear_chart_views();
     lv_obj_clean(s_widget_content); s_bound_count = 0;
+    s_textarea_count = 0;
+    s_keyboard_count = 0;
+    memset(s_textareas, 0, sizeof(s_textareas));
+    memset(s_keyboards, 0, sizeof(s_keyboards));
     if (!info.installed) {
         lv_obj_set_style_bg_color(s_widget_content, lv_color_hex(0x101820), 0);
         lv_label_set_text(s_widget_header, "FILESYSTEM WIDGET | none installed");
@@ -433,7 +468,24 @@ static void render_widget(void)
         } else if (o->type == WIDGET_OBJECT_BUTTON) {
             lv_obj_t *button = make_button(s_widget_content, o->x, o->y, o->w, o->h, o->text, widget_action_cb);
             lv_obj_remove_event_cb(button, widget_action_cb);
-            lv_obj_add_event_cb(button, widget_action_cb, LV_EVENT_CLICKED, o->action);
+            lv_obj_add_event_cb(button, widget_action_cb, LV_EVENT_CLICKED, o);
+        } else if (o->type == WIDGET_OBJECT_TEXTAREA && s_textarea_count < WIDGET_MAX_TEXTAREAS) {
+            lv_obj_t *textarea = lv_textarea_create(s_widget_content);
+            lv_obj_set_pos(textarea, o->x, o->y);
+            lv_obj_set_size(textarea, o->w, o->h);
+            lv_textarea_set_one_line(textarea, o->one_line);
+            lv_textarea_set_max_length(textarea, (uint32_t)o->max_length);
+            if (o->placeholder[0]) lv_textarea_set_placeholder_text(textarea, o->placeholder);
+            lv_textarea_set_text(textarea, o->text);
+            lv_obj_set_style_text_font(textarea, &lv_font_montserrat_18, 0);
+            lv_obj_set_style_text_color(textarea, lv_color_hex(o->color), 0);
+            lv_obj_set_style_bg_color(textarea, lv_color_hex(0x0D1117), 0);
+            lv_obj_set_style_border_color(textarea, lv_color_hex(0x30363D), 0);
+            lv_obj_set_style_border_width(textarea, 1, 0);
+            lv_obj_set_style_radius(textarea, 8, 0);
+            s_textareas[s_textarea_count++] = (text_input_view_t){.textarea = textarea, .source = o};
+        } else if (o->type == WIDGET_OBJECT_KEYBOARD) {
+            /* Rendered in a second pass after all textareas exist. */
         } else if (o->type == WIDGET_OBJECT_CLOCK && s_clock_count < WIDGET_MAX_CLOCKS) {
             sevenseg_clock_view_t *clock = sevenseg_clock_create(s_widget_content, o->x, o->y, o->w, o->h, o->color);
             if (clock) s_clocks[s_clock_count++] = clock;
@@ -441,10 +493,31 @@ static void render_widget(void)
             create_chart_view(o);
         }
     }
+
+    for (size_t i = 0; i < s_widget_model->object_count && s_keyboard_count < WIDGET_MAX_KEYBOARDS; ++i) {
+        widget_object_t *o = &s_widget_model->objects[i];
+        if (o->type != WIDGET_OBJECT_KEYBOARD) continue;
+        lv_obj_t *textarea = find_textarea(o->target);
+        if (!textarea) {
+            ESP_LOGW(TAG, "Keyboard target %s not found at render time", o->target);
+            continue;
+        }
+        lv_obj_t *keyboard = lv_keyboard_create(s_widget_content);
+        lv_obj_set_pos(keyboard, o->x, o->y);
+        lv_obj_set_size(keyboard, o->w, o->h);
+        lv_keyboard_set_textarea(keyboard, textarea);
+        lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), 0);
+        lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), 0);
+        lv_obj_set_style_border_width(keyboard, 1, 0);
+        lv_obj_set_style_radius(keyboard, 8, 0);
+        s_keyboards[s_keyboard_count++] = keyboard;
+    }
+
     s_chart_force_refresh = true;
-    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u clocks=%u charts=%u generation=%u", s_widget_model->id,
+    ESP_LOGI(TAG, "WIDGET RENDER PASS id=%s objects=%u clocks=%u charts=%u textareas=%u keyboards=%u generation=%u", s_widget_model->id,
              (unsigned)s_widget_model->object_count, (unsigned)s_clock_count,
-             (unsigned)s_chart_count, (unsigned)s_widget_generation);
+             (unsigned)s_chart_count, (unsigned)s_textarea_count, (unsigned)s_keyboard_count,
+             (unsigned)s_widget_generation);
 }
 
 static void binding_value(const char *binding, char *out, size_t out_len)

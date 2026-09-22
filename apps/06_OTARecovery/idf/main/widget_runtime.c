@@ -65,6 +65,12 @@ static int json_int(const cJSON *object, const char *key, int fallback)
     return cJSON_IsNumber(item) ? item->valueint : fallback;
 }
 
+static bool json_bool(const cJSON *object, const char *key, bool fallback)
+{
+    const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+    return cJSON_IsBool(item) ? cJSON_IsTrue(item) : fallback;
+}
+
 static const char *json_string(const cJSON *object, const char *key)
 {
     const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
@@ -107,6 +113,7 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "youtube_period_90d") == 0 ||
                       strcmp(action, "youtube_period_all") == 0 ||
                       strcmp(action, "serial_send_test") == 0 ||
+                      strcmp(action, "serial_send_text") == 0 ||
                       strcmp(action, "serial_clear") == 0);
 }
 
@@ -130,6 +137,8 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
     size_t clock_count = 0;
     size_t chart_count = 0;
     size_t carousel_count = 0;
+    size_t textarea_count = 0;
+    size_t keyboard_count = 0;
 
     const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
     const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
@@ -207,11 +216,43 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 dst->type = WIDGET_OBJECT_BUTTON;
                 const char *text = json_string(object, "text");
                 const char *action = json_string(object, "action");
+                const char *target = json_string(object, "target");
                 if (!text[0] || strlen(text) > 64 || strlen(action) >= sizeof(dst->action) || !button_action_allowed(action)) {
                     set_reason(reason, reason_len, "button action invalid"); ok = false; break;
                 }
+                if (strcmp(action, "serial_send_text") == 0 && (!target[0] || strlen(target) >= sizeof(dst->target))) {
+                    set_reason(reason, reason_len, "serial_send_text requires textarea target"); ok = false; break;
+                }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->action, action, sizeof(dst->action));
+                strlcpy(dst->target, target, sizeof(dst->target));
+            } else if (strcmp(type->valuestring, "textarea") == 0) {
+                dst->type = WIDGET_OBJECT_TEXTAREA;
+                textarea_count++;
+                const char *id_text = json_string(object, "id");
+                const char *initial = json_string(object, "text");
+                const char *placeholder = json_string(object, "placeholder");
+                dst->max_length = json_int(object, "max_length", 128);
+                dst->one_line = json_bool(object, "one_line", true);
+                if (textarea_count > WIDGET_MAX_TEXTAREAS || !id_text[0] || strlen(id_text) >= sizeof(dst->id) ||
+                    strlen(initial) > 160 || strlen(placeholder) >= sizeof(dst->placeholder) ||
+                    dst->max_length < 1 || dst->max_length > 256 || dst->w < 160 || dst->h < 40) {
+                    set_reason(reason, reason_len, "textarea requires unique id, >=160x40, max_length 1..256");
+                    ok = false; break;
+                }
+                strlcpy(dst->id, id_text, sizeof(dst->id));
+                strlcpy(dst->text, initial, sizeof(dst->text));
+                strlcpy(dst->placeholder, placeholder, sizeof(dst->placeholder));
+            } else if (strcmp(type->valuestring, "keyboard") == 0) {
+                dst->type = WIDGET_OBJECT_KEYBOARD;
+                keyboard_count++;
+                const char *target = json_string(object, "target");
+                if (keyboard_count > WIDGET_MAX_KEYBOARDS || !target[0] || strlen(target) >= sizeof(dst->target) ||
+                    dst->w < 300 || dst->h < 100) {
+                    set_reason(reason, reason_len, "keyboard requires textarea target and >=300x100");
+                    ok = false; break;
+                }
+                strlcpy(dst->target, target, sizeof(dst->target));
             } else if (strcmp(type->valuestring, "clock") == 0) {
                 dst->type = WIDGET_OBJECT_CLOCK;
                 clock_count++;
@@ -257,6 +298,39 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 }
             } else {
                 set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
+            }
+        }
+
+        for (size_t i = 0; i < out->object_count && ok; ++i) {
+            widget_object_t *obj = &out->objects[i];
+            if (obj->type == WIDGET_OBJECT_TEXTAREA) {
+                for (size_t j = i + 1; j < out->object_count; ++j) {
+                    if (out->objects[j].type == WIDGET_OBJECT_TEXTAREA &&
+                        strcmp(obj->id, out->objects[j].id) == 0) {
+                        set_reason(reason, reason_len, "textarea ids must be unique");
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+
+            bool needs_target = obj->type == WIDGET_OBJECT_KEYBOARD ||
+                                (obj->type == WIDGET_OBJECT_BUTTON &&
+                                 strcmp(obj->action, "serial_send_text") == 0);
+            if (needs_target) {
+                bool found = false;
+                for (size_t j = 0; j < out->object_count; ++j) {
+                    if (out->objects[j].type == WIDGET_OBJECT_TEXTAREA &&
+                        strcmp(obj->target, out->objects[j].id) == 0) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    set_reason(reason, reason_len, "textarea target not found");
+                    ok = false;
+                    break;
+                }
             }
         }
     }

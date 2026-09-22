@@ -13,6 +13,7 @@
 #define SERIAL_RX_TEXT_BYTES 512
 #define SERIAL_RX_TASK_STACK 4096
 #define SERIAL_RX_TASK_PRIORITY 5
+#define SERIAL_TX_TEXT_MAX 256
 
 static SemaphoreHandle_t s_lock;
 static char s_rx_text[SERIAL_RX_TEXT_BYTES];
@@ -99,6 +100,28 @@ esp_err_t serial_service_send_test(void)
     }
 
     return written == sizeof(test) - 1 ? ESP_OK : ESP_FAIL;
+}
+
+esp_err_t serial_service_send_text(const char *text)
+{
+    if (!text) return ESP_ERR_INVALID_ARG;
+
+    size_t len = strnlen(text, SERIAL_TX_TEXT_MAX + 1);
+    if (len == 0 || len > SERIAL_TX_TEXT_MAX) return ESP_ERR_INVALID_SIZE;
+
+    static const char ending[] = "\r\n";
+    size_t text_written = fwrite(text, 1, len, stdout);
+    size_t ending_written = fwrite(ending, 1, sizeof(ending) - 1, stdout);
+    fflush(stdout);
+
+    size_t total = text_written + ending_written;
+    if (s_lock) {
+        xSemaphoreTake(s_lock, portMAX_DELAY);
+        s_tx_bytes += total;
+        xSemaphoreGive(s_lock);
+    }
+
+    return (text_written == len && ending_written == sizeof(ending) - 1) ? ESP_OK : ESP_FAIL;
 }
 
 esp_err_t serial_service_clear(void)
