@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Interactive Serial Terminal — KONTAKTS Help</title>
+  <link rel="stylesheet" href="/help/style.css">
+</head>
+<body>
+<header>
+  <div class="eyebrow">APPLICATION HELP / SERIAL LAB-02</div>
+  <h1>Interactive Serial Terminal</h1>
+  <p>Второй шаг Serial-линии KONTAKTS: теперь произвольную команду можно набрать прямо на TFT штатной LVGL 9 клавиатурой и отправить через UART0.</p>
+  <div class="badges">
+    <span class="badge info">Platform ≥ 0.3.7</span>
+    <span class="badge info">Widget 0.1.0</span>
+    <span class="badge">115200 · 8N1</span>
+    <span class="badge warn">PHYSICAL TEST PENDING</span>
+  </div>
+  <div class="topnav">
+    <a href="/help">Help Center</a>
+    <a href="/help/system?doc=user">Пользователь</a>
+    <a href="/help/system?doc=application-programmer">Прикладной программист</a>
+    <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab">GitHub</a>
+  </div>
+</header>
+<main>
+  <h2>Что нового относительно USB Serial Monitor</h2>
+  <div class="feature-grid">
+    <div class="mini-card"><div class="kicker">Input</div><div class="value">textarea</div><p class="muted">Редактируемое поле ввода создаётся из JSON, а не жёстко в прошивке приложения.</p></div>
+    <div class="mini-card"><div class="kicker">Keyboard</div><div class="value">LVGL 9 keyboard</div><p class="muted">Экранная клавиатура привязывается к textarea по идентификатору target.</p></div>
+    <div class="mini-card"><div class="kicker">Action</div><div class="value">serial_send_text</div><p class="muted">Кнопка SEND передаёт текущее содержимое выбранного textarea через общий serial service.</p></div>
+  </div>
+
+  <h2>Архитектура</h2>
+  <div class="path">
+    <span>LVGL keyboard</span><i>→</i>
+    <span>textarea</span><i>→</i>
+    <span>serial_send_text</span><i>→</i>
+    <span>serial service</span><i>→</i>
+    <span>UART0</span><i>→</i>
+    <span>CH340C</span><i>→</i>
+    <span>PC</span>
+  </div>
+  <div class="callout">
+    <span class="callout-title">Почему это SD-приложение</span>
+    В прошивку добавлены только универсальные возможности <code>textarea</code>, <code>keyboard</code> и generic serial action. Конкретная компоновка терминала остаётся обычным JSON-пакетом на SD.
+  </div>
+
+  <h2>Быстрый тест</h2>
+  <div class="steps">
+    <div class="step">Установите KONTAKTS Platform <code>0.3.7</code> или новее.</div>
+    <div class="step">Скопируйте каталог <code>widgets/serial-terminal</code> на SD и нажмите <b>REFRESH</b>.</div>
+    <div class="step">Откройте <b>Interactive Serial Terminal</b>.</div>
+    <div class="step">Наберите на TFT, например, <code>HELLO123</code> и нажмите <b>SEND</b>.</div>
+    <div class="step">На PC в KONTAKTSerial должна появиться строка <code>HELLO123</code> с окончанием CRLF.</div>
+  </div>
+
+  <h2>Новые Widget Runtime primitives</h2>
+  <table>
+    <thead><tr><th>Primitive</th><th>Основные свойства</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td><code>textarea</code></td><td><code>id</code>, <code>text</code>, <code>placeholder</code>, <code>max_length</code>, <code>one_line</code></td><td>Редактируемый текстовый ввод.</td></tr>
+      <tr><td><code>keyboard</code></td><td><code>target</code></td><td>Штатная LVGL keyboard, привязанная к textarea.</td></tr>
+      <tr><td><code>button</code> + <code>serial_send_text</code></td><td><code>target</code></td><td>Передаёт текущее содержимое указанного textarea.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Пример JSON</h2>
+  <pre>{
+  "type": "textarea",
+  "id": "tx_input",
+  "x": 16, "y": 158, "w": 530, "h": 46,
+  "placeholder": "Type command...",
+  "max_length": 128,
+  "one_line": true
+},
+{
+  "type": "keyboard",
+  "x": 16, "y": 214, "w": 712, "h": 140,
+  "target": "tx_input"
+},
+{
+  "type": "button",
+  "text": "SEND",
+  "action": "serial_send_text",
+  "target": "tx_input"
+}</pre>
+
+  <h2>Текущая граница</h2>
+  <div class="callout warn">
+    <span class="callout-title">LAB-02, не LAB-03</span>
+    Пока используется стандартная LVGL keyboard, одна строка ввода и фиксированное окончание CRLF. История команд, выбор None/LF/CR/CRLF, ASCII/HEX и специальная клавиатура относятся к следующему Serial-виджету.
+  </div>
+</main>
+<footer><a href="/help">← Help Center</a> · <a href="/help/system?doc=application-programmer">Application Programmer</a></footer>
+</body>
+</html>

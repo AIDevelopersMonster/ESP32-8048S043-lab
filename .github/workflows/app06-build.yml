@@ -1,4 +1,4 @@
-name: App 06/07/08/09/11 - Platform OTA + Widget Runtime Build
+name: App 06/07/08/09/11/12 - Platform OTA + Widget Runtime Build
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - agent/app08-youtube-dashboard
       - agent/app09-sd-widget-library
       - agent/app11-usb-serial-terminal
+      - agent/app12-interactive-serial-terminal
     paths:
       - 'apps/06_OTARecovery/**'
       - 'apps/09_SDWidgetLibrary/**'

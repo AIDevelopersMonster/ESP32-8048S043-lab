@@ -1,10 +1,11 @@
-name: App 09/11 - SD Library Bundle
+name: App 09/11/12 - SD Library Bundle
 
 on:
   push:
     branches:
       - agent/app09-sd-widget-library
       - agent/app11-usb-serial-terminal
+      - agent/app12-interactive-serial-terminal
     paths:
       - 'apps/09_SDWidgetLibrary/sd/**'
       - '.github/workflows/app09-sd-release.yml'

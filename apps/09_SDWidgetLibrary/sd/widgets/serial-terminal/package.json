@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "id": "serial-terminal",
+  "name": "Interactive Serial Terminal",
+  "version": "0.1.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {
+      "id": "terminal",
+      "name": "Interactive Serial Terminal",
+      "file": "terminal.json"
+    }
+  ],
+  "requires": {
+    "minimum_platform": "0.3.7",
+    "services": ["serial"]
+  },
+  "documentation": {
+    "entry": "html/index.html"
+  },
+  "firmware": {
+    "required": false
+  },
+  "secrets": {
+    "storage": "none",
+    "sd_allowed": true
+  }
+}
