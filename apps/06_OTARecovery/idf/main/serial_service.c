@@ -184,7 +184,9 @@ esp_err_t serial_service_init(void)
 esp_err_t serial_service_send_test(void)
 {
     static const char test[] = "KONTAKTS USB SERIAL TEST";
-    return serial_service_send_text(test);
+    /* Diagnostic monitor action must remain deterministic even if the
+     * Advanced Terminal previously selected HEX or another line ending. */
+    return write_payload((const uint8_t *)test, sizeof(test) - 1, SERIAL_ENDING_CRLF);
 }
 
 esp_err_t serial_service_send_text(const char *text)
