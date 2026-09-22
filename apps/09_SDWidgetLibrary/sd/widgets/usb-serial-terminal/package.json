@@ -2,14 +2,25 @@
   "schema": 1,
   "id": "usb-serial-terminal",
   "name": "USB Serial Terminal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "widget-package",
   "entrypoints": [
-    {"id": "monitor", "name": "USB Serial Monitor", "file": "terminal.json"}
+    {
+      "id": "monitor",
+      "name": "USB Serial Monitor",
+      "file": "terminal.json"
+    },
+    {
+      "id": "interactive",
+      "name": "Interactive Serial Terminal",
+      "file": "interactive.json"
+    }
   ],
   "requires": {
-    "minimum_platform": "0.3.5",
-    "services": ["serial"]
+    "minimum_platform": "0.3.7",
+    "services": [
+      "serial"
+    ]
   },
   "documentation": {
     "entry": "html/index.html"
