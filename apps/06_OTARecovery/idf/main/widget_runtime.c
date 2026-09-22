@@ -261,12 +261,15 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 dst->type = WIDGET_OBJECT_KEYBOARD;
                 keyboard_count++;
                 const char *target = json_string(object, "target");
+                const char *action = json_string(object, "action");
+                bool action_ok = !action[0] || strcmp(action, "serial_send_text") == 0;
                 if (keyboard_count > WIDGET_MAX_KEYBOARDS || !target[0] || strlen(target) >= sizeof(dst->target) ||
-                    dst->w < 300 || dst->h < 100) {
-                    set_reason(reason, reason_len, "keyboard requires textarea target and >=300x100");
+                    !action_ok || strlen(action) >= sizeof(dst->action) || dst->w < 300 || dst->h < 100) {
+                    set_reason(reason, reason_len, "keyboard requires textarea target, optional serial_send_text action, and >=300x100");
                     ok = false; break;
                 }
                 strlcpy(dst->target, target, sizeof(dst->target));
+                strlcpy(dst->action, action, sizeof(dst->action));
             } else if (strcmp(type->valuestring, "clock") == 0) {
                 dst->type = WIDGET_OBJECT_CLOCK;
                 clock_count++;
