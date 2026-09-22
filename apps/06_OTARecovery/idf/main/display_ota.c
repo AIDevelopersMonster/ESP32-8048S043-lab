@@ -357,7 +357,7 @@ static void create_ui(void)
 
     s_widget_panel = make_panel();
     s_widget_header = make_label(s_widget_panel, 20, 12, "FILESYSTEM WIDGET", &lv_font_montserrat_18, 0x8B949E);
-    s_widget_content = lv_obj_create(s_widget_panel); lv_obj_set_pos(s_widget_content, 12, 44); lv_obj_set_size(s_widget_content, 744, 344);
+    s_widget_content = lv_obj_create(s_widget_panel); lv_obj_set_pos(s_widget_content, 12, 44); lv_obj_set_size(s_widget_content, 744, 352);
     lv_obj_set_style_border_width(s_widget_content, 0, 0); lv_obj_set_style_pad_all(s_widget_content, 0, 0);
     lv_obj_remove_flag(s_widget_content, LV_OBJ_FLAG_SCROLLABLE);
 
@@ -505,11 +505,23 @@ static void render_widget(void)
         lv_obj_t *keyboard = lv_keyboard_create(s_widget_content);
         lv_obj_set_pos(keyboard, o->x, o->y);
         lv_obj_set_size(keyboard, o->w, o->h);
+        lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_TEXT_LOWER);
         lv_keyboard_set_textarea(keyboard, textarea);
-        lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), 0);
-        lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), 0);
-        lv_obj_set_style_border_width(keyboard, 1, 0);
-        lv_obj_set_style_radius(keyboard, 8, 0);
+
+        /* This platform intentionally does not install an LVGL theme.
+         * Keyboard keys therefore need explicit LV_PART_ITEMS styling;
+         * styling only LV_PART_MAIN can leave a blank-looking keyboard. */
+        lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), LV_PART_MAIN);
+        lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_MAIN);
+        lv_obj_set_style_border_width(keyboard, 1, LV_PART_MAIN);
+        lv_obj_set_style_radius(keyboard, 8, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x21262D), LV_PART_ITEMS);
+        lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x1F6FEB), LV_PART_ITEMS | LV_STATE_PRESSED);
+        lv_obj_set_style_text_color(keyboard, lv_color_hex(0xF0F6FC), LV_PART_ITEMS);
+        lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_ITEMS);
+        lv_obj_set_style_border_width(keyboard, 1, LV_PART_ITEMS);
+        lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_move_foreground(keyboard);
         s_keyboards[s_keyboard_count++] = keyboard;
     }
 
