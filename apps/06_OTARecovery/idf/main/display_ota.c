@@ -71,6 +71,14 @@ typedef struct {
     const widget_object_t *source;
 } text_input_view_t;
 
+typedef struct {
+    lv_obj_t *overlay;
+    lv_obj_t *editor;
+    lv_obj_t *matrix;
+    lv_obj_t *target;
+    const widget_object_t *source;
+} keyboard_view_t;
+
 static esp_lcd_panel_handle_t s_panel;
 static i2c_master_bus_handle_t s_i2c_bus;
 static esp_lcd_panel_io_handle_t s_touch_io;
@@ -92,7 +100,7 @@ static bound_chart_t s_charts[WIDGET_MAX_CHARTS];
 static size_t s_chart_count;
 static text_input_view_t s_textareas[WIDGET_MAX_TEXTAREAS];
 static size_t s_textarea_count;
-static lv_obj_t *s_keyboards[WIDGET_MAX_KEYBOARDS];
+static keyboard_view_t s_keyboards[WIDGET_MAX_KEYBOARDS];
 static size_t s_keyboard_count;
 static time_t s_chart_last_update;
 static youtube_period_t s_chart_last_period = (youtube_period_t)-1;
@@ -196,16 +204,6 @@ static void show_action_error(const char *action, esp_err_t err)
     lv_label_set_text_fmt(s_ota_message, "%s rejected: %s", action, esp_err_to_name(err));
 }
 
-static void textarea_keyboard_cb(lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    if (code != LV_EVENT_CLICKED && code != LV_EVENT_FOCUSED) return;
-    lv_obj_t *keyboard = (lv_obj_t *)lv_event_get_user_data(e);
-    if (!keyboard) return;
-    lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
-    lv_obj_move_foreground(keyboard);
-}
-
 static const char * const s_terminal_kbd_lower[] = {
     "1","2","3","4","5","6","7","8","9","0","BS","\n",
     "q","w","e","r","t","y","u","i","o","p","\n",
@@ -229,12 +227,69 @@ static const char * const s_terminal_kbd_symbols[] = {
     "ABC","SPACE",""
 };
 
+static void keyboard_hide(keyboard_view_t *view)
+{
+    if (view && view->overlay) lv_obj_add_flag(view->overlay, LV_OBJ_FLAG_HIDDEN);
+}
+
+static void textarea_keyboard_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code != LV_EVENT_CLICKED && code != LV_EVENT_FOCUSED) return;
+
+    keyboard_view_t *view = (keyboard_view_t *)lv_event_get_user_data(e);
+    if (!view || !view->overlay || !view->editor || !view->target) return;
+
+    lv_textarea_set_text(view->editor, lv_textarea_get_text(view->target));
+    if (view->matrix) lv_buttonmatrix_set_map(view->matrix, s_terminal_kbd_lower);
+    lv_obj_remove_flag(view->overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(view->overlay);
+}
+
+static void keyboard_cancel_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    keyboard_hide((keyboard_view_t *)lv_event_get_user_data(e));
+}
+
+static void keyboard_apply(keyboard_view_t *view)
+{
+    if (!view || !view->editor || !view->target) return;
+    lv_textarea_set_text(view->target, lv_textarea_get_text(view->editor));
+}
+
+static void keyboard_ok_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    keyboard_view_t *view = (keyboard_view_t *)lv_event_get_user_data(e);
+    keyboard_apply(view);
+    keyboard_hide(view);
+}
+
+static void keyboard_send_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
+    keyboard_view_t *view = (keyboard_view_t *)lv_event_get_user_data(e);
+    if (!view) return;
+
+    keyboard_apply(view);
+    if (view->source && strcmp(view->source->action, "serial_send_text") == 0) {
+        esp_err_t err = serial_service_send_text(lv_textarea_get_text(view->target));
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "KEYBOARD SEND rejected: %s", esp_err_to_name(err));
+            return;
+        }
+    }
+    keyboard_hide(view);
+}
+
 static void terminal_keyboard_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED) return;
 
     lv_obj_t *keyboard = (lv_obj_t *)lv_event_get_current_target(e);
-    lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+    keyboard_view_t *view = (keyboard_view_t *)lv_event_get_user_data(e);
+    lv_obj_t *textarea = view ? view->editor : NULL;
     if (!keyboard || !textarea) return;
 
     uint32_t id = lv_buttonmatrix_get_selected_button(keyboard);
@@ -549,7 +604,8 @@ static void render_widget(void)
         widget_object_t *o = &s_widget_model->objects[i];
         if (o->type == WIDGET_OBJECT_LABEL) {
             lv_obj_t *label = make_label(s_widget_content, o->x, o->y, o->text[0] ? o->text : "", &lv_font_montserrat_18, o->color);
-            lv_obj_set_width(label, o->w); lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+            lv_obj_set_size(label, o->w, o->h);
+            lv_label_set_long_mode(label, o->h <= 30 ? LV_LABEL_LONG_DOT : LV_LABEL_LONG_WRAP);
             if (o->binding[0] && s_bound_count < WIDGET_MAX_BOUND_LABELS) {
                 s_bound[s_bound_count++] = (bound_label_t){.label = label, .source = o};
             }
@@ -594,41 +650,91 @@ static void render_widget(void)
             continue;
         }
         /*
-         * Render Widget Runtime "keyboard" as a plain LVGL button matrix instead
-         * of lv_keyboard.  The latter proved invisible on the physical 8048S043
-         * build despite valid geometry and explicit styles.  A button matrix is
-         * deterministic, theme-independent and still keeps "keyboard" generic.
+         * Runtime keyboard is a modal editor overlay.  The normal widget keeps
+         * its full content area; tapping the target textarea opens a dedicated
+         * 744x352 editor with large deterministic button-matrix keys.
          */
-        lv_obj_t *keyboard = lv_buttonmatrix_create(s_widget_content);
-        lv_obj_set_pos(keyboard, o->x, o->y);
-        lv_obj_set_size(keyboard, o->w, o->h);
+        keyboard_view_t *view = &s_keyboards[s_keyboard_count];
+        memset(view, 0, sizeof(*view));
+        view->target = textarea;
+        view->source = o;
+
+        lv_obj_t *overlay = lv_obj_create(s_widget_content);
+        lv_obj_set_pos(overlay, 0, 0);
+        lv_obj_set_size(overlay, 744, 352);
+        lv_obj_set_style_bg_color(overlay, lv_color_hex(0x0B1016), 0);
+        lv_obj_set_style_bg_opa(overlay, LV_OPA_COVER, 0);
+        lv_obj_set_style_border_width(overlay, 0, 0);
+        lv_obj_set_style_radius(overlay, 0, 0);
+        lv_obj_set_style_pad_all(overlay, 0, 0);
+        lv_obj_remove_flag(overlay, LV_OBJ_FLAG_SCROLLABLE);
+        view->overlay = overlay;
+
+        make_label(overlay, 16, 8, "KEYBOARD INPUT", &lv_font_montserrat_18, 0xF0F6FC);
+        make_label(overlay, 190, 8,
+                   o->action[0] ? "CANCEL discards | OK applies | SEND applies + transmits"
+                                : "CANCEL discards | OK applies",
+                   &lv_font_montserrat_14, 0x8B949E);
+
+        lv_obj_t *editor = lv_textarea_create(overlay);
+        lv_obj_set_pos(editor, 16, 36);
+        lv_obj_set_size(editor, 712, 46);
+        lv_textarea_set_one_line(editor, true);
+        lv_textarea_set_max_length(editor, 256);
+        lv_textarea_set_placeholder_text(editor, "Enter text...");
+        lv_obj_set_style_text_font(editor, &lv_font_montserrat_18, 0);
+        lv_obj_set_style_text_color(editor, lv_color_hex(0xF0F6FC), 0);
+        lv_obj_set_style_bg_color(editor, lv_color_hex(0x0D1117), 0);
+        lv_obj_set_style_border_color(editor, lv_color_hex(0x58A6FF), 0);
+        lv_obj_set_style_border_width(editor, 1, 0);
+        lv_obj_set_style_radius(editor, 8, 0);
+        view->editor = editor;
+
+        lv_obj_t *keyboard = lv_buttonmatrix_create(overlay);
+        lv_obj_set_pos(keyboard, 16, 90);
+        lv_obj_set_size(keyboard, 712, 198);
         lv_buttonmatrix_set_map(keyboard, s_terminal_kbd_lower);
-        lv_obj_add_event_cb(keyboard, terminal_keyboard_cb, LV_EVENT_VALUE_CHANGED, textarea);
+        lv_obj_add_event_cb(keyboard, terminal_keyboard_cb, LV_EVENT_VALUE_CHANGED, view);
+        view->matrix = keyboard;
 
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_MAIN);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_MAIN);
         lv_obj_set_style_radius(keyboard, 8, LV_PART_MAIN);
-        lv_obj_set_style_pad_all(keyboard, 2, LV_PART_MAIN);
-        lv_obj_set_style_pad_row(keyboard, 2, LV_PART_MAIN);
-        lv_obj_set_style_pad_column(keyboard, 2, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(keyboard, 3, LV_PART_MAIN);
+        lv_obj_set_style_pad_row(keyboard, 3, LV_PART_MAIN);
+        lv_obj_set_style_pad_column(keyboard, 3, LV_PART_MAIN);
 
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x21262D), LV_PART_ITEMS);
         lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_ITEMS);
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x1F6FEB), LV_PART_ITEMS | LV_STATE_PRESSED);
         lv_obj_set_style_text_color(keyboard, lv_color_hex(0xF0F6FC), LV_PART_ITEMS);
         lv_obj_set_style_text_opa(keyboard, LV_OPA_COVER, LV_PART_ITEMS);
-        lv_obj_set_style_text_font(keyboard, &lv_font_montserrat_14, LV_PART_ITEMS);
+        lv_obj_set_style_text_font(keyboard, &lv_font_montserrat_18, LV_PART_ITEMS);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_ITEMS);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_ITEMS);
-        lv_obj_set_style_radius(keyboard, 4, LV_PART_ITEMS);
+        lv_obj_set_style_radius(keyboard, 5, LV_PART_ITEMS);
 
-        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_CLICKED, keyboard);
-        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_FOCUSED, keyboard);
-        lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_move_foreground(keyboard);
-        s_keyboards[s_keyboard_count++] = keyboard;
+        lv_obj_t *cancel = make_button(overlay, 16, 298, 168, 42, "CANCEL", keyboard_cancel_cb);
+        lv_obj_remove_event_cb(cancel, keyboard_cancel_cb);
+        lv_obj_add_event_cb(cancel, keyboard_cancel_cb, LV_EVENT_CLICKED, view);
+
+        int32_t ok_x = o->action[0] ? 384 : 560;
+        lv_obj_t *ok = make_button(overlay, ok_x, 298, 168, 42, "OK", keyboard_ok_cb);
+        lv_obj_remove_event_cb(ok, keyboard_ok_cb);
+        lv_obj_add_event_cb(ok, keyboard_ok_cb, LV_EVENT_CLICKED, view);
+
+        if (o->action[0]) {
+            lv_obj_t *send = make_button(overlay, 560, 298, 168, 42, "SEND", keyboard_send_cb);
+            lv_obj_remove_event_cb(send, keyboard_send_cb);
+            lv_obj_add_event_cb(send, keyboard_send_cb, LV_EVENT_CLICKED, view);
+        }
+
+        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_CLICKED, view);
+        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_FOCUSED, view);
+        lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
+        s_keyboard_count++;
     }
 
     s_chart_force_refresh = true;
