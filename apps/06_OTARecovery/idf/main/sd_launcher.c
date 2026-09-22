@@ -84,7 +84,7 @@ static void entry_button_cb(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
 
     sd_launcher_view_t *view = (sd_launcher_view_t *)lv_event_get_user_data(e);
-    lv_obj_t *button = (lv_obj_t *)lv_event_get_target(e);
+    lv_obj_t *button = (lv_obj_t *)lv_event_get_current_target(e);
     if (!view || !button || !view->run_cb) return;
 
     uintptr_t encoded = (uintptr_t)lv_obj_get_user_data(button);
@@ -107,7 +107,7 @@ static void package_button_cb(lv_event_t *e)
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
 
     sd_launcher_view_t *view = (sd_launcher_view_t *)lv_event_get_user_data(e);
-    lv_obj_t *button = (lv_obj_t *)lv_event_get_target(e);
+    lv_obj_t *button = (lv_obj_t *)lv_event_get_current_target(e);
     if (!view || !button) return;
 
     uintptr_t encoded = (uintptr_t)lv_obj_get_user_data(button);
