@@ -2,18 +2,13 @@
   "schema": 1,
   "id": "usb-serial-terminal",
   "name": "USB Serial Terminal",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "widget-package",
   "entrypoints": [
     {
       "id": "monitor",
       "name": "USB Serial Monitor",
       "file": "terminal.json"
-    },
-    {
-      "id": "interactive",
-      "name": "Interactive Serial Terminal",
-      "file": "interactive.json"
     },
     {
       "id": "advanced",
