@@ -1,0 +1,56 @@
+name: Cleanup failed GitHub Pages deployments
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/cleanup-pages-deployments.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove failed github-pages deployments
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "Scanning github-pages deployments..."
+          gh api             --method GET             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             --paginate             "/repos/${GITHUB_REPOSITORY}/deployments?environment=github-pages&per_page=100"             --jq '.[] | .id' > /tmp/pages-deployments.txt
+
+          removed=0
+          kept=0
+
+          while IFS= read -r deployment_id; do
+            [ -n "${deployment_id}" ] || continue
+
+            state="$(
+              gh api                 --method GET                 -H "Accept: application/vnd.github+json"                 -H "X-GitHub-Api-Version: 2022-11-28"                 "/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses?per_page=1"                 --jq 'if length == 0 then "unknown" else .[0].state end'
+            )"
+
+            case "${state}" in
+              failure|error)
+                echo "Removing deployment ${deployment_id} (state=${state})"
+
+                gh api                   --method POST                   -H "Accept: application/vnd.github+json"                   -H "X-GitHub-Api-Version: 2022-11-28"                   "/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses"                   -f state=inactive                   -f description="Cleanup of failed GitHub Pages deployment"                   >/dev/null
+
+                gh api                   --method DELETE                   -H "Accept: application/vnd.github+json"                   -H "X-GitHub-Api-Version: 2022-11-28"                   "/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}"                   >/dev/null
+
+                removed=$((removed + 1))
+                ;;
+              *)
+                echo "Keeping deployment ${deployment_id} (state=${state})"
+                kept=$((kept + 1))
+                ;;
+            esac
+          done < /tmp/pages-deployments.txt
+
+          echo "Cleanup complete: removed=${removed}, kept=${kept}"
