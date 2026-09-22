@@ -1,0 +1,101 @@
+{
+  "schema": 1,
+  "id": "usb-serial-terminal.interactive",
+  "name": "Interactive Serial Terminal",
+  "version": "0.2.0",
+  "background": "#0B1016",
+  "objects": [
+    {
+      "type": "label",
+      "x": 16,
+      "y": 6,
+      "w": 430,
+      "h": 26,
+      "text": "INTERACTIVE SERIAL TERMINAL",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 462,
+      "y": 6,
+      "w": 266,
+      "h": 26,
+      "bind": "serial.state",
+      "color": "#58A6FF"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 36,
+      "w": 712,
+      "h": 64,
+      "bind": "serial.rx_text",
+      "prefix": "RX > ",
+      "color": "#7EE787"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 104,
+      "w": 220,
+      "h": 22,
+      "bind": "serial.rx_bytes",
+      "prefix": "RX ",
+      "suffix": " bytes",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "label",
+      "x": 250,
+      "y": 104,
+      "w": 220,
+      "h": 22,
+      "bind": "serial.tx_bytes",
+      "prefix": "TX ",
+      "suffix": " bytes",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "textarea",
+      "id": "tx_input",
+      "x": 16,
+      "y": 134,
+      "w": 530,
+      "h": 44,
+      "placeholder": "Type command...",
+      "max_length": 128,
+      "one_line": true,
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "button",
+      "x": 558,
+      "y": 134,
+      "w": 82,
+      "h": 44,
+      "text": "SEND",
+      "action": "serial_send_text",
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 646,
+      "y": 134,
+      "w": 82,
+      "h": 44,
+      "text": "CLEAR",
+      "action": "serial_clear",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "keyboard",
+      "x": 16,
+      "y": 186,
+      "w": 712,
+      "h": 150,
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    }
+  ]
+}
