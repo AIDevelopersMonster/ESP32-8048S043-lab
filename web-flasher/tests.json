@@ -16,8 +16,8 @@
       "version": "0.3.5",
       "manifest": "manifest-app11.json",
       "runtimeStatus": "physical-pass-usb-uart-bidirectional",
-      "webFlasherStatus": "pending-browser-install-v0.3.5",
-      "notes": "Sample A physically passed normal USB/CH340C/UART0 communication in both directions using platform 0.3.5 and usb-serial-terminal.monitor. P1 is not covered by this acceptance.",
+      "webFlasherStatus": "physical-pass-v0.3.5",
+      "notes": "Sample A physically passed normal USB/CH340C/UART0 communication in both directions using platform 0.3.5 and usb-serial-terminal.monitor. The browser Web Flasher install of platform 0.3.5 was also physically accepted on 2026-09-22. P1 is not covered by this acceptance.",
       "source": "../apps/06_OTARecovery/"
     },
     {
