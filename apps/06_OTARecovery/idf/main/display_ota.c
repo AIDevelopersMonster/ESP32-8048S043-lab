@@ -302,6 +302,33 @@ static void widget_action_cb(lv_event_t *e)
             esp_err_t err = serial_service_send_text(text);
             if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL SEND TEXT rejected: %s", esp_err_to_name(err));
         }
+    } else if (strcmp(action, "serial_repeat_last") == 0) {
+        esp_err_t err = serial_service_repeat_last();
+        if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL REPEAT rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "serial_history_prev") == 0 || strcmp(action, "serial_history_next") == 0) {
+        lv_obj_t *textarea = find_textarea(source->target);
+        if (!textarea) {
+            ESP_LOGW(TAG, "SERIAL HISTORY rejected: textarea target %s not found", source->target);
+        } else {
+            char text[129] = {0};
+            esp_err_t err = strcmp(action, "serial_history_prev") == 0
+                                ? serial_service_history_prev(text, sizeof(text))
+                                : serial_service_history_next(text, sizeof(text));
+            if (err == ESP_OK) lv_textarea_set_text(textarea, text);
+            else if (err != ESP_ERR_NOT_FOUND) ESP_LOGW(TAG, "SERIAL HISTORY rejected: %s", esp_err_to_name(err));
+        }
+    } else if (strcmp(action, "serial_ending_none") == 0) {
+        serial_service_set_ending(SERIAL_ENDING_NONE);
+    } else if (strcmp(action, "serial_ending_lf") == 0) {
+        serial_service_set_ending(SERIAL_ENDING_LF);
+    } else if (strcmp(action, "serial_ending_cr") == 0) {
+        serial_service_set_ending(SERIAL_ENDING_CR);
+    } else if (strcmp(action, "serial_ending_crlf") == 0) {
+        serial_service_set_ending(SERIAL_ENDING_CRLF);
+    } else if (strcmp(action, "serial_mode_ascii") == 0) {
+        serial_service_set_tx_mode(SERIAL_TX_MODE_ASCII);
+    } else if (strcmp(action, "serial_mode_hex") == 0) {
+        serial_service_set_tx_mode(SERIAL_TX_MODE_HEX);
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
