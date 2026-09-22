@@ -83,9 +83,13 @@ Validated on hardware:
 
 P1 is explicitly outside this acceptance and remains a separate service/UART0 investigation.
 
-### Platform 0.3.5 GitHub OTA regression
+### Platform 0.3.6 GitHub OTA regression
 
-The same Sample A was also used to re-check the current app-only GitHub OTA path after the App11 changes. Manifest check, OTA install, PENDING_VERIFY handling, saved Wi-Fi/NVS persistence, reconnect and rollback/confirmation controls were accepted as working on 2026-09-22.
+The same Sample A was used to re-check the current app-only GitHub OTA path after the App11 changes by updating Platform 0.3.5 to 0.3.6. Manifest check, newer-version detection, OTA install, PENDING_VERIFY handling, saved Wi-Fi/NVS persistence, reconnect and rollback/confirmation controls were accepted as working on 2026-09-22.
+
+OTA video:
+
+https://youtube.com/shorts/70_Huyt8igQ
 
 ## Video evidence
 

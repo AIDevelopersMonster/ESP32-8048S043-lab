@@ -34,12 +34,13 @@ Video evidence for the v0.1.2 display OTA interface:
 
 Known UI issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
 
-## Platform 0.3.5 regression acceptance — 2026-09-22
+## Platform 0.3.6 regression acceptance — 2026-09-22
 
-The current release line was re-tested physically on Sample A after the App09/App11 platform changes.
+The current release line was re-tested physically on Sample A by updating Platform 0.3.5 to Platform 0.3.6 through the on-device GitHub OTA flow.
 
 ```text
 GitHub manifest check              PASS
+0.3.6 release detection            PASS
 OTA application install           PASS
 reboot into OTA candidate          PASS
 PENDING_VERIFY handling            PASS
@@ -47,16 +48,20 @@ saved Wi-Fi / NVS persistence      PASS
 automatic STA reconnect            PASS
 on-device OTA controls             PASS
 rollback / confirmation workflow   PASS
-post-update Platform 0.3.5         PASS
+post-update Platform 0.3.6         PASS
 ```
 
-Classification: **PLATFORM 0.3.5 GITHUB OTA REGRESSION PHYSICAL PASS**.
+Classification: **PLATFORM 0.3.6 GITHUB OTA REGRESSION PHYSICAL PASS**.
 
 Evidence record:
 
-- `evidence/platform-v0.3.5-github-ota-regression-physical-pass.md`
+- `evidence/platform-v0.3.6-github-ota-regression-physical-pass.md`
 
-This current regression run did not expose an OTA functional failure. The older TLS allocation-headroom observation remains preserved below as historical hardening evidence rather than being deleted.
+Video evidence:
+
+- https://youtube.com/shorts/70_Huyt8igQ
+
+The 0.3.6 release is deliberately narrow and is used to exercise the complete OTA path without mixing the regression with unrelated platform changes. The older TLS allocation-headroom observation remains preserved below as historical hardening evidence rather than being deleted.
 
 ## App08 YouTube dashboard extension
 
@@ -235,5 +240,5 @@ KNOWN HEADER TEXT OVERLAP                COSMETIC / DEFERRED
 TLS ALLOCATION HEADROOM                  OPEN HARDENING ITEM
 APP08 YOUTUBE API + LOCAL WEB DASHBOARD  PHYSICAL PASS
 APP08 FINAL TFT YOUTUBE CHART             OPEN
-PLATFORM 0.3.5 OTA REGRESSION             PHYSICAL PASS
+PLATFORM 0.3.6 OTA REGRESSION             PHYSICAL PASS
 ```

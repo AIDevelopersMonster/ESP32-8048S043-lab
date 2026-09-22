@@ -20,6 +20,8 @@
 
 | 14 | ESP32-8048S043 — KONTAKTS Platform 0.3.5 через Web Flasher | https://youtube.com/shorts/eH-FXkjYH6s | Physical demonstration of installing KONTAKTS Platform 0.3.5 from the browser Web Flasher using the released full image, followed by normal boot on Sample A. The full install is a clean flash path, so Wi-Fi credentials must be configured again afterward. | APP 11 PLATFORM 0.3.5 WEB FLASHER PHYSICAL PASS / NORMAL BOOT PASS |
 
+| 15 | ESP32-8048S043 — обновление KONTAKTS Platform 0.3.6 по OTA | https://youtube.com/shorts/70_Huyt8igQ | Physical demonstration of updating the running KONTAKTS Platform from 0.3.5 to 0.3.6 through the on-device GitHub OTA flow, preserving saved Wi-Fi/NVS and exercising the PENDING_VERIFY confirm/rollback model. | PLATFORM 0.3.6 GITHUB OTA REGRESSION PHYSICAL PASS / WI-FI + NVS PRESERVED |
+
 ## Planned shooting sequence
 
 | Video | Goal | Evidence status |
@@ -39,7 +41,7 @@
 | 13 Web setup | AP/browser setup path | OPEN |
 | 14 Web Flasher | browser firmware install | APP 01 PHYSICAL PASS |
 | 15 Widget Runtime | JSON UI without reflashing | APP08 v0.2.8 PHYSICAL PASS |
-| 16 GitHub OTA | manifest/download/SHA/reboot/PENDING_VERIFY/confirm-or-rollback | PLATFORM 0.3.5 REGRESSION PHYSICAL PASS / WI-FI + NVS PRESERVED |
+| 16 GitHub OTA | manifest/download/SHA/reboot/PENDING_VERIFY/confirm-or-rollback | PLATFORM 0.3.6 REGRESSION PHYSICAL PASS / VIDEO PUBLISHED / WI-FI + NVS PRESERVED |
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
 | 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | TFT WIDGET PHYSICAL PASS / MULTI-DAY NATURAL HISTORY OBSERVATION PENDING |
 | 19 SD Widget Library | select and run widget packages from SD without compiling each UI into firmware, and serve system/application documentation from SD through `/help` | PHYSICAL SD LIBRARY PASS / BROWSER HELP CENTER PASS |
