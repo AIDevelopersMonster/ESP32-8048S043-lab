@@ -83,6 +83,10 @@ Validated on hardware:
 
 P1 is explicitly outside this acceptance and remains a separate service/UART0 investigation.
 
+### Platform 0.3.5 GitHub OTA regression
+
+The same Sample A was also used to re-check the current app-only GitHub OTA path after the App11 changes. Manifest check, OTA install, PENDING_VERIFY handling, saved Wi-Fi/NVS persistence, reconnect and rollback/confirmation controls were accepted as working on 2026-09-22.
+
 ## Video evidence
 
 Web Flasher installation of KONTAKTS Platform 0.3.5 on Sample A:

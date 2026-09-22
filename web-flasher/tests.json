@@ -18,7 +18,9 @@
       "runtimeStatus": "physical-pass-usb-uart-bidirectional",
       "webFlasherStatus": "physical-pass-v0.3.5",
       "notes": "Sample A physically passed normal USB/CH340C/UART0 communication in both directions using platform 0.3.5 and usb-serial-terminal.monitor. The browser Web Flasher install of platform 0.3.5 was also physically accepted on 2026-09-22. P1 is not covered by this acceptance.",
-      "source": "../apps/06_OTARecovery/"
+      "source": "../apps/06_OTARecovery/",
+      "otaStatus": "physical-pass-v0.3.5",
+      "otaNotes": "Sample A physical regression on 2026-09-22: GitHub manifest check, app-only OTA install, reboot into OTA candidate, PENDING_VERIFY handling, saved Wi-Fi/NVS persistence, automatic reconnect, on-device OTA controls, and rollback/confirmation workflow were reported working. This is separate from the full Web Flasher install path."
     },
     {
       "id": "app01-six-card-serial-deck",

@@ -34,6 +34,30 @@ Video evidence for the v0.1.2 display OTA interface:
 
 Known UI issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
 
+## Platform 0.3.5 regression acceptance — 2026-09-22
+
+The current release line was re-tested physically on Sample A after the App09/App11 platform changes.
+
+```text
+GitHub manifest check              PASS
+OTA application install           PASS
+reboot into OTA candidate          PASS
+PENDING_VERIFY handling            PASS
+saved Wi-Fi / NVS persistence      PASS
+automatic STA reconnect            PASS
+on-device OTA controls             PASS
+rollback / confirmation workflow   PASS
+post-update Platform 0.3.5         PASS
+```
+
+Classification: **PLATFORM 0.3.5 GITHUB OTA REGRESSION PHYSICAL PASS**.
+
+Evidence record:
+
+- `evidence/platform-v0.3.5-github-ota-regression-physical-pass.md`
+
+This current regression run did not expose an OTA functional failure. The older TLS allocation-headroom observation remains preserved below as historical hardening evidence rather than being deleted.
+
 ## App08 YouTube dashboard extension
 
 The `agent/app08-youtube-dashboard` branch extends this platform runtime with YouTube Data API channel statistics, a local `/youtube` configuration/status page, NVS-stored API credentials and local daily history.
@@ -211,4 +235,5 @@ KNOWN HEADER TEXT OVERLAP                COSMETIC / DEFERRED
 TLS ALLOCATION HEADROOM                  OPEN HARDENING ITEM
 APP08 YOUTUBE API + LOCAL WEB DASHBOARD  PHYSICAL PASS
 APP08 FINAL TFT YOUTUBE CHART             OPEN
+PLATFORM 0.3.5 OTA REGRESSION             PHYSICAL PASS
 ```

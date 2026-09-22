@@ -39,7 +39,7 @@
 | 13 Web setup | AP/browser setup path | OPEN |
 | 14 Web Flasher | browser firmware install | APP 01 PHYSICAL PASS |
 | 15 Widget Runtime | JSON UI without reflashing | APP08 v0.2.8 PHYSICAL PASS |
-| 16 GitHub OTA | manifest/download/SHA/reboot/up-to-date | PHYSICAL PASS / HARDENING CONTINUES |
+| 16 GitHub OTA | manifest/download/SHA/reboot/PENDING_VERIFY/confirm-or-rollback | PLATFORM 0.3.5 REGRESSION PHYSICAL PASS / WI-FI + NVS PRESERVED |
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
 | 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | TFT WIDGET PHYSICAL PASS / MULTI-DAY NATURAL HISTORY OBSERVATION PENDING |
 | 19 SD Widget Library | select and run widget packages from SD without compiling each UI into firmware, and serve system/application documentation from SD through `/help` | PHYSICAL SD LIBRARY PASS / BROWSER HELP CENTER PASS |
