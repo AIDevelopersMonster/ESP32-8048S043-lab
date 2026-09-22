@@ -5,7 +5,7 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Widgets, system wiki/help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. The current App12 snapshot includes the Interactive Serial Terminal and its Help pages.",
+    "description": "Widgets, system wiki/help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. USB Serial Terminal now contains both Monitor and Interactive Terminal screens.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
     "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd"
@@ -82,14 +82,14 @@
   ],
   "sd_applications": [
     {
-      "id": "serial-terminal",
-      "name": "Interactive Serial Terminal",
-      "version": "0.1.0",
-      "status": "BUILD PASS / PHYSICAL TEST PENDING",
+      "id": "usb-serial-terminal",
+      "name": "USB Serial Terminal",
+      "version": "0.2.0",
+      "status": "MONITOR PHYSICAL PASS / INTERACTIVE RETEST",
       "minimum_platform": "0.3.7",
-      "description": "LAB-02 Serial widget for direct TFT text entry using the generic Widget Runtime textarea and LVGL 9 keyboard, with SEND through serial_send_text. The application itself is SD-only; Platform 0.3.7 supplies the reusable runtime primitives.",
-      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-serial-terminal.zip",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/serial-terminal"
+      "description": "One SD package with two entrypoints: USB Serial Monitor and Interactive Serial Terminal. The interactive screen uses generic textarea, LVGL keyboard and serial_send_text; it is no longer a separate SD application.",
+      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
     }
   ]
 }
