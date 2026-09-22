@@ -134,7 +134,7 @@ The second package is `clock`, using the already proven NTP seven-segment clock 
 
 The third demonstration package is `youtube-led`, using the generic metric carousel capability.
 
-The fourth experimental package is `usb-serial-terminal`. It uses the generic `serial` platform service to display UART0 RX text and counters and to send a fixed test line through the normal CH340C/USB path. Its first version intentionally has no on-screen keyboard; `textarea + keyboard` are planned as generic Widget Runtime capabilities after the bidirectional USB serial path passes on Sample A.
+The fourth package is `usb-serial-terminal`. Like the `youtube` package, it exposes multiple screens from one `package.json`: `USB Serial Monitor` and `Interactive Serial Terminal`. The monitor keeps the physically validated RX/counter/fixed-test path; the interactive screen uses the generic Platform 0.3.7 `textarea`, `keyboard` and `serial_send_text` primitives for arbitrary TFT-to-UART text entry.
 
 The YouTube API key is **not** stored on SD. It remains in NVS.
 
