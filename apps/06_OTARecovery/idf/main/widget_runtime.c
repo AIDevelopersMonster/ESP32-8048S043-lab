@@ -89,6 +89,7 @@ static bool binding_allowed(const char *binding)
         "youtube.views_delta", "youtube.subscribers_delta", "youtube.channel",
         "youtube.state", "youtube.period",
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
+        "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -114,6 +115,15 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "youtube_period_all") == 0 ||
                       strcmp(action, "serial_send_test") == 0 ||
                       strcmp(action, "serial_send_text") == 0 ||
+                      strcmp(action, "serial_repeat_last") == 0 ||
+                      strcmp(action, "serial_history_prev") == 0 ||
+                      strcmp(action, "serial_history_next") == 0 ||
+                      strcmp(action, "serial_ending_none") == 0 ||
+                      strcmp(action, "serial_ending_lf") == 0 ||
+                      strcmp(action, "serial_ending_cr") == 0 ||
+                      strcmp(action, "serial_ending_crlf") == 0 ||
+                      strcmp(action, "serial_mode_ascii") == 0 ||
+                      strcmp(action, "serial_mode_hex") == 0 ||
                       strcmp(action, "serial_clear") == 0);
 }
 
@@ -220,8 +230,12 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 if (!text[0] || strlen(text) > 64 || strlen(action) >= sizeof(dst->action) || !button_action_allowed(action)) {
                     set_reason(reason, reason_len, "button action invalid"); ok = false; break;
                 }
-                if (strcmp(action, "serial_send_text") == 0 && (!target[0] || strlen(target) >= sizeof(dst->target))) {
-                    set_reason(reason, reason_len, "serial_send_text requires textarea target"); ok = false; break;
+                bool needs_textarea_target =
+                    strcmp(action, "serial_send_text") == 0 ||
+                    strcmp(action, "serial_history_prev") == 0 ||
+                    strcmp(action, "serial_history_next") == 0;
+                if (needs_textarea_target && (!target[0] || strlen(target) >= sizeof(dst->target))) {
+                    set_reason(reason, reason_len, "serial action requires textarea target"); ok = false; break;
                 }
                 strlcpy(dst->text, text, sizeof(dst->text));
                 strlcpy(dst->action, action, sizeof(dst->action));
@@ -316,7 +330,9 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
 
             bool needs_target = obj->type == WIDGET_OBJECT_KEYBOARD ||
                                 (obj->type == WIDGET_OBJECT_BUTTON &&
-                                 strcmp(obj->action, "serial_send_text") == 0);
+                                 (strcmp(obj->action, "serial_send_text") == 0 ||
+                                  strcmp(obj->action, "serial_history_prev") == 0 ||
+                                  strcmp(obj->action, "serial_history_next") == 0));
             if (needs_target) {
                 bool found = false;
                 for (size_t j = 0; j < out->object_count; ++j) {
