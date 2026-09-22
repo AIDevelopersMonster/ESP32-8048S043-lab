@@ -3,60 +3,192 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>USB Serial Terminal</title>
+  <title>USB Serial Terminal — KONTAKTS Help</title>
   <link rel="stylesheet" href="/help/style.css">
 </head>
 <body>
+
 <header>
-  <div class="eyebrow">KONTAKTS APP HELP</div>
+  <div class="eyebrow">APPLICATION HELP / SERIAL</div>
   <h1>USB Serial Terminal</h1>
-  <p>SD-виджет для проверки и использования штатного последовательного канала ESP32-8048S043 через onboard CH340C и UART0.</p>
-  <div class="topnav"><a href="/help">Help Center</a><a href="/help/system?doc=user">Руководство пользователя</a></div>
+  <p>Полноценная справка по SD-приложению для двусторонней работы с UART0 через штатный USB-разъём и CH340C платы ESP32-8048S043.</p>
+
+  <div class="badges">
+    <span class="badge ok">PHYSICAL PASS · Sample A</span>
+    <span class="badge info">Platform ≥ 0.3.5</span>
+    <span class="badge info">Widget 0.1.0</span>
+    <span class="badge">115200 · 8N1</span>
+  </div>
+
+  <div class="topnav">
+    <a href="/help">Help Center</a>
+    <a href="/help/system?doc=user">Руководство пользователя</a>
+    <a href="/help/system?doc=hardware">Аппаратная часть</a>
+    <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab">GitHub Project</a>
+  </div>
 </header>
+
 <main>
-  <h2>Что проверяет виджет</h2>
-  <pre>PC -> USB -> CH340C -> UART0 -> ESP32-S3 -> Widget Runtime -> TFT
-PC <- USB <- CH340C <- UART0 <- ESP32-S3 <- Widget Runtime <- TFT</pre>
-  <p>Это первая стадия UART-лаборатории. Разъём P1 в данный тест не входит и продолжает рассматриваться отдельно как сервисный UART0-разъём.</p>
 
-  <h2>Требования</h2>
-  <ul>
-    <li>KONTAKTS Platform <code>0.3.5</code> или новее;</li>
-    <li>SD-пакет <code>widgets/usb-serial-terminal</code>;</li>
-    <li>обычный USB data-кабель к плате;</li>
-    <li>COM-порт <code>115200 8N1</code>, flow control выключен.</li>
-  </ul>
+  <h2>Назначение</h2>
+  <div class="feature-grid">
+    <div class="mini-card">
+      <div class="kicker">RX</div>
+      <div class="value">PC → TFT</div>
+      <p class="muted">Текст с COM-порта принимается UART0 и отображается в RX-области виджета.</p>
+    </div>
+    <div class="mini-card">
+      <div class="kicker">TX</div>
+      <div class="value">TFT → PC</div>
+      <p class="muted">Кнопка <b>SEND TEST</b> отправляет контрольную строку обратно на компьютер.</p>
+    </div>
+    <div class="mini-card">
+      <div class="kicker">Host tool</div>
+      <div class="value">KONTAKTSerial</div>
+      <p class="muted">Наш отдельный Windows/Python терминал для приёма, передачи и логирования UART.</p>
+    </div>
+  </div>
 
-  <h2>Работа с KONTAKTSerial</h2>
-  <p>Для Windows в репозитории есть наш лёгкий терминал <b>KONTAKTSerial</b>. Он не требует ESP-IDF и использует Python + pyserial.</p>
-  <pre>python -m pip install pyserial
-python .\tools\KONTAKTSerial\KONTAKTSerial.py --port COMxx --baud 115200</pre>
-  <p>Выберите реальный COM-порт платы. Перед подключением закройте другие программы, которые уже держат этот COM-порт.</p>
+  <h2>Физический тракт</h2>
+  <div class="path">
+    <span>PC</span><i>↔</i>
+    <span>USB</span><i>↔</i>
+    <span>CH340C</span><i>↔</i>
+    <span>UART0</span><i>↔</i>
+    <span>ESP32-S3</span><i>↔</i>
+    <span>Widget Runtime</span><i>↔</i>
+    <span>TFT</span>
+  </div>
+  <div class="callout ok">
+    <span class="callout-title">PHYSICAL PASS · 2026-09-22</span>
+    На Sample A тракт проверен в обе стороны: строка с компьютера появилась на TFT, а тестовая строка с TFT была принята на компьютере.
+  </div>
+  <div class="callout warn">
+    <span class="callout-title">Граница этого PASS</span>
+    Разъём <b>P1</b> в данный тест не входит. Здесь проверен только штатный путь USB ↔ CH340C ↔ UART0.
+  </div>
+
+  <h2>Быстрый запуск</h2>
+  <div class="steps">
+    <div class="step"><b>Запустите приложение.</b> На вкладке SD выберите <b>USB Serial Monitor</b>.</div>
+    <div class="step"><b>Подключите плату обычным USB data-кабелем.</b> В Windows появится COM-порт CH340C.</div>
+    <div class="step"><b>Откройте KONTAKTSerial.</b> Выберите COM-порт платы и скорость <code>115200</code>.</div>
+    <div class="step"><b>Проверьте оба направления.</b> Отправьте <code>HELLO123</code> с PC, затем нажмите <b>SEND TEST</b> на TFT.</div>
+  </div>
+
+  <h2>Параметры порта</h2>
+  <dl class="kv">
+    <dt>Baud rate</dt><dd><code>115200</code></dd>
+    <dt>Data bits</dt><dd><code>8</code></dd>
+    <dt>Parity</dt><dd><code>None</code></dd>
+    <dt>Stop bits</dt><dd><code>1</code></dd>
+    <dt>Flow control</dt><dd><code>Off</code></dd>
+    <dt>Физический интерфейс</dt><dd>Onboard CH340C ↔ UART0 ESP32-S3</dd>
+  </dl>
+
+  <h2>KONTAKTSerial на компьютере</h2>
+  <div class="split">
+    <div class="section-card">
+      <strong>Установка зависимости</strong>
+      <pre>python -m pip install pyserial</pre>
+      <p class="small">ESP-IDF для работы терминала не требуется.</p>
+    </div>
+    <div class="section-card">
+      <strong>Запуск</strong>
+      <pre>python .\tools\KONTAKTSerial\KONTAKTSerial.py --port COMxx --baud 115200</pre>
+      <p class="small">Вместо <code>COMxx</code> укажите реальный порт платы.</p>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Элемент KONTAKTSerial</th><th>Назначение</th></tr></thead>
+    <tbody>
+      <tr><td>Port</td><td>Выбор COM-порта; CH340/USB-Serial устройства распознаются в списке.</td></tr>
+      <tr><td>Baud</td><td>Скорость последовательного порта. Для текущей платформы — 115200.</td></tr>
+      <tr><td>Ending</td><td><code>None</code>, <code>LF</code>, <code>CR</code> или <code>CRLF</code> для передаваемой строки.</td></tr>
+      <tr><td>HEX RX</td><td>Показывает принятые байты в шестнадцатеричном виде.</td></tr>
+      <tr><td>Timestamps</td><td>Добавляет время к принимаемым строкам.</td></tr>
+      <tr><td>Save log</td><td>Сохраняет содержимое терминала в текстовый файл.</td></tr>
+      <tr><td>HELLO123</td><td>Быстрая отправка контрольной строки.</td></tr>
+    </tbody>
+  </table>
 
   <h2>Проверка PC → TFT</h2>
-  <ol>
-    <li>Откройте USB Serial Monitor на дисплее.</li>
-    <li>Подключите KONTAKTSerial к COM-порту на <code>115200</code>.</li>
-    <li>Отправьте строку, например <code>HELLO123</code>, с окончанием <code>CRLF</code>.</li>
-    <li>Строка должна появиться в RX-области TFT, а счётчик RX увеличиться.</li>
-  </ol>
+  <div class="steps">
+    <div class="step">Убедитесь, что на TFT открыт <b>USB Serial Monitor</b>.</div>
+    <div class="step">В KONTAKTSerial нажмите <b>Connect</b>.</div>
+    <div class="step">Выберите окончание строки <code>CRLF</code> и отправьте <code>HELLO123</code>.</div>
+    <div class="step">На TFT должна появиться строка <code>HELLO123</code>, а значение RX bytes должно увеличиться.</div>
+  </div>
 
   <h2>Проверка TFT → PC</h2>
-  <p>Нажмите <b>SEND TEST</b> на TFT. В KONTAKTSerial должна появиться строка:</p>
+  <div class="steps">
+    <div class="step">Оставьте KONTAKTSerial подключённым к COM-порту.</div>
+    <div class="step">На TFT нажмите <b>SEND TEST</b>.</div>
+    <div class="step">На компьютере должна появиться строка:</div>
+  </div>
   <pre>KONTAKTS USB SERIAL TEST</pre>
-  <p>Кнопка <b>CLEAR</b> очищает RX-буфер виджета и его счётчики.</p>
 
-  <h2>Что уже подтверждено на Sample A</h2>
-  <p><b>PHYSICAL PASS, 2026-09-22:</b> штатный USB-UART тракт через CH340C проверен в обе стороны: строка с PC появилась на TFT, а <b>SEND TEST</b> с TFT был принят на PC.</p>
+  <h2>Элементы экрана TFT</h2>
+  <table>
+    <thead><tr><th>Элемент</th><th>Что показывает / делает</th></tr></thead>
+    <tbody>
+      <tr><td>Serial state</td><td>Текущий режим: <code>UART0 / CH340C / 115200 8N1</code>.</td></tr>
+      <tr><td>RX text</td><td>Последний накопленный текст, принятый через UART0.</td></tr>
+      <tr><td>RX bytes</td><td>Количество принятых байт.</td></tr>
+      <tr><td>TX bytes</td><td>Количество байт, отправленных приложением.</td></tr>
+      <tr><td>SEND TEST</td><td>Передаёт строку <code>KONTAKTS USB SERIAL TEST</code>.</td></tr>
+      <tr><td>CLEAR</td><td>Очищает RX-буфер приложения и его счётчики.</td></tr>
+    </tbody>
+  </table>
 
-  <h2>Текущие ограничения</h2>
-  <ul>
-    <li>в этой версии на TFT ещё нет экранной клавиатуры и textarea для произвольного ввода;</li>
-    <li>UART0 одновременно является console/logging path, поэтому в PC-терминале видны системные сообщения ESP-IDF;</li>
-    <li>виджет не подтверждает безопасное применение P1 как пользовательского UART при других режимах подключения.</li>
-  </ul>
-  <p class="note">Следующий этап — добавить в общий Widget Runtime generic <code>textarea</code> и <code>keyboard</code>, после чего терминал сможет отправлять произвольные команды прямо с дисплея.</p>
+  <h2>Почему в терминале видны системные логи</h2>
+  <p>UART0 одновременно используется как console/logging path ESP-IDF. Поэтому рядом с пользовательскими данными KONTAKTSerial может показывать строки вида:</p>
+  <pre>I (...) APP09_UI: UI stack high-water=...
+I (...) APP05_NET: STA online ip=...</pre>
+  <p>Для текущего Stage 1 это ожидаемое поведение, а не ошибка терминала.</p>
+
+  <h2>Если что-то не работает</h2>
+  <table>
+    <thead><tr><th>Симптом</th><th>Проверить</th></tr></thead>
+    <tbody>
+      <tr><td>COM-порт не открывается</td><td>Закройте Serial Monitor, miniterm, Arduino IDE и другие программы, которые могут держать этот COM-порт.</td></tr>
+      <tr><td>После Connect плата перезагрузилась</td><td>Некоторые host-terminal настройки DTR/RTS могут вызвать reset через USB-UART. После загрузки соединение обычно продолжает работать.</td></tr>
+      <tr><td>PC отправляет, а TFT молчит</td><td>Проверьте, что открыт именно USB Serial Monitor и выбран правильный COM-порт на 115200.</td></tr>
+      <tr><td>На PC много строк ESP-IDF</td><td>Это нормально: UART0 сейчас общий для console logging и serial service.</td></tr>
+      <tr><td>SEND TEST не приходит</td><td>Проверьте, что KONTAKTSerial остаётся подключён к тому же COM-порту.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Версии и зависимости</h2>
+  <table>
+    <thead><tr><th>Компонент</th><th>Версия / требование</th><th>Статус</th></tr></thead>
+    <tbody>
+      <tr><td>KONTAKTS Platform</td><td><code>0.3.5</code> или новее</td><td class="status-ok">PHYSICAL PASS</td></tr>
+      <tr><td>USB Serial Terminal package</td><td><code>0.1.0</code></td><td class="status-ok">PHYSICAL PASS</td></tr>
+      <tr><td>Platform service</td><td><code>serial</code></td><td class="status-ok">AVAILABLE</td></tr>
+      <tr><td>KONTAKTSerial</td><td>Python + pyserial</td><td class="status-ok">PHYSICAL PASS</td></tr>
+      <tr><td>Generic textarea</td><td>Widget Runtime</td><td class="status-open">PLANNED</td></tr>
+      <tr><td>Generic keyboard</td><td>Widget Runtime / LVGL 9</td><td class="status-open">PLANNED</td></tr>
+      <tr><td>P1 application UART</td><td>Separate hardware acceptance</td><td class="status-open">NOT INCLUDED</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Следующий этап</h2>
+  <div class="callout">
+    <span class="callout-title">Stage 2 — интерактивный терминал на самом TFT</span>
+    В общий Widget Runtime планируется добавить generic <code>textarea</code> и <code>keyboard</code>. После этого тот же SD-пакет сможет вводить произвольные команды непосредственно с дисплея без отдельного terminal-specific firmware screen.
+  </div>
+
+  <p class="small">Исходный код: <code>apps/11_USBSerialTerminal</code>, SD-пакет: <code>apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal</code>, PC tool: <code>tools/KONTAKTSerial</code>.</p>
+
 </main>
-<footer><a href="/help">← Help Center</a></footer>
+
+<footer>
+  <a href="/help">← Help Center</a> ·
+  <a href="/help/system?doc=user">Руководство пользователя</a> ·
+  <a href="https://github.com/AIDevelopersMonster/ESP32-8048S043-lab">GitHub</a>
+</footer>
+
 </body>
 </html>
