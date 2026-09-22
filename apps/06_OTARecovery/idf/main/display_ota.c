@@ -196,6 +196,16 @@ static void show_action_error(const char *action, esp_err_t err)
     lv_label_set_text_fmt(s_ota_message, "%s rejected: %s", action, esp_err_to_name(err));
 }
 
+static void textarea_keyboard_cb(lv_event_t *e)
+{
+    lv_event_code_t code = lv_event_get_code(e);
+    if (code != LV_EVENT_CLICKED && code != LV_EVENT_FOCUSED) return;
+    lv_obj_t *keyboard = (lv_obj_t *)lv_event_get_user_data(e);
+    if (!keyboard) return;
+    lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(keyboard);
+}
+
 static lv_obj_t *find_textarea(const char *id)
 {
     if (!id || !id[0]) return NULL;
@@ -512,14 +522,22 @@ static void render_widget(void)
          * Keyboard keys therefore need explicit LV_PART_ITEMS styling;
          * styling only LV_PART_MAIN can leave a blank-looking keyboard. */
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_MAIN);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_MAIN);
         lv_obj_set_style_radius(keyboard, 8, LV_PART_MAIN);
+
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x21262D), LV_PART_ITEMS);
+        lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_ITEMS);
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x1F6FEB), LV_PART_ITEMS | LV_STATE_PRESSED);
         lv_obj_set_style_text_color(keyboard, lv_color_hex(0xF0F6FC), LV_PART_ITEMS);
+        lv_obj_set_style_text_opa(keyboard, LV_OPA_COVER, LV_PART_ITEMS);
+        lv_obj_set_style_text_font(keyboard, &lv_font_montserrat_14, LV_PART_ITEMS);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_ITEMS);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_ITEMS);
+
+        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_CLICKED, keyboard);
+        lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_FOCUSED, keyboard);
         lv_obj_remove_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
         lv_obj_move_foreground(keyboard);
         s_keyboards[s_keyboard_count++] = keyboard;
