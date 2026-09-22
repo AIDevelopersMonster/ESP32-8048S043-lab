@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'apps/06_OTARecovery/release-version.txt'
+      - 'apps/06_OTARecovery/idf/**'
+      - 'apps/06_OTARecovery/widgets/**'
       - '.github/workflows/app06-ota-release.yml'
   workflow_dispatch:
 
