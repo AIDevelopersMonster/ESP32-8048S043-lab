@@ -206,6 +206,60 @@ static void textarea_keyboard_cb(lv_event_t *e)
     lv_obj_move_foreground(keyboard);
 }
 
+static const char * const s_terminal_kbd_lower[] = {
+    "1","2","3","4","5","6","7","8","9","0","BS","\n",
+    "q","w","e","r","t","y","u","i","o","p","\n",
+    "a","s","d","f","g","h","j","k","l","\n",
+    "SHIFT","z","x","c","v","b","n","m",".","-","\n",
+    "SYM","SPACE",""
+};
+
+static const char * const s_terminal_kbd_upper[] = {
+    "1","2","3","4","5","6","7","8","9","0","BS","\n",
+    "Q","W","E","R","T","Y","U","I","O","P","\n",
+    "A","S","D","F","G","H","J","K","L","\n",
+    "SHIFT","Z","X","C","V","B","N","M",".","-","\n",
+    "SYM","SPACE",""
+};
+
+static const char * const s_terminal_kbd_symbols[] = {
+    "!","@","#","$","%","&","*","(",")","BS","\n",
+    "_","-","+","=","/","\\",":",";","?","\n",
+    "[","]","{","}","<",">",",",".","'","\n",
+    "ABC","SPACE",""
+};
+
+static void terminal_keyboard_cb(lv_event_t *e)
+{
+    if (lv_event_get_code(e) != LV_EVENT_VALUE_CHANGED) return;
+
+    lv_obj_t *keyboard = (lv_obj_t *)lv_event_get_current_target(e);
+    lv_obj_t *textarea = (lv_obj_t *)lv_event_get_user_data(e);
+    if (!keyboard || !textarea) return;
+
+    uint32_t id = lv_buttonmatrix_get_selected_button(keyboard);
+    if (id == LV_BUTTONMATRIX_BUTTON_NONE) return;
+
+    const char *key = lv_buttonmatrix_get_button_text(keyboard, id);
+    if (!key || !key[0]) return;
+
+    if (strcmp(key, "BS") == 0) {
+        lv_textarea_delete_char(textarea);
+    } else if (strcmp(key, "SPACE") == 0) {
+        lv_textarea_add_text(textarea, " ");
+    } else if (strcmp(key, "SHIFT") == 0) {
+        const char *const *map = lv_buttonmatrix_get_map(keyboard);
+        lv_buttonmatrix_set_map(keyboard,
+                                map == s_terminal_kbd_upper ? s_terminal_kbd_lower : s_terminal_kbd_upper);
+    } else if (strcmp(key, "SYM") == 0) {
+        lv_buttonmatrix_set_map(keyboard, s_terminal_kbd_symbols);
+    } else if (strcmp(key, "ABC") == 0) {
+        lv_buttonmatrix_set_map(keyboard, s_terminal_kbd_lower);
+    } else {
+        lv_textarea_add_text(textarea, key);
+    }
+}
+
 static lv_obj_t *find_textarea(const char *id)
 {
     if (!id || !id[0]) return NULL;
@@ -539,20 +593,26 @@ static void render_widget(void)
             ESP_LOGW(TAG, "Keyboard target %s not found at render time", o->target);
             continue;
         }
-        lv_obj_t *keyboard = lv_keyboard_create(s_widget_content);
+        /*
+         * Render Widget Runtime "keyboard" as a plain LVGL button matrix instead
+         * of lv_keyboard.  The latter proved invisible on the physical 8048S043
+         * build despite valid geometry and explicit styles.  A button matrix is
+         * deterministic, theme-independent and still keeps "keyboard" generic.
+         */
+        lv_obj_t *keyboard = lv_buttonmatrix_create(s_widget_content);
         lv_obj_set_pos(keyboard, o->x, o->y);
         lv_obj_set_size(keyboard, o->w, o->h);
-        lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_TEXT_LOWER);
-        lv_keyboard_set_textarea(keyboard, textarea);
+        lv_buttonmatrix_set_map(keyboard, s_terminal_kbd_lower);
+        lv_obj_add_event_cb(keyboard, terminal_keyboard_cb, LV_EVENT_VALUE_CHANGED, textarea);
 
-        /* This platform intentionally does not install an LVGL theme.
-         * Keyboard keys therefore need explicit LV_PART_ITEMS styling;
-         * styling only LV_PART_MAIN can leave a blank-looking keyboard. */
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x161B22), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_MAIN);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_MAIN);
         lv_obj_set_style_radius(keyboard, 8, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(keyboard, 2, LV_PART_MAIN);
+        lv_obj_set_style_pad_row(keyboard, 2, LV_PART_MAIN);
+        lv_obj_set_style_pad_column(keyboard, 2, LV_PART_MAIN);
 
         lv_obj_set_style_bg_color(keyboard, lv_color_hex(0x21262D), LV_PART_ITEMS);
         lv_obj_set_style_bg_opa(keyboard, LV_OPA_COVER, LV_PART_ITEMS);
@@ -562,6 +622,7 @@ static void render_widget(void)
         lv_obj_set_style_text_font(keyboard, &lv_font_montserrat_14, LV_PART_ITEMS);
         lv_obj_set_style_border_color(keyboard, lv_color_hex(0x30363D), LV_PART_ITEMS);
         lv_obj_set_style_border_width(keyboard, 1, LV_PART_ITEMS);
+        lv_obj_set_style_radius(keyboard, 4, LV_PART_ITEMS);
 
         lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_CLICKED, keyboard);
         lv_obj_add_event_cb(textarea, textarea_keyboard_cb, LV_EVENT_FOCUSED, keyboard);
