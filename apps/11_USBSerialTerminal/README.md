@@ -55,7 +55,7 @@ The purpose is to prove the bidirectional USB/UART path before adding a keyboard
 
 ## Acceptance test
 
-1. Install Platform 0.3.5 test firmware.
+1. Install Platform 0.3.5.
 2. Put the current SD library on the card and refresh the application list.
 3. Run **USB Serial Monitor**.
 4. Open the normal board COM port at 115200 baud.
@@ -68,16 +68,24 @@ KONTAKTS USB SERIAL TEST
 ```
 
 8. Press **CLEAR** and verify the TFT counters and RX window reset.
+9. Install Platform 0.3.5 from the browser Web Flasher and verify normal boot.
 
 ## Evidence state
 
-Software implementation only until exercised on Sample A.
+**PHYSICAL PASS — Sample A — 2026-09-22**
 
-Do not claim UART RX physical PASS before the PC-to-board path is observed on hardware.
+Validated on hardware:
+
+- PC -> USB -> CH340C -> UART0 -> ESP32-S3 -> TFT;
+- TFT -> ESP32-S3 -> UART0 -> CH340C -> USB -> PC;
+- KONTAKTSerial as the PC-side serial terminal;
+- Platform 0.3.5 browser Web Flasher install and normal boot.
+
+P1 is explicitly outside this acceptance and remains a separate service/UART0 investigation.
 
 ## Stage 2
 
-After Stage 1 passes, add generic LVGL 9 Widget Runtime capabilities:
+After Stage 1, add generic LVGL 9 Widget Runtime capabilities:
 
 ```text
 textarea
