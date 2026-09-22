@@ -58,6 +58,35 @@ jobs:
           echo "snapshot=$short_sha" >> "$GITHUB_OUTPUT"
           sha256sum sd-release/*
 
+      - name: Build individual widget archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import zipfile
+
+          sd_root = Path('apps/09_SDWidgetLibrary/sd')
+          widgets_root = sd_root / 'widgets'
+          out = Path('sd-release')
+
+          for package_dir in sorted(p for p in widgets_root.iterdir() if p.is_dir()):
+              manifest = package_dir / 'package.json'
+              if not manifest.is_file():
+                  continue
+              data = json.loads(manifest.read_text(encoding='utf-8'))
+              package_id = data.get('id', package_dir.name)
+              target = out / f'widget-{package_id}.zip'
+              with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+                  for path in sorted(package_dir.rglob('*')):
+                      if path.is_file():
+                          arcname = Path('widgets') / package_dir.name / path.relative_to(package_dir)
+                          archive.write(path, arcname.as_posix())
+              print(f'{package_id}: {target}')
+          PY
+          sha256sum sd-release/widget-*.zip
+
       - uses: actions/upload-artifact@v4
         with:
           name: app09-sd-library-${{ steps.bundle.outputs.snapshot }}

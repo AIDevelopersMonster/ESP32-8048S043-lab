@@ -14,6 +14,7 @@ on:
       - agent/app05-stability
       - agent/app08-youtube-dashboard
       - agent/app11-usb-serial-terminal
+      - agent/app12-interactive-serial-terminal
     paths:
       - "apps/01_SixCardSerialDeck/**"
       - "apps/02_MixedWidgets/**"
