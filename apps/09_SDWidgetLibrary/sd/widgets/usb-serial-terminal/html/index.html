@@ -11,12 +11,12 @@
 <header>
   <div class="eyebrow">APPLICATION HELP / SERIAL</div>
   <h1>USB Serial Terminal</h1>
-  <p>Полноценная справка по SD-приложению для двусторонней работы с UART0 через штатный USB-разъём и CH340C платы ESP32-8048S043.</p>
+  <p>Один SD-пакет для UART0 через штатный USB/CH340C. Внутри два экрана: проверенный USB Serial Monitor и Interactive Serial Terminal с textarea, экранной LVGL-клавиатурой и SEND.</p>
 
   <div class="badges">
     <span class="badge ok">PHYSICAL PASS · Sample A</span>
-    <span class="badge info">Platform ≥ 0.3.5</span>
-    <span class="badge info">Widget 0.1.0</span>
+    <span class="badge info">Platform ≥ 0.3.7</span>
+    <span class="badge info">Package 0.2.0</span>
     <span class="badge">115200 · 8N1</span>
   </div>
 
@@ -70,7 +70,7 @@
 
   <h2>Быстрый запуск</h2>
   <div class="steps">
-    <div class="step"><b>Запустите приложение.</b> На вкладке SD выберите <b>USB Serial Monitor</b>.</div>
+    <div class="step"><b>На вкладке SD откройте USB Serial Terminal.</b> Внутри выберите <b>USB Serial Monitor</b> либо <b>Interactive Serial Terminal</b>.</div>
     <div class="step"><b>Подключите плату обычным USB data-кабелем.</b> В Windows появится COM-порт CH340C.</div>
     <div class="step"><b>Откройте KONTAKTSerial.</b> Выберите COM-порт платы и скорость <code>115200</code>.</div>
     <div class="step"><b>Проверьте оба направления.</b> Отправьте <code>HELLO123</code> с PC, затем нажмите <b>SEND TEST</b> на TFT.</div>
@@ -164,20 +164,22 @@ I (...) APP05_NET: STA online ip=...</pre>
   <table>
     <thead><tr><th>Компонент</th><th>Версия / требование</th><th>Статус</th></tr></thead>
     <tbody>
-      <tr><td>KONTAKTS Platform</td><td><code>0.3.5</code> или новее</td><td class="status-ok">PHYSICAL PASS</td></tr>
-      <tr><td>USB Serial Terminal package</td><td><code>0.1.0</code></td><td class="status-ok">PHYSICAL PASS</td></tr>
+      <tr><td>KONTAKTS Platform</td><td><code>0.3.7</code> или новее</td><td class="status-ok">SERIAL RUNTIME AVAILABLE</td></tr>
+      <tr><td>USB Serial Terminal package</td><td><code>0.2.0</code></td><td class="status-ok">TWO SCREENS</td></tr>
+      <tr><td>USB Serial Monitor</td><td>monitor entrypoint</td><td class="status-ok">PHYSICAL PASS</td></tr>
+      <tr><td>Interactive Serial Terminal</td><td>interactive entrypoint</td><td class="status-open">PHYSICAL RETEST REQUIRED</td></tr>
       <tr><td>Platform service</td><td><code>serial</code></td><td class="status-ok">AVAILABLE</td></tr>
       <tr><td>KONTAKTSerial</td><td>Python + pyserial</td><td class="status-ok">PHYSICAL PASS</td></tr>
-      <tr><td>Generic textarea</td><td>Widget Runtime</td><td class="status-open">PLANNED</td></tr>
-      <tr><td>Generic keyboard</td><td>Widget Runtime / LVGL 9</td><td class="status-open">PLANNED</td></tr>
+      <tr><td>Generic textarea</td><td>Widget Runtime</td><td class="status-ok">AVAILABLE</td></tr>
+      <tr><td>Generic keyboard</td><td>Widget Runtime / LVGL 9</td><td class="status-ok">AVAILABLE / STYLE FIX</td></tr>
       <tr><td>P1 application UART</td><td>Separate hardware acceptance</td><td class="status-open">NOT INCLUDED</td></tr>
     </tbody>
   </table>
 
-  <h2>Следующий этап</h2>
+  <h2>Interactive Serial Terminal</h2>
   <div class="callout">
-    <span class="callout-title">Stage 2 — интерактивный терминал на самом TFT</span>
-    В общий Widget Runtime планируется добавить generic <code>textarea</code> и <code>keyboard</code>. После этого тот же SD-пакет сможет вводить произвольные команды непосредственно с дисплея без отдельного terminal-specific firmware screen.
+    <span class="callout-title">Stage 2 встроен в этот же пакет</span>
+    Экран <b>Interactive Serial Terminal</b> использует generic <code>textarea</code>, <code>keyboard</code> и <code>serial_send_text</code>. Отдельного приложения <code>serial-terminal</code> в SD-каталоге больше нет.
   </div>
 
   <p class="small">Исходный код: <code>apps/11_USBSerialTerminal</code>, SD-пакет: <code>apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal</code>, PC tool: <code>tools/KONTAKTSerial</code>.</p>
