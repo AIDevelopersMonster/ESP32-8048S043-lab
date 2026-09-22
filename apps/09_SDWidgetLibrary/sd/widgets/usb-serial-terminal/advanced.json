@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "id": "usb-serial-terminal.advanced",
+  "name": "Advanced Serial Terminal",
+  "version": "0.3.0",
+  "background": "#0B1016",
+  "objects": [
+    {
+      "type": "label",
+      "x": 16,
+      "y": 4,
+      "w": 310,
+      "h": 26,
+      "text": "ADVANCED SERIAL TERMINAL",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 340,
+      "y": 4,
+      "w": 388,
+      "h": 26,
+      "bind": "serial.state",
+      "color": "#58A6FF"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 32,
+      "w": 190,
+      "h": 24,
+      "bind": "serial.tx_mode",
+      "prefix": "MODE: ",
+      "color": "#D2A8FF"
+    },
+    {
+      "type": "label",
+      "x": 220,
+      "y": 32,
+      "w": 190,
+      "h": 24,
+      "bind": "serial.ending",
+      "prefix": "ENDING: ",
+      "color": "#FFA657"
+    },
+    {
+      "type": "label",
+      "x": 424,
+      "y": 32,
+      "w": 304,
+      "h": 24,
+      "bind": "serial.last_tx",
+      "prefix": "LAST: ",
+      "color": "#8B949E"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 60,
+      "w": 712,
+      "h": 48,
+      "bind": "serial.rx_text",
+      "prefix": "RX > ",
+      "color": "#7EE787"
+    },
+    {
+      "type": "textarea",
+      "id": "tx_input",
+      "x": 16,
+      "y": 112,
+      "w": 516,
+      "h": 42,
+      "placeholder": "ASCII text or HEX bytes: 48 45 4C 4C 4F",
+      "max_length": 128,
+      "one_line": true,
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "button",
+      "x": 544,
+      "y": 112,
+      "w": 86,
+      "h": 42,
+      "text": "SEND",
+      "action": "serial_send_text",
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 640,
+      "y": 112,
+      "w": 88,
+      "h": 42,
+      "text": "CLEAR",
+      "action": "serial_clear",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 16,
+      "y": 160,
+      "w": 94,
+      "h": 34,
+      "text": "ASCII",
+      "action": "serial_mode_ascii",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 118,
+      "y": 160,
+      "w": 78,
+      "h": 34,
+      "text": "HEX",
+      "action": "serial_mode_hex",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 208,
+      "y": 160,
+      "w": 86,
+      "h": 34,
+      "text": "NONE",
+      "action": "serial_ending_none",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 302,
+      "y": 160,
+      "w": 68,
+      "h": 34,
+      "text": "LF",
+      "action": "serial_ending_lf",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 378,
+      "y": 160,
+      "w": 68,
+      "h": 34,
+      "text": "CR",
+      "action": "serial_ending_cr",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 454,
+      "y": 160,
+      "w": 88,
+      "h": 34,
+      "text": "CRLF",
+      "action": "serial_ending_crlf",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 550,
+      "y": 160,
+      "w": 82,
+      "h": 34,
+      "text": "PREV",
+      "action": "serial_history_prev",
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 640,
+      "y": 160,
+      "w": 88,
+      "h": 34,
+      "text": "NEXT",
+      "action": "serial_history_next",
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 16,
+      "y": 198,
+      "w": 150,
+      "h": 30,
+      "text": "REPEAT LAST",
+      "action": "serial_repeat_last",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 182,
+      "y": 202,
+      "w": 190,
+      "h": 24,
+      "bind": "serial.history_count",
+      "prefix": "HISTORY: ",
+      "color": "#8B949E"
+    },
+    {
+      "type": "label",
+      "x": 390,
+      "y": 202,
+      "w": 150,
+      "h": 24,
+      "bind": "serial.rx_bytes",
+      "prefix": "RX ",
+      "suffix": " B",
+      "color": "#8B949E"
+    },
+    {
+      "type": "label",
+      "x": 550,
+      "y": 202,
+      "w": 178,
+      "h": 24,
+      "bind": "serial.tx_bytes",
+      "prefix": "TX ",
+      "suffix": " B",
+      "color": "#8B949E"
+    },
+    {
+      "type": "keyboard",
+      "x": 16,
+      "y": 232,
+      "w": 712,
+      "h": 112,
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    }
+  ]
+}
