@@ -111,6 +111,17 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git tag -f "$tag" "$GITHUB_SHA"
             git push origin "refs/tags/$tag" --force
+
+            # app09-sd-current is a mutable snapshot. Remove stale assets that no
+            # longer exist in the freshly built sd-release directory before upload.
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' |
+            while IFS= read -r asset; do
+              if [ ! -e "sd-release/$asset" ]; then
+                echo "Deleting stale release asset: $asset"
+                gh release delete-asset "$tag" "$asset" --yes --repo "$GITHUB_REPOSITORY"
+              fi
+            done
+
             gh release upload "$tag" sd-release/* --clobber --repo "$GITHUB_REPOSITORY"
             gh release edit "$tag" --title "KONTAKTS SD Application Library — Current" --notes "$notes" --prerelease --repo "$GITHUB_REPOSITORY"
           else
