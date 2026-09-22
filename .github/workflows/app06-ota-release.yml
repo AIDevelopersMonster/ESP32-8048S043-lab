@@ -1,0 +1,96 @@
+name: App 06/07/08/09/11/12 - GitHub OTA Release
+
+on:
+  push:
+    branches:
+      - main
+      - agent/app06-ota-recovery
+      - agent/app07-widget-runtime
+      - agent/app08-youtube-dashboard
+      - agent/app09-sd-widget-library
+      - agent/app11-usb-serial-terminal
+      - agent/app12-interactive-serial-terminal
+    paths:
+      - 'apps/06_OTARecovery/release-version.txt'
+      - '.github/workflows/app06-ota-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Build OTA and full images
+        env:
+          APP06_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          mkdir -p .app06-ota
+          docker run --rm \
+            -e KONTAKTS_APP_VERSION="${APP06_VERSION}" \
+            -v "$PWD:/project" \
+            -w /project/apps/06_OTARecovery/idf \
+            espressif/idf:v5.5.5 bash -lc '
+              git config --global --add safe.directory /project &&
+              idf.py set-target esp32s3 &&
+              idf.py build &&
+              cp build/app06_ota_recovery.bin /project/.app06-ota/app06-ota.bin &&
+              cd build &&
+              esptool.py --chip esp32s3 merge_bin -o "/project/.app06-ota/app06-ota-recovery-v${KONTAKTS_APP_VERSION}-full.bin" @flash_args
+            '
+      - name: Build manifest
+        id: assets
+        shell: bash
+        run: |
+          sha="$(sha256sum .app06-ota/app06-ota.bin | awk '{print $1}')"
+          size="$(stat -c '%s' .app06-ota/app06-ota.bin)"
+          version="${{ steps.version.outputs.version }}"
+          tag="app06-v${version}"
+          firmware_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/app06-ota.bin"
+          cat > .app06-ota/app06-ota.json <<EOF
+          {"schema":1,"board":"esp32-8048s043-lab-n16r8","app":"app06-ota-recovery","version":"${version}","channel":"stable","size":${size},"sha256":"${sha}","firmware":"${firmware_url}"}
+          EOF
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          sha256sum .app06-ota/app06-ota*.bin
+      - name: Attach validated factory recovery
+        env: {GH_TOKEN: '${{ github.token }}'}
+        shell: bash
+        run: |
+          mkdir -p .app06-factory
+          gh run download 34047113353 --repo "$GITHUB_REPOSITORY" --name app06-github-ota-recovery-v0.1.0 --dir .app06-factory
+          src="$(find .app06-factory -type f -name 'app06-ota-recovery-v0.1.0-full.bin' -print -quit)"
+          cp "$src" .app06-ota/app06-factory-recovery-v0.1.0-full.bin
+          echo "c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d  .app06-ota/app06-factory-recovery-v0.1.0-full.bin" | sha256sum -c -
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app06-github-ota-${{ steps.version.outputs.version }}
+          path: .app06-ota/*
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP06_VERSION: ${{ steps.version.outputs.version }}
+          APP06_SHA256: ${{ steps.assets.outputs.sha256 }}
+          APP06_SIZE: ${{ steps.assets.outputs.size }}
+        shell: bash
+        run: |
+          tag="app06-v${APP06_VERSION}"
+          notes="KONTAKTS Platform OTA ${APP06_VERSION}. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes a merged full image for initial install/Web Flasher. SD application/library content is released independently from the platform firmware."
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$tag" .app06-ota/* --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
+          fi

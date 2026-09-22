@@ -13,6 +13,14 @@
 | 07 | ESP32-8048S043 — read-only microSD / TF test from our Arduino library | https://youtube.com/shorts/vACvK85U0Lw | Show `08_SDCardTest` mounting a microSD card on the source-backed SPI pins CS=10, MOSI=11, CLK=12, MISO=13, reading SDHC/SDXC metadata and listing the root directory without write/format/delete operations. | SAMPLE A READ-ONLY SD PHYSICAL PASS CANDIDATE |
 | 08 | ESP32-8048S043 + LVGL 9 — Six-Card Serial Deck full profile demonstration | https://youtube.com/shorts/0I5JL6jt8e0 | Full demonstration of the current corrected App 01 firmware: HOME / MEDIA / SYSTEM profile switching, corrected PROFILE control, visible reassignment of all six cards, GT911 touch operation and matching `PROFILE:` / `CARD:` commands in Serial/COM. | APP 01 CURRENT FIRMWARE PHYSICAL PASS / PROFILE SWITCHING PASS / SERIAL COMMANDS PASS / STACK STABLE |
 | 09 | ESP32-8048S043 + LVGL 9 — App 02 Mixed Widgets | https://youtube.com/shorts/LwmW8UwDED0 | Physical demonstration of COMMAND, SWITCH, SLIDER, ARC, PROGRESS/STATUS and NAVIGATION on the App 01 hardware/runtime baseline. One cosmetic issue remains: the top-right `BACK TO CONTROLS` button is slightly too narrow. | APP 02 v0.1.0 PHYSICAL PASS / WIDGET INTERACTION PASS / COSMETIC BACK BUTTON FIX PENDING |
+| 10 | ESP32-8048S043 — YouTube channel statistics via YouTube Data API | https://youtube.com/shorts/cjgx2RB0l_A | Show App08 v0.2.6 retrieving real channel statistics through the YouTube Data API and displaying the local `/youtube` dashboard, with API key stored in NVS and first-day history captured. | APP 08 v0.2.6 YOUTUBE SERVICE + LOCAL WEB DASHBOARD PHYSICAL PASS |
+| 11 | ESP32-8048S043 — App08 v0.2.8 YouTube TFT widget | https://youtube.com/shorts/lkSPy2Qc6TU | Show the v0.2.8 YouTube dashboard running as an external filesystem widget on the physical TFT. Current data/rendering are working well; naturally accumulated multi-day history will be documented after additional daily samples exist. | APP 08 v0.2.8 TFT YOUTUBE WIDGET PHYSICAL PASS / MULTI-DAY HISTORY OBSERVATION PENDING |
+| 12 | ESP32-8048S043 — KONTAKTS Platform 0.3.3, SD apps and browser Help Center | https://youtube.com/shorts/S5e_sCxy8Gc | Physical demonstration after OTA to Platform 0.3.3 with the SD application library installed: the existing local HTTP server remains available and the new `/help` route serves system documentation plus application help directly from the SD card. | APP 09 PLATFORM 0.3.3 OTA PASS / SD LIBRARY PASS / SD BROWSER HELP CENTER PHYSICAL PASS |
+| 13 | ESP32-8048S043 — какие GPIO реально свободны? I2C + 2 порта и ещё 3 без SD | https://youtu.be/5Nu9Fmwf4qA | Document the Sample A connector investigation and practical external resource map: GT911 keeps GPIO19/20 occupied as the system I2C bus, GPIO17/18 are the two primary exposed user-GPIO candidates, and GPIO11/12/13 become additional candidates only when microSD is deliberately not used. Also distinguishes the CH340C-linked TXD0/RXD0 service UART from normal application GPIO. | SAMPLE A CONNECTOR / CONTINUITY EVIDENCE VIDEO; GPIO17/18 AND I2C RESOURCE MAP DOCUMENTED; DIGITAL FUNCTIONAL ACCEPTANCE STILL PENDING |
+
+| 14 | ESP32-8048S043 — KONTAKTS Platform 0.3.5 через Web Flasher | https://youtube.com/shorts/eH-FXkjYH6s | Physical demonstration of installing KONTAKTS Platform 0.3.5 from the browser Web Flasher using the released full image, followed by normal boot on Sample A. The full install is a clean flash path, so Wi-Fi credentials must be configured again afterward. | APP 11 PLATFORM 0.3.5 WEB FLASHER PHYSICAL PASS / NORMAL BOOT PASS |
+
+| 15 | ESP32-8048S043 — обновление KONTAKTS Platform 0.3.6 по OTA | https://youtube.com/shorts/70_Huyt8igQ | Physical demonstration of updating the running KONTAKTS Platform from 0.3.5 to 0.3.6 through the on-device GitHub OTA flow, preserving saved Wi-Fi/NVS and exercising the PENDING_VERIFY confirm/rollback model. | PLATFORM 0.3.6 GITHUB OTA REGRESSION PHYSICAL PASS / WI-FI + NVS PRESERVED |
 
 ## Planned shooting sequence
 
@@ -32,9 +40,12 @@
 | 12 LVGL basic UI | button, slider, touch using lab firmware | DONE / APP 02 MIXED WIDGETS PHYSICAL PASS |
 | 13 Web setup | AP/browser setup path | OPEN |
 | 14 Web Flasher | browser firmware install | APP 01 PHYSICAL PASS |
-| 15 Widget Runtime | JSON UI without reflashing | OPEN |
-| 16 GitHub OTA | manifest/download/SHA/reboot/up-to-date | OPEN |
+| 15 Widget Runtime | JSON UI without reflashing | APP08 v0.2.8 PHYSICAL PASS |
+| 16 GitHub OTA | manifest/download/SHA/reboot/PENDING_VERIFY/confirm-or-rollback | PLATFORM 0.3.6 REGRESSION PHYSICAL PASS / VIDEO PUBLISHED / WI-FI + NVS PRESERVED |
 | 17 Six-Card Serial Deck | original six-card HMI with runtime HOME / MEDIA / SYSTEM reassignment and Serial/COM command output | PUBLISHED / CURRENT APP 01 PHYSICAL PASS |
+| 18 YouTube Dashboard | retrieve channel statistics through YouTube Data API, persist local history and render TFT dashboard/chart | TFT WIDGET PHYSICAL PASS / MULTI-DAY NATURAL HISTORY OBSERVATION PENDING |
+| 19 SD Widget Library | select and run widget packages from SD without compiling each UI into firmware, and serve system/application documentation from SD through `/help` | PHYSICAL SD LIBRARY PASS / BROWSER HELP CENTER PASS |
+| 20 Free GPIO / connector map | show measured Sample A connector routing and explain the practical `I2C + GPIO17/18`, plus GPIO11/12/13 when SD is disabled | PUBLISHED / CONNECTOR-CONTINUITY EVIDENCE RECORDED / FUNCTIONAL GPIO TESTS PENDING |
 
 ## Rule
 

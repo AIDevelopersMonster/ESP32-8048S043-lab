@@ -3,6 +3,7 @@
   const serialSupported = "serial" in navigator;
   const grid = document.getElementById("firmware-grid");
   const sdSlot = document.getElementById("sd-library-slot");
+  const sdAppsSlot = document.getElementById("sd-apps-slot");
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -77,6 +78,31 @@
       </article>`;
   }
 
+  function renderSdApplication(item) {
+    const name = escapeHtml(item.name);
+    const version = escapeHtml(item.version);
+    const status = escapeHtml(item.status);
+    const description = escapeHtml(item.description);
+    const download = escapeHtml(item.download);
+    const source = escapeHtml(item.source);
+    const minimumPlatform = escapeHtml(item.minimum_platform);
+
+    return `
+      <article class="card sd-card">
+        <span class="status ${isCandidate(item.status) ? "candidate" : ""}">${status}</span>
+        <h2>${name}</h2>
+        <div class="version">Widget ${version} · Platform ≥ ${minimumPlatform}</div>
+        <p>${description}</p>
+        <div class="installer sd-download">
+          <a class="download-button" href="${download}">DOWNLOAD WIDGET</a>
+        </div>
+        <p class="sd-note"><strong>Install:</strong> extract the ZIP into the root of the FAT32 SD card. It contains the correct <code>widgets/...</code> path and is not firmware.</p>
+        <div class="links">
+          ${source ? `<a href="${source}">Source</a>` : ""}
+        </div>
+      </article>`;
+  }
+
   async function loadCatalog() {
     try {
       const response = await fetch("./firmware-list.json", { cache: "no-store" });
@@ -86,6 +112,12 @@
       if (!firmwares.length) throw new Error("catalog contains no firmware entries");
 
       renderSdLibrary(catalog.sd_library);
+      const sdApplications = Array.isArray(catalog.sd_applications) ? catalog.sd_applications : [];
+      if (sdAppsSlot) {
+        sdAppsSlot.innerHTML = sdApplications.length
+          ? sdApplications.map(renderSdApplication).join("")
+          : '<article class="card"><h2>No individual SD applications published yet</h2></article>';
+      }
       grid.innerHTML = firmwares.map(renderFirmware).join("");
 
       console.log(`${catalog.project}: loaded ${firmwares.length} firmware entries`);
@@ -96,6 +128,7 @@
       console.error("Firmware catalog load failed", error);
       grid.innerHTML = `<div class="catalog-error"><strong>Firmware catalog could not be loaded.</strong><br>${escapeHtml(error.message)}</div>`;
       if (sdSlot) sdSlot.innerHTML = "";
+      if (sdAppsSlot) sdAppsSlot.innerHTML = "";
     }
   }
 

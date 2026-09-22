@@ -1,0 +1,483 @@
+#include "widget_runtime.h"
+
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+#include "cJSON.h"
+#include "esp_heap_caps.h"
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+
+#include "storage_fs.h"
+
+#define TAG "APP08_WIDGET"
+#define WIDGET_PATH STORAGE_FS_BASE "/widget.json"
+#define WIDGET_TEMP_PATH STORAGE_FS_BASE "/widget.tmp"
+#define WIDGET_BACKUP_PATH STORAGE_FS_BASE "/widget.bak"
+
+static SemaphoreHandle_t s_lock;
+static widget_model_t *s_model;
+static widget_info_t s_info;
+
+static void *psram_alloc(size_t size)
+{
+    void *p = heap_caps_calloc(1, size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    return p ? p : calloc(1, size);
+}
+
+static void set_reason(char *reason, size_t len, const char *text)
+{
+    if (reason && len) strlcpy(reason, text ? text : "", len);
+}
+
+static bool valid_short_string(const cJSON *item, size_t max_len)
+{
+    return cJSON_IsString(item) && item->valuestring && item->valuestring[0] &&
+           strlen(item->valuestring) <= max_len;
+}
+
+static bool parse_hex_color(const cJSON *item, uint32_t fallback, uint32_t *out)
+{
+    if (!out) return false;
+    if (!item) {
+        *out = fallback;
+        return true;
+    }
+    if (!cJSON_IsString(item) || !item->valuestring) return false;
+    const char *s = item->valuestring;
+    if (strlen(s) != 7 || s[0] != '#') return false;
+    for (size_t i = 1; i < 7; ++i) {
+        if (!isxdigit((unsigned char)s[i])) return false;
+    }
+    *out = (uint32_t)strtoul(s + 1, NULL, 16);
+    return true;
+}
+
+static int json_int(const cJSON *object, const char *key, int fallback)
+{
+    const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+    return cJSON_IsNumber(item) ? item->valueint : fallback;
+}
+
+static bool json_bool(const cJSON *object, const char *key, bool fallback)
+{
+    const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+    return cJSON_IsBool(item) ? cJSON_IsTrue(item) : fallback;
+}
+
+static const char *json_string(const cJSON *object, const char *key)
+{
+    const cJSON *item = cJSON_GetObjectItemCaseSensitive(object, key);
+    return (cJSON_IsString(item) && item->valuestring) ? item->valuestring : "";
+}
+
+static bool binding_allowed(const char *binding)
+{
+    if (!binding || !binding[0]) return true;
+    static const char *allowed[] = {
+        "system.uptime", "system.heap", "system.psram", "wifi.ip",
+        "wifi.rssi", "firmware.version", "ota.state",
+        "time.clock", "time.date", "time.year", "time.weekday",
+        "time.sync_state", "time.last_sync",
+        "youtube.subscribers", "youtube.views", "youtube.videos",
+        "youtube.views_delta", "youtube.subscribers_delta", "youtube.channel",
+        "youtube.state", "youtube.period",
+        "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
+    };
+    for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
+        if (strcmp(binding, allowed[i]) == 0) return true;
+    }
+    return false;
+}
+
+static bool chart_binding_allowed(const char *binding)
+{
+    return binding && (strcmp(binding, "youtube.views_history") == 0 ||
+                       strcmp(binding, "youtube.subscribers_history") == 0);
+}
+
+static bool button_action_allowed(const char *action)
+{
+    return action && (strcmp(action, "show_status") == 0 ||
+                      strcmp(action, "show_ota") == 0 ||
+                      strcmp(action, "sync_time") == 0 ||
+                      strcmp(action, "youtube_refresh") == 0 ||
+                      strcmp(action, "youtube_period_7d") == 0 ||
+                      strcmp(action, "youtube_period_30d") == 0 ||
+                      strcmp(action, "youtube_period_90d") == 0 ||
+                      strcmp(action, "youtube_period_all") == 0 ||
+                      strcmp(action, "serial_send_test") == 0 ||
+                      strcmp(action, "serial_send_text") == 0 ||
+                      strcmp(action, "serial_clear") == 0);
+}
+
+static bool parse_widget(const char *json, size_t len, widget_model_t *out,
+                         char *reason, size_t reason_len)
+{
+    if (!json || !out || len == 0 || len > WIDGET_MAX_JSON_BYTES) {
+        set_reason(reason, reason_len, "Widget must be 1..32768 bytes");
+        return false;
+    }
+
+    cJSON *root = cJSON_ParseWithLength(json, len);
+    if (!root) {
+        set_reason(reason, reason_len, "JSON parse failed");
+        return false;
+    }
+
+    memset(out, 0, sizeof(*out));
+    out->background = 0x101820;
+    bool ok = true;
+    size_t clock_count = 0;
+    size_t chart_count = 0;
+    size_t carousel_count = 0;
+    size_t textarea_count = 0;
+    size_t keyboard_count = 0;
+
+    const cJSON *schema = cJSON_GetObjectItemCaseSensitive(root, "schema");
+    const cJSON *id = cJSON_GetObjectItemCaseSensitive(root, "id");
+    const cJSON *name = cJSON_GetObjectItemCaseSensitive(root, "name");
+    const cJSON *version = cJSON_GetObjectItemCaseSensitive(root, "version");
+    const cJSON *background = cJSON_GetObjectItemCaseSensitive(root, "background");
+    const cJSON *objects = cJSON_GetObjectItemCaseSensitive(root, "objects");
+
+    if (!cJSON_IsNumber(schema) || schema->valueint != 1) {
+        set_reason(reason, reason_len, "schema must equal 1"); ok = false;
+    } else if (!valid_short_string(id, 48)) {
+        set_reason(reason, reason_len, "id missing/too long"); ok = false;
+    } else if (!valid_short_string(name, 64)) {
+        set_reason(reason, reason_len, "name missing/too long"); ok = false;
+    } else if (!valid_short_string(version, 24)) {
+        set_reason(reason, reason_len, "version missing/too long"); ok = false;
+    } else if (!parse_hex_color(background, 0x101820, &out->background)) {
+        set_reason(reason, reason_len, "background must be #RRGGBB"); ok = false;
+    } else if (!cJSON_IsArray(objects) || cJSON_GetArraySize(objects) < 1 ||
+               cJSON_GetArraySize(objects) > WIDGET_MAX_OBJECTS) {
+        set_reason(reason, reason_len, "objects must contain 1..24 items"); ok = false;
+    }
+
+    if (ok) {
+        strlcpy(out->id, id->valuestring, sizeof(out->id));
+        strlcpy(out->name, name->valuestring, sizeof(out->name));
+        strlcpy(out->version, version->valuestring, sizeof(out->version));
+        out->object_count = (size_t)cJSON_GetArraySize(objects);
+
+        for (size_t i = 0; i < out->object_count && ok; ++i) {
+            const cJSON *object = cJSON_GetArrayItem(objects, (int)i);
+            const cJSON *type = cJSON_GetObjectItemCaseSensitive(object, "type");
+            if (!cJSON_IsObject(object) || !valid_short_string(type, 20)) {
+                set_reason(reason, reason_len, "object type missing"); ok = false; break;
+            }
+
+            widget_object_t *dst = &out->objects[i];
+            dst->x = json_int(object, "x", 16);
+            dst->y = json_int(object, "y", 16);
+            dst->w = json_int(object, "w", 300);
+            dst->h = json_int(object, "h", 36);
+            dst->value = json_int(object, "value", 0);
+            dst->interval_ms = json_int(object, "interval_ms", 5000);
+
+            if (dst->x < 0 || dst->x > 730 || dst->y < 0 || dst->y > 350 ||
+                dst->w < 20 || dst->w > 740 || dst->h < 18 || dst->h > 350 ||
+                dst->x + dst->w > 744 || dst->y + dst->h > 365) {
+                set_reason(reason, reason_len, "object geometry out of range"); ok = false; break;
+            }
+
+            if (!parse_hex_color(cJSON_GetObjectItemCaseSensitive(object, "color"), 0xFFFFFF, &dst->color)) {
+                set_reason(reason, reason_len, "object color must be #RRGGBB"); ok = false; break;
+            }
+
+            if (strcmp(type->valuestring, "label") == 0) {
+                dst->type = WIDGET_OBJECT_LABEL;
+                const char *text = json_string(object, "text");
+                const char *binding = json_string(object, "bind");
+                const char *prefix = json_string(object, "prefix");
+                const char *suffix = json_string(object, "suffix");
+                if ((!text[0] && !binding[0]) || strlen(text) > 160 || strlen(binding) > 39 ||
+                    strlen(prefix) > 64 || strlen(suffix) > 64 || !binding_allowed(binding)) {
+                    set_reason(reason, reason_len, "label text/binding invalid"); ok = false; break;
+                }
+                strlcpy(dst->text, text, sizeof(dst->text));
+                strlcpy(dst->binding, binding, sizeof(dst->binding));
+                strlcpy(dst->prefix, prefix, sizeof(dst->prefix));
+                strlcpy(dst->suffix, suffix, sizeof(dst->suffix));
+            } else if (strcmp(type->valuestring, "bar") == 0) {
+                dst->type = WIDGET_OBJECT_BAR;
+                if (dst->value < 0 || dst->value > 100) {
+                    set_reason(reason, reason_len, "bar value must be 0..100"); ok = false; break;
+                }
+            } else if (strcmp(type->valuestring, "button") == 0) {
+                dst->type = WIDGET_OBJECT_BUTTON;
+                const char *text = json_string(object, "text");
+                const char *action = json_string(object, "action");
+                const char *target = json_string(object, "target");
+                if (!text[0] || strlen(text) > 64 || strlen(action) >= sizeof(dst->action) || !button_action_allowed(action)) {
+                    set_reason(reason, reason_len, "button action invalid"); ok = false; break;
+                }
+                if (strcmp(action, "serial_send_text") == 0 && (!target[0] || strlen(target) >= sizeof(dst->target))) {
+                    set_reason(reason, reason_len, "serial_send_text requires textarea target"); ok = false; break;
+                }
+                strlcpy(dst->text, text, sizeof(dst->text));
+                strlcpy(dst->action, action, sizeof(dst->action));
+                strlcpy(dst->target, target, sizeof(dst->target));
+            } else if (strcmp(type->valuestring, "textarea") == 0) {
+                dst->type = WIDGET_OBJECT_TEXTAREA;
+                textarea_count++;
+                const char *id_text = json_string(object, "id");
+                const char *initial = json_string(object, "text");
+                const char *placeholder = json_string(object, "placeholder");
+                dst->max_length = json_int(object, "max_length", 128);
+                dst->one_line = json_bool(object, "one_line", true);
+                if (textarea_count > WIDGET_MAX_TEXTAREAS || !id_text[0] || strlen(id_text) >= sizeof(dst->id) ||
+                    strlen(initial) > 160 || strlen(placeholder) >= sizeof(dst->placeholder) ||
+                    dst->max_length < 1 || dst->max_length > 256 || dst->w < 160 || dst->h < 40) {
+                    set_reason(reason, reason_len, "textarea requires unique id, >=160x40, max_length 1..256");
+                    ok = false; break;
+                }
+                strlcpy(dst->id, id_text, sizeof(dst->id));
+                strlcpy(dst->text, initial, sizeof(dst->text));
+                strlcpy(dst->placeholder, placeholder, sizeof(dst->placeholder));
+            } else if (strcmp(type->valuestring, "keyboard") == 0) {
+                dst->type = WIDGET_OBJECT_KEYBOARD;
+                keyboard_count++;
+                const char *target = json_string(object, "target");
+                if (keyboard_count > WIDGET_MAX_KEYBOARDS || !target[0] || strlen(target) >= sizeof(dst->target) ||
+                    dst->w < 300 || dst->h < 100) {
+                    set_reason(reason, reason_len, "keyboard requires textarea target and >=300x100");
+                    ok = false; break;
+                }
+                strlcpy(dst->target, target, sizeof(dst->target));
+            } else if (strcmp(type->valuestring, "clock") == 0) {
+                dst->type = WIDGET_OBJECT_CLOCK;
+                clock_count++;
+                if (clock_count > WIDGET_MAX_CLOCKS || dst->w < 320 || dst->h < 90) {
+                    set_reason(reason, reason_len, "clock requires >=320x90 and max 2 instances"); ok = false; break;
+                }
+            } else if (strcmp(type->valuestring, "chart") == 0) {
+                dst->type = WIDGET_OBJECT_CHART;
+                const char *binding = json_string(object, "bind");
+                chart_count++;
+                if (chart_count > WIDGET_MAX_CHARTS || !chart_binding_allowed(binding) ||
+                    strlen(binding) >= sizeof(dst->binding) || dst->w < 180 || dst->h < 80) {
+                    set_reason(reason, reason_len, "chart requires YouTube history binding, >=180x80, max 2"); ok = false; break;
+                }
+                strlcpy(dst->binding, binding, sizeof(dst->binding));
+            } else if (strcmp(type->valuestring, "metric_carousel") == 0) {
+                dst->type = WIDGET_OBJECT_METRIC_CAROUSEL;
+                carousel_count++;
+                const char *title = json_string(object, "text");
+                const cJSON *items = cJSON_GetObjectItemCaseSensitive(object, "items");
+                int item_count = cJSON_IsArray(items) ? cJSON_GetArraySize(items) : 0;
+                if (carousel_count > WIDGET_MAX_METRIC_CAROUSELS || dst->w < 320 || dst->h < 150 ||
+                    dst->interval_ms < 1000 || dst->interval_ms > 60000 || item_count < 2 ||
+                    item_count > WIDGET_MAX_CAROUSEL_ITEMS || strlen(title) > 64) {
+                    set_reason(reason, reason_len, "metric_carousel requires 2..8 items, >=320x150, interval 1..60s");
+                    ok = false; break;
+                }
+                strlcpy(dst->text, title, sizeof(dst->text));
+                dst->carousel_item_count = (size_t)item_count;
+                for (int ci = 0; ci < item_count && ok; ++ci) {
+                    const cJSON *item = cJSON_GetArrayItem(items, ci);
+                    const char *binding = cJSON_IsObject(item) ? json_string(item, "bind") : "";
+                    const char *label = cJSON_IsObject(item) ? json_string(item, "label") : "";
+                    widget_carousel_item_t *dst_item = &dst->carousel_items[ci];
+                    if (!binding[0] || strlen(binding) >= sizeof(dst_item->binding) || !binding_allowed(binding) ||
+                        !label[0] || strlen(label) >= sizeof(dst_item->label) ||
+                        !parse_hex_color(cJSON_GetObjectItemCaseSensitive(item, "color"), dst->color, &dst_item->color)) {
+                        set_reason(reason, reason_len, "metric_carousel item binding/label/color invalid");
+                        ok = false; break;
+                    }
+                    strlcpy(dst_item->binding, binding, sizeof(dst_item->binding));
+                    strlcpy(dst_item->label, label, sizeof(dst_item->label));
+                }
+            } else {
+                set_reason(reason, reason_len, "unsupported object type"); ok = false; break;
+            }
+        }
+
+        for (size_t i = 0; i < out->object_count && ok; ++i) {
+            widget_object_t *obj = &out->objects[i];
+            if (obj->type == WIDGET_OBJECT_TEXTAREA) {
+                for (size_t j = i + 1; j < out->object_count; ++j) {
+                    if (out->objects[j].type == WIDGET_OBJECT_TEXTAREA &&
+                        strcmp(obj->id, out->objects[j].id) == 0) {
+                        set_reason(reason, reason_len, "textarea ids must be unique");
+                        ok = false;
+                        break;
+                    }
+                }
+            }
+
+            bool needs_target = obj->type == WIDGET_OBJECT_KEYBOARD ||
+                                (obj->type == WIDGET_OBJECT_BUTTON &&
+                                 strcmp(obj->action, "serial_send_text") == 0);
+            if (needs_target) {
+                bool found = false;
+                for (size_t j = 0; j < out->object_count; ++j) {
+                    if (out->objects[j].type == WIDGET_OBJECT_TEXTAREA &&
+                        strcmp(obj->target, out->objects[j].id) == 0) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    set_reason(reason, reason_len, "textarea target not found");
+                    ok = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    cJSON_Delete(root);
+    out->valid = ok;
+    if (ok) set_reason(reason, reason_len, "OK");
+    return ok;
+}
+
+static esp_err_t read_file(char **json_out, size_t *len_out)
+{
+    if (!json_out || !len_out) return ESP_ERR_INVALID_ARG;
+    *json_out = NULL; *len_out = 0;
+    struct stat st;
+    if (stat(WIDGET_PATH, &st) != 0) return ESP_ERR_NOT_FOUND;
+    if (st.st_size <= 0 || st.st_size > WIDGET_MAX_JSON_BYTES) return ESP_ERR_INVALID_SIZE;
+
+    FILE *f = fopen(WIDGET_PATH, "rb");
+    if (!f) return ESP_FAIL;
+    char *json = psram_alloc((size_t)st.st_size + 1);
+    if (!json) { fclose(f); return ESP_ERR_NO_MEM; }
+    size_t got = fread(json, 1, (size_t)st.st_size, f);
+    fclose(f);
+    if (got != (size_t)st.st_size) { free(json); return ESP_FAIL; }
+    json[got] = '\0';
+    *json_out = json; *len_out = got;
+    return ESP_OK;
+}
+
+static esp_err_t commit_file(const char *json, size_t len)
+{
+    FILE *f = fopen(WIDGET_TEMP_PATH, "wb");
+    if (!f) return ESP_FAIL;
+    size_t written = fwrite(json, 1, len, f);
+    fflush(f);
+    fsync(fileno(f));
+    fclose(f);
+    if (written != len) { remove(WIDGET_TEMP_PATH); return ESP_FAIL; }
+
+    remove(WIDGET_BACKUP_PATH);
+    if (rename(WIDGET_PATH, WIDGET_BACKUP_PATH) != 0 && errno != ENOENT) {
+        remove(WIDGET_TEMP_PATH); return ESP_FAIL;
+    }
+    if (rename(WIDGET_TEMP_PATH, WIDGET_PATH) != 0) {
+        rename(WIDGET_BACKUP_PATH, WIDGET_PATH); return ESP_FAIL;
+    }
+    remove(WIDGET_BACKUP_PATH);
+    return ESP_OK;
+}
+
+static void publish_model(const widget_model_t *model, size_t file_size, const char *status)
+{
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    *s_model = *model;
+    s_info.installed = model->valid;
+    s_info.generation++;
+    s_info.file_size = file_size;
+    strlcpy(s_info.id, model->id, sizeof(s_info.id));
+    strlcpy(s_info.name, model->name, sizeof(s_info.name));
+    strlcpy(s_info.version, model->version, sizeof(s_info.version));
+    strlcpy(s_info.status, status ? status : "OK", sizeof(s_info.status));
+    xSemaphoreGive(s_lock);
+}
+
+esp_err_t widget_runtime_init(void)
+{
+    s_lock = xSemaphoreCreateMutex();
+    if (!s_lock) return ESP_ERR_NO_MEM;
+    s_model = psram_alloc(sizeof(*s_model));
+    if (!s_model) return ESP_ERR_NO_MEM;
+    memset(&s_info, 0, sizeof(s_info));
+    strlcpy(s_info.status, "No external widget installed", sizeof(s_info.status));
+
+    char *json = NULL; size_t len = 0;
+    esp_err_t err = read_file(&json, &len);
+    if (err == ESP_ERR_NOT_FOUND) {
+        ESP_LOGI(TAG, "No persisted widget; firmware shell remains active");
+        return ESP_OK;
+    }
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Persisted widget read failed: %s", esp_err_to_name(err));
+        return ESP_OK;
+    }
+
+    widget_model_t *model = psram_alloc(sizeof(*model));
+    if (!model) { free(json); return ESP_ERR_NO_MEM; }
+    char reason[96];
+    bool ok = parse_widget(json, len, model, reason, sizeof(reason));
+    free(json);
+    if (!ok) {
+        ESP_LOGW(TAG, "Persisted widget rejected: %s; system shell remains available", reason);
+        free(model); return ESP_OK;
+    }
+    publish_model(model, len, "AUTOLOAD PASS");
+    ESP_LOGI(TAG, "WIDGET AUTOLOAD PASS id=%s name=%s version=%s bytes=%u",
+             model->id, model->name, model->version, (unsigned)len);
+    free(model);
+    return ESP_OK;
+}
+
+esp_err_t widget_runtime_install_json(const char *json, size_t len, char *reason, size_t reason_len)
+{
+    widget_model_t *model = psram_alloc(sizeof(*model));
+    if (!model) { set_reason(reason, reason_len, "No memory for widget model"); return ESP_ERR_NO_MEM; }
+    if (!parse_widget(json, len, model, reason, reason_len)) { free(model); return ESP_ERR_INVALID_ARG; }
+
+    esp_err_t err = commit_file(json, len);
+    if (err != ESP_OK) {
+        set_reason(reason, reason_len, "Filesystem commit failed"); free(model); return err;
+    }
+    publish_model(model, len, "INSTALL PASS");
+    ESP_LOGI(TAG, "WIDGET INSTALL PASS id=%s name=%s version=%s bytes=%u generation=%u",
+             model->id, model->name, model->version, (unsigned)len, (unsigned)widget_runtime_generation());
+    free(model);
+    set_reason(reason, reason_len, "INSTALL PASS");
+    return ESP_OK;
+}
+
+esp_err_t widget_runtime_delete(void)
+{
+    remove(WIDGET_TEMP_PATH); remove(WIDGET_BACKUP_PATH);
+    if (remove(WIDGET_PATH) != 0 && errno != ENOENT) return ESP_FAIL;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    memset(s_model, 0, sizeof(*s_model));
+    s_info.installed = false; s_info.generation++; s_info.file_size = 0;
+    s_info.id[0] = s_info.name[0] = s_info.version[0] = '\0';
+    strlcpy(s_info.status, "No external widget installed", sizeof(s_info.status));
+    xSemaphoreGive(s_lock);
+    ESP_LOGI(TAG, "Widget deleted; firmware shell remains available");
+    return ESP_OK;
+}
+
+void widget_runtime_get_info(widget_info_t *out)
+{
+    if (!out || !s_lock) return;
+    xSemaphoreTake(s_lock, portMAX_DELAY); *out = s_info; xSemaphoreGive(s_lock);
+}
+
+void widget_runtime_get_model(widget_model_t *out)
+{
+    if (!out || !s_lock || !s_model) return;
+    xSemaphoreTake(s_lock, portMAX_DELAY); *out = *s_model; xSemaphoreGive(s_lock);
+}
+
+uint32_t widget_runtime_generation(void)
+{
+    if (!s_lock) return 0;
+    xSemaphoreTake(s_lock, portMAX_DELAY); uint32_t g = s_info.generation; xSemaphoreGive(s_lock); return g;
+}

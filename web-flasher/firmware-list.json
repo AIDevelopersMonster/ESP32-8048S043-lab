@@ -5,10 +5,10 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Widgets, system wiki/help and offline UPDATE content. Download the ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. The current snapshot includes USB Serial Terminal and its HTML Help pages.",
+    "description": "Widgets, system wiki/help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. The current App12 snapshot includes the Interactive Serial Terminal and its Help pages.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
-    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/09_SDWidgetLibrary/sd"
+    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd"
   },
   "firmwares": [
     {
@@ -16,9 +16,12 @@
       "name": "KONTAKTS Platform / USB Serial Terminal",
       "version": "0.3.5",
       "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS",
-      "description": "Current KONTAKTS platform with SYS | SD | WIDGET, SD Help Center, Widget Runtime and the generic UART0 serial service used by USB Serial Terminal. On Sample A the normal USB -> CH340C -> UART0 path was physically exercised in both directions, and the 0.3.5 browser Web Flasher install was physically accepted on 2026-09-22.",
+      "description": "Current KONTAKTS Web Flasher baseline with SYS | SD | WIDGET, SD Help Center, Widget Runtime and the generic UART0 serial service used by USB Serial Terminal. On Sample A the normal USB -> CH340C -> UART0 path was physically exercised in both directions, the 0.3.5 browser Web Flasher full install was physically accepted, and the app-only GitHub OTA path was physically regression-tested from 0.3.5 to 0.3.6 with saved Wi-Fi/NVS preserved.",
       "manifest": "./manifest-app11.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/06_OTARecovery"
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/06_OTARecovery",
+      "ota_version": "0.3.6",
+      "ota_status": "PHYSICAL PASS",
+      "ota_video": "https://youtube.com/shorts/70_Huyt8igQ"
     },
     {
       "id": "app09",
@@ -75,6 +78,18 @@
       "description": "Earlier standalone Wi-Fi provisioning test. It is not the current KONTAKTS platform and is kept only as historical/diagnostic firmware.",
       "manifest": "./manifest-app05.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
+    }
+  ],
+  "sd_applications": [
+    {
+      "id": "serial-terminal",
+      "name": "Interactive Serial Terminal",
+      "version": "0.1.0",
+      "status": "BUILD PASS / PHYSICAL TEST PENDING",
+      "minimum_platform": "0.3.7",
+      "description": "LAB-02 Serial widget for direct TFT text entry using the generic Widget Runtime textarea and LVGL 9 keyboard, with SEND through serial_send_text. The application itself is SD-only; Platform 0.3.7 supplies the reusable runtime primitives.",
+      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-serial-terminal.zip",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/serial-terminal"
     }
   ]
 }

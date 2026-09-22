@@ -1,127 +1,281 @@
-# Pinout working document
+# ESP32-8048S043 Sample A — pinout and connector evidence
 
-This file separates **reported**, **source-backed** and **physically verified** pin mappings.
+This is the hardware contract for the actual project board **Sample A**. It separates physically tested functions, continuity measurements, visible silk, and MCU-only capabilities.
 
-Current status for Sample A:
+## Current Sample A status
 
 ```text
-RGB display runtime      PASS with factory LVGL Widgets Demo
-Touchscreen visual check PASS with factory LVGL Widgets Demo
-Exact touch IC identity  SOURCE-BACKED GT911, dedicated I2C scan still open
-Exact pin map            SOURCE-BACKED, not yet fully continuity-verified
+RGB display runtime      PHYSICAL PASS
+GT911 touchscreen        PHYSICAL PASS, I2C slave 0x5D
+microSD / TF             PHYSICAL PASS, SPI 10 MHz
+P2 silk                  IO19 / IO11 / IO12 / IO13
+P3 silk                  IO17 / IO18 / IO19 / IO20
+P4 silk                  GND / 3.3V / IO17 / IO18
+P3 IO17/18 silk group    UART1
+P3 IO19/20 silk group    USB
+R17                      DNP / not fitted; on GPIO18 option path
+GPIO17                   ESP32-S3-WROOM-1 module pin 10 from pin-1 dot
+GPIO18                   ESP32-S3-WROOM-1 module pin 11 from pin-1 dot
+Flash                    16 MB
+PSRAM                    8 MB
 ```
 
-## Evidence sources
+## Practical external resource map
 
-Primary project evidence:
+For the current capacitive-touch configuration the useful external resources are:
 
-- factory firmware dump and partition analysis;
-- factory serial boot log;
-- factory LVGL Widgets Demo display PASS;
-- factory touchscreen visual PASS video;
-- project macro photographs.
+```text
+ALWAYS PRESENT
 
-Source-backed reconstruction:
+GPIO19 = system I2C SDA  -> GT911 resident slave 0x5D
+GPIO20 = system I2C SCL  -> GT911 resident slave 0x5D
+GPIO17 = primary user GPIO candidate
+GPIO18 = primary user GPIO candidate; R17 option link is DNP/open
 
-- `hardware/SCHEMATIC_BOM_RESEARCH.md`;
-- JCZN1688 / Jingcai `ESP32-8048S043` support archive lead;
-- TinyTronics Jingcai ESP32-8048S043C-I documentation package lead;
-- same-layout annotated 2022-10-18 board reference.
+IF microSD IS NOT USED
 
-## Source-backed 800x480 RGB panel mapping
+GPIO11 = additional user GPIO candidate / SPI MOSI
+GPIO12 = additional user GPIO candidate / SPI SCK
+GPIO13 = additional user GPIO candidate / SPI MISO
+```
 
-Status: `SOURCE-BACKED / FACTORY RUNTIME DISPLAY PASS`.
+Therefore the practical exposed resource count is:
 
-The mapping below is backed by the recovered board documentation and is consistent with the factory LVGL display runtime PASS. It is not yet promoted to a full BSP pinout PASS until reproduced by our own minimal RGB example.
+```text
+with SD in use:
+    system I2C on GPIO19/20
+    + 2 user GPIOs: 17, 18
+
+without SD use:
+    system I2C on GPIO19/20
+    + 5 user GPIOs: 17, 18, 11, 12, 13
+```
+
+**GPIO19 does not become free when the SD card is removed.** It remains the GT911 SDA line. GPIO20 likewise remains GT911 SCL.
+
+The three lines GPIO11/12/13 become candidates for other use only when the SD interface is not initialized/owned by the platform. Removing the card alone is not the software contract for reusing those pins.
+
+## Evidence classes
+
+- **PHYSICAL PASS** — function exercised on Sample A.
+- **CONTINUITY PASS** — electrical continuity measured on Sample A.
+- **PHYSICALLY OBSERVED** — silk/component state directly observed.
+- **SOURCE-BACKED** — supported by matching external board documentation but not yet physically accepted.
+- **MCU CAPABILITY ONLY** — ESP32-S3 silicon capability; not automatically a board-level interface.
+
+## RGB LCD
+
+Status: `PHYSICAL PASS` with the project firmware.
 
 | Signal | GPIO |
 |---|---:|
 | DE | 40 |
 | VSYNC | 41 |
 | HSYNC | 39 |
-| PCLK / DCLK | 42 |
-| Backlight PWM | 2 |
-| R0 | 45 |
-| R1 | 48 |
-| R2 | 47 |
-| R3 | 21 |
-| R4 | 14 |
-| G0 | 5 |
-| G1 | 6 |
-| G2 | 7 |
-| G3 | 15 |
-| G4 | 16 |
-| G5 | 4 |
-| B0 | 8 |
-| B1 | 3 |
-| B2 | 46 |
-| B3 | 9 |
-| B4 | 1 |
+| PCLK | 42 |
+| Backlight | 2 |
+| R0..R4 | 45, 48, 47, 21, 14 |
+| G0..G5 | 5, 6, 7, 15, 16, 4 |
+| B0..B4 | 8, 3, 46, 9, 1 |
 
-Compact form:
+## GT911 capacitive touch / system I2C
+
+| Signal | GPIO | Sample A evidence |
+|---|---:|---|
+| SDA | 19 | PHYSICAL PASS; P3 IO19 <-> P2 IO19 <-> R4 continuity |
+| SCL | 20 | PHYSICAL PASS; P3 IO20 <-> R3 continuity |
+| RESET | 38 | PHYSICAL PASS |
+| optional INT | 18 through R17 option | R17 is DNP/open; current driver uses no INT |
+| address | 0x5D | PHYSICAL PASS |
+
+Current App09 creates one ESP32-S3 I2C master bus on GPIO19/20 and attaches GT911 as a slave at `0x5D`.
+
+P3 therefore physically exposes the already-running touch I2C nets:
 
 ```text
-DE 40, VSYNC 41, HSYNC 39, PCLK 42, BL 2
-R0..R4 = 45, 48, 47, 21, 14
-G0..G5 = 5, 6, 7, 15, 16, 4
-B0..B4 = 8, 3, 46, 9, 1
+P3 IO19 -> GPIO19 -> GT911 SDA
+P3 IO20 -> GPIO20 -> GT911 SCL
 ```
 
-## Source-backed GT911 capacitive touch mapping
+Adding another compatible I2C **slave** to this bus is architecturally normal. The remaining acceptance step is a coexistence test with an external slave while touch remains operational.
 
-Status: `SOURCE-BACKED / FACTORY TOUCHSCREEN VISUAL PASS / CONTROLLER SCAN OPEN`.
+The PCB silk calls GPIO19/20 `USB` because these ESP32-S3 pins also support native USB D-/D+. In the current capacitive-touch configuration they are used as I2C and are **not free USB pins**.
 
-The factory demo responds to touch in the visual check, and the recovered documentation identifies GT911 for the capacitive-touch version. A dedicated I2C scanner and coordinate-target test are still required before marking the controller and coordinate transform as fully verified.
+## GPIO17 / GPIO18
 
-| Signal | GPIO / value |
-|---|---:|
-| SDA | 19 |
-| SCL | 20 |
-| RESET | 38 |
-| INT | 18, optional / link-dependent |
-| I2C address | 0x5D or 0x14 depending on reset/address strap sequence |
+Direct Sample A continuity:
 
-## Source-backed microSD / TF1 mapping
+```text
+P3 IO17 <-> P4 IO17 <-> ESP32-S3-WROOM-1 module pin 10
+P3 IO18 <-> P4 IO18 <-> ESP32-S3-WROOM-1 module pin 11
+P3/P4 IO18 <-> R17-side net
+R17 = DNP / not fitted
+```
 
-Status: `SOURCE-BACKED / NOT YET PHYSICALLY TESTED`.
+This agrees with the ESP32-S3-WROOM-1 module pinout:
+
+```text
+module pin 10 = GPIO17
+module pin 11 = GPIO18
+```
+
+No external pull-up/pull-down component for GPIO17 has yet been located. Record that as **not found**, not as proof that no bias network exists anywhere on the PCB.
+
+Current engineering classification:
+
+```text
+GPIO17  PRIMARY USER GPIO CANDIDATE
+GPIO18  PRIMARY USER GPIO CANDIDATE; optional R17 branch open
+```
+
+Neither GPIO17 nor GPIO18 is used by the current platform for LCD, SD, GT911 SDA/SCL/reset, flash, or PSRAM. Final digital HIGH/LOW functional acceptance is still pending.
+
+## microSD / SPI
+
+Status: `PHYSICAL PASS at 10 MHz`.
 
 | Signal | GPIO |
 |---|---:|
 | CS | 10 |
 | MOSI | 11 |
-| CLK | 12 |
+| SCK | 12 |
 | MISO | 13 |
 
-## Board-level interface notes
+With SD active, GPIO11/12/13 belong to the SD SPI bus.
 
-The TinyTronics/Jingcai documentation path identifies the capacitive-touch board as using:
+If the platform is deliberately run **without SD support**, GPIO11/12/13 are externally available on P2 and may be repurposed as three independent GPIOs or as another SPI use, subject to a functional test.
+
+GPIO10 is the SD CS but is not part of the convenient P2 signal set, so it is not counted in the practical external GPIO total.
+
+## P2 — mixed-function header on Sample A
+
+Visible order:
 
 ```text
-ESP32-S3
-16 MB flash
-8 MB PSRAM
-CH340C USB-UART bridge
-GT911 capacitive-touch controller
+IO19
+IO11
+IO12
+IO13
 ```
 
-The PCB family may contain both the XPT2046 resistive-touch footprint/device and the GT911 capacitive-touch interface. For the current capacitive panel, do not assume XPT2046 is active.
+| P2 signal | Current use |
+|---|---|
+| IO19 | GT911/system I2C SDA; same net as P3 IO19 |
+| IO11 | SD MOSI while SD is active |
+| IO12 | SD SCK while SD is active |
+| IO13 | SD MISO while SD is active |
+
+Because IO19 is already GT911 SDA, P2 is **not a self-contained four-wire SPI expansion connector** on this capacitive Sample A. Its 11/12/13 lines are still useful when SD is not used.
+
+## P3 — main signal expansion header
+
+Visible order:
+
+```text
+IO17   UART1 silk group
+IO18   UART1 silk group
+IO19   USB silk group
+IO20   USB silk group
+```
+
+Practical KONTAKTS interpretation:
+
+```text
+IO17 = user GPIO candidate
+IO18 = user GPIO candidate
+IO19 = system I2C SDA
+IO20 = system I2C SCL
+```
+
+The UART1 and USB labels describe intended/alternate peripheral functions of the ESP32-S3 pins. They do not override the current platform allocation.
+
+## P4 — GPIO/power header
+
+Visible order:
+
+```text
+GND
+3.3V
+IO17
+IO18
+```
+
+Continuity already proves:
+
+```text
+P4 IO17 <-> P3 IO17
+P4 IO18 <-> P3 IO18
+```
+
+GND/3.3V rail voltage acceptance can be recorded separately.
+
+## Service UART0 / CH340C connector — technological interface
+
+The separate service connector is silked:
+
+```text
+5V / TXD0 / RXD0 / GND
+```
+
+Sample A continuity measurements include:
+
+```text
+R7 <-> CH340C pin 2
+R6 <-> CH340C pin 3
+```
+
+This connector is classified as a **technological/service programming and debug interface**, shared with the onboard CH340C path. Its TXD0/RXD0 signals are **not counted as free application GPIOs** and should not be presented as normal user expansion ports.
+
+Do not attach another active UART transmitter casually to a line already driven through the CH340C path; treat this header as service/debug infrastructure.
+
+## ADC boundary
+
+No external ADC input is yet guaranteed. GPIO17/18 are ADC-capable at MCU level, but a controlled known-voltage measurement is required before advertising them as analog inputs.
 
 ## Validation checklist
 
-- [x] factory firmware preserved by double-read SHA-256 match;
-- [x] factory LVGL Widgets Demo serial boot confirmed;
-- [x] factory LVGL Widgets Demo display visible on 800x480 panel;
-- [x] touchscreen visually responds in factory demo video;
-- [ ] minimal RGB color-bar example built and physically validated;
-- [ ] backlight PWM GPIO 2 confirmed by dedicated brightness test;
-- [ ] RGB data order confirmed by own color test;
-- [ ] PCLK polarity confirmed by own timing test;
-- [ ] GT911 detected by I2C scan at 0x5D or 0x14;
-- [ ] GT911 reset/address strap behavior documented;
-- [ ] touch coordinates match rendered targets;
-- [ ] orientation transform documented;
-- [ ] SD card initialized and read/write tested on GPIO 10/11/12/13.
+- [x] RGB display physically validated;
+- [x] GT911 touch physically validated at 0x5D;
+- [x] microSD physically validated on GPIO10/11/12/13;
+- [x] P2 silk confirmed IO19/IO11/IO12/IO13;
+- [x] P3 silk confirmed IO17/IO18/IO19/IO20;
+- [x] P4 silk confirmed GND/3.3V/IO17/IO18;
+- [x] P3 IO17 <-> P4 IO17 continuity;
+- [x] P3 IO18 <-> P4 IO18 continuity;
+- [x] GPIO17 <-> WROOM-1 module pin 10 continuity;
+- [x] GPIO18 <-> WROOM-1 module pin 11 continuity;
+- [x] GPIO18 <-> R17 option path continuity;
+- [x] R17 physically DNP/open;
+- [x] P3 IO19 <-> P2 IO19 <-> R4 continuity;
+- [x] P3 IO20 <-> R3 continuity;
+- [x] R7 <-> CH340C pin 2 continuity;
+- [x] R6 <-> CH340C pin 3 continuity;
+- [ ] validate GPIO17 digital input/output;
+- [ ] validate GPIO18 digital input/output;
+- [ ] validate GPIO11/12/13 as general GPIO with SD disabled if needed;
+- [ ] validate an external I2C slave while GT911 remains operational;
+- [ ] validate ADC with known voltages;
+- [ ] record P4 3.3V rail voltage/current capability;
+- [ ] validate shared SPI with SD only if a real project requires it.
 
-## Boundary
+## Canonical practical conclusion
 
-This document is now stronger than a vendor pinout copy, but still not the final BSP validation certificate. The next promotion step is to run our own minimal examples against this map and attach serial/video/photo evidence for each subsystem.
+```text
+SYSTEM I2C
+  GPIO19 = SDA, GT911 resident slave
+  GPIO20 = SCL, GT911 resident slave
+
+PRIMARY USER GPIO
+  GPIO17
+  GPIO18
+
+ADDITIONAL USER GPIO WHEN SD IS DISABLED
+  GPIO11
+  GPIO12
+  GPIO13
+
+TECHNOLOGICAL / SERVICE ONLY
+  TXD0 / RXD0 through CH340C service path
+```
+
+So Sample A gives **I2C + two primary user GPIOs**, and **three more candidate GPIOs when microSD is deliberately not used**. GPIO19/20 remain occupied by the touch I2C bus regardless of SD presence.

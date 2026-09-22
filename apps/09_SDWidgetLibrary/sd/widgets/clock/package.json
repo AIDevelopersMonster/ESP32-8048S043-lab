@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "id": "clock",
+  "name": "Clock",
+  "version": "1.0.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {"id": "ntp-sevenseg", "name": "NTP Seven Segment Clock", "file": "clock.json"}
+  ],
+  "requires": {
+    "minimum_platform": "0.3.0",
+    "services": ["time"]
+  },
+  "documentation": {
+    "entry": "html/index.html"
+  },
+  "firmware": {
+    "required": false
+  },
+  "secrets": {
+    "storage": "nvs",
+    "sd_allowed": false
+  }
+}

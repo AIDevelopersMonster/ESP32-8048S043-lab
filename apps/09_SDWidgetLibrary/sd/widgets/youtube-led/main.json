@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "id": "youtube.led-carousel",
+  "name": "YouTube LED Carousel",
+  "version": "1.0.0",
+  "background": "#03060A",
+  "objects": [
+    {
+      "type": "metric_carousel",
+      "x": 18,
+      "y": 18,
+      "w": 708,
+      "h": 300,
+      "text": "KONTAKTS LIVE",
+      "interval_ms": 5000,
+      "color": "#58A6FF",
+      "items": [
+        {"bind": "youtube.subscribers", "label": "SUBSCRIBERS", "color": "#58A6FF"},
+        {"bind": "youtube.views", "label": "VIEWS", "color": "#58A6FF"},
+        {"bind": "youtube.videos", "label": "VIDEOS", "color": "#FF4D4D"},
+        {"bind": "time.clock", "label": "TIME", "color": "#58A6FF"}
+      ]
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 324,
+      "w": 708,
+      "h": 28,
+      "bind": "youtube.channel",
+      "prefix": "CHANNEL  ",
+      "color": "#8B949E"
+    }
+  ]
+}

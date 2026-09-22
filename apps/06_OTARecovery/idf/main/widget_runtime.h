@@ -1,0 +1,84 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "esp_err.h"
+
+#define WIDGET_MAX_JSON_BYTES 32768
+#define WIDGET_MAX_OBJECTS 24
+#define WIDGET_MAX_BOUND_LABELS 12
+#define WIDGET_MAX_CLOCKS 2
+#define WIDGET_MAX_CHARTS 2
+#define WIDGET_MAX_METRIC_CAROUSELS 2
+#define WIDGET_MAX_CAROUSEL_ITEMS 8
+#define WIDGET_MAX_TEXTAREAS 4
+#define WIDGET_MAX_KEYBOARDS 2
+
+typedef enum {
+    WIDGET_OBJECT_LABEL = 0,
+    WIDGET_OBJECT_BAR,
+    WIDGET_OBJECT_BUTTON,
+    WIDGET_OBJECT_TEXTAREA,
+    WIDGET_OBJECT_KEYBOARD,
+    WIDGET_OBJECT_CLOCK,
+    WIDGET_OBJECT_CHART,
+    WIDGET_OBJECT_METRIC_CAROUSEL,
+} widget_object_type_t;
+
+typedef struct {
+    char binding[40];
+    char label[33];
+    uint32_t color;
+} widget_carousel_item_t;
+
+typedef struct {
+    widget_object_type_t type;
+    int x;
+    int y;
+    int w;
+    int h;
+    int value;
+    int interval_ms;
+    uint32_t color;
+    char text[161];
+    char id[33];
+    char target[33];
+    char placeholder[81];
+    int max_length;
+    bool one_line;
+    char binding[40];
+    char prefix[65];
+    char suffix[65];
+    char action[32];
+    size_t carousel_item_count;
+    widget_carousel_item_t carousel_items[WIDGET_MAX_CAROUSEL_ITEMS];
+} widget_object_t;
+
+typedef struct {
+    bool valid;
+    char id[49];
+    char name[65];
+    char version[25];
+    uint32_t background;
+    size_t object_count;
+    widget_object_t objects[WIDGET_MAX_OBJECTS];
+} widget_model_t;
+
+typedef struct {
+    bool installed;
+    uint32_t generation;
+    size_t file_size;
+    char id[49];
+    char name[65];
+    char version[25];
+    char status[96];
+} widget_info_t;
+
+esp_err_t widget_runtime_init(void);
+esp_err_t widget_runtime_install_json(const char *json, size_t len, char *reason, size_t reason_len);
+esp_err_t widget_runtime_delete(void);
+void widget_runtime_get_info(widget_info_t *out);
+void widget_runtime_get_model(widget_model_t *out);
+uint32_t widget_runtime_generation(void);

@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "id": "usb-serial-terminal.monitor",
+  "name": "USB Serial Monitor",
+  "version": "0.1.0",
+  "background": "#0B1016",
+  "objects": [
+    {
+      "type": "label",
+      "x": 16,
+      "y": 10,
+      "w": 520,
+      "h": 28,
+      "text": "USB SERIAL MONITOR",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 520,
+      "y": 10,
+      "w": 208,
+      "h": 28,
+      "bind": "serial.state",
+      "color": "#58A6FF"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 52,
+      "w": 712,
+      "h": 172,
+      "bind": "serial.rx_text",
+      "prefix": "RX > ",
+      "color": "#7EE787"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 236,
+      "w": 220,
+      "h": 30,
+      "bind": "serial.rx_bytes",
+      "prefix": "RX BYTES  ",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "label",
+      "x": 260,
+      "y": 236,
+      "w": 220,
+      "h": 30,
+      "bind": "serial.tx_bytes",
+      "prefix": "TX BYTES  ",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "button",
+      "x": 16,
+      "y": 282,
+      "w": 220,
+      "h": 50,
+      "text": "SEND TEST",
+      "action": "serial_send_test",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 260,
+      "y": 282,
+      "w": 220,
+      "h": 50,
+      "text": "CLEAR",
+      "action": "serial_clear",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 506,
+      "y": 290,
+      "w": 222,
+      "h": 34,
+      "text": "PC <-> CH340C <-> UART0",
+      "color": "#8B949E"
+    }
+  ]
+}

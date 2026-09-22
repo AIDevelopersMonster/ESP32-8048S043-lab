@@ -1,0 +1,346 @@
+# App09 — SD Widget Library
+
+**Project:** KONTAKTS / ESP32-8048S043 Lab  
+**Branch:** `agent/app09-sd-widget-library`  
+**Status:** PHYSICAL SD APPLICATION PASS / UX ITERATION
+
+## Goal
+
+App09 extends the physically validated App08 platform with an SD-backed application library while preserving a firmware-resident recovery surface.
+
+The canonical navigation candidate for App09 is:
+
+```text
+SYS | SD | WIDGET
+```
+
+- `SYS` — emergency status, diagnostics, OTA, rollback and recovery;
+- `SD` — application library and manual offline update source;
+- `WIDGET` — currently active application UI.
+
+The SD application-library path is now physically validated on the real ESP32-8048S043 hardware. UX refinement and the offline `/UPDATE` acceptance path remain open.
+
+## Canonical application rule
+
+The firmware shell must **not** contain application-specific launch buttons or application names. The platform knows only `SYS | SD | WIDGET`, the package contract and platform services/capabilities.
+
+Every compatible application is installed by copying a package directory to SD:
+
+```text
+SD/
+├── widgets/
+│   ├── youtube/
+│   ├── clock/
+│   ├── youtube-led/
+│   ├── nalivator/
+│   └── thermostat/
+└── UPDATE/
+    ├── platform/
+    └── project-name/
+```
+
+`SD` scans `/sd/widgets/*/package.json`, builds its launcher dynamically from declared `entrypoints`, and starts the selected JSON through Widget Runtime. Therefore adding another compatible application must require **no firmware rebuild and no new C button**.
+
+A platform firmware update is justified only when an application requires a service/provider/driver or generic UI capability that the installed platform does not yet expose.
+
+The earlier experimental build that added a dedicated `CLOCK` launcher in firmware is explicitly **non-canonical**. It proved that a second package could be carried on SD, but App09 replaces that pattern with manifest-driven discovery.
+
+## Platform boundary
+
+```text
+KONTAKTS Platform firmware
+├── SYS
+│   ├── emergency status
+│   ├── GitHub OTA
+│   ├── CONFIRM / ROLLBACK
+│   └── factory recovery
+├── SD Manager
+│   └── manifest-driven application catalog
+├── SD Launcher
+│   └── dynamic entrypoints from package.json
+├── WIDGET Runtime
+├── generic UI capabilities
+│   └── metric_carousel
+├── Wi-Fi / NVS
+├── platform services/providers
+└── internal /storage rescue/persistence
+
+SD card
+├── widgets/...           <- application packages
+└── UPDATE/...            <- explicit/manual offline update packages
+```
+
+The application package supplies presentation and declares required capabilities. The platform supplies hardware drivers, networking, NVS secrets, service bindings, OTA, rollback and recovery.
+
+## Demonstration package — YouTube LED Carousel
+
+Platform `0.3.1` adds a generic `metric_carousel` object. It is not YouTube-specific: any compatible widget can cycle allowed bindings at a declared interval.
+
+The demonstration SD package is:
+
+```text
+widgets/youtube-led/
+├── package.json
+└── main.json
+```
+
+Its first demo cycles every 5 seconds through:
+
+```text
+Subscribers -> Views -> Videos -> Time -> ...
+```
+
+The intended SD-only demonstration procedure after installing platform `0.3.1` is:
+
+```text
+1. boot platform without widgets/youtube-led
+2. open SD and show that YouTube LED Carousel is absent
+3. copy only widgets/youtube-led to the SD card
+4. press MOUNT / RESCAN
+5. launcher discovers YouTube LED Carousel from package.json
+6. run it from SD
+7. observe metrics changing automatically every 5 seconds
+```
+
+The September 10 physical test loaded the prepared SD content in one pass rather than filming the absence/copy/rescan sequence separately, but it physically confirmed the resulting architecture: the package is discovered from SD, launches through Widget Runtime and the metric carousel cycles on real hardware.
+
+## SYS recovery invariant
+
+The old separate top-level `STATUS` and `OTA` concepts are folded into `SYS`.
+
+A small emergency status remains firmware-resident and must work even if the SD card is missing, unreadable or corrupt. A richer `status` application may later be supplied as an SD widget, but it must not replace the emergency recovery path.
+
+Minimum firmware-resident SYS information should include:
+
+```text
+firmware version
+running partition
+image state
+Wi-Fi state / IP
+SD state
+heap / PSRAM
+OTA state
+```
+
+## Package examples
+
+The first SD package is `youtube` and contains three presentations already derived from the App08 physical-pass widgets:
+
+- Dashboard — combined subscribers/views/videos + two charts;
+- Views — full-width views chart;
+- Subscribers — full-width subscribers chart.
+
+The second package is `clock`, using the already proven NTP seven-segment clock widget. It exists specifically to prove that application discovery is independent of YouTube.
+
+The third demonstration package is `youtube-led`, using the generic metric carousel capability.
+
+The fourth experimental package is `usb-serial-terminal`. It uses the generic `serial` platform service to display UART0 RX text and counters and to send a fixed test line through the normal CH340C/USB path. Its first version intentionally has no on-screen keyboard; `textarea + keyboard` are planned as generic Widget Runtime capabilities after the bidirectional USB serial path passes on Sample A.
+
+The YouTube API key is **not** stored on SD. It remains in NVS.
+
+## Runtime rule
+
+A selected SD JSON must be read and validated by Widget Runtime. The file does not need to stay open after rendering.
+
+```text
+/sd/widgets/<package>/<entrypoint>.json
+      |
+      | read + validate
+      v
+Widget Runtime
+      |
+      | persist active copy
+      v
+/storage/widget.json
+```
+
+This gives an important failure property: removing the SD card after a successful selection does not destroy the currently active widget.
+
+## Missing/dead SD rule
+
+SD is optional application storage. Failure to mount SD must not block:
+
+- boot;
+- SYS / recovery;
+- Wi-Fi provisioning;
+- the currently persisted `/storage/widget.json`.
+
+No automatic formatting of the user's SD card is permitted.
+
+## Pins
+
+Use the already physically tested SD SPI mapping for this board family:
+
+```text
+CS   = GPIO10
+MOSI = GPIO11
+CLK  = GPIO12
+MISO = GPIO13
+```
+
+Initial App09 frequency is `10 MHz`, matching the prior physical read-only SD test.
+
+## Physical evidence
+
+### 1. First SD integration
+
+The following short video records the hardware stage where the SD card was first added to the ESP32-8048S043 project and tested on the real board:
+
+- **Video:** [ESP32-8048S043 — first SD integration](https://youtube.com/shorts/TMS2s1jirdw)
+- **Scope:** physical SD integration baseline; this video documents the stage before the later App09 SD application-library work and should not be treated as a full App09 acceptance test.
+
+### 2. SD application-library demonstration
+
+The following short records the next physical milestone: the board is already working with the SD application library and the SD launcher is being demonstrated on real hardware.
+
+- **Video:** [ESP32-8048S043 — working with the SD application library](https://youtube.com/shorts/FdH1dvEePZg)
+- **Scope:** demonstrates the App09 stage where the SD card is mounted and application entries from the SD library are presented for selection/launch.
+
+### 3. SD-only YouTube LED Carousel — physical pass
+
+This video records the platform `0.3.1` milestone on the real ESP32-8048S043: the `youtube-led` package is present on SD, is discovered by the manifest-driven launcher, launches as a widget and automatically rotates live presentation pages every five seconds.
+
+- **Video:** [ESP32-8048S043 — YouTube LED Carousel from SD](https://youtube.com/shorts/i0kHp_BlsIQ)
+- **Scope confirmed:** SD package discovery, generic launcher, Widget Runtime install/run and `metric_carousel` operation on physical hardware.
+- **UX note:** functionality passed; launcher/widget visual design remains an active refinement item.
+
+### 4. Windows flasher + hierarchical SD launcher
+
+This short records the next user-facing milestone: the physically validated Windows ESP32 BIN Flasher v2 is used together with the newer SD application-library implementation where packages are presented as applications and package entrypoints open as a second-level menu.
+
+- **Video:** [ESP32-8048S043 — Windows flasher and new SD applications UI](https://youtube.com/shorts/T91Nbeij2r8)
+- **Scope:** helper flasher workflow plus the newer hierarchical SD launcher UX on the physical board.
+
+### 5. Platform 0.3.3 + SD Help Center — physical pass
+
+This short records the completed browser-help milestone after OTA to KONTAKTS Platform `0.3.3` and installation of the current SD application library. The existing local HTTP server remains the platform entry point, while the new `/help` route serves the Help Center directly from SD.
+
+- **Video:** [ESP32-8048S043 — KONTAKTS Platform 0.3.3, SD apps and Help Center](https://youtube.com/shorts/S5e_sCxy8Gc)
+- **Scope confirmed:** OTA to Platform 0.3.3, current SD library in use, local HTTP server available, `/help` route working, system documentation served from `/sd/wiki`, and application help served from `/sd/widgets/<package>/html/index.html`.
+- **Architecture confirmed:** documentation content can be updated on SD without reflashing the ESP32 firmware.
+
+## Application/service contract
+
+Applications depend on platform **services/capabilities**, not on one hard-coded sensor assembly.
+
+Examples:
+
+```text
+time
+wifi
+youtube
+weather
+temperature
+relay
+flow-meter
+audio
+serial
+storage
+mqtt
+```
+
+A thermostat package, for example, can require `temperature + relay` while allowing the temperature provider to be selected from available implementations such as DS18B20, NTC or BME280.
+
+The package should not need a separate firmware image for each supported sensor if the installed platform already exposes the matching provider.
+
+This model is intended for:
+
+- YouTube dashboards;
+- clocks;
+- weather station;
+- music station/player;
+- thermostat with selectable sensors and outputs;
+- liquid dispenser / filling controller ("наливатор") using flow-meter, valve/pump and recipe services;
+- MQTT and generic sensor dashboards.
+
+## Package-to-firmware contract
+
+Some future applications may require capabilities that the installed platform does not contain. The package format therefore supports an **optional firmware requirement**.
+
+The intended user flow is:
+
+```text
+copy project package to SD
+      |
+      v
+MOUNT / RESCAN
+      |
+      v
+read package.json + entrypoints
+      |
+      v
+check package requirements
+      |
+      +-- compatible platform -> show in launcher -> RUN
+      |
+      +-- capability missing
+              |
+              v
+         offer verified platform update
+              |
+              +-- GitHub manifest
+              |
+              +-- SD /UPDATE package
+              |
+              v
+         normal PENDING_VERIFY / CONFIRM / ROLLBACK
+              |
+              v
+         return to project package
+```
+
+The widget/package itself never writes flash directly.
+
+## Firmware delivery channels
+
+```text
+GitHub Release OTA  -> normal network update
+SD /UPDATE          -> normal offline/manual update
+Web Flasher         -> initial install / recovery
+```
+
+All firmware paths must converge on the same verification policy: board/application compatibility, size, SHA-256, ESP image descriptor/version checks, inactive OTA slot, then `PENDING_VERIFY / CONFIRM / ROLLBACK`.
+
+## Acceptance gates
+
+App09 is not a full PHYSICAL PASS until the remaining recovery and offline-update paths are also exercised on real hardware.
+
+```text
+[x] top navigation is SYS | SD | WIDGET
+[ ] SYS remains usable without SD
+[x] SD mounts without formatting
+[ ] missing SD leaves platform usable
+[x] launcher is generated from /widgets/*/package.json
+[x] no application-specific launcher buttons exist in firmware
+[x] YouTube package entrypoints appear dynamically
+[x] Clock package appears dynamically without adding a firmware button
+[x] youtube-led is discovered from SD and launches without an application-specific firmware button
+[x] metric carousel changes value every 5 seconds
+[x] a new compatible package can be added through the manifest-driven SD library
+[x] selected widget can be run
+[ ] selected widget persists internally after explicit SD removal test
+[ ] SD can be removed after selection without killing active widget
+[ ] reboot without SD restores persisted active widget
+[ ] SD /UPDATE package is discovered
+[ ] SD update requires explicit user action
+[ ] bad SHA / wrong board update is rejected
+[ ] successful SD update enters normal PENDING_VERIFY flow
+[ ] rollback remains functional after SD update
+[x] secrets are not stored in the SD application package
+[x] browser Help Center opens at /help on the existing local HTTP server
+[x] system documentation is served from SD
+[x] application HTML help is served from SD packages
+```
+
+## Open UX work
+
+The SD application path is functionally working, but visual polish is intentionally not considered finished. The next UI pass should focus on a product-style SD launcher rather than a debug surface:
+
+```text
+compact SD status
+application list / selector
+selected application summary
+clear RUN action
+separate SYSTEM UPDATE area
+no raw package JSON on the normal user screen
+```

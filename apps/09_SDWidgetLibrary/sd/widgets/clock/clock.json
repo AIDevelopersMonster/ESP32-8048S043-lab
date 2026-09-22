@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "id": "clock.ntp-sevenseg",
+  "name": "NTP Seven Segment Clock",
+  "version": "1.0.0",
+  "background": "#080808",
+  "objects": [
+    {
+      "type": "clock",
+      "x": 32,
+      "y": 12,
+      "w": 680,
+      "h": 150,
+      "color": "#FF3B30"
+    },
+    {
+      "type": "label",
+      "x": 44,
+      "y": 184,
+      "w": 230,
+      "h": 34,
+      "bind": "time.date",
+      "prefix": "DATE  ",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 292,
+      "y": 184,
+      "w": 190,
+      "h": 34,
+      "bind": "time.year",
+      "prefix": "YEAR  ",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 500,
+      "y": 184,
+      "w": 200,
+      "h": 34,
+      "bind": "time.weekday",
+      "color": "#FFB000"
+    },
+    {
+      "type": "label",
+      "x": 44,
+      "y": 232,
+      "w": 330,
+      "h": 34,
+      "bind": "time.sync_state",
+      "prefix": "NTP  ",
+      "color": "#8B949E"
+    },
+    {
+      "type": "label",
+      "x": 44,
+      "y": 278,
+      "w": 330,
+      "h": 34,
+      "bind": "time.last_sync",
+      "prefix": "LAST SYNC  ",
+      "color": "#8B949E"
+    },
+    {
+      "type": "button",
+      "x": 470,
+      "y": 260,
+      "w": 230,
+      "h": 58,
+      "text": "SYNC TIME",
+      "action": "sync_time",
+      "color": "#FFFFFF"
+    }
+  ]
+}

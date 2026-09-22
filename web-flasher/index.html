@@ -65,6 +65,14 @@
       </article>
     </section>
 
+    <h2 class="section-title">Individual SD Applications</h2>
+    <section id="sd-apps-slot" class="grid" aria-live="polite">
+      <article class="card sd-card">
+        <h2>Loading SD applications…</h2>
+        <p>The catalog is resolving individually downloadable widget packages.</p>
+      </article>
+    </section>
+
     <h2 class="section-title">Platform Firmware</h2>
     <section id="firmware-grid" class="grid" aria-live="polite">
       <article class="card">
@@ -76,7 +84,7 @@
     <p class="warning"><strong>Target hardware:</strong> the validated ESP32-8048S043 ESP32-S3 800×480 RGB / GT911 board profile used by this repository. Firmware install writes the ESP32 flash. The SD Library ZIP is different: extract it to the FAT32 SD card and never flash the ZIP to the board.</p>
 
     <footer>
-      Platform firmware and the App09 SD library are delivered independently. Individual SD application versions remain defined inside each package.json.
+      Platform firmware, the complete SD library and individual SD applications are delivered independently. Individual application versions remain defined inside each package.json.
     </footer>
 
     <script src="./app.js"></script>
