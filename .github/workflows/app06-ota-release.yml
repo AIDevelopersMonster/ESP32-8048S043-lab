@@ -4,15 +4,8 @@ on:
   push:
     branches:
       - main
-      - agent/app06-ota-recovery
-      - agent/app07-widget-runtime
-      - agent/app08-youtube-dashboard
-      - agent/app09-sd-widget-library
-      - agent/app11-usb-serial-terminal
-      - agent/app12-interactive-serial-terminal
     paths:
       - 'apps/06_OTARecovery/release-version.txt'
-      - '.github/workflows/app06-ota-release.yml'
   workflow_dispatch:
 
 permissions:
@@ -21,6 +14,7 @@ permissions:
 
 jobs:
   build-release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +26,22 @@ jobs:
           version="$(tr -d '[:space:]' < apps/06_OTARecovery/release-version.txt)"
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Guard immutable release tag
+        id: release_guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP06_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          tag="app06-v${APP06_VERSION}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Release $tag already exists and is immutable; nothing will be overwritten."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       - name: Build OTA and full images
+        if: steps.release_guard.outputs.exists != 'true'
         env:
           APP06_VERSION: ${{ steps.version.outputs.version }}
         shell: bash
@@ -51,6 +60,7 @@ jobs:
               esptool.py --chip esp32s3 merge_bin -o "/project/.app06-ota/app06-ota-recovery-v${KONTAKTS_APP_VERSION}-full.bin" @flash_args
             '
       - name: Build manifest
+        if: steps.release_guard.outputs.exists != 'true'
         id: assets
         shell: bash
         run: |
@@ -66,6 +76,7 @@ jobs:
           echo "size=$size" >> "$GITHUB_OUTPUT"
           sha256sum .app06-ota/app06-ota*.bin
       - name: Attach validated factory recovery
+        if: steps.release_guard.outputs.exists != 'true'
         env: {GH_TOKEN: '${{ github.token }}'}
         shell: bash
         run: |
@@ -75,10 +86,12 @@ jobs:
           cp "$src" .app06-ota/app06-factory-recovery-v0.1.0-full.bin
           echo "c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d  .app06-ota/app06-factory-recovery-v0.1.0-full.bin" | sha256sum -c -
       - uses: actions/upload-artifact@v4
+        if: steps.release_guard.outputs.exists != 'true'
         with:
           name: app06-github-ota-${{ steps.version.outputs.version }}
           path: .app06-ota/*
       - name: Publish release
+        if: steps.release_guard.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           APP06_VERSION: ${{ steps.version.outputs.version }}
@@ -88,9 +101,4 @@ jobs:
         run: |
           tag="app06-v${APP06_VERSION}"
           notes="KONTAKTS Platform OTA ${APP06_VERSION}. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes a merged full image for initial install/Web Flasher. SD application/library content is released independently from the platform firmware."
-          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$tag" .app06-ota/* --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit "$tag" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
-          else
-            gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
-          fi
+          gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
