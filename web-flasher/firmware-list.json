@@ -5,32 +5,29 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Widgets, system wiki/help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. USB Serial Terminal now contains both Monitor and Interactive Terminal screens.",
+    "description": "Current widgets, system help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. USB Serial Terminal 0.4.0 contains USB Serial Monitor and Advanced Serial Terminal with fullscreen keyboard overlay.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
-    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd"
+    "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd",
+    "sha256": "1b014fd76007a55bbcc0b1ac19a376281bfc402de0442397213a43a40ed10665",
+    "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app09-sd-current"
   },
   "firmwares": [
     {
-      "id": "app11",
-      "name": "KONTAKTS Platform / USB Serial Terminal",
-      "version": "0.3.5",
-      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS",
-      "description": "Current KONTAKTS Web Flasher baseline with SYS | SD | WIDGET, SD Help Center, Widget Runtime and the generic UART0 serial service used by USB Serial Terminal. On Sample A the normal USB -> CH340C -> UART0 path was physically exercised in both directions, the 0.3.5 browser Web Flasher full install was physically accepted, and the app-only GitHub OTA path was physically regression-tested from 0.3.5 to 0.3.6 with saved Wi-Fi/NVS preserved.",
-      "manifest": "./manifest-app11.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app11-usb-serial-terminal/apps/06_OTARecovery",
-      "ota_version": "0.3.6",
-      "ota_status": "PHYSICAL PASS",
-      "ota_video": "https://youtube.com/shorts/70_Huyt8igQ"
-    },
-    {
-      "id": "app09",
-      "name": "KONTAKTS Platform / SD Application Library",
-      "version": "0.3.3",
-      "status": "BUILD PASS / WEB FLASHER CANDIDATE",
-      "description": "Earlier platform with SYS | SD | WIDGET, hierarchical SD application launcher, Widget Runtime, GitHub OTA/recovery and browser-only SD Help Center.",
-      "manifest": "./manifest-app09.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/agent/app09-sd-widget-library/apps/06_OTARecovery"
+      "id": "app13",
+      "name": "KONTAKTS Platform / Advanced Serial Terminal",
+      "version": "0.3.7",
+      "status": "PHYSICAL PASS / CURRENT CANDIDATE",
+      "description": "Current KONTAKTS Platform for ESP32-8048S043 with SYS | SD | WIDGET, GitHub OTA, SD application launcher, Widget Runtime, USB Serial Monitor and Advanced Serial Terminal support. Fullscreen keyboard overlay based on LVGL buttonmatrix was physically validated on hardware.",
+      "manifest": "./manifest-app13.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/06_OTARecovery",
+      "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app06-v0.3.7",
+      "full_image": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota-recovery-v0.3.7-full.bin",
+      "full_sha256": "f12cc349dcbaa6b2f5fcf9eea0b9bb03bae57634a57ccdb7ec20fa4c2d2071a6",
+      "ota_binary": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota.bin",
+      "ota_manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota.json",
+      "ota_sha256": "014e04359f0e357856637331283fa6d9b47e174d197d382e3b11ef923f0eb291",
+      "ota_status": "PHYSICAL PASS"
     },
     {
       "id": "app07-v024",
@@ -84,11 +81,12 @@
     {
       "id": "usb-serial-terminal",
       "name": "USB Serial Terminal",
-      "version": "0.2.0",
-      "status": "MONITOR PHYSICAL PASS / INTERACTIVE RETEST",
+      "version": "0.4.0",
+      "status": "PHYSICAL PASS",
       "minimum_platform": "0.3.7",
-      "description": "One SD package with two entrypoints: USB Serial Monitor and Interactive Serial Terminal. The interactive screen uses generic textarea, LVGL keyboard and serial_send_text; it is no longer a separate SD application.",
+      "description": "One SD package with two entrypoints: USB Serial Monitor and Advanced Serial Terminal. Advanced mode supports ASCII/HEX, NONE/LF/CR/CRLF endings, PREV/NEXT history, repeat-last and a fullscreen modal keyboard overlay with CANCEL / OK / SEND.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
+      "sha256": "57c18412cf05241d10a12b9c41cd3bdd9c2a16157421d05a03719ab1b47b411b",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
     }
   ]
