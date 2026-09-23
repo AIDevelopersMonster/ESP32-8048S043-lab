@@ -246,6 +246,25 @@ Q1 is a **CJ3401 P-channel MOSFET** in SOT-23, top marking `R1`. The drain is on
 
 Function: **reverse-polarity protection of the board when powered through P1**. At correct polarity the MOSFET turns on and has only a small channel voltage drop. At reversed polarity it stays off and blocks the reverse feed. This circuit does **not** provide over-voltage protection, so P1 remains a nominal +5 V input.
 
+### Power-source guidance and temporary external-load limit
+
+A USB power meter measurement on Sample A in a normal operating state (LCD/backlight active, KONTAKTS Platform running) showed approximately:
+
+```text
+USB-C input: 4.95 V
+Input current: ~0.64 A
+Input power: ~3.17 W
+```
+
+This is a measured operating point, **not** a worst-case maximum.
+
+Current project guidance:
+
+- **USB 2.0 PC port:** do not recommend as the normal power source for this board. The measured ~0.64 A operating current already exceeds the classic 500 mA USB 2.0 current level, so reliable operation must not depend on a host PC port supplying more than that.
+- **External 5 V source:** use at least **5 V / 1 A**; **5 V / 1.5–2 A** is preferred for practical margin.
+- **Additional external load powered from board rails:** until U3/U4 thermal behavior, rail distribution and PCB-current limits are fully characterized, treat **500 mA as a temporary expert-only ceiling**, with voltage and temperature monitoring.
+- Do not present the 500 mA figure as a generally safe user-accessible current rating; it is a controlled provisional limit pending dedicated load testing.
+
 ## ADC boundary
 
 No external ADC input is yet guaranteed. GPIO17/18 are ADC-capable at MCU level, but a controlled known-voltage measurement is required before advertising them as analog inputs.
