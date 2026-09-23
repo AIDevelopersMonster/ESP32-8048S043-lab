@@ -37,7 +37,22 @@
       "description": "Known-good KONTAKTS platform baseline with firmware-resident STATUS and OTA, persistent filesystem Widget Runtime, NTP clock support, Storage Manager and physically verified live OTA percentage/progress bar. Use this to restore the platform after experimental builds.",
       "manifest": "./manifest-app07-v024.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/8f054fe79798cd49ac5f0b9098d931811a0239dd/apps/06_OTARecovery"
-    },
+    }
+  ],
+  "sd_applications": [
+    {
+      "id": "usb-serial-terminal",
+      "name": "USB Serial Terminal",
+      "version": "0.4.0",
+      "status": "PHYSICAL PASS",
+      "minimum_platform": "0.3.7",
+      "description": "One SD package with two entrypoints: USB Serial Monitor and Advanced Serial Terminal. Advanced mode supports ASCII/HEX, NONE/LF/CR/CRLF endings, PREV/NEXT history, repeat-last and a fullscreen modal keyboard overlay with CANCEL / OK / SEND.",
+      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
+      "sha256": "57c18412cf05241d10a12b9c41cd3bdd9c2a16157421d05a03719ab1b47b411b",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
+    }
+  ],
+  "laboratory_firmwares": [
     {
       "id": "app01",
       "name": "Six-Card Serial Deck",
@@ -75,19 +90,6 @@
       "description": "Earlier standalone Wi-Fi provisioning test. It is not the current KONTAKTS platform and is kept only as historical/diagnostic firmware.",
       "manifest": "./manifest-app05.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
-    }
-  ],
-  "sd_applications": [
-    {
-      "id": "usb-serial-terminal",
-      "name": "USB Serial Terminal",
-      "version": "0.4.0",
-      "status": "PHYSICAL PASS",
-      "minimum_platform": "0.3.7",
-      "description": "One SD package with two entrypoints: USB Serial Monitor and Advanced Serial Terminal. Advanced mode supports ASCII/HEX, NONE/LF/CR/CRLF endings, PREV/NEXT history, repeat-last and a fullscreen modal keyboard overlay with CANCEL / OK / SEND.",
-      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
-      "sha256": "57c18412cf05241d10a12b9c41cd3bdd9c2a16157421d05a03719ab1b47b411b",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
     }
   ]
 }
