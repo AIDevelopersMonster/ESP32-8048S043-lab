@@ -3,6 +3,7 @@
   const serialSupported = "serial" in navigator;
   const grid = document.getElementById("firmware-grid");
   const laboratoryGrid = document.getElementById("laboratory-grid");
+  const arduinoIdeSlot = document.getElementById("arduino-ide-slot");
   const sdSlot = document.getElementById("sd-library-slot");
   const sdAppsSlot = document.getElementById("sd-apps-slot");
 
@@ -62,6 +63,38 @@
           ${otaManifest ? `<a href="${otaManifest}">OTA manifest</a>` : ""}
           ${video ? `<a href="${video}">Physical test video</a>` : ""}
           ${source ? `<a href="${source}">Source</a>` : ""}
+        </div>
+      </article>`;
+  }
+
+  function renderArduinoIde(item) {
+    if (!arduinoIdeSlot || !item) return;
+    const name = escapeHtml(item.name);
+    const version = escapeHtml(item.version);
+    const status = escapeHtml(item.status);
+    const description = escapeHtml(item.description);
+    const boardProfile = escapeHtml(item.board_profile);
+    const boardSource = escapeHtml(item.board_profile_source);
+    const setupGuide = escapeHtml(item.setup_guide);
+    const librarySource = escapeHtml(item.library_source);
+    const examplesSource = escapeHtml(item.examples_source);
+    const examples = escapeHtml(item.examples);
+    const notes = escapeHtml(item.notes);
+
+    arduinoIdeSlot.innerHTML = `
+      <article class="card">
+        <span class="status ${isCandidate(item.status) ? "candidate" : ""}">${status}</span>
+        <h2>${name}</h2>
+        <div class="version">Library ${version}</div>
+        <p>${description}</p>
+        <p><strong>Board profile:</strong><br><code>${boardProfile}</code></p>
+        <p><strong>Examples:</strong> ${examples}</p>
+        <p class="sd-note">${notes}</p>
+        <div class="links">
+          <a href="${setupGuide}">Setup guide</a>
+          <a href="${boardSource}">Board profile</a>
+          <a href="${librarySource}">Arduino library</a>
+          <a href="${examplesSource}">Examples</a>
         </div>
       </article>`;
   }
@@ -132,6 +165,7 @@
       if (!firmwares.length) throw new Error("catalog contains no platform firmware entries");
 
       renderSdLibrary(catalog.sd_library);
+      renderArduinoIde(catalog.arduino_ide);
       const sdApplications = Array.isArray(catalog.sd_applications) ? catalog.sd_applications : [];
       if (sdAppsSlot) {
         sdAppsSlot.innerHTML = sdApplications.length
@@ -155,6 +189,7 @@
       if (sdSlot) sdSlot.innerHTML = "";
       if (sdAppsSlot) sdAppsSlot.innerHTML = "";
       if (laboratoryGrid) laboratoryGrid.innerHTML = "";
+      if (arduinoIdeSlot) arduinoIdeSlot.innerHTML = "";
     }
   }
 
