@@ -41,7 +41,7 @@ The distributor confirms CH340C, GT911, ESP32-S3, 16 MB flash and 8 MB PSRAM for
 | U4 | AMS1117-3.3 | 3.3 V regulator, TFT rail | Annotated layout, SOT-223 placement | High |
 | U5 | marking `KDE2H`; likely LT1930-class boost converter | LCD LED backlight boost supply | Annotated layout / macsbug analysis | Medium: exact silicon vendor not confirmed |
 | Touch FPC IC | GT911 | Capacitive touch controller | Layout / distributor / project macro photo | High |
-| Q1 | AO3402 / AO3402-family N-MOSFET | Power switching around 5 V / 4.6 V rail | Annotated layout | Medium-high |
+| Q1 | CJ3401, marking `R1`, P-channel MOSFET, SOT-23 | Reverse-polarity protection for the P1 +5 V power input; D -> P1 +5 V, G -> GND, S -> internal +5 V rail feeding U3/U4 | Sample A macro photo + board tracing/continuity + successful powering through P1 | High |
 | T1 | `J3Y`, S9013-family NPN | CH340 auto-reset / boot circuitry | Annotated layout | High at circuit-function level |
 | T2 | `J3Y`, S9013-family NPN | CH340 auto-reset / boot circuitry | Annotated layout | High at circuit-function level |
 | D1 | 1N5819W | Schottky diode in 5 V / regulator path | Annotated layout | High |
@@ -60,18 +60,42 @@ Do not assume U1 is active in the current capacitive configuration; software/har
 The matching board documentation shows approximately this structure:
 
 ```text
-USB-C / P1 5 V
-      |
-      +--> D1 1N5819W / MOSFET switching area
+main internal +5 V rail
       |
       +--> U3 AMS1117-3.3 --> 3.3V-ESP
       |
       +--> U4 AMS1117-3.3 --> 3.3V-TFT
       |
       +--> U5 boost converter + L1 + D2 --> LEDA ~15 V backlight rail
+
+P1 +5 V input
+      |
+      D
+   Q1 CJ3401 (P-MOSF, marking R1)
+      S
+      |
+      +--> internal +5 V rail
+      |
+      G --> GND
 ```
 
 The annotated source reports approximately **15.6 V DC** at LEDA for the backlight boost stage.
+
+### P1 +5 V input protection — Sample A verified
+
+The Sample A board can be powered through the P1 `+5V` pin. Tracing of Q1 shows the following topology:
+
+```text
+P1 +5V ---- D  Q1 CJ3401  S ---- +5V_SYS -> U3/U4
+              |
+              G
+              |
+             GND
+```
+
+Q1 is a **P-channel MOSFET** in SOT-23 with top marking `R1`, consistent with CJ3401. With correct +5 V polarity, `VGS` is negative and Q1 conducts with low channel resistance. With reversed polarity, Q1 remains off and its body-diode orientation blocks the harmful reverse feed into the board.
+
+Therefore Q1 is documented as **reverse-polarity protection for the board when power is applied through P1**. This is not over-voltage protection: applying a voltage substantially above the intended +5 V with correct polarity is outside this protection mechanism.
 
 JP1 is associated with the ESP 3.3 V rail and JP2 with the TFT 3.3 V rail in the reference layout.
 
