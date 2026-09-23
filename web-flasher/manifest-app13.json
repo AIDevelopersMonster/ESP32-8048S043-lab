@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.3.7 - Advanced Serial Terminal",
+  "version": "0.3.7",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app13-kontakts-platform-v0.3.7-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
