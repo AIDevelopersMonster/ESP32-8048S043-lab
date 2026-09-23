@@ -39,6 +39,7 @@ The photographs provide useful evidence for the following functional blocks:
 - diode references including `D1`/`D2`.
 - solder jumpers `JP1` and `JP2`.
 - test pads `S1`, `S2`, `S3`.
+- P1 +5 V input protection around Q1: Sample A powers from P1; Q1 is traced as `D -> P1 +5V`, `G -> GND`, `S -> +5V_SYS/U3/U4`.
 
 ## Component identification policy
 
@@ -53,6 +54,7 @@ Component identity is **not** inferred solely from package shape or from schemat
 | U4 | Power-package IC | To be decoded | **UNCONFIRMED** |
 | U5 | Power-package IC, marking partly visible | To be decoded | **UNCONFIRMED** |
 | U6 | Small regulator/power IC near L1 | To be decoded | **UNCONFIRMED** |
+| Q1 | SOT-23, top marking `R1`; traced between P1 +5 V and internal +5 V rail | CJ3401 P-channel MOSFET; P1 reverse-polarity protection | **ELECTRICALLY VERIFIED / PHOTO VERIFIED** |
 
 ## Why the photographs matter
 
