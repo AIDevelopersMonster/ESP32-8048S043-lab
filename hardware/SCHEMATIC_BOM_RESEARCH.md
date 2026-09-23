@@ -99,6 +99,18 @@ Therefore Q1 is documented as **reverse-polarity protection for the board when p
 
 JP1 is associated with the ESP 3.3 V rail and JP2 with the TFT 3.3 V rail in the reference layout.
 
+### Measured board input current / provisional power policy
+
+A physical USB-C input measurement on Sample A with the LCD/backlight active and KONTAKTS Platform running gave approximately **4.95 V, 0.64 A, or 3.17 W**. This is an observed operating point only, not a claimed worst-case current.
+
+Until the U3/U4 regulator dissipation, board copper paths and thermal behavior are fully characterized:
+
+- a USB 2.0 host-PC port is **not recommended** as the board's normal power source;
+- use a regulated external **5 V / >=1 A** supply, preferably **1.5–2 A**;
+- any additional load sourced from board power rails is provisionally limited to **500 mA in expert/controlled testing**, with voltage and temperature monitoring.
+
+The 500 mA value is deliberately documented as a temporary engineering ceiling, not as the final guaranteed expansion-current rating.
+
 ## 5. Display / touch / SD wiring recovered
 
 ### RGB LCD
