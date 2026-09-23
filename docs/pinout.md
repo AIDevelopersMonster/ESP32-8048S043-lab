@@ -18,6 +18,8 @@ GPIO17                   ESP32-S3-WROOM-1 module pin 10 from pin-1 dot
 GPIO18                   ESP32-S3-WROOM-1 module pin 11 from pin-1 dot
 Flash                    16 MB
 PSRAM                    8 MB
+P1 +5V input             PHYSICAL PASS; board powers from P1
+P1 Q1 protection         CJ3401 P-MOSF, marking R1; reverse-polarity protection
 ```
 
 ## Practical external resource map
@@ -228,6 +230,22 @@ This connector is classified as a **technological/service programming and debug 
 
 Do not attach another active UART transmitter casually to a line already driven through the CH340C path; treat this header as service/debug infrastructure.
 
+### P1 +5 V power input and Q1 protection
+
+On Sample A, P1 is also a validated board-power input:
+
+```text
+P1 +5V ---- D  Q1 CJ3401  S ---- +5V_SYS -> U3/U4
+              |
+              G
+              |
+             GND
+```
+
+Q1 is a **CJ3401 P-channel MOSFET** in SOT-23, top marking `R1`. The drain is on the P1 +5 V side, the gate is tied to ground, and the source feeds the board's internal +5 V rail used by U3/U4.
+
+Function: **reverse-polarity protection of the board when powered through P1**. At correct polarity the MOSFET turns on and has only a small channel voltage drop. At reversed polarity it stays off and blocks the reverse feed. This circuit does **not** provide over-voltage protection, so P1 remains a nominal +5 V input.
+
 ## ADC boundary
 
 No external ADC input is yet guaranteed. GPIO17/18 are ADC-capable at MCU level, but a controlled known-voltage measurement is required before advertising them as analog inputs.
@@ -250,6 +268,9 @@ No external ADC input is yet guaranteed. GPIO17/18 are ADC-capable at MCU level,
 - [x] P3 IO20 <-> R3 continuity;
 - [x] R7 <-> CH340C pin 2 continuity;
 - [x] R6 <-> CH340C pin 3 continuity;
+- [x] board powered successfully from P1 +5V/GND;
+- [x] Q1 identified as CJ3401 P-MOSF, marking R1;
+- [x] Q1 topology traced: D -> P1 +5V, G -> GND, S -> internal +5V rail feeding U3/U4;
 - [ ] validate GPIO17 digital input/output;
 - [ ] validate GPIO18 digital input/output;
 - [ ] validate GPIO11/12/13 as general GPIO with SD disabled if needed;
