@@ -91,5 +91,18 @@
       "manifest": "./manifest-app05.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
     }
-  ]
+  ],
+  "arduino_ide": {
+    "name": "Arduino IDE / ESP32_8048S043 BSP",
+    "version": "0.1.0",
+    "status": "SEPARATE ARDUINO LINE / SAMPLE A VALIDATION",
+    "description": "Separate Arduino IDE development line for ESP32-8048S043. It uses the local N16R8 board profile and the ESP32_8048S043 Arduino library; it is not the KONTAKTS Platform and is not part of the ESP-IDF laboratory firmware branch.",
+    "board_profile": "AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8",
+    "board_profile_source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/boards/arduino-ide/esp32-8048s043-lab",
+    "setup_guide": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/blob/main/boards/arduino-ide/esp32-8048s043-lab/LOCAL_PLATFORM_SETUP.md",
+    "library_source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/libraries/ESP32_8048S043",
+    "examples_source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/libraries/ESP32_8048S043/examples",
+    "examples": "01 BoardInfo through 19 LVGL9 ArduinoGFX BounceBufferUI",
+    "notes": "Arduino CI uses Arduino CLI with esp32 core 3.3.8. Examples 01-05 are compiled in CI; multiple examples 01-14 have Sample A physical validation records, while later LVGL examples include explicit diagnostic/open boundaries."
+  }
 }
