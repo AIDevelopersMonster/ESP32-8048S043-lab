@@ -12,16 +12,15 @@
   },
   "firmware": [
     {
-      "id": "app11-kontakts-platform",
-      "version": "0.3.5",
-      "manifest": "manifest-app11.json",
-      "runtimeStatus": "physical-pass-usb-uart-bidirectional",
-      "webFlasherStatus": "physical-pass-v0.3.5",
-      "notes": "Sample A physically passed normal USB/CH340C/UART0 communication in both directions using platform 0.3.5 and usb-serial-terminal.monitor. The browser Web Flasher install of platform 0.3.5 was also physically accepted on 2026-09-22. P1 is not covered by this acceptance.",
+      "id": "app13-kontakts-platform",
+      "version": "0.3.7",
+      "manifest": "manifest-app13.json",
+      "runtimeStatus": "physical-pass-advanced-serial-terminal-0.4.0",
+      "webFlasherStatus": "candidate-pending-browser-retest",
+      "notes": "Sample A physically passed Platform 0.3.7 with USB Serial Monitor and Advanced Serial Terminal 0.4.0. The LVGL buttonmatrix keyboard and fullscreen modal keyboard overlay were physically accepted on 2026-09-23. Web Flasher catalog now points to the same released full image; browser installation of this exact 0.3.7 image remains a separate retest.",
       "source": "../apps/06_OTARecovery/",
-      "otaStatus": "physical-pass-v0.3.6",
-      "otaNotes": "Sample A physical regression on 2026-09-22: Platform 0.3.5 was updated to 0.3.6 through GitHub OTA. Manifest check, newer-version detection, app-only install, reboot into OTA candidate, PENDING_VERIFY handling, saved Wi-Fi/NVS persistence, automatic reconnect, on-device OTA controls, and rollback/confirmation workflow were accepted as working. This is separate from the full Web Flasher 0.3.5 install path.",
-      "otaVideo": "https://youtube.com/shorts/70_Huyt8igQ"
+      "otaStatus": "physical-pass-platform-0.3.7",
+      "otaNotes": "Platform 0.3.7 GitHub OTA assets and manifest are current. The same release supplies app06-ota.bin for app-only OTA and app06-ota-recovery-v0.3.7-full.bin for full installation."
     },
     {
       "id": "app01-six-card-serial-deck",
