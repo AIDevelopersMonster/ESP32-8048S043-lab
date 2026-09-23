@@ -60,6 +60,16 @@ Component identity is **not** inferred solely from package shape or from schemat
 
 These photographs are primary evidence for this repository. They establish the actual PCB variant under test and reduce the risk of silently applying pinouts or schematics from another ESP32-8048S043 revision.
 
+## Measured power consumption and current project limits
+
+Sample A was measured at approximately **4.95 V / 0.64 A (~3.17 W)** from USB-C while the display/backlight and KONTAKTS Platform were active. This value documents one real operating state and is not treated as the maximum consumption of the board.
+
+Project power guidance derived from the current evidence:
+
+- do **not** recommend a USB 2.0 PC port as the normal power source;
+- use an external regulated 5 V source rated at least 1 A, preferably 1.5–2 A;
+- until the regulator rails and thermal margins are characterized, limit additional external loading from board power rails to **500 mA maximum in expert/controlled testing only**, with voltage and temperature monitoring.
+
 The next hardware-analysis steps are:
 
 1. preserve the original photographs under `hardware/images/`;
