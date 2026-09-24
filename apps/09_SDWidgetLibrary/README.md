@@ -1,5 +1,38 @@
 # App09 — SD Widget Library
 
+## Platform 0.3.8 candidate — fixed external I/O contract
+
+This branch adds a deliberately narrow external-I/O layer for the physically
+documented Sample A connectors. It is not a generic arbitrary-pin framework.
+
+```text
+P4
+  GPIO17 / GPIO18
+    -> UART1 transport, TX=17 RX=18
+    -> OR two digital outputs
+    -> one mode owns the pair at a time
+
+System I2C
+  GPIO19 = SDA
+  GPIO20 = SCL
+  GT911 remains resident at 0x5D
+  external I2C slaves are a later coexistence gate, not implemented here
+```
+
+The first SD applications using the new service are:
+
+- `rs485-terminal` — raw UART1 terminal intended for an external auto-direction
+  TTL/RS-485 converter powered from the P4 3.3 V rail after physical acceptance;
+- `p4-output` — simple GPIO17/GPIO18 output control, proving the same platform
+  image can repurpose the pair without a project-specific firmware rebuild.
+
+P1/UART0/CH340C remains unchanged as the technological/service serial path.
+
+Status: **BUILD + PHYSICAL TEST PENDING**. No new hardware PASS is claimed by
+this software branch.
+
+
+
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Branch:** `agent/app09-sd-widget-library`  
 **Status:** PHYSICAL SD APPLICATION PASS / UX ITERATION

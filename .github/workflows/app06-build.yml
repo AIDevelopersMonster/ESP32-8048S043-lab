@@ -10,6 +10,7 @@ on:
       - agent/app09-sd-widget-library
       - agent/app11-usb-serial-terminal
       - agent/app12-interactive-serial-terminal
+      - feature/p4-io-rs485-widget
     paths:
       - 'apps/06_OTARecovery/**'
       - 'apps/09_SDWidgetLibrary/**'

@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "id": "rs485-terminal.main",
+  "name": "RS-485 Terminal",
+  "version": "0.1.0",
+  "background": "#0B1016",
+  "objects": [
+    {
+      "type": "label",
+      "x": 16,
+      "y": 6,
+      "w": 330,
+      "h": 26,
+      "text": "RS-485 / P4",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 354,
+      "y": 6,
+      "w": 374,
+      "h": 26,
+      "bind": "p4.state",
+      "color": "#58A6FF"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 38,
+      "w": 712,
+      "h": 78,
+      "bind": "p4.rx_text",
+      "prefix": "RX > ",
+      "color": "#7EE787"
+    },
+    {
+      "type": "label",
+      "x": 16,
+      "y": 120,
+      "w": 170,
+      "h": 22,
+      "bind": "p4.rx_bytes",
+      "prefix": "RX ",
+      "suffix": " B",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "label",
+      "x": 190,
+      "y": 120,
+      "w": 170,
+      "h": 22,
+      "bind": "p4.tx_bytes",
+      "prefix": "TX ",
+      "suffix": " B",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "button",
+      "x": 380,
+      "y": 112,
+      "w": 104,
+      "h": 38,
+      "text": "9600",
+      "action": "p4_uart_9600",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 112,
+      "w": 104,
+      "h": 38,
+      "text": "19200",
+      "action": "p4_uart_19200",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 604,
+      "y": 112,
+      "w": 124,
+      "h": 38,
+      "text": "115200",
+      "action": "p4_uart_115200",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "textarea",
+      "id": "tx_input",
+      "x": 16,
+      "y": 158,
+      "w": 500,
+      "h": 44,
+      "placeholder": "ASCII text or HEX bytes",
+      "max_length": 128,
+      "one_line": true,
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "button",
+      "x": 524,
+      "y": 158,
+      "w": 98,
+      "h": 44,
+      "text": "SEND",
+      "action": "p4_send_text",
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 630,
+      "y": 158,
+      "w": 98,
+      "h": 44,
+      "text": "CLEAR",
+      "action": "p4_clear",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 16,
+      "y": 214,
+      "w": 108,
+      "h": 40,
+      "text": "ASCII",
+      "action": "p4_mode_ascii",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 132,
+      "y": 214,
+      "w": 108,
+      "h": 40,
+      "text": "HEX",
+      "action": "p4_mode_hex",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 248,
+      "y": 214,
+      "w": 118,
+      "h": 40,
+      "text": "NO END",
+      "action": "p4_ending_none",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 374,
+      "y": 214,
+      "w": 118,
+      "h": 40,
+      "text": "CRLF",
+      "action": "p4_ending_crlf",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 610,
+      "y": 214,
+      "w": 118,
+      "h": 40,
+      "text": "RELEASE",
+      "action": "p4_idle",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "keyboard",
+      "x": 16,
+      "y": 262,
+      "w": 712,
+      "h": 100,
+      "target": "tx_input",
+      "color": "#FFFFFF"
+    }
+  ]
+}
