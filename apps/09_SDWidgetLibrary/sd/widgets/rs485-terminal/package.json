@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "id": "rs485-terminal",
+  "name": "RS-485 Terminal",
+  "version": "0.1.0",
+  "type": "widget-package",
+  "entrypoints": [
+    {
+      "id": "terminal",
+      "name": "RS-485 Terminal",
+      "file": "terminal.json"
+    }
+  ],
+  "requires": {
+    "minimum_platform": "0.3.8",
+    "services": [
+      "p4-uart"
+    ]
+  },
+  "hardware": {
+    "connector": "P4",
+    "tx": "GPIO17",
+    "rx": "GPIO18",
+    "power": "3.3V",
+    "direction": "external-auto"
+  },
+  "firmware": {
+    "required": true
+  },
+  "secrets": {
+    "storage": "none",
+    "sd_allowed": true
+  }
+}
