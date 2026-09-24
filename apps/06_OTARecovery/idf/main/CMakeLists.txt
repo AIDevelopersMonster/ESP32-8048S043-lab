@@ -143,6 +143,7 @@ idf_component_register(
         "metric_carousel.c"
         "widget_runtime.c"
         "serial_service.c"
+        "p4_service.c"
         "network_manager.c"
         "time_service.c"
         "youtube_service.c"
@@ -170,6 +171,7 @@ idf_component_register(
         esp_lcd
         esp_driver_i2c
         esp_driver_gpio
+        esp_driver_uart
         esp_timer
         lvgl__lvgl
         espressif__esp_lcd_touch
