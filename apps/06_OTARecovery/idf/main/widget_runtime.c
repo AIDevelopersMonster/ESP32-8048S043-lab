@@ -90,6 +90,8 @@ static bool binding_allowed(const char *binding)
         "youtube.state", "youtube.period",
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
         "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
+        "p4.state", "p4.mode", "p4.rx_text", "p4.rx_bytes", "p4.tx_bytes",
+        "p4.baud", "p4.ending", "p4.tx_mode", "p4.gpio17", "p4.gpio18",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
@@ -124,7 +126,24 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_ending_crlf") == 0 ||
                       strcmp(action, "serial_mode_ascii") == 0 ||
                       strcmp(action, "serial_mode_hex") == 0 ||
-                      strcmp(action, "serial_clear") == 0);
+                      strcmp(action, "serial_clear") == 0 ||
+                      strcmp(action, "p4_uart_9600") == 0 ||
+                      strcmp(action, "p4_uart_19200") == 0 ||
+                      strcmp(action, "p4_uart_38400") == 0 ||
+                      strcmp(action, "p4_uart_57600") == 0 ||
+                      strcmp(action, "p4_uart_115200") == 0 ||
+                      strcmp(action, "p4_send_text") == 0 ||
+                      strcmp(action, "p4_clear") == 0 ||
+                      strcmp(action, "p4_mode_ascii") == 0 ||
+                      strcmp(action, "p4_mode_hex") == 0 ||
+                      strcmp(action, "p4_ending_none") == 0 ||
+                      strcmp(action, "p4_ending_crlf") == 0 ||
+                      strcmp(action, "p4_gpio_mode") == 0 ||
+                      strcmp(action, "p4_gpio17_on") == 0 ||
+                      strcmp(action, "p4_gpio17_off") == 0 ||
+                      strcmp(action, "p4_gpio18_on") == 0 ||
+                      strcmp(action, "p4_gpio18_off") == 0 ||
+                      strcmp(action, "p4_idle") == 0);
 }
 
 static bool parse_widget(const char *json, size_t len, widget_model_t *out,
@@ -233,7 +252,8 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
                 bool needs_textarea_target =
                     strcmp(action, "serial_send_text") == 0 ||
                     strcmp(action, "serial_history_prev") == 0 ||
-                    strcmp(action, "serial_history_next") == 0;
+                    strcmp(action, "serial_history_next") == 0 ||
+                    strcmp(action, "p4_send_text") == 0;
                 if (needs_textarea_target && (!target[0] || strlen(target) >= sizeof(dst->target))) {
                     set_reason(reason, reason_len, "serial action requires textarea target"); ok = false; break;
                 }
