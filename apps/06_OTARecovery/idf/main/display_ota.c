@@ -25,6 +25,7 @@
 
 #include "network_manager.h"
 #include "ota_manager.h"
+#include "p4_service.h"
 #include "sd_manager.h"
 #include "serial_service.h"
 #include "sevenseg_clock.h"
@@ -441,6 +442,46 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "p4_uart_9600") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_uart_enable(9600));
+    } else if (strcmp(action, "p4_uart_19200") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_uart_enable(19200));
+    } else if (strcmp(action, "p4_uart_38400") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_uart_enable(38400));
+    } else if (strcmp(action, "p4_uart_57600") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_uart_enable(57600));
+    } else if (strcmp(action, "p4_uart_115200") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_uart_enable(115200));
+    } else if (strcmp(action, "p4_send_text") == 0) {
+        lv_obj_t *textarea = find_textarea(source->target);
+        if (!textarea) {
+            ESP_LOGW(TAG, "P4 SEND rejected: textarea target %s not found", source->target);
+        } else {
+            esp_err_t err = p4_service_uart_send_text(lv_textarea_get_text(textarea));
+            if (err != ESP_OK) ESP_LOGW(TAG, "P4 SEND rejected: %s", esp_err_to_name(err));
+        }
+    } else if (strcmp(action, "p4_clear") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_clear());
+    } else if (strcmp(action, "p4_mode_ascii") == 0) {
+        p4_service_set_tx_mode(P4_TX_ASCII);
+    } else if (strcmp(action, "p4_mode_hex") == 0) {
+        p4_service_set_tx_mode(P4_TX_HEX);
+    } else if (strcmp(action, "p4_ending_none") == 0) {
+        p4_service_set_ending(P4_ENDING_NONE);
+    } else if (strcmp(action, "p4_ending_crlf") == 0) {
+        p4_service_set_ending(P4_ENDING_CRLF);
+    } else if (strcmp(action, "p4_gpio_mode") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_gpio_enable());
+    } else if (strcmp(action, "p4_gpio17_on") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_gpio_set(17, true));
+    } else if (strcmp(action, "p4_gpio17_off") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_gpio_set(17, false));
+    } else if (strcmp(action, "p4_gpio18_on") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_gpio_set(18, true));
+    } else if (strcmp(action, "p4_gpio18_off") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_gpio_set(18, false));
+    } else if (strcmp(action, "p4_idle") == 0) {
+        ESP_ERROR_CHECK_WITHOUT_ABORT(p4_service_idle());
     }
 }
 
@@ -767,6 +808,8 @@ static void binding_value(const char *binding, char *out, size_t out_len)
         else strlcpy(out, "offline", out_len);
     } else if (strncmp(binding, "serial.", 7) == 0) {
         serial_service_format_binding(binding, out, out_len);
+    } else if (strncmp(binding, "p4.", 3) == 0) {
+        p4_service_format_binding(binding, out, out_len);
     } else if (strcmp(binding, "firmware.version") == 0) {
         strlcpy(out, ota.current_version, out_len);
     } else if (strcmp(binding, "ota.state") == 0) {
