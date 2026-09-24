@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "id": "p4-output.main",
+  "name": "P4 Output",
+  "version": "0.1.0",
+  "background": "#0B1016",
+  "objects": [
+    {
+      "type": "label",
+      "x": 20,
+      "y": 18,
+      "w": 300,
+      "h": 30,
+      "text": "P4 DIGITAL OUTPUTS",
+      "color": "#F0F6FC"
+    },
+    {
+      "type": "label",
+      "x": 360,
+      "y": 18,
+      "w": 360,
+      "h": 30,
+      "bind": "p4.state",
+      "color": "#58A6FF"
+    },
+    {
+      "type": "button",
+      "x": 20,
+      "y": 70,
+      "w": 200,
+      "h": 52,
+      "text": "ENABLE OUTPUTS",
+      "action": "p4_gpio_mode",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 20,
+      "y": 154,
+      "w": 160,
+      "h": 30,
+      "text": "GPIO17",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "label",
+      "x": 180,
+      "y": 154,
+      "w": 120,
+      "h": 30,
+      "bind": "p4.gpio17",
+      "color": "#7EE787"
+    },
+    {
+      "type": "button",
+      "x": 20,
+      "y": 196,
+      "w": 140,
+      "h": 52,
+      "text": "17 ON",
+      "action": "p4_gpio17_on",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 174,
+      "y": 196,
+      "w": 140,
+      "h": 52,
+      "text": "17 OFF",
+      "action": "p4_gpio17_off",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "label",
+      "x": 390,
+      "y": 154,
+      "w": 160,
+      "h": 30,
+      "text": "GPIO18",
+      "color": "#C9D1D9"
+    },
+    {
+      "type": "label",
+      "x": 550,
+      "y": 154,
+      "w": 120,
+      "h": 30,
+      "bind": "p4.gpio18",
+      "color": "#7EE787"
+    },
+    {
+      "type": "button",
+      "x": 390,
+      "y": 196,
+      "w": 140,
+      "h": 52,
+      "text": "18 ON",
+      "action": "p4_gpio18_on",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 544,
+      "y": 196,
+      "w": 140,
+      "h": 52,
+      "text": "18 OFF",
+      "action": "p4_gpio18_off",
+      "color": "#FFFFFF"
+    },
+    {
+      "type": "button",
+      "x": 544,
+      "y": 294,
+      "w": 140,
+      "h": 48,
+      "text": "RELEASE",
+      "action": "p4_idle",
+      "color": "#FFFFFF"
+    }
+  ]
+}
