@@ -90,6 +90,10 @@ static bool binding_allowed(const char *binding)
         "youtube.state", "youtube.period",
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
         "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
+        "modbus.state", "modbus.bus", "modbus.tx_count", "modbus.rx_count",
+        "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
+        "modbus.sensor1.temperature", "modbus.sensor1.humidity",
+        "temperature.value", "humidity.value",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
         if (strcmp(binding, allowed[i]) == 0) return true;
