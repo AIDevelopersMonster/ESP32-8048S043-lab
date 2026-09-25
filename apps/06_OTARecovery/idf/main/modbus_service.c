@@ -18,7 +18,7 @@
 #define MODBUS_BAUD              9600
 #define MODBUS_RX_BUFFER_BYTES   256
 #define MODBUS_TIMEOUT_MS        250
-#define MODBUS_POLL_MS           1000
+#define MODBUS_POLL_MS           5000
 #define MODBUS_EID041_SLAVE      1
 
 static SemaphoreHandle_t s_bus_lock;
