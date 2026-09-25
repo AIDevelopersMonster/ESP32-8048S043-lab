@@ -24,6 +24,7 @@
 #include "lvgl.h"
 
 #include "network_manager.h"
+#include "modbus_service.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
 #include "serial_service.h"
@@ -767,6 +768,10 @@ static void binding_value(const char *binding, char *out, size_t out_len)
         else strlcpy(out, "offline", out_len);
     } else if (strncmp(binding, "serial.", 7) == 0) {
         serial_service_format_binding(binding, out, out_len);
+    } else if (strncmp(binding, "modbus.", 7) == 0 ||
+               strcmp(binding, "temperature.value") == 0 ||
+               strcmp(binding, "humidity.value") == 0) {
+        modbus_service_format_binding(binding, out, out_len);
     } else if (strcmp(binding, "firmware.version") == 0) {
         strlcpy(out, ota.current_version, out_len);
     } else if (strcmp(binding, "ota.state") == 0) {
