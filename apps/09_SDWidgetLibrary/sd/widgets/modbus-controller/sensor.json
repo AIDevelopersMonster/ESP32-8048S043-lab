@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "id": "modbus-trh-monitor",
+  "name": "Modbus T/RH Monitor",
+  "version": "0.1.0",
+  "background": "#0D1117",
+  "objects": [
+    {"type":"label","x":20,"y":18,"w":704,"h":38,"text":"MODBUS RTU / SENSOR 1","color":"#F0F6FC"},
+    {"type":"label","x":20,"y":64,"w":704,"h":32,"bind":"modbus.bus","color":"#8B949E"},
+    {"type":"label","x":20,"y":108,"w":704,"h":36,"bind":"modbus.state","prefix":"Bus: ","color":"#58A6FF"},
+    {"type":"label","x":20,"y":160,"w":340,"h":54,"bind":"modbus.sensor1.temperature","prefix":"Temperature  ","suffix":" C","color":"#F0F6FC"},
+    {"type":"label","x":384,"y":160,"w":340,"h":54,"bind":"modbus.sensor1.humidity","prefix":"Humidity  ","suffix":" %RH","color":"#F0F6FC"},
+    {"type":"label","x":20,"y":240,"w":220,"h":32,"bind":"modbus.tx_count","prefix":"TX frames: ","color":"#C9D1D9"},
+    {"type":"label","x":260,"y":240,"w":220,"h":32,"bind":"modbus.rx_count","prefix":"RX frames: ","color":"#C9D1D9"},
+    {"type":"label","x":500,"y":240,"w":224,"h":32,"bind":"modbus.timeout_count","prefix":"Timeouts: ","color":"#C9D1D9"},
+    {"type":"label","x":20,"y":292,"w":340,"h":32,"bind":"modbus.crc_errors","prefix":"CRC errors: ","color":"#8B949E"},
+    {"type":"label","x":384,"y":292,"w":340,"h":32,"bind":"modbus.protocol_errors","prefix":"Protocol errors: ","color":"#8B949E"}
+  ]
+}
