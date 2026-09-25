@@ -2,6 +2,7 @@
 
 #include "display_ota.h"
 #include "network_manager.h"
+#include "modbus_service.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
 #include "serial_service.h"
@@ -22,6 +23,7 @@ void app_main(void)
     ESP_ERROR_CHECK(storage_fs_init());
     ESP_ERROR_CHECK(widget_runtime_init());
     ESP_ERROR_CHECK(serial_service_init());
+    ESP_ERROR_CHECK(modbus_service_init());
     ESP_ERROR_CHECK(ota_manager_init());
 
     /* SD is optional. Mount failure must never block boot/recovery/widget restore. */
