@@ -93,8 +93,11 @@ static bool binding_allowed(const char *binding)
         "modbus.state", "modbus.bus", "modbus.tx_count", "modbus.rx_count",
         "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
         "modbus.sensor1.temperature", "modbus.sensor1.humidity",
-        "modbus.ma01.state", "modbus.ma01.do1", "modbus.ma01.do2", "modbus.ma01.do3",
+        "modbus.ma01.state", "modbus.ma01.address",
+        "modbus.ma01.do1", "modbus.ma01.do2", "modbus.ma01.do3",
         "modbus.ma01.do4", "modbus.ma01.do5", "modbus.ma01.do6", "modbus.ma01.do7", "modbus.ma01.do8",
+        "modbus.ma01.summary1", "modbus.ma01.summary2", "modbus.ma01.summary3", "modbus.ma01.summary4",
+        "modbus.ma01.summary5", "modbus.ma01.summary6", "modbus.ma01.summary7", "modbus.ma01.summary8",
         "temperature.value", "humidity.value",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
@@ -132,6 +135,22 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_mode_hex") == 0 ||
                       strcmp(action, "serial_clear") == 0 ||
                       strcmp(action, "modbus_ma01_refresh") == 0 ||
+                      strcmp(action, "modbus_ma01_action_1") == 0 ||
+                      strcmp(action, "modbus_ma01_action_2") == 0 ||
+                      strcmp(action, "modbus_ma01_action_3") == 0 ||
+                      strcmp(action, "modbus_ma01_action_4") == 0 ||
+                      strcmp(action, "modbus_ma01_action_5") == 0 ||
+                      strcmp(action, "modbus_ma01_action_6") == 0 ||
+                      strcmp(action, "modbus_ma01_action_7") == 0 ||
+                      strcmp(action, "modbus_ma01_action_8") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_1") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_2") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_3") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_4") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_5") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_6") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_7") == 0 ||
+                      strcmp(action, "modbus_ma01_mode_8") == 0 ||
                       strcmp(action, "modbus_ma01_toggle_1") == 0 ||
                       strcmp(action, "modbus_ma01_toggle_2") == 0 ||
                       strcmp(action, "modbus_ma01_toggle_3") == 0 ||
@@ -184,7 +203,7 @@ static bool parse_widget(const char *json, size_t len, widget_model_t *out,
         set_reason(reason, reason_len, "background must be #RRGGBB"); ok = false;
     } else if (!cJSON_IsArray(objects) || cJSON_GetArraySize(objects) < 1 ||
                cJSON_GetArraySize(objects) > WIDGET_MAX_OBJECTS) {
-        set_reason(reason, reason_len, "objects must contain 1..24 items"); ok = false;
+        set_reason(reason, reason_len, "objects must contain 1..32 items"); ok = false;
     }
 
     if (ok) {
