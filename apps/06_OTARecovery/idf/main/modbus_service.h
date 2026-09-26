@@ -46,7 +46,13 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave,
                                            uint16_t coil,
                                            bool on);
 
-/* MA01-XXCX0080 provider: slave 32, coils 0x0000..0x0007. */
+/*
+ * MA01-XXCX0080 provider.
+ * Slave address is runtime configuration persisted in NVS, never fixed in firmware.
+ */
+uint8_t modbus_service_ma01_get_slave(void);
+esp_err_t modbus_service_ma01_set_slave(uint8_t slave);
+esp_err_t modbus_service_ma01_scan(uint8_t *out_slave, uint16_t *out_model, uint16_t *out_fw);
 esp_err_t modbus_service_ma01_refresh(void);
 esp_err_t modbus_service_ma01_set(uint8_t channel, bool on);
 esp_err_t modbus_service_ma01_toggle(uint8_t channel);
