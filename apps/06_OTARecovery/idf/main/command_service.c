@@ -38,8 +38,25 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
 
     if (strcmp(line, "HELP") == 0) {
         strlcpy(response,
-                "OK commands: HELP | MA01 READ | MA01 STATUS | MA01 DO<n> ON|OFF|TOGGLE",
+                "OK commands: HELP | MA01 INFO | MA01 READ | MA01 STATUS | MA01 DO<n> ON|OFF|TOGGLE",
                 response_len);
+        return ESP_OK;
+    }
+
+    if (strcmp(line, "MA01 INFO") == 0) {
+        uint16_t model = 0, fw = 0;
+        esp_err_t err = modbus_service_read_registers(32, 0x03, 0x07D0, 1, &model, 1);
+        if (err != ESP_OK) {
+            snprintf(response, response_len, "ERR MA01 INFO model %s", esp_err_to_name(err));
+            return err;
+        }
+        err = modbus_service_read_registers(32, 0x03, 0x07DC, 1, &fw, 1);
+        if (err != ESP_OK) {
+            snprintf(response, response_len, "ERR MA01 INFO firmware %s", esp_err_to_name(err));
+            return err;
+        }
+        snprintf(response, response_len, "OK MA01 MODEL=0x%04X FW=0x%04X",
+                 (unsigned)model, (unsigned)fw);
         return ESP_OK;
     }
 
