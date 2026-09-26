@@ -20,7 +20,7 @@
 #define MODBUS_TIMEOUT_MS        250
 #define MODBUS_POLL_MS           5000
 #define MODBUS_EID041_SLAVE      1
-#define MODBUS_MA01_SLAVE         32
+#define MODBUS_MA01_SLAVE         16
 #define MODBUS_MA01_COILS         8
 
 static bool s_ma01_coils[MODBUS_MA01_COILS];
