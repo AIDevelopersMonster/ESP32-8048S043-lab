@@ -2,12 +2,13 @@
   "schema": 1,
   "id": "modbus-ma01-relay",
   "name": "MA01 8DO Relay Controller",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "background": "#0D1117",
   "objects": [
     {"type":"label","x":18,"y":12,"w":430,"h":30,"text":"MODBUS RTU / MA01-XXCX0080 8DO","color":"#F0F6FC"},
     {"type":"label","x":450,"y":12,"w":130,"h":30,"bind":"modbus.ma01.address","prefix":"ADDR: ","color":"#58A6FF"},
     {"type":"label","x":585,"y":12,"w":145,"h":30,"bind":"modbus.ma01.state","prefix":"MA01: ","color":"#58A6FF"},
+    {"type":"button","x":374,"y":44,"w":174,"h":38,"text":"SEARCH DEVICE","action":"modbus_ma01_scan"},
     {"type":"button","x":556,"y":44,"w":174,"h":38,"text":"READ ALL","action":"modbus_ma01_refresh"},
 
     {"type":"label","x":18,"y":92,"w":165,"h":26,"bind":"modbus.ma01.summary1","prefix":"DO1  ","color":"#F0F6FC"},
