@@ -98,6 +98,10 @@ static bool binding_allowed(const char *binding)
         "modbus.ma01.do4", "modbus.ma01.do5", "modbus.ma01.do6", "modbus.ma01.do7", "modbus.ma01.do8",
         "modbus.ma01.summary1", "modbus.ma01.summary2", "modbus.ma01.summary3", "modbus.ma01.summary4",
         "modbus.ma01.summary5", "modbus.ma01.summary6", "modbus.ma01.summary7", "modbus.ma01.summary8",
+        "modbus.ma01.mode1", "modbus.ma01.mode2", "modbus.ma01.mode3", "modbus.ma01.mode4",
+        "modbus.ma01.mode5", "modbus.ma01.mode6", "modbus.ma01.mode7", "modbus.ma01.mode8",
+        "modbus.ma01.pulse1", "modbus.ma01.pulse2", "modbus.ma01.pulse3", "modbus.ma01.pulse4",
+        "modbus.ma01.pulse5", "modbus.ma01.pulse6", "modbus.ma01.pulse7", "modbus.ma01.pulse8",
         "temperature.value", "humidity.value",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
