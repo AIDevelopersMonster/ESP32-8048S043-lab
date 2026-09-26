@@ -443,6 +443,16 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "modbus_ma01_scan") == 0) {
+        char response[256] = {0};
+        esp_err_t err = command_service_execute("MA01 SCAN", response, sizeof(response));
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 SCAN rejected: %s | %s", esp_err_to_name(err), response);
+        } else {
+            ESP_LOGI(TAG, "MA01 SCAN: %s", response);
+            (void)modbus_service_ma01_refresh_config();
+            (void)modbus_service_ma01_refresh();
+        }
     } else if (strcmp(action, "modbus_ma01_refresh") == 0) {
         esp_err_t cfg_err = modbus_service_ma01_refresh_config();
         esp_err_t state_err = modbus_service_ma01_refresh();
