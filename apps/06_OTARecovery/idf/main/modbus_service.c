@@ -774,6 +774,19 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
     } else if (strcmp(binding, "modbus.ma01.address") == 0) {
         if (s_ma01_slave) snprintf(out, out_len, "%u", (unsigned)s_ma01_slave);
         else strlcpy(out, "--", out_len);
+    } else if (strncmp(binding, "modbus.ma01.mode", 17) == 0 &&
+               binding[17] >= '1' && binding[17] <= '8' && binding[18] == '\0') {
+        unsigned channel = (unsigned)(binding[17] - '1');
+        if (!s_ma01_config_valid) strlcpy(out, "--", out_len);
+        else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_LEVEL) strlcpy(out, "LEVEL", out_len);
+        else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_PULSE) strlcpy(out, "PULSE", out_len);
+        else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_FOLLOW) strlcpy(out, "FOLLOW", out_len);
+        else strlcpy(out, "?", out_len);
+    } else if (strncmp(binding, "modbus.ma01.pulse", 18) == 0 &&
+               binding[18] >= '1' && binding[18] <= '8' && binding[19] == '\0') {
+        unsigned channel = (unsigned)(binding[18] - '1');
+        if (!s_ma01_config_valid) strlcpy(out, "--", out_len);
+        else snprintf(out, out_len, "%u ms", (unsigned)s_ma01_pulse_ms[channel]);
     } else if (strncmp(binding, "modbus.ma01.summary", 20) == 0 &&
                binding[20] >= '1' && binding[20] <= '8' && binding[21] == '\0') {
         unsigned channel = (unsigned)(binding[20] - '1');
