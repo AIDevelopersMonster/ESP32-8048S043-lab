@@ -24,6 +24,7 @@
 #include "lvgl.h"
 
 #include "network_manager.h"
+#include "command_service.h"
 #include "modbus_service.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
@@ -443,14 +444,20 @@ static void widget_action_cb(lv_event_t *e)
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
     } else if (strcmp(action, "modbus_ma01_refresh") == 0) {
-        esp_err_t err = modbus_service_ma01_refresh();
-        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 REFRESH rejected: %s", esp_err_to_name(err));
+        char response[256] = {0};
+        esp_err_t err = command_service_execute("MA01 READ", response, sizeof(response));
+        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 REFRESH rejected: %s | %s",
+                                    esp_err_to_name(err), response);
+        else ESP_LOGI(TAG, "MA01 REFRESH: %s", response);
     } else if (strncmp(action, "modbus_ma01_toggle_", 19) == 0 &&
                action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
         uint8_t channel = (uint8_t)(action[19] - '0');
-        esp_err_t err = modbus_service_ma01_toggle(channel);
-        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s",
-                                    (unsigned)channel, esp_err_to_name(err));
+        char command[32], response[256] = {0};
+        snprintf(command, sizeof(command), "MA01 DO%u TOGGLE", (unsigned)channel);
+        esp_err_t err = command_service_execute(command, response, sizeof(response));
+        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s | %s",
+                                    (unsigned)channel, esp_err_to_name(err), response);
+        else ESP_LOGI(TAG, "MA01 DO%u: %s", (unsigned)channel, response);
     }
 }
 
