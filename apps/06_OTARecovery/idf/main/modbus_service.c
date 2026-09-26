@@ -291,6 +291,16 @@ esp_err_t modbus_service_ma01_refresh(void)
     return err;
 }
 
+esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+    esp_err_t err = modbus_service_write_single_coil(MODBUS_MA01_SLAVE,
+                                                     (uint16_t)(channel - 1),
+                                                     on);
+    if (err != ESP_OK) return err;
+    return modbus_service_ma01_refresh();
+}
+
 esp_err_t modbus_service_ma01_toggle(uint8_t channel)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
@@ -302,9 +312,7 @@ esp_err_t modbus_service_ma01_toggle(uint8_t channel)
     next = !s_ma01_coils[channel - 1];
     xSemaphoreGive(s_status_lock);
 
-    err = modbus_service_write_single_coil(MODBUS_MA01_SLAVE, (uint16_t)(channel - 1), next);
-    if (err != ESP_OK) return err;
-    return modbus_service_ma01_refresh();
+    return modbus_service_ma01_set(channel, next);
 }
 
 static void eid041_poll_task(void *arg)
