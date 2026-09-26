@@ -136,6 +136,9 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_clear") == 0 ||
                       strcmp(action, "modbus_ma01_refresh") == 0 ||
                       strcmp(action, "modbus_ma01_scan") == 0 ||
+                      strcmp(action, "modbus_ma01_open_home") == 0 ||
+                      strcmp(action, "modbus_ma01_open_work") == 0 ||
+                      strcmp(action, "modbus_ma01_open_settings") == 0 ||
                       strcmp(action, "modbus_ma01_action_1") == 0 ||
                       strcmp(action, "modbus_ma01_action_2") == 0 ||
                       strcmp(action, "modbus_ma01_action_3") == 0 ||
