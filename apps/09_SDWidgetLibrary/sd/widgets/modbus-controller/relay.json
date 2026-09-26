@@ -2,32 +2,46 @@
   "schema": 1,
   "id": "modbus-ma01-relay",
   "name": "MA01 8DO Relay Controller",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "background": "#0D1117",
   "objects": [
-    {"type":"label","x":18,"y":12,"w":500,"h":30,"text":"MODBUS RTU / MA01-XXCX0080 8DO","color":"#F0F6FC"},
-    {"type":"label","x":520,"y":12,"w":206,"h":30,"bind":"modbus.ma01.state","prefix":"MA01: ","color":"#58A6FF"},
-    {"type":"label","x":18,"y":46,"w":500,"h":28,"text":"Slave 32 | 9600 8N1 | Coils 0x0000..0x0007","color":"#8B949E"},
-    {"type":"button","x":552,"y":42,"w":174,"h":42,"text":"READ ALL","action":"modbus_ma01_refresh"},
+    {"type":"label","x":18,"y":12,"w":430,"h":30,"text":"MODBUS RTU / MA01-XXCX0080 8DO","color":"#F0F6FC"},
+    {"type":"label","x":450,"y":12,"w":130,"h":30,"bind":"modbus.ma01.address","prefix":"ADDR: ","color":"#58A6FF"},
+    {"type":"label","x":585,"y":12,"w":145,"h":30,"bind":"modbus.ma01.state","prefix":"MA01: ","color":"#58A6FF"},
+    {"type":"button","x":556,"y":44,"w":174,"h":38,"text":"READ ALL","action":"modbus_ma01_refresh"},
 
-    {"type":"label","x":22,"y":104,"w":150,"h":28,"bind":"modbus.ma01.do1","prefix":"DO1  ","color":"#F0F6FC"},
-    {"type":"button","x":22,"y":136,"w":150,"h":58,"text":"DO1 TOGGLE","action":"modbus_ma01_toggle_1"},
-    {"type":"label","x":204,"y":104,"w":150,"h":28,"bind":"modbus.ma01.do2","prefix":"DO2  ","color":"#F0F6FC"},
-    {"type":"button","x":204,"y":136,"w":150,"h":58,"text":"DO2 TOGGLE","action":"modbus_ma01_toggle_2"},
-    {"type":"label","x":386,"y":104,"w":150,"h":28,"bind":"modbus.ma01.do3","prefix":"DO3  ","color":"#F0F6FC"},
-    {"type":"button","x":386,"y":136,"w":150,"h":58,"text":"DO3 TOGGLE","action":"modbus_ma01_toggle_3"},
-    {"type":"label","x":568,"y":104,"w":150,"h":28,"bind":"modbus.ma01.do4","prefix":"DO4  ","color":"#F0F6FC"},
-    {"type":"button","x":568,"y":136,"w":150,"h":58,"text":"DO4 TOGGLE","action":"modbus_ma01_toggle_4"},
+    {"type":"label","x":18,"y":92,"w":165,"h":26,"bind":"modbus.ma01.summary1","prefix":"DO1  ","color":"#F0F6FC"},
+    {"type":"button","x":18,"y":120,"w":165,"h":42,"text":"DO1 ACTION","action":"modbus_ma01_action_1"},
+    {"type":"button","x":18,"y":166,"w":165,"h":30,"text":"DO1 MODE","action":"modbus_ma01_mode_1"},
 
-    {"type":"label","x":22,"y":218,"w":150,"h":28,"bind":"modbus.ma01.do5","prefix":"DO5  ","color":"#F0F6FC"},
-    {"type":"button","x":22,"y":250,"w":150,"h":58,"text":"DO5 TOGGLE","action":"modbus_ma01_toggle_5"},
-    {"type":"label","x":204,"y":218,"w":150,"h":28,"bind":"modbus.ma01.do6","prefix":"DO6  ","color":"#F0F6FC"},
-    {"type":"button","x":204,"y":250,"w":150,"h":58,"text":"DO6 TOGGLE","action":"modbus_ma01_toggle_6"},
-    {"type":"label","x":386,"y":218,"w":150,"h":28,"bind":"modbus.ma01.do7","prefix":"DO7  ","color":"#F0F6FC"},
-    {"type":"button","x":386,"y":250,"w":150,"h":58,"text":"DO7 TOGGLE","action":"modbus_ma01_toggle_7"},
-    {"type":"label","x":568,"y":218,"w":150,"h":28,"bind":"modbus.ma01.do8","prefix":"DO8  ","color":"#F0F6FC"},
-    {"type":"button","x":568,"y":250,"w":150,"h":58,"text":"DO8 TOGGLE","action":"modbus_ma01_toggle_8"},
+    {"type":"label","x":201,"y":92,"w":165,"h":26,"bind":"modbus.ma01.summary2","prefix":"DO2  ","color":"#F0F6FC"},
+    {"type":"button","x":201,"y":120,"w":165,"h":42,"text":"DO2 ACTION","action":"modbus_ma01_action_2"},
+    {"type":"button","x":201,"y":166,"w":165,"h":30,"text":"DO2 MODE","action":"modbus_ma01_mode_2"},
 
-    {"type":"label","x":22,"y":320,"w":696,"h":26,"text":"Each toggle reads actual coils first, writes FC05, then reads back FC01.","color":"#8B949E"}
+    {"type":"label","x":384,"y":92,"w":165,"h":26,"bind":"modbus.ma01.summary3","prefix":"DO3  ","color":"#F0F6FC"},
+    {"type":"button","x":384,"y":120,"w":165,"h":42,"text":"DO3 ACTION","action":"modbus_ma01_action_3"},
+    {"type":"button","x":384,"y":166,"w":165,"h":30,"text":"DO3 MODE","action":"modbus_ma01_mode_3"},
+
+    {"type":"label","x":567,"y":92,"w":165,"h":26,"bind":"modbus.ma01.summary4","prefix":"DO4  ","color":"#F0F6FC"},
+    {"type":"button","x":567,"y":120,"w":165,"h":42,"text":"DO4 ACTION","action":"modbus_ma01_action_4"},
+    {"type":"button","x":567,"y":166,"w":165,"h":30,"text":"DO4 MODE","action":"modbus_ma01_mode_4"},
+
+    {"type":"label","x":18,"y":214,"w":165,"h":26,"bind":"modbus.ma01.summary5","prefix":"DO5  ","color":"#F0F6FC"},
+    {"type":"button","x":18,"y":242,"w":165,"h":42,"text":"DO5 ACTION","action":"modbus_ma01_action_5"},
+    {"type":"button","x":18,"y":288,"w":165,"h":30,"text":"DO5 MODE","action":"modbus_ma01_mode_5"},
+
+    {"type":"label","x":201,"y":214,"w":165,"h":26,"bind":"modbus.ma01.summary6","prefix":"DO6  ","color":"#F0F6FC"},
+    {"type":"button","x":201,"y":242,"w":165,"h":42,"text":"DO6 ACTION","action":"modbus_ma01_action_6"},
+    {"type":"button","x":201,"y":288,"w":165,"h":30,"text":"DO6 MODE","action":"modbus_ma01_mode_6"},
+
+    {"type":"label","x":384,"y":214,"w":165,"h":26,"bind":"modbus.ma01.summary7","prefix":"DO7  ","color":"#F0F6FC"},
+    {"type":"button","x":384,"y":242,"w":165,"h":42,"text":"DO7 ACTION","action":"modbus_ma01_action_7"},
+    {"type":"button","x":384,"y":288,"w":165,"h":30,"text":"DO7 MODE","action":"modbus_ma01_mode_7"},
+
+    {"type":"label","x":567,"y":214,"w":165,"h":26,"bind":"modbus.ma01.summary8","prefix":"DO8  ","color":"#F0F6FC"},
+    {"type":"button","x":567,"y":242,"w":165,"h":42,"text":"DO8 ACTION","action":"modbus_ma01_action_8"},
+    {"type":"button","x":567,"y":288,"w":165,"h":30,"text":"DO8 MODE","action":"modbus_ma01_mode_8"},
+
+    {"type":"label","x":18,"y":330,"w":714,"h":26,"text":"ACTION follows configured mode. MODE cycles LEVEL -> PULSE -> FOLLOW.","color":"#8B949E"}
   ]
 }
