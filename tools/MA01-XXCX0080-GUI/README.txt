@@ -44,7 +44,9 @@ Three-tab UI:
 - Model: MA01-XXCX0080
 - Firmware: V1.6
 - RS485 / Modbus RTU
-- Factory/default test address: 32
+- Slave address is user-configurable and must not be hard-coded in clients.
+- Current physically tested module was discovered at slave 16.
+- Earlier lab sessions used slave 32; treat that only as historical configuration, not as a default assumption.
 - 9600, 8N1
 
 ## Registers used
