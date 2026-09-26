@@ -38,25 +38,68 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
 
     if (strcmp(line, "HELP") == 0) {
         strlcpy(response,
-                "OK commands: HELP | MA01 INFO | MA01 READ | MA01 STATUS | MA01 DO<n> ON|OFF|TOGGLE",
+                "OK commands: HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 STATUS | MA01 DO<n> ON|OFF|TOGGLE",
                 response_len);
         return ESP_OK;
     }
 
-    if (strcmp(line, "MA01 INFO") == 0) {
+    if (strcmp(line, "MA01 ADDR") == 0) {
+        uint8_t slave = modbus_service_ma01_get_slave();
+        if (slave) snprintf(response, response_len, "OK MA01 ADDR=%u", (unsigned)slave);
+        else strlcpy(response, "OK MA01 ADDR=NOT_SET", response_len);
+        return ESP_OK;
+    }
+
+    if (strncmp(line, "MA01 ADDR ", 10) == 0) {
+        char *end = NULL;
+        long slave = strtol(line + 10, &end, 10);
+        if (!end || *end != '\0' || slave < 1 || slave > 247) {
+            strlcpy(response, "ERR syntax: MA01 ADDR <1..247>", response_len);
+            return ESP_ERR_INVALID_ARG;
+        }
+        esp_err_t err = modbus_service_ma01_set_slave((uint8_t)slave);
+        if (err != ESP_OK) {
+            snprintf(response, response_len, "ERR MA01 ADDR %s", esp_err_to_name(err));
+            return err;
+        }
+        snprintf(response, response_len, "OK MA01 ADDR=%ld SAVED", slave);
+        return ESP_OK;
+    }
+
+    if (strcmp(line, "MA01 SCAN") == 0) {
+        uint8_t slave = 0;
         uint16_t model = 0, fw = 0;
-        esp_err_t err = modbus_service_read_registers(16, 0x03, 0x07D0, 1, &model, 1);
+        esp_err_t err = modbus_service_ma01_scan(&slave, &model, &fw);
+        if (err != ESP_OK) {
+            snprintf(response, response_len, "ERR MA01 SCAN %s", esp_err_to_name(err));
+            return err;
+        }
+        snprintf(response, response_len,
+                 "OK MA01 FOUND ADDR=%u MODEL=0x%04X FW=0x%04X SAVED",
+                 (unsigned)slave, (unsigned)model, (unsigned)fw);
+        return ESP_OK;
+    }
+
+    if (strcmp(line, "MA01 INFO") == 0) {
+        uint8_t slave = modbus_service_ma01_get_slave();
+        if (!slave) {
+            strlcpy(response, "ERR MA01 address not configured; use MA01 SCAN or MA01 ADDR <1..247>", response_len);
+            return ESP_ERR_INVALID_STATE;
+        }
+
+        uint16_t model = 0, fw = 0;
+        esp_err_t err = modbus_service_read_registers(slave, 0x03, 0x07D0, 1, &model, 1);
         if (err != ESP_OK) {
             snprintf(response, response_len, "ERR MA01 INFO model %s", esp_err_to_name(err));
             return err;
         }
-        err = modbus_service_read_registers(16, 0x03, 0x07DC, 1, &fw, 1);
+        err = modbus_service_read_registers(slave, 0x03, 0x07DC, 1, &fw, 1);
         if (err != ESP_OK) {
             snprintf(response, response_len, "ERR MA01 INFO firmware %s", esp_err_to_name(err));
             return err;
         }
-        snprintf(response, response_len, "OK MA01 MODEL=0x%04X FW=0x%04X",
-                 (unsigned)model, (unsigned)fw);
+        snprintf(response, response_len, "OK MA01 ADDR=%u MODEL=0x%04X FW=0x%04X",
+                 (unsigned)slave, (unsigned)model, (unsigned)fw);
         return ESP_OK;
     }
 
