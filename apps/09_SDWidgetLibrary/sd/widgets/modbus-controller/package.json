@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-controller",
   "name": "Modbus Controller",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "widget-package",
   "entrypoints": [
     {
