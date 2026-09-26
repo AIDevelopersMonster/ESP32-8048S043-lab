@@ -21,7 +21,7 @@ except ImportError:
     raise
 
 APP_NAME = "KONTAKTSerial"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.2.0"
 DEFAULT_BAUD = 115200
 
 
@@ -59,6 +59,12 @@ class KontaktSerial(tk.Tk):
         self.autoscroll_var = tk.BooleanVar(value=True)
         self.show_tx_var = tk.BooleanVar(value=True)
         self.hex_rx_var = tk.BooleanVar(value=False)
+
+        # Service/UART0 helper state. Intentionally no default MA01 slave address.
+        self.ma01_addr_var = tk.StringVar(value="")
+        self.ma01_channel_var = tk.StringVar(value="1")
+        self.ma01_mode_var = tk.StringVar(value="PULSE")
+        self.ma01_pulse_ms_var = tk.StringVar(value="")
 
         self._build_ui()
         self.refresh_ports(prefer=initial_port)
@@ -123,6 +129,56 @@ class KontaktSerial(tk.Tk):
         ttk.Button(send, text="Send", command=self.send_text).grid(row=0, column=4)
         ttk.Button(send, text="HELLO123", command=lambda: self.send_literal("HELLO123")).grid(row=0, column=5, padx=(8, 0))
         send.columnconfigure(1, weight=1)
+
+        service = ttk.LabelFrame(self, text="ESP32 service UART0 / MA01", padding=8)
+        service.pack(fill="x", padx=8, pady=(0, 8))
+
+        quick = ttk.Frame(service)
+        quick.pack(fill="x", pady=(0, 6))
+        for label, command in (
+            ("HELP", "HELP"),
+            ("ADDR?", "MA01 ADDR"),
+            ("SCAN", "MA01 SCAN"),
+            ("INFO", "MA01 INFO"),
+            ("READ", "MA01 READ"),
+            ("CONFIG", "MA01 CONFIG"),
+        ):
+            ttk.Button(quick, text=label, command=lambda cmd=command: self.send_service_command(cmd)).pack(side="left", padx=(0, 6))
+
+        cfg = ttk.Frame(service)
+        cfg.pack(fill="x", pady=(0, 6))
+        ttk.Label(cfg, text="Slave").pack(side="left")
+        ttk.Entry(cfg, textvariable=self.ma01_addr_var, width=6).pack(side="left", padx=(4, 6))
+        ttk.Button(cfg, text="SET ADDR", command=self.set_ma01_address).pack(side="left", padx=(0, 16))
+
+        ttk.Label(cfg, text="DO").pack(side="left")
+        ttk.Combobox(
+            cfg,
+            textvariable=self.ma01_channel_var,
+            state="readonly",
+            values=tuple(str(i) for i in range(1, 9)),
+            width=4,
+        ).pack(side="left", padx=(4, 6))
+        ttk.Button(cfg, text="ACTION", command=lambda: self.send_do_command("ACTION")).pack(side="left", padx=(0, 4))
+        ttk.Button(cfg, text="ON", command=lambda: self.send_do_command("ON")).pack(side="left", padx=(0, 4))
+        ttk.Button(cfg, text="OFF", command=lambda: self.send_do_command("OFF")).pack(side="left", padx=(0, 4))
+        ttk.Button(cfg, text="TOGGLE", command=lambda: self.send_do_command("TOGGLE")).pack(side="left")
+
+        mode = ttk.Frame(service)
+        mode.pack(fill="x")
+        ttk.Label(mode, text="Mode").pack(side="left")
+        ttk.Combobox(
+            mode,
+            textvariable=self.ma01_mode_var,
+            state="readonly",
+            values=("LEVEL", "PULSE", "FOLLOW"),
+            width=9,
+        ).pack(side="left", padx=(4, 6))
+        ttk.Button(mode, text="SET MODE", command=self.set_ma01_mode).pack(side="left", padx=(0, 16))
+
+        ttk.Label(mode, text="Pulse ms").pack(side="left")
+        ttk.Entry(mode, textvariable=self.ma01_pulse_ms_var, width=8).pack(side="left", padx=(4, 6))
+        ttk.Button(mode, text="SET PULSE", command=self.set_ma01_pulse_ms).pack(side="left")
 
         bottom = ttk.Frame(self, padding=(8, 0, 8, 8))
         bottom.pack(fill="x")
@@ -290,6 +346,66 @@ class KontaktSerial(tk.Tk):
         self.send_entry.delete(0, "end")
         self.send_entry.insert(0, text)
         self.send_text()
+
+    def send_service_command(self, command: str) -> None:
+        """Send one command to the ESP32 service command layer over UART0/P1."""
+        self.send_literal(command)
+
+    def _selected_ma01_channel(self) -> str:
+        channel = self.ma01_channel_var.get().strip()
+        if channel not in {str(i) for i in range(1, 9)}:
+            raise ValueError("DO channel must be 1..8")
+        return channel
+
+    def set_ma01_address(self) -> None:
+        text = self.ma01_addr_var.get().strip()
+        try:
+            address = int(text)
+        except ValueError:
+            messagebox.showerror(APP_NAME, "MA01 slave address must be 1..247.")
+            return
+        if not 1 <= address <= 247:
+            messagebox.showerror(APP_NAME, "MA01 slave address must be 1..247.")
+            return
+        self.send_service_command(f"MA01 ADDR {address}")
+
+    def send_do_command(self, operation: str) -> None:
+        try:
+            channel = self._selected_ma01_channel()
+        except ValueError as exc:
+            messagebox.showerror(APP_NAME, str(exc))
+            return
+        self.send_service_command(f"MA01 DO{channel} {operation}")
+
+    def set_ma01_mode(self) -> None:
+        try:
+            channel = self._selected_ma01_channel()
+        except ValueError as exc:
+            messagebox.showerror(APP_NAME, str(exc))
+            return
+        mode = self.ma01_mode_var.get().strip().upper()
+        if mode not in {"LEVEL", "PULSE", "FOLLOW"}:
+            messagebox.showerror(APP_NAME, "Mode must be LEVEL, PULSE or FOLLOW.")
+            return
+        self.send_service_command(f"MA01 DO{channel} MODE {mode}")
+
+    def set_ma01_pulse_ms(self) -> None:
+        try:
+            channel = self._selected_ma01_channel()
+        except ValueError as exc:
+            messagebox.showerror(APP_NAME, str(exc))
+            return
+
+        text = self.ma01_pulse_ms_var.get().strip()
+        try:
+            pulse_ms = int(text)
+        except ValueError:
+            messagebox.showerror(APP_NAME, "Pulse time must be 0..65535 ms.")
+            return
+        if not 0 <= pulse_ms <= 65535:
+            messagebox.showerror(APP_NAME, "Pulse time must be 0..65535 ms.")
+            return
+        self.send_service_command(f"MA01 DO{channel} PULSEMS {pulse_ms}")
 
     def send_text(self) -> None:
         ser = self.ser
