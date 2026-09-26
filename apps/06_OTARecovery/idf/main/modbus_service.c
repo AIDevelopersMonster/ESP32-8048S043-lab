@@ -9,6 +9,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "nvs.h"
 
 #define TAG "MODBUS_SERVICE"
 
@@ -20,11 +21,13 @@
 #define MODBUS_TIMEOUT_MS        250
 #define MODBUS_POLL_MS           5000
 #define MODBUS_EID041_SLAVE      1
-#define MODBUS_MA01_SLAVE         16
 #define MODBUS_MA01_COILS         8
+#define MODBUS_NVS_NAMESPACE      "platform"
+#define MODBUS_NVS_MA01_ADDR      "ma01_addr"
 
 static bool s_ma01_coils[MODBUS_MA01_COILS];
 static bool s_ma01_online;
+static uint8_t s_ma01_slave;
 
 static SemaphoreHandle_t s_bus_lock;
 static SemaphoreHandle_t s_status_lock;
@@ -65,6 +68,81 @@ static void status_error(bool timeout, bool crc)
     else if (crc) s_status.crc_errors++;
     else s_status.protocol_errors++;
     xSemaphoreGive(s_status_lock);
+}
+
+static void ma01_load_slave(void)
+{
+    s_ma01_slave = 0;
+
+    nvs_handle_t handle;
+    if (nvs_open(MODBUS_NVS_NAMESPACE, NVS_READONLY, &handle) != ESP_OK) {
+        return;
+    }
+
+    uint8_t slave = 0;
+    if (nvs_get_u8(handle, MODBUS_NVS_MA01_ADDR, &slave) == ESP_OK &&
+        slave >= 1 && slave <= 247) {
+        s_ma01_slave = slave;
+    }
+    nvs_close(handle);
+}
+
+uint8_t modbus_service_ma01_get_slave(void)
+{
+    if (!s_status_lock) return 0;
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint8_t slave = s_ma01_slave;
+    xSemaphoreGive(s_status_lock);
+    return slave;
+}
+
+esp_err_t modbus_service_ma01_set_slave(uint8_t slave)
+{
+    if (!s_status_lock) return ESP_ERR_INVALID_STATE;
+    if (slave < 1 || slave > 247) return ESP_ERR_INVALID_ARG;
+
+    nvs_handle_t handle;
+    esp_err_t err = nvs_open(MODBUS_NVS_NAMESPACE, NVS_READWRITE, &handle);
+    if (err != ESP_OK) return err;
+
+    err = nvs_set_u8(handle, MODBUS_NVS_MA01_ADDR, slave);
+    if (err == ESP_OK) err = nvs_commit(handle);
+    nvs_close(handle);
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    s_ma01_slave = slave;
+    s_ma01_online = false;
+    memset(s_ma01_coils, 0, sizeof(s_ma01_coils));
+    xSemaphoreGive(s_status_lock);
+
+    ESP_LOGI(TAG, "MA01 slave address set to %u and saved", (unsigned)slave);
+    return ESP_OK;
+}
+
+esp_err_t modbus_service_ma01_scan(uint8_t *out_slave, uint16_t *out_model, uint16_t *out_fw)
+{
+    if (!s_bus_lock || !s_status_lock) return ESP_ERR_INVALID_STATE;
+
+    for (unsigned slave = 1; slave <= 247; ++slave) {
+        uint16_t model = 0;
+        esp_err_t err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07D0, 1, &model, 1);
+        if (err != ESP_OK) continue;
+
+        uint16_t fw = 0;
+        err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07DC, 1, &fw, 1);
+        if (err != ESP_OK) continue;
+
+        err = modbus_service_ma01_set_slave((uint8_t)slave);
+        if (err != ESP_OK) return err;
+
+        if (out_slave) *out_slave = (uint8_t)slave;
+        if (out_model) *out_model = model;
+        if (out_fw) *out_fw = fw;
+        return ESP_OK;
+    }
+
+    return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t modbus_service_read_registers(uint8_t slave,
@@ -275,8 +353,11 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on
 
 esp_err_t modbus_service_ma01_refresh(void)
 {
+    uint8_t slave = modbus_service_ma01_get_slave();
+    if (!slave) return ESP_ERR_INVALID_STATE;
+
     bool coils[MODBUS_MA01_COILS] = {0};
-    esp_err_t err = modbus_service_read_coils(MODBUS_MA01_SLAVE, 0, MODBUS_MA01_COILS,
+    esp_err_t err = modbus_service_read_coils(slave, 0, MODBUS_MA01_COILS,
                                               coils, MODBUS_MA01_COILS);
     if (err == ESP_OK) {
         xSemaphoreTake(s_status_lock, portMAX_DELAY);
@@ -294,7 +375,10 @@ esp_err_t modbus_service_ma01_refresh(void)
 esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
-    esp_err_t err = modbus_service_write_single_coil(MODBUS_MA01_SLAVE,
+    uint8_t slave = modbus_service_ma01_get_slave();
+    if (!slave) return ESP_ERR_INVALID_STATE;
+
+    esp_err_t err = modbus_service_write_single_coil(slave,
                                                      (uint16_t)(channel - 1),
                                                      on);
     if (err != ESP_OK) return err;
@@ -379,6 +463,7 @@ esp_err_t modbus_service_init(void)
     if (err != ESP_OK) return err;
 
     memset(&s_status, 0, sizeof(s_status));
+    ma01_load_slave();
 
     BaseType_t task_ok = xTaskCreate(eid041_poll_task,
                                      "modbus_eid041",
@@ -391,6 +476,11 @@ esp_err_t modbus_service_init(void)
     ESP_LOGI(TAG,
              "Modbus RTU master ready: UART1 TX=GPIO%d RX=GPIO%d %d 8N1",
              MODBUS_TX_GPIO, MODBUS_RX_GPIO, MODBUS_BAUD);
+    if (s_ma01_slave) {
+        ESP_LOGI(TAG, "MA01 configured slave=%u (NVS)", (unsigned)s_ma01_slave);
+    } else {
+        ESP_LOGW(TAG, "MA01 slave not configured; use MA01 SCAN or MA01 ADDR <1..247>");
+    }
     return ESP_OK;
 }
 
@@ -443,7 +533,8 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
                  (unsigned)(status.humidity_tenths_rh / 10),
                  (unsigned)(status.humidity_tenths_rh % 10));
     } else if (strcmp(binding, "modbus.ma01.state") == 0) {
-        strlcpy(out, s_ma01_online ? "ONLINE" : "NOT READ", out_len);
+        if (!s_ma01_slave) strlcpy(out, "NO ADDR", out_len);
+        else strlcpy(out, s_ma01_online ? "ONLINE" : "NOT READ", out_len);
     } else if (strncmp(binding, "modbus.ma01.do", 14) == 0 &&
                binding[14] >= '1' && binding[14] <= '8' && binding[15] == '\0') {
         unsigned channel = (unsigned)(binding[14] - '1');
