@@ -48,6 +48,7 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave,
 
 /* MA01-XXCX0080 provider: slave 32, coils 0x0000..0x0007. */
 esp_err_t modbus_service_ma01_refresh(void);
+esp_err_t modbus_service_ma01_set(uint8_t channel, bool on);
 esp_err_t modbus_service_ma01_toggle(uint8_t channel);
 
 void modbus_service_get_status(modbus_service_status_t *out);
