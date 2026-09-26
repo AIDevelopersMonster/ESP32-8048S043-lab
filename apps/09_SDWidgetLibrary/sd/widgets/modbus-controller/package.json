@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-controller",
   "name": "Modbus Controller",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "widget-package",
   "entrypoints": [
     {
@@ -12,8 +12,18 @@
     },
     {
       "id": "relay",
-      "name": "MA01 8DO Relay Controller",
+      "name": "MA01 Control Center",
       "file": "relay.json"
+    },
+    {
+      "id": "relay-work",
+      "name": "MA01 Working Mode",
+      "file": "relay-work.json"
+    },
+    {
+      "id": "relay-settings",
+      "name": "MA01 Settings",
+      "file": "relay-settings.json"
     }
   ],
   "requires": {
