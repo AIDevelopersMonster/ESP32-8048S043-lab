@@ -22,11 +22,16 @@
 #define MODBUS_POLL_MS           5000
 #define MODBUS_EID041_SLAVE      1
 #define MODBUS_MA01_COILS         8
+#define MODBUS_MA01_MODE_BASE     0x0578
+#define MODBUS_MA01_PULSE_BASE    0x05DC
 #define MODBUS_NVS_NAMESPACE      "platform"
 #define MODBUS_NVS_MA01_ADDR      "ma01_addr"
 
 static bool s_ma01_coils[MODBUS_MA01_COILS];
+static uint16_t s_ma01_modes[MODBUS_MA01_COILS];
+static uint16_t s_ma01_pulse_ms[MODBUS_MA01_COILS];
 static bool s_ma01_online;
+static bool s_ma01_config_valid;
 static uint8_t s_ma01_slave;
 
 static SemaphoreHandle_t s_bus_lock;
@@ -113,7 +118,10 @@ esp_err_t modbus_service_ma01_set_slave(uint8_t slave)
     xSemaphoreTake(s_status_lock, portMAX_DELAY);
     s_ma01_slave = slave;
     s_ma01_online = false;
+    s_ma01_config_valid = false;
     memset(s_ma01_coils, 0, sizeof(s_ma01_coils));
+    memset(s_ma01_modes, 0, sizeof(s_ma01_modes));
+    memset(s_ma01_pulse_ms, 0, sizeof(s_ma01_pulse_ms));
     xSemaphoreGive(s_status_lock);
 
     ESP_LOGI(TAG, "MA01 slave address set to %u and saved", (unsigned)slave);
@@ -234,6 +242,129 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
     return ESP_OK;
 }
 
+static esp_err_t modbus_service_write_single_register(uint8_t slave, uint16_t reg, uint16_t value)
+{
+    if (!s_bus_lock || !s_status_lock || !slave) return ESP_ERR_INVALID_STATE;
+
+    uint8_t request[8] = {
+        slave, 0x06,
+        (uint8_t)(reg >> 8), (uint8_t)(reg & 0xFF),
+        (uint8_t)(value >> 8), (uint8_t)(value & 0xFF), 0, 0
+    };
+    uint16_t crc = modbus_crc16(request, 6);
+    request[6] = (uint8_t)(crc & 0xFF);
+    request[7] = (uint8_t)(crc >> 8);
+
+    uint8_t response[8] = {0};
+
+    xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    uart_flush_input(MODBUS_UART);
+
+    int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
+    if (written != (int)sizeof(request)) {
+        xSemaphoreGive(s_bus_lock);
+        status_error(false, false);
+        return ESP_FAIL;
+    }
+    status_frame_tx();
+
+    esp_err_t wait_err = uart_wait_tx_done(MODBUS_UART, pdMS_TO_TICKS(100));
+    if (wait_err != ESP_OK) {
+        xSemaphoreGive(s_bus_lock);
+        status_error(true, false);
+        return wait_err;
+    }
+
+    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    xSemaphoreGive(s_bus_lock);
+
+    if (got != (int)sizeof(response)) {
+        status_error(true, false);
+        return ESP_ERR_TIMEOUT;
+    }
+
+    uint16_t response_crc = (uint16_t)response[6] | ((uint16_t)response[7] << 8);
+    if (modbus_crc16(response, 6) != response_crc) {
+        status_error(false, true);
+        return ESP_ERR_INVALID_CRC;
+    }
+    if (memcmp(request, response, 6) != 0) {
+        status_error(false, false);
+        return ESP_ERR_INVALID_RESPONSE;
+    }
+
+    status_frame_rx();
+    return ESP_OK;
+}
+
+esp_err_t modbus_service_ma01_refresh_config(void)
+{
+    uint8_t slave = modbus_service_ma01_get_slave();
+    if (!slave) return ESP_ERR_INVALID_STATE;
+
+    uint16_t modes[MODBUS_MA01_COILS] = {0};
+    uint16_t pulse_ms[MODBUS_MA01_COILS] = {0};
+
+    esp_err_t err = modbus_service_read_registers(slave, 0x03,
+                                                  MODBUS_MA01_MODE_BASE,
+                                                  MODBUS_MA01_COILS,
+                                                  modes,
+                                                  MODBUS_MA01_COILS);
+    if (err != ESP_OK) return err;
+
+    err = modbus_service_read_registers(slave, 0x03,
+                                        MODBUS_MA01_PULSE_BASE,
+                                        MODBUS_MA01_COILS,
+                                        pulse_ms,
+                                        MODBUS_MA01_COILS);
+    if (err != ESP_OK) return err;
+
+    for (unsigned i = 0; i < MODBUS_MA01_COILS; ++i) {
+        if (modes[i] > MODBUS_MA01_MODE_FOLLOW) return ESP_ERR_INVALID_RESPONSE;
+    }
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    memcpy(s_ma01_modes, modes, sizeof(s_ma01_modes));
+    memcpy(s_ma01_pulse_ms, pulse_ms, sizeof(s_ma01_pulse_ms));
+    s_ma01_config_valid = true;
+    xSemaphoreGive(s_status_lock);
+
+    return ESP_OK;
+}
+
+static esp_err_t ma01_ensure_config(void)
+{
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    bool valid = s_ma01_config_valid;
+    xSemaphoreGive(s_status_lock);
+    return valid ? ESP_OK : modbus_service_ma01_refresh_config();
+}
+
+static void ma01_delayed_refresh_task(void *arg)
+{
+    uint32_t delay_ms = (uint32_t)(uintptr_t)arg;
+    vTaskDelay(pdMS_TO_TICKS(delay_ms));
+    esp_err_t err = modbus_service_ma01_refresh();
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "MA01 delayed pulse refresh failed: %s", esp_err_to_name(err));
+    }
+    vTaskDelete(NULL);
+}
+
+static void ma01_schedule_refresh(uint32_t delay_ms)
+{
+    if (delay_ms < 100) delay_ms = 100;
+    if (delay_ms > 66000) delay_ms = 66000;
+    BaseType_t ok = xTaskCreate(ma01_delayed_refresh_task,
+                                "ma01_pulse_refresh",
+                                3072,
+                                (void *)(uintptr_t)delay_ms,
+                                4,
+                                NULL);
+    if (ok != pdPASS) {
+        ESP_LOGW(TAG, "MA01 delayed refresh task allocation failed");
+    }
+}
 
 esp_err_t modbus_service_read_coils(uint8_t slave,
                                     uint16_t start_coil,
@@ -378,17 +509,46 @@ esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
     uint8_t slave = modbus_service_ma01_get_slave();
     if (!slave) return ESP_ERR_INVALID_STATE;
 
-    esp_err_t err = modbus_service_write_single_coil(slave,
-                                                     (uint16_t)(channel - 1),
-                                                     on);
+    esp_err_t err = ma01_ensure_config();
     if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint16_t mode = s_ma01_modes[channel - 1];
+    uint16_t pulse_ms = s_ma01_pulse_ms[channel - 1];
+    xSemaphoreGive(s_status_lock);
+
+    if (mode == MODBUS_MA01_MODE_FOLLOW) return ESP_ERR_NOT_SUPPORTED;
+
+    err = modbus_service_write_single_coil(slave,
+                                           (uint16_t)(channel - 1),
+                                           on);
+    if (err != ESP_OK) return err;
+
+    if (mode == MODBUS_MA01_MODE_PULSE && on) {
+        xSemaphoreTake(s_status_lock, portMAX_DELAY);
+        s_ma01_coils[channel - 1] = true;
+        s_ma01_online = true;
+        xSemaphoreGive(s_status_lock);
+        ma01_schedule_refresh((uint32_t)pulse_ms + 150U);
+        return ESP_OK;
+    }
+
     return modbus_service_ma01_refresh();
 }
 
 esp_err_t modbus_service_ma01_toggle(uint8_t channel)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
-    esp_err_t err = modbus_service_ma01_refresh();
+
+    esp_err_t err = ma01_ensure_config();
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint16_t mode = s_ma01_modes[channel - 1];
+    xSemaphoreGive(s_status_lock);
+    if (mode != MODBUS_MA01_MODE_LEVEL) return ESP_ERR_NOT_SUPPORTED;
+
+    err = modbus_service_ma01_refresh();
     if (err != ESP_OK) return err;
 
     bool next;
@@ -397,6 +557,78 @@ esp_err_t modbus_service_ma01_toggle(uint8_t channel)
     xSemaphoreGive(s_status_lock);
 
     return modbus_service_ma01_set(channel, next);
+}
+
+esp_err_t modbus_service_ma01_action(uint8_t channel)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+
+    esp_err_t err = ma01_ensure_config();
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint16_t mode = s_ma01_modes[channel - 1];
+    xSemaphoreGive(s_status_lock);
+
+    if (mode == MODBUS_MA01_MODE_LEVEL) return modbus_service_ma01_toggle(channel);
+    if (mode == MODBUS_MA01_MODE_PULSE) return modbus_service_ma01_set(channel, true);
+    return ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t modbus_service_ma01_set_mode(uint8_t channel, modbus_ma01_mode_t mode)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+    if (mode < MODBUS_MA01_MODE_LEVEL || mode > MODBUS_MA01_MODE_FOLLOW) return ESP_ERR_INVALID_ARG;
+
+    uint8_t slave = modbus_service_ma01_get_slave();
+    if (!slave) return ESP_ERR_INVALID_STATE;
+
+    esp_err_t err = modbus_service_write_single_register(
+        slave,
+        (uint16_t)(MODBUS_MA01_MODE_BASE + channel - 1),
+        (uint16_t)mode);
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    s_ma01_modes[channel - 1] = (uint16_t)mode;
+    s_ma01_config_valid = true;
+    xSemaphoreGive(s_status_lock);
+    return ESP_OK;
+}
+
+esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+
+    esp_err_t err = ma01_ensure_config();
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint16_t current = s_ma01_modes[channel - 1];
+    xSemaphoreGive(s_status_lock);
+
+    modbus_ma01_mode_t next = (modbus_ma01_mode_t)((current + 1U) % 3U);
+    return modbus_service_ma01_set_mode(channel, next);
+}
+
+esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+
+    uint8_t slave = modbus_service_ma01_get_slave();
+    if (!slave) return ESP_ERR_INVALID_STATE;
+
+    esp_err_t err = modbus_service_write_single_register(
+        slave,
+        (uint16_t)(MODBUS_MA01_PULSE_BASE + channel - 1),
+        pulse_ms);
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    s_ma01_pulse_ms[channel - 1] = pulse_ms;
+    s_ma01_config_valid = true;
+    xSemaphoreGive(s_status_lock);
+    return ESP_OK;
 }
 
 static void eid041_poll_task(void *arg)
@@ -535,6 +767,20 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
     } else if (strcmp(binding, "modbus.ma01.state") == 0) {
         if (!s_ma01_slave) strlcpy(out, "NO ADDR", out_len);
         else strlcpy(out, s_ma01_online ? "ONLINE" : "NOT READ", out_len);
+    } else if (strcmp(binding, "modbus.ma01.address") == 0) {
+        if (s_ma01_slave) snprintf(out, out_len, "%u", (unsigned)s_ma01_slave);
+        else strlcpy(out, "--", out_len);
+    } else if (strncmp(binding, "modbus.ma01.summary", 20) == 0 &&
+               binding[20] >= '1' && binding[20] <= '8' && binding[21] == '\0') {
+        unsigned channel = (unsigned)(binding[20] - '1');
+        const char *state = s_ma01_online ? (s_ma01_coils[channel] ? "ON" : "OFF") : "--";
+        const char *mode = "?";
+        if (s_ma01_config_valid) {
+            if (s_ma01_modes[channel] == MODBUS_MA01_MODE_LEVEL) mode = "LEVEL";
+            else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_PULSE) mode = "PULSE";
+            else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_FOLLOW) mode = "FOLLOW";
+        }
+        snprintf(out, out_len, "%s | %s", state, mode);
     } else if (strncmp(binding, "modbus.ma01.do", 14) == 0 &&
                binding[14] >= '1' && binding[14] <= '8' && binding[15] == '\0') {
         unsigned channel = (unsigned)(binding[14] - '1');
