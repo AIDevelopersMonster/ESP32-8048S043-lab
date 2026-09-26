@@ -2,13 +2,18 @@
   "schema": 1,
   "id": "modbus-controller",
   "name": "Modbus Controller",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "widget-package",
   "entrypoints": [
     {
       "id": "sensor",
       "name": "Modbus T/RH Monitor",
       "file": "sensor.json"
+    },
+    {
+      "id": "relay",
+      "name": "MA01 8DO Relay Controller",
+      "file": "relay.json"
     }
   ],
   "requires": {
