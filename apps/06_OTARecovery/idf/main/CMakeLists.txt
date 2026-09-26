@@ -143,6 +143,7 @@ idf_component_register(
         "metric_carousel.c"
         "widget_runtime.c"
         "serial_service.c"
+        "command_service.c"
         "modbus_service.c"
         "network_manager.c"
         "time_service.c"
