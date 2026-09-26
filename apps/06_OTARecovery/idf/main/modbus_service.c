@@ -591,9 +591,12 @@ esp_err_t modbus_service_ma01_set_mode(uint8_t channel, modbus_ma01_mode_t mode)
 
     xSemaphoreTake(s_status_lock, portMAX_DELAY);
     s_ma01_modes[channel - 1] = (uint16_t)mode;
-    s_ma01_config_valid = true;
     xSemaphoreGive(s_status_lock);
-    return ESP_OK;
+
+    /* A single FC06 write must not mark the whole 8-channel configuration valid.
+     * Re-read both mode and pulse tables so subsequent ACTION semantics are based
+     * on the actual module configuration. */
+    return modbus_service_ma01_refresh_config();
 }
 
 esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
@@ -626,9 +629,10 @@ esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms)
 
     xSemaphoreTake(s_status_lock, portMAX_DELAY);
     s_ma01_pulse_ms[channel - 1] = pulse_ms;
-    s_ma01_config_valid = true;
     xSemaphoreGive(s_status_lock);
-    return ESP_OK;
+
+    /* Keep cached mode/pulse data coherent after an isolated register write. */
+    return modbus_service_ma01_refresh_config();
 }
 
 static void eid041_poll_task(void *arg)
