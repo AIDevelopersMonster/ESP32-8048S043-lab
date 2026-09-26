@@ -45,12 +45,12 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
 
     if (strcmp(line, "MA01 INFO") == 0) {
         uint16_t model = 0, fw = 0;
-        esp_err_t err = modbus_service_read_registers(32, 0x03, 0x07D0, 1, &model, 1);
+        esp_err_t err = modbus_service_read_registers(16, 0x03, 0x07D0, 1, &model, 1);
         if (err != ESP_OK) {
             snprintf(response, response_len, "ERR MA01 INFO model %s", esp_err_to_name(err));
             return err;
         }
-        err = modbus_service_read_registers(32, 0x03, 0x07DC, 1, &fw, 1);
+        err = modbus_service_read_registers(16, 0x03, 0x07DC, 1, &fw, 1);
         if (err != ESP_OK) {
             snprintf(response, response_len, "ERR MA01 INFO firmware %s", esp_err_to_name(err));
             return err;
