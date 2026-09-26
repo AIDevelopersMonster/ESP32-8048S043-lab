@@ -444,20 +444,36 @@ static void widget_action_cb(lv_event_t *e)
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
     } else if (strcmp(action, "modbus_ma01_refresh") == 0) {
-        char response[256] = {0};
-        esp_err_t err = command_service_execute("MA01 READ", response, sizeof(response));
-        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 REFRESH rejected: %s | %s",
-                                    esp_err_to_name(err), response);
-        else ESP_LOGI(TAG, "MA01 REFRESH: %s", response);
+        esp_err_t cfg_err = modbus_service_ma01_refresh_config();
+        esp_err_t state_err = modbus_service_ma01_refresh();
+        if (cfg_err != ESP_OK || state_err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 REFRESH rejected: config=%s state=%s",
+                     esp_err_to_name(cfg_err), esp_err_to_name(state_err));
+        }
+    } else if (strncmp(action, "modbus_ma01_action_", 19) == 0 &&
+               action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
+        uint8_t channel = (uint8_t)(action[19] - '0');
+        esp_err_t err = modbus_service_ma01_action(channel);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 DO%u action rejected: %s",
+                     (unsigned)channel, esp_err_to_name(err));
+        }
+    } else if (strncmp(action, "modbus_ma01_mode_", 17) == 0 &&
+               action[17] >= '1' && action[17] <= '8' && action[18] == '\0') {
+        uint8_t channel = (uint8_t)(action[17] - '0');
+        esp_err_t err = modbus_service_ma01_cycle_mode(channel);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 DO%u mode change rejected: %s",
+                     (unsigned)channel, esp_err_to_name(err));
+        }
     } else if (strncmp(action, "modbus_ma01_toggle_", 19) == 0 &&
                action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
         uint8_t channel = (uint8_t)(action[19] - '0');
-        char command[32], response[256] = {0};
-        snprintf(command, sizeof(command), "MA01 DO%u TOGGLE", (unsigned)channel);
-        esp_err_t err = command_service_execute(command, response, sizeof(response));
-        if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s | %s",
-                                    (unsigned)channel, esp_err_to_name(err), response);
-        else ESP_LOGI(TAG, "MA01 DO%u: %s", (unsigned)channel, response);
+        esp_err_t err = modbus_service_ma01_toggle(channel);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s",
+                     (unsigned)channel, esp_err_to_name(err));
+        }
     }
 }
 
