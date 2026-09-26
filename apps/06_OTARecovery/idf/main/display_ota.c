@@ -443,6 +443,23 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "modbus_ma01_open_home") == 0 ||
+               strcmp(action, "modbus_ma01_open_work") == 0 ||
+               strcmp(action, "modbus_ma01_open_settings") == 0) {
+        const char *path = strcmp(action, "modbus_ma01_open_work") == 0
+                               ? "widgets/modbus-controller/relay-work.json"
+                           : strcmp(action, "modbus_ma01_open_settings") == 0
+                               ? "widgets/modbus-controller/relay-settings.json"
+                               : "widgets/modbus-controller/relay.json";
+        char reason[160] = {0};
+        esp_err_t err = sd_manager_run_widget(path, reason, sizeof(reason));
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 view switch rejected: %s | %s",
+                     esp_err_to_name(err), reason);
+        } else {
+            s_widget_generation = widget_runtime_generation();
+            render_widget();
+        }
     } else if (strcmp(action, "modbus_ma01_scan") == 0) {
         char response[256] = {0};
         esp_err_t err = command_service_execute("MA01 SCAN", response, sizeof(response));
