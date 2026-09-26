@@ -181,6 +181,10 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     size_t expected = 5U + byte_count;
     uint8_t response[9] = {0};
 
+    ESP_LOGI(TAG, "FC01 TX slave=%u start=0x%04X count=%u",
+             (unsigned)slave, (unsigned)start_coil, (unsigned)coil_count);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
+
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -202,6 +206,13 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
         if (n > 0) got += (size_t)n;
     }
     xSemaphoreGive(s_bus_lock);
+
+    if (got > 0) {
+        ESP_LOGI(TAG, "FC01 RX got=%u expected=%u", (unsigned)got, (unsigned)expected);
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_INFO);
+    } else {
+        ESP_LOGW(TAG, "FC01 RX got=0 expected=%u", (unsigned)expected);
+    }
 
     if (got != expected) { status_error(true, false); return ESP_ERR_TIMEOUT; }
     uint16_t response_crc = (uint16_t)response[expected - 2] | ((uint16_t)response[expected - 1] << 8);
@@ -229,6 +240,10 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on
     request[6] = (uint8_t)(crc & 0xFF); request[7] = (uint8_t)(crc >> 8);
     uint8_t response[8] = {0};
 
+    ESP_LOGI(TAG, "FC05 TX slave=%u coil=0x%04X value=%s",
+             (unsigned)slave, (unsigned)coil, on ? "ON" : "OFF");
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
+
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -242,6 +257,14 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on
     }
     int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
+
+    if (got > 0) {
+        ESP_LOGI(TAG, "FC05 RX got=%d expected=%u", got, (unsigned)sizeof(response));
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_INFO);
+    } else {
+        ESP_LOGW(TAG, "FC05 RX got=0 expected=%u", (unsigned)sizeof(response));
+    }
+
     if (got != (int)sizeof(response)) { status_error(true, false); return ESP_ERR_TIMEOUT; }
     uint16_t response_crc = (uint16_t)response[6] | ((uint16_t)response[7] << 8);
     if (modbus_crc16(response, 6) != response_crc) { status_error(false, true); return ESP_ERR_INVALID_CRC; }
