@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "id": "modbus-ma01-settings",
+  "name": "MA01 Settings",
+  "version": "0.4.0",
+  "background": "#0D1117",
+  "objects": [
+    {"type":"label","x":18,"y":12,"w":310,"h":30,"text":"MA01 / SETTINGS","color":"#F0F6FC"},
+    {"type":"label","x":360,"y":12,"w":130,"h":30,"bind":"modbus.ma01.address","prefix":"ADDR: ","color":"#58A6FF"},
+    {"type":"label","x":500,"y":12,"w":150,"h":30,"bind":"modbus.ma01.state","prefix":"MA01: ","color":"#58A6FF"},
+    {"type":"button","x":660,"y":8,"w":72,"h":34,"text":"HOME","action":"modbus_ma01_open_home"},
+    {"type":"button","x":18,"y":48,"w":170,"h":38,"text":"SEARCH DEVICE","action":"modbus_ma01_scan"},
+    {"type":"button","x":198,"y":48,"w":170,"h":38,"text":"READ CONFIG","action":"modbus_ma01_refresh"},
+    {"type":"button","x":378,"y":48,"w":170,"h":38,"text":"WORK","action":"modbus_ma01_open_work"},
+
+    {"type":"label","x":18,"y":104,"w":165,"h":26,"bind":"modbus.ma01.mode1","prefix":"DO1 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":18,"y":132,"w":165,"h":26,"bind":"modbus.ma01.pulse1","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":18,"y":162,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_1"},
+
+    {"type":"label","x":201,"y":104,"w":165,"h":26,"bind":"modbus.ma01.mode2","prefix":"DO2 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":201,"y":132,"w":165,"h":26,"bind":"modbus.ma01.pulse2","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":201,"y":162,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_2"},
+
+    {"type":"label","x":384,"y":104,"w":165,"h":26,"bind":"modbus.ma01.mode3","prefix":"DO3 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":384,"y":132,"w":165,"h":26,"bind":"modbus.ma01.pulse3","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":384,"y":162,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_3"},
+
+    {"type":"label","x":567,"y":104,"w":165,"h":26,"bind":"modbus.ma01.mode4","prefix":"DO4 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":567,"y":132,"w":165,"h":26,"bind":"modbus.ma01.pulse4","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":567,"y":162,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_4"},
+
+    {"type":"label","x":18,"y":224,"w":165,"h":26,"bind":"modbus.ma01.mode5","prefix":"DO5 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":18,"y":252,"w":165,"h":26,"bind":"modbus.ma01.pulse5","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":18,"y":282,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_5"},
+
+    {"type":"label","x":201,"y":224,"w":165,"h":26,"bind":"modbus.ma01.mode6","prefix":"DO6 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":201,"y":252,"w":165,"h":26,"bind":"modbus.ma01.pulse6","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":201,"y":282,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_6"},
+
+    {"type":"label","x":384,"y":224,"w":165,"h":26,"bind":"modbus.ma01.mode7","prefix":"DO7 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":384,"y":252,"w":165,"h":26,"bind":"modbus.ma01.pulse7","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":384,"y":282,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_7"},
+
+    {"type":"label","x":567,"y":224,"w":165,"h":26,"bind":"modbus.ma01.mode8","prefix":"DO8 MODE: ","color":"#F0F6FC"},
+    {"type":"label","x":567,"y":252,"w":165,"h":26,"bind":"modbus.ma01.pulse8","prefix":"PULSE: ","color":"#8B949E"},
+    {"type":"button","x":567,"y":282,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_8"},
+
+    {"type":"label","x":18,"y":328,"w":714,"h":26,"text":"SETTINGS view: discovery and relay configuration. Pulse width is shown here.","color":"#8B949E"}
+  ]
+}
