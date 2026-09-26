@@ -413,9 +413,9 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
                  (unsigned)(status.humidity_tenths_rh % 10));
     } else if (strcmp(binding, "modbus.ma01.state") == 0) {
         strlcpy(out, s_ma01_online ? "ONLINE" : "NOT READ", out_len);
-    } else if (strncmp(binding, "modbus.ma01.do", 15) == 0 &&
-               binding[15] >= '1' && binding[15] <= '8' && binding[16] == '\0') {
-        unsigned channel = (unsigned)(binding[15] - '1');
+    } else if (strncmp(binding, "modbus.ma01.do", 14) == 0 &&
+               binding[14] >= '1' && binding[14] <= '8' && binding[15] == '\0') {
+        unsigned channel = (unsigned)(binding[14] - '1');
         strlcpy(out, s_ma01_online ? (s_ma01_coils[channel] ? "ON" : "OFF") : "--", out_len);
     } else {
         strlcpy(out, "unsupported", out_len);
