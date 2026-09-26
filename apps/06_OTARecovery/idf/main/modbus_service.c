@@ -20,6 +20,11 @@
 #define MODBUS_TIMEOUT_MS        250
 #define MODBUS_POLL_MS           5000
 #define MODBUS_EID041_SLAVE      1
+#define MODBUS_MA01_SLAVE         32
+#define MODBUS_MA01_COILS         8
+
+static bool s_ma01_coils[MODBUS_MA01_COILS];
+static bool s_ma01_online;
 
 static SemaphoreHandle_t s_bus_lock;
 static SemaphoreHandle_t s_status_lock;
@@ -151,6 +156,134 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
     return ESP_OK;
 }
 
+
+esp_err_t modbus_service_read_coils(uint8_t slave,
+                                    uint16_t start_coil,
+                                    uint16_t coil_count,
+                                    bool *out_coils,
+                                    size_t out_count)
+{
+    if (!s_bus_lock || !s_status_lock) return ESP_ERR_INVALID_STATE;
+    if (!slave || !coil_count || coil_count > 32 || !out_coils || out_count < coil_count) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    uint8_t request[8] = {
+        slave, 0x01,
+        (uint8_t)(start_coil >> 8), (uint8_t)(start_coil & 0xFF),
+        (uint8_t)(coil_count >> 8), (uint8_t)(coil_count & 0xFF), 0, 0
+    };
+    uint16_t crc = modbus_crc16(request, 6);
+    request[6] = (uint8_t)(crc & 0xFF);
+    request[7] = (uint8_t)(crc >> 8);
+
+    size_t byte_count = (coil_count + 7U) / 8U;
+    size_t expected = 5U + byte_count;
+    uint8_t response[9] = {0};
+
+    xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    uart_flush_input(MODBUS_UART);
+    int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
+    if (written != (int)sizeof(request)) {
+        xSemaphoreGive(s_bus_lock); status_error(false, false); return ESP_FAIL;
+    }
+    status_frame_tx();
+    esp_err_t wait_err = uart_wait_tx_done(MODBUS_UART, pdMS_TO_TICKS(100));
+    if (wait_err != ESP_OK) {
+        xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
+    }
+
+    size_t got = 0;
+    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(MODBUS_TIMEOUT_MS);
+    while (got < expected) {
+        TickType_t now = xTaskGetTickCount();
+        if ((int32_t)(deadline - now) <= 0) break;
+        int n = uart_read_bytes(MODBUS_UART, response + got, expected - got, deadline - now);
+        if (n > 0) got += (size_t)n;
+    }
+    xSemaphoreGive(s_bus_lock);
+
+    if (got != expected) { status_error(true, false); return ESP_ERR_TIMEOUT; }
+    uint16_t response_crc = (uint16_t)response[expected - 2] | ((uint16_t)response[expected - 1] << 8);
+    if (modbus_crc16(response, expected - 2) != response_crc) {
+        status_error(false, true); return ESP_ERR_INVALID_CRC;
+    }
+    if (response[0] != slave || response[1] != 0x01 || response[2] != byte_count) {
+        status_error(false, false); return ESP_ERR_INVALID_RESPONSE;
+    }
+    for (uint16_t i = 0; i < coil_count; ++i) out_coils[i] = (response[3 + i / 8] & (1U << (i % 8))) != 0;
+    status_frame_rx();
+    return ESP_OK;
+}
+
+esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on)
+{
+    if (!s_bus_lock || !s_status_lock || !slave) return ESP_ERR_INVALID_STATE;
+    uint16_t value = on ? 0xFF00 : 0x0000;
+    uint8_t request[8] = {
+        slave, 0x05,
+        (uint8_t)(coil >> 8), (uint8_t)(coil & 0xFF),
+        (uint8_t)(value >> 8), (uint8_t)(value & 0xFF), 0, 0
+    };
+    uint16_t crc = modbus_crc16(request, 6);
+    request[6] = (uint8_t)(crc & 0xFF); request[7] = (uint8_t)(crc >> 8);
+    uint8_t response[8] = {0};
+
+    xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    uart_flush_input(MODBUS_UART);
+    int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
+    if (written != (int)sizeof(request)) {
+        xSemaphoreGive(s_bus_lock); status_error(false, false); return ESP_FAIL;
+    }
+    status_frame_tx();
+    esp_err_t wait_err = uart_wait_tx_done(MODBUS_UART, pdMS_TO_TICKS(100));
+    if (wait_err != ESP_OK) {
+        xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
+    }
+    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    xSemaphoreGive(s_bus_lock);
+    if (got != (int)sizeof(response)) { status_error(true, false); return ESP_ERR_TIMEOUT; }
+    uint16_t response_crc = (uint16_t)response[6] | ((uint16_t)response[7] << 8);
+    if (modbus_crc16(response, 6) != response_crc) { status_error(false, true); return ESP_ERR_INVALID_CRC; }
+    if (memcmp(request, response, 6) != 0) { status_error(false, false); return ESP_ERR_INVALID_RESPONSE; }
+    status_frame_rx();
+    return ESP_OK;
+}
+
+esp_err_t modbus_service_ma01_refresh(void)
+{
+    bool coils[MODBUS_MA01_COILS] = {0};
+    esp_err_t err = modbus_service_read_coils(MODBUS_MA01_SLAVE, 0, MODBUS_MA01_COILS,
+                                              coils, MODBUS_MA01_COILS);
+    if (err == ESP_OK) {
+        xSemaphoreTake(s_status_lock, portMAX_DELAY);
+        memcpy(s_ma01_coils, coils, sizeof(s_ma01_coils));
+        s_ma01_online = true;
+        xSemaphoreGive(s_status_lock);
+    } else {
+        xSemaphoreTake(s_status_lock, portMAX_DELAY);
+        s_ma01_online = false;
+        xSemaphoreGive(s_status_lock);
+    }
+    return err;
+}
+
+esp_err_t modbus_service_ma01_toggle(uint8_t channel)
+{
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+    esp_err_t err = modbus_service_ma01_refresh();
+    if (err != ESP_OK) return err;
+
+    bool next;
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    next = !s_ma01_coils[channel - 1];
+    xSemaphoreGive(s_status_lock);
+
+    err = modbus_service_write_single_coil(MODBUS_MA01_SLAVE, (uint16_t)(channel - 1), next);
+    if (err != ESP_OK) return err;
+    return modbus_service_ma01_refresh();
+}
+
 static void eid041_poll_task(void *arg)
 {
     (void)arg;
@@ -278,6 +411,12 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
         snprintf(out, out_len, "%u.%u",
                  (unsigned)(status.humidity_tenths_rh / 10),
                  (unsigned)(status.humidity_tenths_rh % 10));
+    } else if (strcmp(binding, "modbus.ma01.state") == 0) {
+        strlcpy(out, s_ma01_online ? "ONLINE" : "NOT READ", out_len);
+    } else if (strncmp(binding, "modbus.ma01.do", 15) == 0 &&
+               binding[15] >= '1' && binding[15] <= '8' && binding[16] == '\0') {
+        unsigned channel = (unsigned)(binding[15] - '1');
+        strlcpy(out, s_ma01_online ? (s_ma01_coils[channel] ? "ON" : "OFF") : "--", out_len);
     } else {
         strlcpy(out, "unsupported", out_len);
     }
