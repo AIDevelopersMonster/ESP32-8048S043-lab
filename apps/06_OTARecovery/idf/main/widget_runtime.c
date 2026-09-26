@@ -93,6 +93,8 @@ static bool binding_allowed(const char *binding)
         "modbus.state", "modbus.bus", "modbus.tx_count", "modbus.rx_count",
         "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
         "modbus.sensor1.temperature", "modbus.sensor1.humidity",
+        "modbus.ma01.state", "modbus.ma01.do1", "modbus.ma01.do2", "modbus.ma01.do3",
+        "modbus.ma01.do4", "modbus.ma01.do5", "modbus.ma01.do6", "modbus.ma01.do7", "modbus.ma01.do8",
         "temperature.value", "humidity.value",
     };
     for (size_t i = 0; i < sizeof(allowed) / sizeof(allowed[0]); ++i) {
@@ -128,7 +130,16 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_ending_crlf") == 0 ||
                       strcmp(action, "serial_mode_ascii") == 0 ||
                       strcmp(action, "serial_mode_hex") == 0 ||
-                      strcmp(action, "serial_clear") == 0);
+                      strcmp(action, "serial_clear") == 0 ||
+                      strcmp(action, "modbus_ma01_refresh") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_1") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_2") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_3") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_4") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_5") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_6") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_7") == 0 ||
+                      strcmp(action, "modbus_ma01_toggle_8") == 0);
 }
 
 static bool parse_widget(const char *json, size_t len, widget_model_t *out,
