@@ -10,6 +10,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "command_service.h"
 
 #define TAG "SERIAL_SERVICE"
 #define SERIAL_RX_TEXT_BYTES 512
@@ -71,7 +72,10 @@ static void append_rx_char(char ch)
 static void serial_rx_task(void *arg)
 {
     (void)arg;
-    ESP_LOGI(TAG, "stdin RX task started");
+    ESP_LOGI(TAG, "stdin RX task started; service commands enabled");
+
+    char line[128] = {0};
+    size_t line_len = 0;
 
     for (;;) {
         int ch = fgetc(stdin);
@@ -80,7 +84,32 @@ static void serial_rx_task(void *arg)
             vTaskDelay(pdMS_TO_TICKS(10));
             continue;
         }
+
         append_rx_char((char)ch);
+
+        if (ch == '\r' || ch == '\n') {
+            if (line_len == 0) continue;
+
+            line[line_len] = '\0';
+            char response[256] = {0};
+            ESP_LOGI(TAG, "CMD RX: %s", line);
+            esp_err_t err = command_service_execute(line, response, sizeof(response));
+            printf("\r\n%s\r\n", response[0] ? response : esp_err_to_name(err));
+            fflush(stdout);
+
+            line_len = 0;
+            line[0] = '\0';
+            continue;
+        }
+
+        if (ch == 0x08 || ch == 0x7F) {
+            if (line_len > 0) line_len--;
+            continue;
+        }
+
+        if (isprint((unsigned char)ch) && line_len + 1 < sizeof(line)) {
+            line[line_len++] = (char)ch;
+        }
     }
 }
 
