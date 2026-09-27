@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-ma01-settings",
   "name": "MA01 Settings",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "background": "#0D1117",
   "objects": [
     {"type":"label","x":18,"y":12,"w":310,"h":30,"text":"MA01 / SETTINGS","color":"#F0F6FC"},
@@ -45,6 +45,6 @@
     {"type":"label","x":567,"y":252,"w":165,"h":26,"bind":"modbus.ma01.pulse8","prefix":"PULSE: ","color":"#8B949E"},
     {"type":"button","x":567,"y":282,"w":165,"h":32,"text":"CHANGE MODE","action":"modbus_ma01_mode_8"},
 
-    {"type":"label","x":18,"y":328,"w":714,"h":26,"text":"SETTINGS view: discovery and relay configuration. Pulse width is shown here.","color":"#8B949E"}
+    {"type":"label","x":18,"y":328,"w":714,"h":26,"text":"SETTINGS view: discovery and relay configuration. Relay modes: LEVEL / PULSE.","color":"#8B949E"}
   ]
 }
