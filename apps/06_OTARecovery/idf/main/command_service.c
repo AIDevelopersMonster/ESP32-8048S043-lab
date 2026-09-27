@@ -38,7 +38,7 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
 
     if (strcmp(line, "HELP") == 0) {
         strlcpy(response,
-                "OK commands: HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE|FOLLOW>|PULSEMS <0..65535>",
+                "OK commands: HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>",
                 response_len);
         return ESP_OK;
     }
@@ -145,13 +145,39 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
         char *end = NULL;
         long channel = strtol(p, &end, 10);
         if (channel < 1 || channel > 8 || !end || *end != ' ') {
-            strlcpy(response, "ERR syntax: MA01 DO<n> ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE|FOLLOW>|PULSEMS <0..65535>", response_len);
+            strlcpy(response, "ERR syntax: MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>", response_len);
             return ESP_ERR_INVALID_ARG;
         }
         const char *op = end + 1;
         esp_err_t err;
 
-        if (strcmp(op, "ACTION") == 0) {
+        if (strcmp(op, "INFO") == 0) {
+            err = modbus_service_ma01_refresh_config();
+            if (err != ESP_OK) {
+                snprintf(response, response_len, "ERR MA01 DO%ld INFO CONFIG %s", channel, esp_err_to_name(err));
+                return err;
+            }
+            err = modbus_service_ma01_refresh();
+            if (err != ESP_OK) {
+                snprintf(response, response_len, "ERR MA01 DO%ld INFO STATE %s", channel, esp_err_to_name(err));
+                return err;
+            }
+
+            char state_binding[24], mode_binding[24], pulse_binding[24];
+            char state[8], mode[12], pulse[24];
+            snprintf(state_binding, sizeof(state_binding), "modbus.ma01.do%ld", channel);
+            snprintf(mode_binding, sizeof(mode_binding), "modbus.ma01.mode%ld", channel);
+            snprintf(pulse_binding, sizeof(pulse_binding), "modbus.ma01.pulse%ld", channel);
+            modbus_service_format_binding(state_binding, state, sizeof(state));
+            modbus_service_format_binding(mode_binding, mode, sizeof(mode));
+            modbus_service_format_binding(pulse_binding, pulse, sizeof(pulse));
+            unsigned long pulse_ms = strtoul(pulse, NULL, 10);
+
+            snprintf(response, response_len,
+                     "OK MA01 DO%ld STATE=%s MODE=%s PULSEMS=%lu",
+                     channel, state, mode, pulse_ms);
+            return ESP_OK;
+        } else if (strcmp(op, "ACTION") == 0) {
             err = modbus_service_ma01_action((uint8_t)channel);
             if (err == ESP_OK) {
                 snprintf(response, response_len, "OK MA01 DO%ld ACTION", channel);
@@ -168,9 +194,8 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
             modbus_ma01_mode_t mode;
             if (strcmp(mode_text, "LEVEL") == 0) mode = MODBUS_MA01_MODE_LEVEL;
             else if (strcmp(mode_text, "PULSE") == 0) mode = MODBUS_MA01_MODE_PULSE;
-            else if (strcmp(mode_text, "FOLLOW") == 0) mode = MODBUS_MA01_MODE_FOLLOW;
             else {
-                strlcpy(response, "ERR syntax: MA01 DO<n> MODE LEVEL|PULSE|FOLLOW", response_len);
+                strlcpy(response, "ERR syntax: MA01 DO<n> MODE LEVEL|PULSE", response_len);
                 return ESP_ERR_INVALID_ARG;
             }
             err = modbus_service_ma01_set_mode((uint8_t)channel, mode);
@@ -191,7 +216,7 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
                 return ESP_OK;
             }
         } else {
-            strlcpy(response, "ERR syntax: MA01 DO<n> ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE|FOLLOW>|PULSEMS <0..65535>", response_len);
+            strlcpy(response, "ERR syntax: MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>", response_len);
             return ESP_ERR_INVALID_ARG;
         }
 
