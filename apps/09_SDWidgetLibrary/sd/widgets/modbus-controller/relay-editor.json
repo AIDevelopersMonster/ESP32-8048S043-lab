@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "modbus-ma01-editor",
+  "name": "MA01 Channel Editor",
+  "version": "0.5.0",
+  "background": "#0D1117",
+  "objects": [
+    {"type":"label","x":18,"y":12,"w":300,"h":30,"text":"MA01 / CHANNEL EDITOR","color":"#F0F6FC"},
+    {"type":"label","x":350,"y":12,"w":125,"h":30,"bind":"modbus.ma01.address","prefix":"ADDR: ","color":"#58A6FF"},
+    {"type":"label","x":485,"y":12,"w":155,"h":30,"bind":"modbus.ma01.state","prefix":"MA01: ","color":"#58A6FF"},
+    {"type":"button","x":650,"y":8,"w":82,"h":36,"text":"BACK","action":"modbus_ma01_open_settings"},
+
+    {"type":"label","x":24,"y":66,"w":220,"h":38,"bind":"modbus.ma01.selected_channel","prefix":"CHANNEL: ","color":"#F0F6FC"},
+    {"type":"label","x":270,"y":66,"w":220,"h":38,"bind":"modbus.ma01.selected_state","prefix":"STATE: ","color":"#F0F6FC"},
+    {"type":"button","x":560,"y":60,"w":172,"h":42,"text":"READ","action":"modbus_ma01_refresh"},
+
+    {"type":"label","x":24,"y":126,"w":300,"h":32,"bind":"modbus.ma01.selected_mode","prefix":"MODE: ","color":"#F0F6FC"},
+    {"type":"button","x":24,"y":166,"w":220,"h":54,"text":"LEVEL","action":"modbus_ma01_selected_level"},
+    {"type":"button","x":264,"y":166,"w":220,"h":54,"text":"PULSE","action":"modbus_ma01_selected_pulse"},
+
+    {"type":"label","x":24,"y":246,"w":360,"h":32,"bind":"modbus.ma01.selected_pulse","prefix":"PULSE TIME: ","color":"#F0F6FC"},
+    {"type":"button","x":24,"y":290,"w":155,"h":52,"text":"-1000 ms","action":"modbus_ma01_pulse_m1000"},
+    {"type":"button","x":193,"y":290,"w":155,"h":52,"text":"-100 ms","action":"modbus_ma01_pulse_m100"},
+    {"type":"button","x":362,"y":290,"w":155,"h":52,"text":"+100 ms","action":"modbus_ma01_pulse_p100"},
+    {"type":"button","x":531,"y":290,"w":155,"h":52,"text":"+1000 ms","action":"modbus_ma01_pulse_p1000"}
+  ]
+}
