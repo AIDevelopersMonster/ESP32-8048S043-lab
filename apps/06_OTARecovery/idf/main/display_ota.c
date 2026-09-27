@@ -9,6 +9,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "driver/gpio.h"
 #include "driver/i2c_master.h"
 #include "esp_err.h"
@@ -43,6 +44,9 @@
 #define APP_UI_TASK_STACK_SIZE 16384
 #define APP_UI_TASK_PRIORITY 9
 #define APP_UI_TASK_CORE 1
+#define WIDGET_JOB_TASK_STACK_SIZE 4096
+#define WIDGET_JOB_TASK_PRIORITY 5
+#define WIDGET_JOB_QUEUE_LEN 8
 #define LCD_PIN_BL GPIO_NUM_2
 #define LCD_PIN_HSYNC GPIO_NUM_39
 #define LCD_PIN_VSYNC GPIO_NUM_41
@@ -81,6 +85,31 @@ typedef struct {
     const widget_object_t *source;
 } keyboard_view_t;
 
+typedef enum {
+    WIDGET_JOB_MA01_SCAN = 1,
+    WIDGET_JOB_MA01_REFRESH,
+    WIDGET_JOB_MA01_ACTION,
+    WIDGET_JOB_MA01_MODE,
+    WIDGET_JOB_MA01_TOGGLE,
+    WIDGET_JOB_MA01_SELECTED_LEVEL,
+    WIDGET_JOB_MA01_SELECTED_PULSE,
+    WIDGET_JOB_MA01_PULSE_ADJUST,
+} widget_job_kind_t;
+
+typedef struct {
+    widget_job_kind_t kind;
+    uint8_t channel;
+    int32_t value;
+} widget_job_t;
+
+typedef enum {
+    MA01_VIEW_NONE = 0,
+    MA01_VIEW_HOME,
+    MA01_VIEW_WORK,
+    MA01_VIEW_SETTINGS,
+    MA01_VIEW_EDITOR,
+} ma01_view_t;
+
 static esp_lcd_panel_handle_t s_panel;
 static i2c_master_bus_handle_t s_i2c_bus;
 static esp_lcd_panel_io_handle_t s_touch_io;
@@ -111,6 +140,8 @@ static bool s_chart_force_refresh = true;
 static uint32_t s_widget_generation;
 static bool s_first_refresh = true;
 static bool s_sd_packages_scanned;
+static QueueHandle_t s_widget_job_queue;
+static ma01_view_t s_pending_ma01_view = MA01_VIEW_NONE;
 
 static void render_widget(void);
 
@@ -374,6 +405,67 @@ static void sd_subscribers_cb(lv_event_t *e)
         sd_run_widget("widgets/youtube/subscribers.json", "Subscribers");
 }
 
+static void queue_widget_job(widget_job_kind_t kind, uint8_t channel, int32_t value)
+{
+    if (!s_widget_job_queue) {
+        ESP_LOGW(TAG, "Widget worker unavailable");
+        return;
+    }
+    widget_job_t job = {.kind = kind, .channel = channel, .value = value};
+    if (xQueueSend(s_widget_job_queue, &job, 0) != pdTRUE) {
+        ESP_LOGW(TAG, "Widget worker busy; action ignored");
+    }
+}
+
+static void widget_job_task(void *arg)
+{
+    (void)arg;
+    widget_job_t job;
+    for (;;) {
+        if (xQueueReceive(s_widget_job_queue, &job, portMAX_DELAY) != pdTRUE) continue;
+
+        if (job.kind == WIDGET_JOB_MA01_SCAN) {
+            char response[256] = {0};
+            esp_err_t err = command_service_execute("MA01 SCAN", response, sizeof(response));
+            if (err != ESP_OK) {
+                ESP_LOGW(TAG, "MA01 SCAN rejected: %s | %s", esp_err_to_name(err), response);
+            } else {
+                ESP_LOGI(TAG, "MA01 SCAN: %s", response);
+                (void)modbus_service_ma01_refresh_config();
+                (void)modbus_service_ma01_refresh();
+            }
+        } else if (job.kind == WIDGET_JOB_MA01_REFRESH) {
+            esp_err_t cfg_err = modbus_service_ma01_refresh_config();
+            esp_err_t state_err = modbus_service_ma01_refresh();
+            if (cfg_err != ESP_OK || state_err != ESP_OK) {
+                ESP_LOGW(TAG, "MA01 REFRESH rejected: config=%s state=%s",
+                         esp_err_to_name(cfg_err), esp_err_to_name(state_err));
+            }
+        } else if (job.kind == WIDGET_JOB_MA01_ACTION) {
+            esp_err_t err = modbus_service_ma01_action(job.channel);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u action rejected: %s",
+                                        (unsigned)job.channel, esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_MA01_MODE) {
+            esp_err_t err = modbus_service_ma01_cycle_mode(job.channel);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u mode rejected: %s",
+                                        (unsigned)job.channel, esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_MA01_TOGGLE) {
+            esp_err_t err = modbus_service_ma01_toggle(job.channel);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s",
+                                        (unsigned)job.channel, esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_MA01_SELECTED_LEVEL) {
+            esp_err_t err = modbus_service_ma01_set_selected_mode(MODBUS_MA01_MODE_LEVEL);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 selected LEVEL rejected: %s", esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_MA01_SELECTED_PULSE) {
+            esp_err_t err = modbus_service_ma01_set_selected_mode(MODBUS_MA01_MODE_PULSE);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 selected PULSE rejected: %s", esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_MA01_PULSE_ADJUST) {
+            esp_err_t err = modbus_service_ma01_adjust_selected_pulse(job.value);
+            if (err != ESP_OK) ESP_LOGW(TAG, "MA01 pulse adjust rejected: %s", esp_err_to_name(err));
+        }
+    }
+}
+
 static void widget_action_cb(lv_event_t *e)
 {
     if (lv_event_get_code(e) != LV_EVENT_CLICKED) return;
@@ -443,64 +535,43 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
-    } else if (strcmp(action, "modbus_ma01_open_home") == 0 ||
-               strcmp(action, "modbus_ma01_open_work") == 0 ||
-               strcmp(action, "modbus_ma01_open_settings") == 0) {
-        const char *path = strcmp(action, "modbus_ma01_open_work") == 0
-                               ? "widgets/modbus-controller/relay-work.json"
-                           : strcmp(action, "modbus_ma01_open_settings") == 0
-                               ? "widgets/modbus-controller/relay-settings.json"
-                               : "widgets/modbus-controller/relay.json";
-        char reason[160] = {0};
-        esp_err_t err = sd_manager_run_widget(path, reason, sizeof(reason));
-        if (err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 view switch rejected: %s | %s",
-                     esp_err_to_name(err), reason);
-        } else {
-            s_widget_generation = widget_runtime_generation();
-            render_widget();
-        }
+    } else if (strcmp(action, "modbus_ma01_open_home") == 0) {
+        s_pending_ma01_view = MA01_VIEW_HOME;
+    } else if (strcmp(action, "modbus_ma01_open_work") == 0) {
+        s_pending_ma01_view = MA01_VIEW_WORK;
+    } else if (strcmp(action, "modbus_ma01_open_settings") == 0) {
+        s_pending_ma01_view = MA01_VIEW_SETTINGS;
+    } else if (strcmp(action, "modbus_ma01_open_editor") == 0) {
+        s_pending_ma01_view = MA01_VIEW_EDITOR;
+    } else if (strncmp(action, "modbus_ma01_select_", 19) == 0 &&
+               action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
+        (void)modbus_service_ma01_select_channel((uint8_t)(action[19] - '0'));
+        s_pending_ma01_view = MA01_VIEW_EDITOR;
     } else if (strcmp(action, "modbus_ma01_scan") == 0) {
-        char response[256] = {0};
-        esp_err_t err = command_service_execute("MA01 SCAN", response, sizeof(response));
-        if (err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 SCAN rejected: %s | %s", esp_err_to_name(err), response);
-        } else {
-            ESP_LOGI(TAG, "MA01 SCAN: %s", response);
-            (void)modbus_service_ma01_refresh_config();
-            (void)modbus_service_ma01_refresh();
-        }
+        queue_widget_job(WIDGET_JOB_MA01_SCAN, 0, 0);
     } else if (strcmp(action, "modbus_ma01_refresh") == 0) {
-        esp_err_t cfg_err = modbus_service_ma01_refresh_config();
-        esp_err_t state_err = modbus_service_ma01_refresh();
-        if (cfg_err != ESP_OK || state_err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 REFRESH rejected: config=%s state=%s",
-                     esp_err_to_name(cfg_err), esp_err_to_name(state_err));
-        }
+        queue_widget_job(WIDGET_JOB_MA01_REFRESH, 0, 0);
+    } else if (strcmp(action, "modbus_ma01_selected_level") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_SELECTED_LEVEL, 0, 0);
+    } else if (strcmp(action, "modbus_ma01_selected_pulse") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_SELECTED_PULSE, 0, 0);
+    } else if (strcmp(action, "modbus_ma01_pulse_m1000") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_PULSE_ADJUST, 0, -1000);
+    } else if (strcmp(action, "modbus_ma01_pulse_m100") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_PULSE_ADJUST, 0, -100);
+    } else if (strcmp(action, "modbus_ma01_pulse_p100") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_PULSE_ADJUST, 0, 100);
+    } else if (strcmp(action, "modbus_ma01_pulse_p1000") == 0) {
+        queue_widget_job(WIDGET_JOB_MA01_PULSE_ADJUST, 0, 1000);
     } else if (strncmp(action, "modbus_ma01_action_", 19) == 0 &&
                action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
-        uint8_t channel = (uint8_t)(action[19] - '0');
-        esp_err_t err = modbus_service_ma01_action(channel);
-        if (err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 DO%u action rejected: %s",
-                     (unsigned)channel, esp_err_to_name(err));
-        }
+        queue_widget_job(WIDGET_JOB_MA01_ACTION, (uint8_t)(action[19] - '0'), 0);
     } else if (strncmp(action, "modbus_ma01_mode_", 17) == 0 &&
                action[17] >= '1' && action[17] <= '8' && action[18] == '\0') {
-        uint8_t channel = (uint8_t)(action[17] - '0');
-        esp_err_t err = modbus_service_ma01_cycle_mode(channel);
-        if (err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 DO%u mode change rejected: %s",
-                     (unsigned)channel, esp_err_to_name(err));
-        }
+        queue_widget_job(WIDGET_JOB_MA01_MODE, (uint8_t)(action[17] - '0'), 0);
     } else if (strncmp(action, "modbus_ma01_toggle_", 19) == 0 &&
                action[19] >= '1' && action[19] <= '8' && action[20] == '\0') {
-        uint8_t channel = (uint8_t)(action[19] - '0');
-        esp_err_t err = modbus_service_ma01_toggle(channel);
-        if (err != ESP_OK) {
-            ESP_LOGW(TAG, "MA01 DO%u toggle rejected: %s",
-                     (unsigned)channel, esp_err_to_name(err));
-        }
+        queue_widget_job(WIDGET_JOB_MA01_TOGGLE, (uint8_t)(action[19] - '0'), 0);
     }
 }
 
@@ -967,6 +1038,24 @@ static void refresh_ui(void)
 
     refresh_sd();
 
+    if (s_pending_ma01_view != MA01_VIEW_NONE) {
+        ma01_view_t view = s_pending_ma01_view;
+        s_pending_ma01_view = MA01_VIEW_NONE;
+        const char *path = view == MA01_VIEW_WORK
+                               ? "widgets/modbus-controller/relay-work.json"
+                           : view == MA01_VIEW_SETTINGS
+                               ? "widgets/modbus-controller/relay-settings.json"
+                           : view == MA01_VIEW_EDITOR
+                               ? "widgets/modbus-controller/relay-editor.json"
+                               : "widgets/modbus-controller/relay.json";
+        char reason[160] = {0};
+        esp_err_t err = sd_manager_run_widget(path, reason, sizeof(reason));
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "MA01 view switch rejected: %s | %s",
+                     esp_err_to_name(err), reason);
+        }
+    }
+
     uint32_t generation = widget_runtime_generation();
     if (generation != s_widget_generation) { s_widget_generation = generation; render_widget(); }
     refresh_bindings();
@@ -1035,6 +1124,22 @@ static void ui_task(void *arg)
 
 esp_err_t display_ota_start(void)
 {
+    if (!s_widget_job_queue) {
+        s_widget_job_queue = xQueueCreate(WIDGET_JOB_QUEUE_LEN, sizeof(widget_job_t));
+        if (!s_widget_job_queue) return ESP_ERR_NO_MEM;
+        BaseType_t worker_ok = xTaskCreate(widget_job_task,
+                                           "widget_job",
+                                           WIDGET_JOB_TASK_STACK_SIZE,
+                                           NULL,
+                                           WIDGET_JOB_TASK_PRIORITY,
+                                           NULL);
+        if (worker_ok != pdPASS) {
+            vQueueDelete(s_widget_job_queue);
+            s_widget_job_queue = NULL;
+            return ESP_ERR_NO_MEM;
+        }
+    }
+
     BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app09_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
     return ok==pdPASS?ESP_OK:ESP_ERR_NO_MEM;
 }
