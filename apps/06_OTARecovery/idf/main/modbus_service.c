@@ -610,7 +610,11 @@ esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
     uint16_t current = s_ma01_modes[channel - 1];
     xSemaphoreGive(s_status_lock);
 
-    modbus_ma01_mode_t next = (modbus_ma01_mode_t)((current + 1U) % 3U);
+    /* Relay widget uses only LEVEL and PULSE.
+     * FOLLOW is a device capability, but is not part of normal relay operation.
+     * If a channel was externally configured as FOLLOW, bring it back to LEVEL. */
+    modbus_ma01_mode_t next =
+        current == MODBUS_MA01_MODE_LEVEL ? MODBUS_MA01_MODE_PULSE : MODBUS_MA01_MODE_LEVEL;
     return modbus_service_ma01_set_mode(channel, next);
 }
 
