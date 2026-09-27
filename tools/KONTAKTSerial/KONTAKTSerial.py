@@ -49,6 +49,7 @@ class KontaktSerial(tk.Tk):
         self.rx_bytes = 0
         self.tx_bytes = 0
         self.port_map: dict[str, str] = {}
+        self.service_rx_buffer = ""
 
         self.port_var = tk.StringVar(value=initial_port or "")
         self.baud_var = tk.StringVar(value=str(initial_baud))
@@ -325,7 +326,10 @@ class KontaktSerial(tk.Tk):
                 else:
                     text = item.decode("utf-8", errors="replace")
                 if not self.hex_rx_var.get():
-                    self._update_ma01_from_text(text)
+                    self.service_rx_buffer += text.replace("\r", "")
+                    while "\n" in self.service_rx_buffer:
+                        line, self.service_rx_buffer = self.service_rx_buffer.split("\n", 1)
+                        self._update_ma01_from_text(line)
                 if self.timestamps_var.get():
                     text = self._timestamp_chunks(text)
                 self._append(text, "rx")
