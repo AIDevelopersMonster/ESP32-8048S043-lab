@@ -1,40 +1,38 @@
 # KONTAKTSerial
 
-KONTAKTSerial is the Windows service-terminal and engineering GUI for the ESP32-8048S043 platform.
+KONTAKTSerial is the Windows service-terminal, CLI companion, and engineering GUI for the ESP32-8048S043 technological/service port.
 
-It works through the board's **technological/service UART0** path:
+It works through the board's **UART0 / P1 / CH340C** path:
 
 ```text
 PC -> USB -> CH340C -> UART0/P1 -> ESP32-S3 command/service layer
                                       |
-                                      +-> Modbus provider -> UART1 GPIO17/18 -> TTL/RS485 -> MA01
+                                      +-> MA01 provider -> UART1 GPIO17/18 -> TTL/RS485 -> MA01
 ```
 
-UART0/P1 is **not** the field Modbus port. It is the PC service/diagnostic transport into the common command layer.
+UART0/P1 is a **service transport**, not the field Modbus port.
 
 ## Current status
 
-Version: `0.2.0`
+Version: `0.3.0`
 
 UART0 service link:
 
 ```text
 115200 8N1
 no flow control
-line ending: CRLF recommended
+CRLF recommended
 ```
 
 ## Install
-
-Python 3 is required.
 
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-Tkinter is normally included with standard Windows Python.
+## GUI
 
-## Run
+Run:
 
 ```powershell
 python .\KONTAKTSerial.py
@@ -46,65 +44,87 @@ or:
 run.cmd
 ```
 
-Optional direct port selection:
+Optional explicit port:
 
 ```powershell
 python .\KONTAKTSerial.py --port COM4 --baud 115200
 ```
 
-## CLI access without the GUI
+The GUI opens the technological COM port and sends the same ASCII commands documented below.
 
-Any normal serial terminal can be used against the service UART.
+### GUI MA01 controls
 
-Example with pyserial miniterm:
+The MA01 service panel provides:
+
+- HELP
+- ADDR?
+- SCAN
+- INFO
+- READ
+- CONFIG
+- SET ADDR
+- DO1..DO8 selector
+- per-channel INFO
+- ACTION / ON / OFF / TOGGLE
+- LEVEL / PULSE
+- pulse-time entry in milliseconds
+- SET MODE
+- SET PULSE
+
+The GUI does **not** pre-fill a Modbus slave address. Use ADDR?, SCAN, or enter one explicitly.
+
+When a channel INFO response is received, the GUI updates its mode and pulse-time fields from the device response.
+
+## CLI
+
+Any serial terminal can be used.
+
+### pyserial miniterm
 
 ```powershell
 python -m serial.tools.miniterm COM4 115200
 ```
 
-Use `CRLF` or press Enter in a terminal that sends a line ending.
+Then type commands and press Enter.
 
-### General service commands
+### Basic commands
 
 ```text
 HELP
+MA01 ADDR
+MA01 SCAN
+MA01 INFO
+MA01 READ
+MA01 CONFIG
 ```
 
-Print the currently supported command set.
+### Address
 
-### MA01 address
-
-Read the configured MA01 slave address:
+Read configured address:
 
 ```text
 MA01 ADDR
 ```
 
-Set and persist an address:
+Set and persist address:
 
 ```text
 MA01 ADDR 16
 ```
 
-The address is stored in NVS. It is not hard-coded into the provider.
-
-Search slave addresses and save the detected MA01:
+Search for MA01:
 
 ```text
 MA01 SCAN
 ```
 
-### MA01 identification
+### Device information
 
 ```text
 MA01 INFO
 ```
 
-Reads the MA01 identification registers through the ESP32 Modbus provider.
-
-### MA01 state
-
-Read DO1..DO8:
+### Read all outputs
 
 ```text
 MA01 READ
@@ -116,123 +136,112 @@ Alias:
 MA01 STATUS
 ```
 
-Read relay mode configuration:
+### Read relay configuration
 
 ```text
 MA01 CONFIG
 ```
 
-This reads the configured MA01 channel modes and reports LEVEL / PULSE / FOLLOW state through the provider.
+### Read one channel
 
-### MA01 output control
+Example for DO1:
 
-For channel 1:
+```text
+MA01 DO1 INFO
+```
+
+Expected form:
+
+```text
+OK MA01 DO1 STATE=OFF MODE=PULSE PULSEMS=5000
+```
+
+This is the recommended command for engineering tools that need a compact per-channel state.
+
+### Operate one channel
+
+Mode-aware action:
 
 ```text
 MA01 DO1 ACTION
+```
+
+Explicit output commands:
+
+```text
 MA01 DO1 ON
 MA01 DO1 OFF
 MA01 DO1 TOGGLE
 ```
 
-The same syntax applies to DO1..DO8.
-
-`ACTION` is the preferred mode-aware command:
-
-- LEVEL -> toggle;
-- PULSE -> trigger the pulse;
-- FOLLOW -> direct action is rejected because the channel is externally followed.
-
-### MA01 mode configuration
-
-Set DO1 to pulse mode:
-
-```text
-MA01 DO1 MODE PULSE
-```
-
-Available modes:
+For normal relay operation the supported modes are:
 
 ```text
 LEVEL
 PULSE
-FOLLOW
 ```
 
-Examples:
+Set mode:
 
 ```text
 MA01 DO1 MODE LEVEL
-MA01 DO2 MODE PULSE
-MA01 DO3 MODE FOLLOW
+MA01 DO1 MODE PULSE
 ```
 
-### Pulse width
-
-Set pulse time for a channel:
+Set pulse width:
 
 ```text
 MA01 DO1 PULSEMS 5000
 ```
 
-Valid numeric range exposed by the service command is `0..65535` ms.
+Valid exposed range:
 
-## GUI service panel
+```text
+0..65535 ms
+```
 
-KONTAKTSerial v0.2.0 keeps the normal serial terminal and adds a small **ESP32 service UART0 / MA01** panel.
+The same syntax applies to DO1..DO8.
 
-The panel sends the same ASCII commands listed above through UART0/P1. It does not open the field RS485 port directly.
+## Recommended CLI workflow
 
-Available GUI actions:
-
-- HELP
-- ADDR?
-- SCAN
-- INFO
-- READ
-- CONFIG
-- SET ADDR
-- DO1..DO8 selector
-- ACTION / ON / OFF / TOGGLE
-- LEVEL / PULSE / FOLLOW selector
-- SET MODE
-- pulse-time entry
-- SET PULSE
-
-No MA01 slave address is pre-filled in the GUI. The user can query, scan or enter the address explicitly.
-
-## Typical engineering workflow
+First connection:
 
 ```text
 HELP
 MA01 ADDR
-MA01 INFO
-MA01 CONFIG
-MA01 READ
-MA01 DO1 ACTION
 ```
 
-If the address has not yet been configured:
+If no address is configured:
 
 ```text
 MA01 SCAN
 ```
 
-or set it explicitly:
+Then:
 
 ```text
-MA01 ADDR 16
+MA01 INFO
+MA01 CONFIG
+MA01 READ
+MA01 DO1 INFO
 ```
 
-## Transport separation
+Example engineering changes:
 
-The platform intentionally separates transport from device logic:
+```text
+MA01 DO1 MODE PULSE
+MA01 DO1 PULSEMS 5000
+MA01 DO1 ACTION
+MA01 DO1 INFO
+```
+
+## Architecture
 
 ```text
 HMI ---------+
-UART0/P1 ----+--> command/service layer --> MA01 provider --> Modbus RTU UART1 --> RS485
+UART0/P1 ----+--> command/service layer --> MA01 provider --> UART1/RS485
 Web ---------+
 Bluetooth ---+
 ```
 
-Therefore the same MA01 provider logic can later be called from HMI, service UART, Web/API or Bluetooth without duplicating the Modbus implementation.
+The GUI and CLI use UART0 only as a transport. MA01-specific Modbus logic remains in the provider, so the same command/service layer can later be exposed through HMI, Web/API or Bluetooth.
