@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-ma01-work",
   "name": "MA01 Working Mode",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "background": "#0D1117",
   "objects": [
     {"type":"label","x":18,"y":12,"w":310,"h":30,"text":"MA01 / WORK","color":"#F0F6FC"},
