@@ -27,6 +27,12 @@ SYS | SD | WIDGET
              EID041
 ```
 
+## Video evidence
+
+Bench demonstration of the technological UART0 service path controlling the MA01 relay module while the ESP32-8048S043 HMI shows the current state:
+
+https://youtu.be/d2D-bZdQFHI
+
 ## First acceptance target
 
 - UART1 TX = GPIO17
