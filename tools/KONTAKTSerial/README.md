@@ -77,7 +77,26 @@ When a channel INFO response is received, the GUI updates its mode and pulse-tim
 
 ## CLI
 
-Any serial terminal can be used.
+A dedicated CLI client is included:
+
+```powershell
+python .\KONTAKTSerial_CLI.py --list
+python .\KONTAKTSerial_CLI.py --port COM4
+```
+
+One-shot command mode:
+
+```powershell
+python .\KONTAKTSerial_CLI.py --port COM4 -c "MA01 DO1 INFO"
+```
+
+Windows launcher:
+
+```text
+run_cli.cmd --port COM4
+```
+
+Any normal serial terminal can also be used.
 
 ### pyserial miniterm
 
