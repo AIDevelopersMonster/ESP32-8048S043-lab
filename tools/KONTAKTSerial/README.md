@@ -14,7 +14,7 @@ UART0/P1 is a **service transport**, not the field Modbus port.
 
 ## Current status
 
-Version: `0.3.0`
+Version: `0.3.1`
 
 UART0 service link:
 
@@ -74,6 +74,8 @@ The MA01 service panel provides:
 The GUI does **not** pre-fill a Modbus slave address. Use ADDR?, SCAN, or enter one explicitly.
 
 When a channel INFO response is received, the GUI updates its mode and pulse-time fields from the device response.
+
+Serial responses are buffered until a complete line is received before the GUI parser updates MA01 fields. This avoids partial COM-port chunks causing intermittent parsing failures.
 
 ## CLI
 
