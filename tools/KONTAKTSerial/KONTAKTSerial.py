@@ -21,7 +21,7 @@ except ImportError:
     raise
 
 APP_NAME = "KONTAKTSerial"
-APP_VERSION = "0.3.0"
+APP_VERSION = "0.3.1"
 DEFAULT_BAUD = 115200
 
 
