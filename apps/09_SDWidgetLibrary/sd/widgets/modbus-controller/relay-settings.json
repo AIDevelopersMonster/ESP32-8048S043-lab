@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-ma01-settings",
   "name": "MA01 Settings",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "background": "#0D1117",
   "objects": [
     {"type":"label","x":18,"y":12,"w":310,"h":30,"text":"MA01 / SETTINGS","color":"#F0F6FC"},
