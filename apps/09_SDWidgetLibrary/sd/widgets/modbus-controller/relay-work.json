@@ -2,7 +2,7 @@
   "schema": 1,
   "id": "modbus-ma01-work",
   "name": "MA01 Working Mode",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "background": "#0D1117",
   "objects": [
     {"type":"label","x":18,"y":12,"w":310,"h":30,"text":"MA01 / WORK","color":"#F0F6FC"},
@@ -30,6 +30,6 @@
     {"type":"label","x":567,"y":220,"w":165,"h":26,"bind":"modbus.ma01.summary8","prefix":"DO8  ","color":"#F0F6FC"},
     {"type":"button","x":567,"y":250,"w":165,"h":50,"text":"DO8 ACTION","action":"modbus_ma01_action_8"},
 
-    {"type":"label","x":18,"y":324,"w":714,"h":26,"text":"WORK view: only operational controls. ACTION follows LEVEL/PULSE/FOLLOW mode.","color":"#8B949E"}
+    {"type":"label","x":18,"y":324,"w":714,"h":26,"text":"WORK view: only operational controls. ACTION follows relay mode: LEVEL or PULSE.","color":"#8B949E"}
   ]
 }
