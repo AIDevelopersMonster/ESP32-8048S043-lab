@@ -69,6 +69,8 @@ esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel);
 esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms);
 esp_err_t modbus_service_ma01_select_channel(uint8_t channel);
 uint8_t modbus_service_ma01_get_selected_channel(void);
+esp_err_t modbus_service_ma01_set_selected_mode(modbus_ma01_mode_t mode);
+esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms);
 
 void modbus_service_get_status(modbus_service_status_t *out);
 void modbus_service_format_binding(const char *binding, char *out, size_t out_len);
