@@ -94,6 +94,8 @@ static bool binding_allowed(const char *binding)
         "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
         "modbus.sensor1.temperature", "modbus.sensor1.humidity",
         "modbus.ma01.state", "modbus.ma01.address",
+        "modbus.ma01.selected_channel", "modbus.ma01.selected_mode",
+        "modbus.ma01.selected_pulse", "modbus.ma01.selected_state",
         "modbus.ma01.do1", "modbus.ma01.do2", "modbus.ma01.do3",
         "modbus.ma01.do4", "modbus.ma01.do5", "modbus.ma01.do6", "modbus.ma01.do7", "modbus.ma01.do8",
         "modbus.ma01.summary1", "modbus.ma01.summary2", "modbus.ma01.summary3", "modbus.ma01.summary4",
@@ -143,6 +145,21 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "modbus_ma01_open_home") == 0 ||
                       strcmp(action, "modbus_ma01_open_work") == 0 ||
                       strcmp(action, "modbus_ma01_open_settings") == 0 ||
+                      strcmp(action, "modbus_ma01_open_editor") == 0 ||
+                      strcmp(action, "modbus_ma01_select_1") == 0 ||
+                      strcmp(action, "modbus_ma01_select_2") == 0 ||
+                      strcmp(action, "modbus_ma01_select_3") == 0 ||
+                      strcmp(action, "modbus_ma01_select_4") == 0 ||
+                      strcmp(action, "modbus_ma01_select_5") == 0 ||
+                      strcmp(action, "modbus_ma01_select_6") == 0 ||
+                      strcmp(action, "modbus_ma01_select_7") == 0 ||
+                      strcmp(action, "modbus_ma01_select_8") == 0 ||
+                      strcmp(action, "modbus_ma01_selected_level") == 0 ||
+                      strcmp(action, "modbus_ma01_selected_pulse") == 0 ||
+                      strcmp(action, "modbus_ma01_pulse_m1000") == 0 ||
+                      strcmp(action, "modbus_ma01_pulse_m100") == 0 ||
+                      strcmp(action, "modbus_ma01_pulse_p100") == 0 ||
+                      strcmp(action, "modbus_ma01_pulse_p1000") == 0 ||
                       strcmp(action, "modbus_ma01_action_1") == 0 ||
                       strcmp(action, "modbus_ma01_action_2") == 0 ||
                       strcmp(action, "modbus_ma01_action_3") == 0 ||
