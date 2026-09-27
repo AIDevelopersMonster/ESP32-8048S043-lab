@@ -661,6 +661,30 @@ uint8_t modbus_service_ma01_get_selected_channel(void)
     return channel >= 1 && channel <= MODBUS_MA01_COILS ? channel : 1;
 }
 
+esp_err_t modbus_service_ma01_set_selected_mode(modbus_ma01_mode_t mode)
+{
+    if (mode != MODBUS_MA01_MODE_LEVEL && mode != MODBUS_MA01_MODE_PULSE) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    return modbus_service_ma01_set_mode(modbus_service_ma01_get_selected_channel(), mode);
+}
+
+esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms)
+{
+    uint8_t channel = modbus_service_ma01_get_selected_channel();
+    esp_err_t err = ma01_ensure_config();
+    if (err != ESP_OK) return err;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    int32_t current = (int32_t)s_ma01_pulse_ms[channel - 1];
+    xSemaphoreGive(s_status_lock);
+
+    int32_t next = current + delta_ms;
+    if (next < 0) next = 0;
+    if (next > 65535) next = 65535;
+    return modbus_service_ma01_set_pulse_ms(channel, (uint16_t)next);
+}
+
 static void eid041_poll_task(void *arg)
 {
     (void)arg;
