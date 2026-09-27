@@ -11,6 +11,7 @@ on:
       - agent/app11-usb-serial-terminal
       - agent/app12-interactive-serial-terminal
       - agent/app14-modbus-service
+      - agent/app15-web-control
     paths:
       - 'apps/06_OTARecovery/**'
       - 'apps/09_SDWidgetLibrary/**'
