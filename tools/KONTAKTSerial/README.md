@@ -24,6 +24,12 @@ no flow control
 CRLF recommended
 ```
 
+## Video demonstration
+
+Physical bench demonstration of **KONTAKTSerial 0.3.1 + ESP32-8048S043 + MA01 RS485**, including control from the PC through UART0/P1 and simultaneous display of the current relay state on the board HMI:
+
+https://youtu.be/d2D-bZdQFHI
+
 ## Install
 
 ```powershell
