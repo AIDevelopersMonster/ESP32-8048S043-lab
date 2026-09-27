@@ -33,6 +33,7 @@ static uint16_t s_ma01_pulse_ms[MODBUS_MA01_COILS];
 static bool s_ma01_online;
 static bool s_ma01_config_valid;
 static uint8_t s_ma01_slave;
+static uint8_t s_ma01_selected_channel = 1;
 
 static SemaphoreHandle_t s_bus_lock;
 static SemaphoreHandle_t s_status_lock;
@@ -639,6 +640,27 @@ esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms)
     return modbus_service_ma01_refresh_config();
 }
 
+
+esp_err_t modbus_service_ma01_select_channel(uint8_t channel)
+{
+    if (!s_status_lock) return ESP_ERR_INVALID_STATE;
+    if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
+
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    s_ma01_selected_channel = channel;
+    xSemaphoreGive(s_status_lock);
+    return ESP_OK;
+}
+
+uint8_t modbus_service_ma01_get_selected_channel(void)
+{
+    if (!s_status_lock) return 1;
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    uint8_t channel = s_ma01_selected_channel;
+    xSemaphoreGive(s_status_lock);
+    return channel >= 1 && channel <= MODBUS_MA01_COILS ? channel : 1;
+}
+
 static void eid041_poll_task(void *arg)
 {
     (void)arg;
@@ -778,6 +800,24 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
     } else if (strcmp(binding, "modbus.ma01.address") == 0) {
         if (s_ma01_slave) snprintf(out, out_len, "%u", (unsigned)s_ma01_slave);
         else strlcpy(out, "--", out_len);
+    } else if (strcmp(binding, "modbus.ma01.selected_channel") == 0) {
+        snprintf(out, out_len, "DO%u", (unsigned)s_ma01_selected_channel);
+    } else if (strcmp(binding, "modbus.ma01.selected_mode") == 0) {
+        unsigned channel = s_ma01_selected_channel >= 1 && s_ma01_selected_channel <= MODBUS_MA01_COILS
+                               ? (unsigned)(s_ma01_selected_channel - 1) : 0;
+        if (!s_ma01_config_valid) strlcpy(out, "--", out_len);
+        else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_LEVEL) strlcpy(out, "LEVEL", out_len);
+        else if (s_ma01_modes[channel] == MODBUS_MA01_MODE_PULSE) strlcpy(out, "PULSE", out_len);
+        else strlcpy(out, "OTHER", out_len);
+    } else if (strcmp(binding, "modbus.ma01.selected_pulse") == 0) {
+        unsigned channel = s_ma01_selected_channel >= 1 && s_ma01_selected_channel <= MODBUS_MA01_COILS
+                               ? (unsigned)(s_ma01_selected_channel - 1) : 0;
+        if (!s_ma01_config_valid) strlcpy(out, "--", out_len);
+        else snprintf(out, out_len, "%u ms", (unsigned)s_ma01_pulse_ms[channel]);
+    } else if (strcmp(binding, "modbus.ma01.selected_state") == 0) {
+        unsigned channel = s_ma01_selected_channel >= 1 && s_ma01_selected_channel <= MODBUS_MA01_COILS
+                               ? (unsigned)(s_ma01_selected_channel - 1) : 0;
+        strlcpy(out, s_ma01_online ? (s_ma01_coils[channel] ? "ON" : "OFF") : "--", out_len);
     } else if (strncmp(binding, "modbus.ma01.mode", 16) == 0 &&
                binding[16] >= '1' && binding[16] <= '8' && binding[17] == '\0') {
         unsigned channel = (unsigned)(binding[16] - '1');
