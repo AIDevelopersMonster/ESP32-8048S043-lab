@@ -21,7 +21,7 @@ except ImportError:
     raise
 
 APP_NAME = "KONTAKTSerial"
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.3.0"
 DEFAULT_BAUD = 115200
 
 
@@ -65,6 +65,7 @@ class KontaktSerial(tk.Tk):
         self.ma01_channel_var = tk.StringVar(value="1")
         self.ma01_mode_var = tk.StringVar(value="PULSE")
         self.ma01_pulse_ms_var = tk.StringVar(value="")
+        self.ma01_info_var = tk.StringVar(value="No channel data")
 
         self._build_ui()
         self.refresh_ports(prefer=initial_port)
@@ -159,6 +160,7 @@ class KontaktSerial(tk.Tk):
             values=tuple(str(i) for i in range(1, 9)),
             width=4,
         ).pack(side="left", padx=(4, 6))
+        ttk.Button(cfg, text="INFO", command=lambda: self.send_do_command("INFO")).pack(side="left", padx=(0, 4))
         ttk.Button(cfg, text="ACTION", command=lambda: self.send_do_command("ACTION")).pack(side="left", padx=(0, 4))
         ttk.Button(cfg, text="ON", command=lambda: self.send_do_command("ON")).pack(side="left", padx=(0, 4))
         ttk.Button(cfg, text="OFF", command=lambda: self.send_do_command("OFF")).pack(side="left", padx=(0, 4))
@@ -171,14 +173,15 @@ class KontaktSerial(tk.Tk):
             mode,
             textvariable=self.ma01_mode_var,
             state="readonly",
-            values=("LEVEL", "PULSE", "FOLLOW"),
+            values=("LEVEL", "PULSE"),
             width=9,
         ).pack(side="left", padx=(4, 6))
         ttk.Button(mode, text="SET MODE", command=self.set_ma01_mode).pack(side="left", padx=(0, 16))
 
         ttk.Label(mode, text="Pulse ms").pack(side="left")
         ttk.Entry(mode, textvariable=self.ma01_pulse_ms_var, width=8).pack(side="left", padx=(4, 6))
-        ttk.Button(mode, text="SET PULSE", command=self.set_ma01_pulse_ms).pack(side="left")
+        ttk.Button(mode, text="SET PULSE", command=self.set_ma01_pulse_ms).pack(side="left", padx=(0, 12))
+        ttk.Label(mode, textvariable=self.ma01_info_var).pack(side="left", padx=(8, 0))
 
         bottom = ttk.Frame(self, padding=(8, 0, 8, 8))
         bottom.pack(fill="x")
@@ -321,6 +324,8 @@ class KontaktSerial(tk.Tk):
                     text = " ".join(f"{b:02X}" for b in item) + " "
                 else:
                     text = item.decode("utf-8", errors="replace")
+                if not self.hex_rx_var.get():
+                    self._update_ma01_from_text(text)
                 if self.timestamps_var.get():
                     text = self._timestamp_chunks(text)
                 self._append(text, "rx")
@@ -328,6 +333,29 @@ class KontaktSerial(tk.Tk):
             pass
         finally:
             self.after(50, self._drain_rx_queue)
+
+    def _update_ma01_from_text(self, text: str) -> None:
+        for line in text.replace("\r", "").split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith("OK MA01 ADDR="):
+                value = line.split("ADDR=", 1)[1].split()[0]
+                if value.isdigit():
+                    self.ma01_addr_var.set(value)
+            if line.startswith("OK MA01 FOUND ") and "ADDR=" in line:
+                value = line.split("ADDR=", 1)[1].split()[0]
+                if value.isdigit():
+                    self.ma01_addr_var.set(value)
+            if line.startswith("OK MA01 DO") and " STATE=" in line and " MODE=" in line and " PULSEMS=" in line:
+                self.ma01_info_var.set(line.replace("OK MA01 ", "", 1))
+                try:
+                    tail = line.split(" MODE=", 1)[1]
+                    mode, rest = tail.split(" PULSEMS=", 1)
+                    self.ma01_mode_var.set(mode)
+                    self.ma01_pulse_ms_var.set(rest.split()[0])
+                except ValueError:
+                    pass
 
     def _timestamp_chunks(self, text: str) -> str:
         stamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
@@ -384,8 +412,8 @@ class KontaktSerial(tk.Tk):
             messagebox.showerror(APP_NAME, str(exc))
             return
         mode = self.ma01_mode_var.get().strip().upper()
-        if mode not in {"LEVEL", "PULSE", "FOLLOW"}:
-            messagebox.showerror(APP_NAME, "Mode must be LEVEL, PULSE or FOLLOW.")
+        if mode not in {"LEVEL", "PULSE"}:
+            messagebox.showerror(APP_NAME, "Mode must be LEVEL or PULSE.")
             return
         self.send_service_command(f"MA01 DO{channel} MODE {mode}")
 
