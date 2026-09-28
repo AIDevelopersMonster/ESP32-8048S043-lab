@@ -16,6 +16,7 @@
 #include "esp_partition.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/idf_additions.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "mbedtls/sha256.h"
@@ -552,7 +553,7 @@ static void ota_task(void *arg)
             if (newer) err = install_manifest(&manifest);
         }
         finish_action(err, action == OTA_ACTION_CHECK ? "GitHub check" : "OTA install");
-        vTaskDelete(NULL);
+        vTaskDeleteWithCaps(NULL);
         return;
     }
 
@@ -561,7 +562,7 @@ static void ota_task(void *arg)
         vTaskDelay(pdMS_TO_TICKS(800));
         err = esp_ota_mark_app_invalid_rollback_and_reboot();
         finish_action(err, "Rollback");
-        vTaskDelete(NULL);
+        vTaskDeleteWithCaps(NULL);
         return;
     }
 
@@ -582,12 +583,12 @@ static void ota_task(void *arg)
             esp_restart();
         }
         finish_action(err, "Recovery");
-        vTaskDelete(NULL);
+        vTaskDeleteWithCaps(NULL);
         return;
     }
 
     finish_action(ESP_ERR_INVALID_STATE, "OTA action");
-    vTaskDelete(NULL);
+    vTaskDeleteWithCaps(NULL);
 }
 
 static esp_err_t start_action(ota_action_t action)
@@ -607,7 +608,7 @@ static esp_err_t start_action(ota_action_t action)
     s_action = action;
     status_unlock();
 
-    BaseType_t ok = xTaskCreate(ota_task, "app06_ota", OTA_TASK_STACK_BYTES, NULL, 5, &s_task);
+    BaseType_t ok = xTaskCreateWithCaps(ota_task, "app06_ota", OTA_TASK_STACK_BYTES, NULL, 5, &s_task, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     if (ok != pdPASS) {
         status_lock();
         s_status.busy = false;
