@@ -1,4 +1,6 @@
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "display_ota.h"
 #include "ble_service.h"
@@ -25,7 +27,6 @@ void app_main(void)
     ESP_ERROR_CHECK(widget_runtime_init());
     ESP_ERROR_CHECK(serial_service_init());
     ESP_ERROR_CHECK(modbus_service_init());
-    ESP_ERROR_CHECK(ble_service_init());
     ESP_ERROR_CHECK(ota_manager_init());
 
     /* SD is optional. Mount failure must never block boot/recovery/widget restore. */
@@ -41,6 +42,23 @@ void app_main(void)
 
     /* Firmware-resident SYS/recovery shell remains independent from SD/widget files. */
     ESP_ERROR_CHECK(display_ota_start());
+
+    /*
+     * The RGB panel and LVGL need a sizeable contiguous block of internal DMA RAM.
+     * Reserve that known-good display baseline before the optional BLE transport
+     * starts allocating host/controller memory.
+     */
+    for (int i = 0; i < 300 && !display_ota_is_ready(); ++i) {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    if (display_ota_is_ready()) {
+        esp_err_t ble_err = ble_service_init();
+        if (ble_err != ESP_OK) {
+            ESP_LOGW(TAG, "Optional BLE transport unavailable: %s", esp_err_to_name(ble_err));
+        }
+    } else {
+        ESP_LOGW(TAG, "BLE transport deferred because display did not become ready");
+    }
 
     ESP_ERROR_CHECK(web_setup_start());
     ESP_ERROR_CHECK(network_manager_begin());
