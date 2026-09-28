@@ -145,6 +145,7 @@ idf_component_register(
         "serial_service.c"
         "command_service.c"
         "modbus_service.c"
+        "ble_service.c"
         "ma01_web.c"
         "network_manager.c"
         "time_service.c"
@@ -162,6 +163,7 @@ idf_component_register(
         sdmmc
         esp_driver_spi
         esp_wifi
+        bt
         esp_event
         esp_netif
         esp_http_server
