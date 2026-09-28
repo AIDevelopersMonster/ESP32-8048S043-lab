@@ -1103,9 +1103,12 @@ static void init_lvgl(void)
     lv_display_t *display=lv_display_create(LCD_H_RES,LCD_V_RES); lv_display_set_user_data(display,s_panel);
     lv_display_set_flush_cb(display,display_flush_cb); lv_display_set_color_format(display,LV_COLOR_FORMAT_RGB565);
     size_t bytes=LCD_H_RES*LVGL_BUF_LINES*sizeof(uint16_t);
-    void *buf=heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT); if(!buf) abort();
+    void *buf=heap_caps_malloc(bytes,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+    const char *buf_mem="PSRAM";
+    if(!buf){buf=heap_caps_malloc(bytes,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);buf_mem="internal fallback";}
+    if(!buf) abort();
     lv_display_set_buffers(display,buf,NULL,bytes,LV_DISPLAY_RENDER_MODE_PARTIAL);
-    ESP_LOGI(TAG,"LVGL draw buffer=%u bytes (%u lines internal)",(unsigned)bytes,(unsigned)LVGL_BUF_LINES);
+    ESP_LOGI(TAG,"LVGL draw buffer=%u bytes (%u lines %s)",(unsigned)bytes,(unsigned)LVGL_BUF_LINES,buf_mem);
     lv_indev_t *indev=lv_indev_create(); lv_indev_set_type(indev,LV_INDEV_TYPE_POINTER); lv_indev_set_read_cb(indev,touch_read_cb);
 }
 
