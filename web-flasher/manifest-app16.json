@@ -1,0 +1,17 @@
+{
+  "name": "KONTAKTS Platform 0.3.9 - BLE + Web + MA01",
+  "version": "0.3.9",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "improv": false,
+      "parts": [
+        {
+          "path": "firmware/app16-kontakts-platform-v0.3.9-full.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}
