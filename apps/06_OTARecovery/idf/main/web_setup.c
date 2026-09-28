@@ -89,7 +89,7 @@ static esp_err_t widget_delete_post(httpd_req_t *req){esp_err_t err=widget_runti
 
 esp_err_t web_setup_start(void)
 {
-    httpd_config_t config=HTTPD_DEFAULT_CONFIG();config.max_uri_handlers=28;config.stack_size=8192;
+    httpd_config_t config=HTTPD_DEFAULT_CONFIG();config.max_uri_handlers=40;config.stack_size=8192;
     ESP_RETURN_ON_ERROR(httpd_start(&s_httpd,&config),TAG,"httpd_start failed");
     const httpd_uri_t h[]={
       {.uri="/",.method=HTTP_GET,.handler=root_get},{.uri="/favicon.ico",.method=HTTP_GET,.handler=favicon_get},{.uri="/status",.method=HTTP_GET,.handler=status_get},{.uri="/scan",.method=HTTP_GET,.handler=scan_get},{.uri="/save",.method=HTTP_POST,.handler=save_post},{.uri="/clear",.method=HTTP_POST,.handler=clear_post},
