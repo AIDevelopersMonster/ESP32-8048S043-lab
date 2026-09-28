@@ -34,6 +34,40 @@ Video evidence for the v0.1.2 display OTA interface:
 
 Known UI issue: minor text overlap in the top/header line. This is cosmetic and is intentionally deferred because no functional control failure was observed.
 
+## Platform 0.3.9 / App16 physical acceptance — 2026-09-29
+
+Platform 0.3.9 was physically validated on Sample A as the first integrated build with BLE control transport and the existing HMI, Web, SD, OTA and UART services active together.
+
+```text
+RGB display + GT911                PASS
+SD library / application launcher PASS
+MA01 UART1 GPIO17/18 / RS485      PASS
+HMI <-> Web <-> relay state       PASS
+Wi-Fi AP + STA/router             PASS
+UART0/P1 + KONTAKTSerial 0.3.1    PASS
+GitHub OTA CHECK                  PASS
+BLE KONTAKTS-8048 advertising     PASS
+BLE GATT command/response         PASS
+```
+
+BLE contract:
+
+```text
+Service FFF0
+Command FFF1 WRITE
+Response FFF2 READ
+```
+
+The physical acceptance also closed the runtime memory issue found during App16 bring-up. LVGL draw buffering, NimBLE host allocation and the OTA worker stack were moved away from scarce internal RAM where appropriate, while the RGB bounce buffer remains internal/DMA-capable.
+
+Physically tested CI full-image SHA-256:
+
+```text
+20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
+```
+
+See `release-notes-0.3.9.md` and `../16_BLEControl/README.md`.
+
 ## Platform 0.3.6 regression acceptance — 2026-09-22
 
 The current release line was re-tested physically on Sample A by updating Platform 0.3.5 to Platform 0.3.6 through the on-device GitHub OTA flow.
