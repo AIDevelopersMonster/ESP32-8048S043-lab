@@ -56,3 +56,7 @@ CONFIG_BT_NIMBLE_ROLE_CENTRAL=n
 CONFIG_BT_NIMBLE_ROLE_OBSERVER=n
 CONFIG_BT_NIMBLE_GATT_CLIENT=n
 CONFIG_BT_NIMBLE_SECURITY_ENABLE=n
+
+# App16 OTA worker keeps its 16 KiB stack in PSRAM so runtime OTA checks do not
+# depend on scarce/fragmented internal DRAM after display + BLE + HTTP startup.
+CONFIG_FREERTOS_TASK_CREATE_ALLOW_EXT_MEM=y
