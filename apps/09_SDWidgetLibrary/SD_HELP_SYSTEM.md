@@ -91,3 +91,15 @@ Application HTML is user-controlled SD content served on the same HTTP origin as
 ## Invariant
 
 The board display remains `SYS | SD | WIDGET`. Browser documentation is a separate platform capability. Adding or editing HTML must not require a firmware rebuild once platform 0.3.3 or later is installed.
+
+
+## Platform 0.3.9 documentation update
+
+The four system Help roles are updated for the physically accepted Platform 0.3.9:
+
+- **User guide** — Web, technological UART0/P1 and BLE connection/use, including the FFF0/FFF1/FFF2 GATT contract.
+- **Application programmer guide** — transport-independent command/service/provider architecture; clients must not duplicate MA01 Modbus register maps.
+- **System programmer guide** — App16 NimBLE transport, UART0 vs UART1 responsibility, and the PSRAM/internal-RAM allocation policy that allows RGB/LVGL + SD + HTTP + Wi-Fi + BLE + OTA to coexist.
+- **Hardware reference** — Sample A continuity/runtime evidence for P1 service UART0, P3/P4 GPIO17/18, UART1/RS485 use, P1 +5 V input and CJ3401 reverse-polarity protection.
+
+Platform firmware and the SD Help bundle remain independently releasable. Updating HTML Help does not require reflashing a compatible platform.
