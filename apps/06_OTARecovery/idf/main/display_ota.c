@@ -36,6 +36,8 @@
 #include "youtube_service.h"
 
 #define TAG "APP09_UI"
+
+static volatile bool s_ui_ready;
 #define LCD_H_RES 800
 #define LCD_V_RES 480
 #define LCD_PCLK_HZ (16 * 1000 * 1000)
@@ -1117,6 +1119,7 @@ static void ui_task(void *arg)
              (unsigned)heap_caps_get_free_size(MALLOC_CAP_INTERNAL),(unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL),(unsigned)heap_caps_get_free_size(MALLOC_CAP_SPIRAM));
     init_display(); init_touch(); init_lvgl(); create_ui();
     s_widget_generation=UINT32_MAX; refresh_ui(); gpio_set_level(LCD_PIN_BL,1);
+    s_ui_ready=true;
     ESP_LOGI(TAG,"Platform shell ready; UI stack high-water=%u bytes",(unsigned)uxTaskGetStackHighWaterMark(NULL));
     TickType_t last_refresh=0,last_stack=xTaskGetTickCount();
     for(;;){lv_timer_handler();TickType_t now=xTaskGetTickCount();if(now-last_refresh>=pdMS_TO_TICKS(500)){refresh_ui();last_refresh=now;}if(now-last_stack>=pdMS_TO_TICKS(10000)){ESP_LOGI(TAG,"UI stack high-water=%u largest_internal=%u",(unsigned)uxTaskGetStackHighWaterMark(NULL),(unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));last_stack=now;}vTaskDelay(pdMS_TO_TICKS(5));}
@@ -1142,4 +1145,9 @@ esp_err_t display_ota_start(void)
 
     BaseType_t ok=xTaskCreatePinnedToCore(ui_task,"app09_ui",APP_UI_TASK_STACK_SIZE,NULL,APP_UI_TASK_PRIORITY,NULL,APP_UI_TASK_CORE);
     return ok==pdPASS?ESP_OK:ESP_ERR_NO_MEM;
+}
+
+bool display_ota_is_ready(void)
+{
+    return s_ui_ready;
 }
