@@ -98,5 +98,5 @@ jobs:
         shell: bash
         run: |
           tag="app06-v${APP06_VERSION}"
-          notes="KONTAKTS Platform OTA ${APP06_VERSION} — candidate/test release pending physical acceptance. Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes a merged full image for initial install/Web Flasher. Until physical PASS, a newer candidate with the same version may replace this release. SD application/library content is released independently from the platform firmware."
+          notes="KONTAKTS Platform ${APP06_VERSION} — PHYSICAL PASS on ESP32-8048S043 Sample A (2026-09-29). Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes the merged full image for initial install/Web Flasher. Platform 0.3.9 adds BLE device KONTAKTS-8048 (service FFF0, command FFF1 WRITE, response FFF2 READ), keeps HMI/Web/UART0 transports on the common command/service layer, and includes the PSRAM/internal-RAM coexistence fixes required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation. SD Help/application content is released independently via app09-sd-current."
           gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
