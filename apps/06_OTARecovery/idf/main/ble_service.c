@@ -13,6 +13,7 @@
 #include "host/ble_gatt.h"
 #include "host/ble_hs.h"
 #include "host/ble_uuid.h"
+#include "host/util/util.h"
 #include "nimble/nimble_port.h"
 #include "nimble/nimble_port_freertos.h"
 #include "services/gap/ble_svc_gap.h"
@@ -26,6 +27,9 @@
 #define BLE_COMMAND_MAX 128
 #define BLE_RESPONSE_MAX 1024
 #define BLE_QUEUE_LEN 4
+
+/* ESP-IDF NimBLE store template exports this without a public prototype. */
+void ble_store_config_init(void);
 
 typedef struct {
     char command[BLE_COMMAND_MAX];
