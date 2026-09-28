@@ -1,6 +1,6 @@
 # App15 — Browser control transport
 
-Status: **CODE READY FOR BUILD + PHYSICAL TEST**.
+Status: **PHYSICAL MVP PASS / FOLLOW-UP IMPROVEMENTS DEFERRED**.
 
 App15 adds a browser transport to the existing ESP32-8048S043 platform. It does not duplicate MA01 Modbus register logic.
 
@@ -10,7 +10,7 @@ Architecture:
 HMI -----------+
 UART0/P1 ------+
 Web browser ---+--> command/service layer --> MA01 provider --> UART1 GPIO17/18 --> RS485 --> MA01
-Bluetooth -----+
+BLE -----------+
 ```
 
 ## Web UI
@@ -61,6 +61,33 @@ Do not expose the HTTP port directly to the public Internet.
 
 ## Physical acceptance
 
+Physical bench test completed on 2026-09-28 with:
+
+- ESP32-8048S043 HMI active;
+- MA01-XXCX0080 on UART1/RS485;
+- browser MA01 Web Control page active;
+- relay state visible in the browser and on the board HMI;
+- browser control reaching the real relay module.
+
+The MVP is accepted for continued platform development.
+
+## Known limitations intentionally deferred
+
+- a high number of Modbus timeouts is still observed and needs a separate timing/polling pass;
+- the browser UI does not yet provide a dedicated **READ ALL** action;
+- further UI/diagnostic polish is deferred unless a fault blocks normal use.
+
+These are tracked as follow-up work and are not blockers for the current App15 MVP.
+
+## Remaining control transports / clients
+
+The common command/service architecture is intentionally kept transport-independent. Remaining planned user-facing work:
+
+- **BLE transport** to the same command/service layer;
+- **mobile application** for phone control, using the common service/API model rather than duplicating MA01-specific Modbus logic.
+
+
+
 1. Build and flash the App15 branch.
 2. Connect the board to Wi-Fi or its setup AP.
 3. Open `/ma01` from a browser.
@@ -71,4 +98,3 @@ Do not expose the HTTP port directly to the public Internet.
 8. Change LEVEL/PULSE and pulse time in the browser and verify them on the real module.
 9. Leave the page open for several minutes and confirm the HMI/touch remain responsive.
 
-Until those checks pass, App15 remains a physical-test candidate.
