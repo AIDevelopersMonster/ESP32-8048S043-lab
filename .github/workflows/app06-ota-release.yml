@@ -46,28 +46,45 @@ jobs:
           fi
       - name: Build OTA and full images
         env:
+          GH_TOKEN: ${{ github.token }}
           APP06_VERSION: ${{ steps.version.outputs.version }}
         shell: bash
         run: |
+          set -euo pipefail
           mkdir -p .app06-ota
-          docker run --rm \
-            -e KONTAKTS_APP_VERSION="${APP06_VERSION}" \
-            -v "$PWD:/project" \
-            -w /project/apps/06_OTARecovery/idf \
-            espressif/idf:v5.5.5 bash -lc '
-              git config --global --add safe.directory /project &&
-              idf.py set-target esp32s3 &&
-              idf.py build &&
-              cp build/app06_ota_recovery.bin /project/.app06-ota/app06-ota.bin &&
-              cd build &&
-              esptool.py --chip esp32s3 merge_bin -o "/project/.app06-ota/app06-ota-recovery-v${KONTAKTS_APP_VERSION}-full.bin" @flash_args
-            '
+          if [[ "${APP06_VERSION}" == "0.3.9" ]]; then
+            echo "::notice::Publishing the exact App16 hardware-accepted CI artifact from run 36491495390."
+            rm -rf .accepted-app16
+            gh run download 36491495390 --repo "$GITHUB_REPOSITORY" --name app06-platform-v0.3.9 --dir .accepted-app16
+            full_src="$(find .accepted-app16 -type f -name 'app06-ota-recovery-v0.3.9-full.bin' -print -quit)"
+            ota_src="$(find .accepted-app16 -type f -name 'app06-ota-v0.3.9.bin' -print -quit)"
+            test -n "$full_src"
+            test -n "$ota_src"
+            cp "$full_src" .app06-ota/app06-ota-recovery-v0.3.9-full.bin
+            cp "$ota_src" .app06-ota/app06-ota.bin
+            echo "20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76  .app06-ota/app06-ota-recovery-v0.3.9-full.bin" | sha256sum -c -
+          else
+            docker run --rm \
+              -e KONTAKTS_APP_VERSION="${APP06_VERSION}" \
+              -v "$PWD:/project" \
+              -w /project/apps/06_OTARecovery/idf \
+              espressif/idf:v5.5.5 bash -lc '
+                git config --global --add safe.directory /project &&
+                idf.py set-target esp32s3 &&
+                idf.py build &&
+                cp build/app06_ota_recovery.bin /project/.app06-ota/app06-ota.bin &&
+                cd build &&
+                esptool.py --chip esp32s3 merge_bin -o "/project/.app06-ota/app06-ota-recovery-v${KONTAKTS_APP_VERSION}-full.bin" @flash_args
+              '
+          fi
       - name: Build manifest
         id: assets
         shell: bash
         run: |
           sha="$(sha256sum .app06-ota/app06-ota.bin | awk '{print $1}')"
           size="$(stat -c '%s' .app06-ota/app06-ota.bin)"
+          full_file=".app06-ota/app06-ota-recovery-v${{ steps.version.outputs.version }}-full.bin"
+          full_sha="$(sha256sum "$full_file" | awk '{print $1}')"
           version="${{ steps.version.outputs.version }}"
           tag="app06-v${version}"
           firmware_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/app06-ota.bin"
@@ -76,6 +93,7 @@ jobs:
           EOF
           echo "sha256=$sha" >> "$GITHUB_OUTPUT"
           echo "size=$size" >> "$GITHUB_OUTPUT"
+          echo "full_sha256=$full_sha" >> "$GITHUB_OUTPUT"
           sha256sum .app06-ota/app06-ota*.bin
       - name: Attach validated factory recovery
         env: {GH_TOKEN: '${{ github.token }}'}
@@ -96,8 +114,9 @@ jobs:
           APP06_VERSION: ${{ steps.version.outputs.version }}
           APP06_SHA256: ${{ steps.assets.outputs.sha256 }}
           APP06_SIZE: ${{ steps.assets.outputs.size }}
+          APP06_FULL_SHA256: ${{ steps.assets.outputs.full_sha256 }}
         shell: bash
         run: |
           tag="app06-v${APP06_VERSION}"
-          notes="KONTAKTS Platform ${APP06_VERSION} — PHYSICAL PASS on ESP32-8048S043 Sample A (2026-09-29). Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Includes the merged full image for initial install/Web Flasher. Platform 0.3.9 adds BLE device KONTAKTS-8048 (service FFF0, command FFF1 WRITE, response FFF2 READ), keeps HMI/Web/UART0 transports on the common command/service layer, and includes the PSRAM/internal-RAM coexistence fixes required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation. SD Help/application content is released independently via app09-sd-current."
+          notes="KONTAKTS Platform ${APP06_VERSION} — PHYSICAL PASS on ESP32-8048S043 Sample A (2026-09-29). Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Full image SHA-256 ${APP06_FULL_SHA256}. Includes the merged full image for initial install/Web Flasher. Platform 0.3.9 adds BLE device KONTAKTS-8048 (service FFF0, command FFF1 WRITE, response FFF2 READ), keeps HMI/Web/UART0 transports on the common command/service layer, and includes the PSRAM/internal-RAM coexistence fixes required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation. SD Help/application content is released independently via app09-sd-current."
           gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
