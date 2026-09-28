@@ -5,19 +5,35 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Current widgets, system help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. USB Serial Terminal 0.4.0 contains USB Serial Monitor and Advanced Serial Terminal with fullscreen keyboard overlay.",
+    "description": "Current widgets, Platform 0.3.9 system Help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. Help now covers user, application programmer, system programmer and hardware roles, including BLE/Web/UART transports and the current Sample A connector evidence.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
     "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd",
-    "sha256": "1b014fd76007a55bbcc0b1ac19a376281bfc402de0442397213a43a40ed10665",
+    "sha256": "41c712ee48ce4a304a91e716cfee765a6a6f8d1804976874e803828db6952a7c",
     "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app09-sd-current"
   },
   "firmwares": [
     {
+      "id": "app16",
+      "name": "KONTAKTS Platform / BLE + Web + MA01",
+      "version": "0.3.9",
+      "status": "PHYSICAL PASS / CURRENT PLATFORM",
+      "description": "Current physically accepted KONTAKTS Platform for ESP32-8048S043. Adds BLE device KONTAKTS-8048 (FFF0 / FFF1 WRITE / FFF2 READ), keeps HMI, Web and technological UART0/P1 on the same command/service layer, and includes the memory hardening required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation.",
+      "manifest": "./manifest-app16.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/16_BLEControl",
+      "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app06-v0.3.9",
+      "full_image": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.9/app06-ota-recovery-v0.3.9-full.bin",
+      "full_sha256": "20d3cd2675e49fa84e1be6ff9dbf0c01a4d3786234138cf4511014b9b4fdbc76",
+      "ota_binary": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.9/app06-ota.bin",
+      "ota_manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.9/app06-ota.json",
+      "ota_sha256": "061630b7871e045ebcded0837893cece455db95d093ed70fdf3dfba9ed8ccb26",
+      "ota_status": "PHYSICAL PLATFORM PASS / RELEASED"
+    },
+    {
       "id": "app13",
       "name": "KONTAKTS Platform / Advanced Serial Terminal",
       "version": "0.3.7",
-      "status": "PHYSICAL PASS / CURRENT CANDIDATE",
+      "status": "PHYSICAL PASS / PREVIOUS PLATFORM",
       "description": "Current KONTAKTS Platform for ESP32-8048S043 with SYS | SD | WIDGET, GitHub OTA, SD application launcher, Widget Runtime, USB Serial Monitor and Advanced Serial Terminal support. Fullscreen keyboard overlay based on LVGL buttonmatrix was physically validated on hardware.",
       "manifest": "./manifest-app13.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/06_OTARecovery",
@@ -41,6 +57,17 @@
   ],
   "sd_applications": [
     {
+      "id": "modbus-controller",
+      "name": "Modbus Controller / MA01 Control Center",
+      "version": "0.5.0",
+      "status": "PHYSICAL PASS WITH PLATFORM 0.3.9",
+      "minimum_platform": "0.3.8",
+      "description": "SD package with Modbus T/RH monitor and MA01 Control Center. Uses the platform modbus provider; MA01 field traffic is UART1 GPIO17/18 through an external automatic-direction RS485 transceiver.",
+      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-modbus-controller.zip",
+      "sha256": "6d3bbcfabfd059852110a6ccb239c5ff53c0b2d39fa8b4de8d9db7a9e428e467",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/modbus-controller"
+    },
+    {
       "id": "usb-serial-terminal",
       "name": "USB Serial Terminal",
       "version": "0.4.0",
@@ -48,7 +75,7 @@
       "minimum_platform": "0.3.7",
       "description": "One SD package with two entrypoints: USB Serial Monitor and Advanced Serial Terminal. Advanced mode supports ASCII/HEX, NONE/LF/CR/CRLF endings, PREV/NEXT history, repeat-last and a fullscreen modal keyboard overlay with CANCEL / OK / SEND.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
-      "sha256": "57c18412cf05241d10a12b9c41cd3bdd9c2a16157421d05a03719ab1b47b411b",
+      "sha256": "c5b6a2658fc2f7bb0c63a485a2f6192bfbf7c2b366c0708de27d1afacd7293dc",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
     }
   ],
