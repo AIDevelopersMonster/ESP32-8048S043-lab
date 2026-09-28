@@ -12,6 +12,7 @@ on:
       - agent/app12-interactive-serial-terminal
       - agent/app14-modbus-service
       - agent/app15-web-control
+      - agent/app16-ble-control
     paths:
       - 'apps/06_OTARecovery/**'
       - 'apps/09_SDWidgetLibrary/**'
