@@ -6,6 +6,7 @@
   const arduinoIdeSlot = document.getElementById("arduino-ide-slot");
   const sdSlot = document.getElementById("sd-library-slot");
   const sdAppsSlot = document.getElementById("sd-apps-slot");
+  const mobileClientsSlot = document.getElementById("mobile-clients-slot");
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -128,6 +129,36 @@
       </article>`;
   }
 
+  function renderMobileClient(item) {
+    const name = escapeHtml(item.name);
+    const version = escapeHtml(item.version);
+    const status = escapeHtml(item.status);
+    const description = escapeHtml(item.description);
+    const minimumAndroid = escapeHtml(item.minimum_android);
+    const apk = escapeHtml(item.apk);
+    const release = escapeHtml(item.release);
+    const source = escapeHtml(item.source);
+    const video = item.video ? escapeHtml(item.video) : null;
+    const sha = item.sha256 ? escapeHtml(item.sha256) : null;
+
+    return `
+      <article class="card sd-card">
+        <span class="status ${isCandidate(item.status) ? "candidate" : ""}">${status}</span>
+        <h2>${name}</h2>
+        <div class="version">Version ${version} · Android ≥ ${minimumAndroid}</div>
+        <p>${description}</p>
+        <div class="installer sd-download">
+          <a class="download-button" href="${apk}">DOWNLOAD ANDROID APK</a>
+        </div>
+        ${sha ? `<p class="sd-note"><strong>APK SHA-256:</strong><br><code>${sha}</code></p>` : ""}
+        <div class="links">
+          ${release ? `<a href="${release}">Release</a>` : ""}
+          ${video ? `<a href="${video}">Physical test video</a>` : ""}
+          ${source ? `<a href="${source}">Source</a>` : ""}
+        </div>
+      </article>`;
+  }
+
   function renderSdApplication(item) {
     const name = escapeHtml(item.name);
     const version = escapeHtml(item.version);
@@ -167,6 +198,12 @@
       renderSdLibrary(catalog.sd_library);
       renderArduinoIde(catalog.arduino_ide);
       const sdApplications = Array.isArray(catalog.sd_applications) ? catalog.sd_applications : [];
+      const mobileClients = Array.isArray(catalog.mobile_clients) ? catalog.mobile_clients : [];
+      if (mobileClientsSlot) {
+        mobileClientsSlot.innerHTML = mobileClients.length
+          ? mobileClients.map(renderMobileClient).join("")
+          : '<article class="card"><h2>No mobile clients published yet</h2></article>';
+      }
       if (sdAppsSlot) {
         sdAppsSlot.innerHTML = sdApplications.length
           ? sdApplications.map(renderSdApplication).join("")
@@ -179,7 +216,7 @@
           : '<article class="card"><h2>No laboratory firmware entries</h2></article>';
       }
 
-      console.log(`${catalog.project}: loaded ${firmwares.length} platform firmware entries and ${laboratoryFirmwares.length} laboratory entries`);
+      console.log(`${catalog.project}: loaded ${firmwares.length} platform firmware entries, ${laboratoryFirmwares.length} laboratory entries and ${mobileClients.length} mobile clients`);
       for (const firmware of [...firmwares, ...laboratoryFirmwares]) {
         console.log(`${firmware.id}: ${firmware.name} ${firmware.version} - ${firmware.status}`);
       }
@@ -188,6 +225,7 @@
       grid.innerHTML = `<div class="catalog-error"><strong>Firmware catalog could not be loaded.</strong><br>${escapeHtml(error.message)}</div>`;
       if (sdSlot) sdSlot.innerHTML = "";
       if (sdAppsSlot) sdAppsSlot.innerHTML = "";
+      if (mobileClientsSlot) mobileClientsSlot.innerHTML = "";
       if (laboratoryGrid) laboratoryGrid.innerHTML = "";
       if (arduinoIdeSlot) arduinoIdeSlot.innerHTML = "";
     }
