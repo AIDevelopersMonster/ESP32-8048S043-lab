@@ -4,6 +4,8 @@
 
 - Promote KONTAKTS Platform 0.3.9 to the current physically accepted integrated platform.
 - Validate RGB/LVGL, GT911, SD application library, Wi-Fi STA/AP, Web, technological UART0/P1, GitHub OTA CHECK, BLE and MA01 UART1/RS485 in one platform line.
+- Physically regression-test Web Flasher 0.3.7 -> GitHub OTA 0.3.9, then re-check GitHub OTA successfully from 0.3.9.
+- Fix release-channel ownership after App17 temporarily displaced the firmware `releases/latest` pointer; Android and mutable SD channels are prereleases so the firmware OTA manifest remains reachable.
 - Publish the exact hardware-accepted Platform 0.3.9 full image and SHA-256:
   `20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76`.
 - Update Web Flasher to Platform 0.3.9.
