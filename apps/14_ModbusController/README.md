@@ -1,6 +1,6 @@
 # App14 — Modbus RTU service / first field device
 
-Status: **CODE READY FOR BUILD + PHYSICAL TEST**.
+Status: **GENERIC MODBUS LAB RECORD / MA01 FIELD PATH PHYSICALLY PROVEN IN LATER PLATFORM STAGES**.
 
 This stage extends the existing KONTAKTS Platform rather than creating a standalone firmware application.
 
@@ -26,6 +26,22 @@ SYS | SD | WIDGET
                 |
              EID041
 ```
+
+## Current interpretation
+
+This README preserves the original generic Modbus/EID041 acceptance target. That exact EID041 register hypothesis is still not promoted to PASS here.
+
+The platform work continued beyond this first target. In later stages, the same UART1 GPIO17/18 + automatic-direction RS485 architecture was physically validated with an **Ebyte MA01-XXCX0080** relay module, including HMI, technological UART, Web, BLE and Android control.
+
+Therefore:
+
+```text
+generic UART1/RS485 field transport  PHYSICAL PASS
+MA01 provider/control path           PHYSICAL PASS
+original EID041 hypothesis           still separate / not claimed here
+```
+
+This distinction keeps the historical experiment honest while linking it to the proven platform architecture.
 
 ## Video evidence
 
