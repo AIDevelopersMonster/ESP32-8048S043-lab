@@ -71,6 +71,12 @@ The first Android MVP should provide:
 
 The app writes to FFF1 and explicitly reads FFF2 after the write completes. The current firmware does not require notifications.
 
+## Android compatibility
+
+LAB-01 v0.1.1 uses `minSdk 23` (Android 6.0+). This explicitly includes Android 7.1.2 / API 25 devices used for the physical bench test.
+
+The first v0.1.0 CI APK used `minSdk 26` (Android 8.0) and therefore could not be installed on Android 7.1.2; that was an application packaging compatibility limit, not a BLE or firmware failure.
+
 ## Android implementation policy
 
 Use a native Android application first. The initial implementation should keep dependencies small and use the platform Bluetooth LE APIs directly.
