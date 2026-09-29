@@ -3,7 +3,7 @@
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
 **Programmer:** Sol  
 **Engineer:** Alex Malachevsky  
-**Status:** BUILD PASS / PHYSICAL PASS / WEB FLASHER CANDIDATE
+**Status:** PHYSICAL PASS / LEGACY STANDALONE NETWORK LAB
 
 ## Goal
 
@@ -143,12 +143,10 @@ OTA / UPDATE
   -> NVS must be preserved
 ```
 
-## Web Flasher status
+## Web Flasher / continuation status
 
-App05 v0.1.1 is the current browser-install candidate. The catalog and manifest point to `app05-network-provisioning-v0.1.1.bin`.
+App05 is retained as a historical standalone network-provisioning lab. Its network state machine is physically validated, but it is no longer the current user-facing platform image.
 
-Web Flasher remains `CANDIDATE` until browser-to-board installation of v0.1.1 is physically confirmed.
+The browser-install path was subsequently validated on later KONTAKTS Platform releases, and the current Web Flasher publishes Platform 0.3.9 as the physically accepted integrated firmware.
 
-## Next controlled variable
-
-After App05 v0.1.1 Web Flasher physical pass: App06 OTA / rollback / recovery.
+The former "next controlled variable" — App06 OTA / rollback / recovery — was completed and became part of the canonical platform core.
