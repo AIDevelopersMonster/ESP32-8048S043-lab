@@ -272,28 +272,33 @@ Firmware и widget не обязаны иметь одинаковую верс�
 
 ## 14. Текущая программа прикладных работ
 
-### Виджеты
+Базовые Web/BLE/mobile transport proofs уже закрыты в App15/App16/App17. Прикладной слой теперь должен развивать UX и reusable capabilities, не создавая отдельную аппаратную логику для каждого клиента.
 
-1. физически закрыть demo A/B;
-2. сделать template/minimal widget;
-3. добавить dynamic bar binding;
-4. определить input/control objects;
-5. определить multi-widget storage/index, если один active widget станет тесен.
+### Виджеты и SD applications
+
+1. стандартизовать package/entrypoint UX;
+2. продолжить capability-driven packages;
+3. улучшить state/error presentation;
+4. документировать совместимость package -> minimum platform.
 
 ### Web/browser
 
-6. вынести web UI из монолитной C-строки;
-7. разделить API и static frontend;
-8. добавить live widget status/generation без full reload;
-9. browser-side JSON pre-validation;
-10. drag/drop upload и понятный diagnostics panel.
+5. уменьшить polling и отделить live state от агрессивного Modbus READ;
+6. постепенно разделять static frontend и API;
+7. добавить ясные diagnostics/reconnect states.
+
+### Mobile/BLE
+
+8. улучшить App17 state parsing DO1..DO8;
+9. добавить reconnect UX;
+10. определить notifications/authentication только после отдельного platform contract.
 
 ### Runtime API
 
-11. формализовать binding registry;
-12. формализовать action registry;
-13. определить capability/version negotiation;
-14. подготовить schema documentation + examples.
+11. формализовать binding/action/provider registry;
+12. capability/version negotiation;
+13. schema documentation + examples;
+14. не допускать дублирования Modbus register maps в Web/BLE/mobile clients.
 
 ## 15. Что требует передачи системному программисту
 
@@ -307,3 +312,36 @@ Firmware и widget не обязаны иметь одинаковую верс�
 - TLS/security/authentication;
 - изменение системных endpoints;
 - увеличение лимитов, влияющее на RAM/flash safety.
+
+
+## 16. Общий command/service контракт
+
+Прикладные клиенты Platform 0.3.9 должны использовать общий service/API слой:
+
+```text
+Web
+BLE
+Android
+UART0 engineering tool
+        |
+        v
+command/service layer
+        |
+        v
+provider
+```
+
+Для MA01 прикладному клиенту разрешены команды уровня:
+
+```text
+MA01 READ
+MA01 DO1 INFO
+MA01 DO1 ACTION
+MA01 DO1 ON
+MA01 DO1 OFF
+MA01 DO1 MODE LEVEL
+MA01 DO1 MODE PULSE
+MA01 DO1 PULSEMS 5000
+```
+
+Modbus register addresses являются деталью provider layer и не должны копироваться в Android/JavaScript/UI packages.
