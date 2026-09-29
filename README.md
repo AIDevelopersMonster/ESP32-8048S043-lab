@@ -330,6 +330,8 @@ Important starting points:
 - `docs/HARDWARE-ACCEPTANCE-START.md` — board acceptance workflow.
 - `hardware/SCHEMATIC_BOM_RESEARCH.md` — reconstructed hardware evidence.
 - `web-flasher/firmware-list.json` — current public firmware/application catalog.
+- `docs/RELEASE-ASSET-INVENTORY.md` — verified current release assets and SHA-256 values.
+- `docs/BRANCH-HYGIENE.md` — branch keep/archive/remove policy.
 
 ## Current boundaries / next work
 
