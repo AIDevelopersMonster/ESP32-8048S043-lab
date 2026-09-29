@@ -1,7 +1,7 @@
 # App09 — SD Widget Library
 
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
-**Branch:** `agent/app09-sd-widget-library`  
+**Canonical branch:** `main`  
 **Status:** PHYSICAL SD APPLICATION PASS / UX ITERATION
 
 ## Goal
@@ -344,3 +344,28 @@ clear RUN action
 separate SYSTEM UPDATE area
 no raw package JSON on the normal user screen
 ```
+
+
+## Platform 0.3.9 integration checkpoint
+
+The SD library is now part of the physically accepted Platform 0.3.9 system rather than an isolated branch experiment.
+
+Confirmed together on Sample A:
+
+```text
+SD mount / rescan                 PASS
+manifest-driven application list PASS
+Widget Runtime                   PASS
+system Help from SD              PASS
+MA01 control package             PASS with Platform 0.3.9
+Wi-Fi / Web / BLE coexistence    PASS at platform level
+```
+
+Current mutable SD release channel:
+
+```text
+app09-sd-current
+kontakts-sd-library.zip
+```
+
+The SD layer remains application/content distribution. Hardware drivers and protocol-specific knowledge stay in platform services/providers.
