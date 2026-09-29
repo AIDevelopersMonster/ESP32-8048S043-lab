@@ -83,7 +83,7 @@ The same higher-level storage contract can later be backed by internal flash or 
 
 - **NVS** - small durable settings and selectors;
 - **internal filesystem** - compact resources required when no SD card is installed;
-- **SD card (later)** - large project packages, history, media, logs, profiles and optional models.
+- **SD card** - now used by the later Platform 0.3.9 line for application packages and Help/content.
 
 ## GPIO mapping boundary for future project packages
 
@@ -128,11 +128,6 @@ The physical-pass boundary has now been met on the real board:
 
 App 04 does **not** add Wi-Fi, AP mode, web setup or OTA download. Those become the next controlled variables after the storage contract.
 
-## Next step
+## Historical continuation
 
-App 05: network provisioning foundation:
-
-- Wi-Fi STA registration with a router;
-- first-run/fallback access point;
-- local web setup;
-- persistent credentials/settings through the App04 storage service.
+The next stage was App05 network provisioning. That work, plus OTA/recovery, SD applications and later transports, has since been integrated into the current Platform 0.3.9 line. App04 remains a closed storage-baseline record.
