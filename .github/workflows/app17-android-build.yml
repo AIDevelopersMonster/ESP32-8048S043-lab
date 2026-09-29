@@ -1,10 +1,12 @@
-name: App17 - Android BLE Mobile
+name: KONTAKTS Mobile - Android Build
 
 on:
   push:
     branches:
       - main
-      - agent/app17-mobile-control
+      - 'agent/app17-*'
+      - 'feat/app17-*'
+      - 'fix/app17-*'
     paths:
       - 'apps/17_MobileControl/android/**'
       - '.github/workflows/app17-android-build.yml'
