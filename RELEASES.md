@@ -94,3 +94,23 @@ Release:
 https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app17-v0.1.1
 
 The publication workflow pins the physically tested artifact. A new App17 version must receive a new physical acceptance checkpoint before the pinned release workflow is extended to that version.
+
+## GitHub `latest` ownership rule
+
+Platform firmware up to 0.3.9 resolves:
+
+```text
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/download/app06-ota.json
+```
+
+Therefore the repository-wide normal/non-prerelease `latest` release is reserved for the current KONTAKTS Platform firmware channel.
+
+Other public artifact channels must not displace it:
+
+```text
+app17-v0.1.1      -> prerelease
+app09-sd-current  -> prerelease
+app06-v0.3.9      -> normal release / current firmware latest
+```
+
+This invariant was physically regression-tested by installing Platform 0.3.7 through Web Flasher, discovering and installing Platform 0.3.9 through GitHub OTA, then repeating CHECK GITHUB successfully on 0.3.9.
