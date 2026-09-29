@@ -1,7 +1,7 @@
 # Руководство пользователя
 
 Устройство: **KONTAKTS / ESP32-8048S043 Platform**  
-Статус: **живое руководство; уточняется по мере physical validation платформы**.
+Статус: **living documentation / актуальный интегрированный baseline: Platform 0.3.9**.
 
 ---
 
@@ -17,13 +17,17 @@
 
 ### Основные системные вкладки
 
+Текущая интегрированная линия использует:
+
 ```text
-STATUS | OTA | WIDGET
+SYS | SD | WIDGET
 ```
 
-- `STATUS` — состояние устройства, сети, версии и раздела прошивки;
-- `OTA` — проверка/установка firmware, CONFIRM, ROLLBACK, recovery;
-- `WIDGET` — установленный прикладной экран из файловой системы.
+- `SYS` — системный/recovery слой: состояние, сеть, OTA, CONFIRM/ROLLBACK и диагностика;
+- `SD` — библиотека приложений и Help-контент на SD;
+- `WIDGET` — активное пользовательское приложение/виджет.
+
+Старые документы и evidence могут содержать историческое `STATUS | OTA | WIDGET`; это ранняя навигационная модель и не должна восприниматься как текущая каноническая оболочка.
 
 ## 3. Первый запуск
 
@@ -79,7 +83,7 @@ IP может измениться после переподключения к 
 
 ```text
 installed=0.1.0
-available=0.2.1
+available=0.3.9
 ```
 
 Это означает, что устройство видит стабильный GitHub Release и может перейти к установке.
@@ -129,7 +133,7 @@ INSTALL UPDATE
 Для текущего перехода ожидается:
 
 ```text
-Firmware 0.2.1
+Firmware 0.3.9
 running = ota_0 или ota_1
 image_state = PENDING_VERIFY
 ```
@@ -152,7 +156,7 @@ Bootloader считает неподтверждённую версию испы
 
 ### 6.6 Обязательная проверка новой версии перед CONFIRM
 
-Для платформы `0.2.1` выполнить минимум:
+Для платформы `0.3.9` выполнить минимум:
 
 ```text
 [ ] STATUS открывается
@@ -168,8 +172,8 @@ Bootloader считает неподтверждённую версию испы
 При повторном `CHECK GITHUB` на уже установленной `0.2.1` нормальный результат:
 
 ```text
-installed=0.2.1
-available=0.2.1
+installed=0.3.9
+available=0.3.9
 UP_TO_DATE
 ```
 
@@ -200,7 +204,7 @@ image_state = VALID
 После загрузки проверить:
 
 ```text
-Firmware 0.2.1
+Firmware 0.3.9
 running = тот же OTA-раздел
 image_state = VALID
 Wi-Fi = online
@@ -229,7 +233,7 @@ FACTORY RECOVERY
 
 Важно: пока factory-раздел устройства содержит историческую `0.1.0`, `FACTORY RECOVERY` вернёт именно её. В следующих версиях планируется современный recovery shell с экраном, Wi-Fi и OTA.
 
-### 6.11 Текущий рекомендуемый сценарий 0.1.0 -> 0.2.1
+### 6.11 Текущий рекомендуемый сценарий исторический baseline -> 0.3.9
 
 ```text
 0.1.0
@@ -240,7 +244,7 @@ available 0.2.1
   |
   | DOWNLOAD & INSTALL
   v
-0.2.1 / PENDING_VERIFY
+0.3.9 / PENDING_VERIFY
   |
   | проверить STATUS/OTA/WIDGET/touch/Wi-Fi/web
   | повторить CHECK GITHUB
@@ -248,11 +252,11 @@ available 0.2.1
 CONFIRM
   |
   v
-0.2.1 / VALID
+0.3.9 / VALID
   |
   | RESET
   v
-0.2.1 / VALID
+0.3.9 / VALID
 ```
 
 Только после этого переходить к тестам файловой системы и виджетов.
@@ -449,7 +453,37 @@ new supported widgets
 Добавлен физически актуальный сценарий web OTA:
 
 ```text
-0.1.0 -> 0.2.1 PENDING_VERIFY -> functional check -> CONFIRM -> VALID -> reset
+исторический baseline -> 0.3.9 PENDING_VERIFY -> functional check -> CONFIRM -> VALID -> reset
 ```
 
 Добавлено предупреждение о текущем историческом factory `0.1.0` и порядке тестирования Widget Runtime после подтверждения firmware.
+
+
+## 15. Текущие способы управления
+
+Platform 0.3.9 физически проверена с несколькими транспортами к одному command/service layer:
+
+```text
+HMI
+UART0/P1
+Web
+BLE
+Android App17
+```
+
+Для MA01 это означает единый provider и единый набор текстовых команд без дублирования Modbus-карты в клиентах.
+
+BLE:
+
+```text
+Device   KONTAKTS-8048
+Service  FFF0
+Command  FFF1 WRITE
+Response FFF2 READ
+```
+
+Android App17 v0.1.1 физически проверен на Android 7.1.2 / API 25 и управляет реальным реле MA01.
+
+Видео:
+
+https://youtube.com/shorts/FxDnALva3xM
