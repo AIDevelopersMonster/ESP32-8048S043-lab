@@ -206,6 +206,23 @@ different address (16 on Sample A). MA01 SCAN skips address 1 and only saves a
 candidate after the model, firmware, eight coils (FC01) and valid output modes
 have been read. If an earlier scan stored address 1, set MA01 ADDR 16 again.
 
+## Sample A AUTO startup diagnosis (2026-09-29)
+
+The relay at address 16 accepts separate DO1 ON/OFF requests, including with
+Climate Home open in OFF mode. During AUTO startup, the trace instead shows
+the first FC05 OFF after an EID041 read timing out on every captured cycle;
+the following FC05 requests generally receive valid echoes. Some captured
+responses also have CRC errors. This identifies a sequencing-dependent failure,
+but does not yet establish the physical cause of every corrupted frame.
+
+The shared RTU transport now waits at least 10 ms before every request while
+holding the bus mutex, including when switching between sensor and relay.
+All FC01/03/04/05/06 responses are assembled across partial UART reads under
+one existing 250 ms deadline. CRC, slave/function and write-echo checks remain
+mandatory. Host tests cover fragmented frames, incomplete/absent replies,
+deadline expiry, tick wrap, and the gap at 1 ms and 10 ms RTOS ticks.
+The timing fix still requires a new firmware build and physical AUTO retest.
+
 ## Sample A flash layout read from the board (2026-09-29)
 
 Before the App18 physical test, the board on COM4 identified as ESP32-S3

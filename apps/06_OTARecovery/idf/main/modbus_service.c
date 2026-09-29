@@ -1,5 +1,6 @@
 #include "modbus_service.h"
 #include "climate_service.h"
+#include "modbus_rtu_io.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -207,6 +208,7 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
     uint8_t response[69] = {0};
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
 
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -224,17 +226,8 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
         return wait_err;
     }
 
-    size_t got = 0;
-    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(MODBUS_TIMEOUT_MS);
-    while (got < expected) {
-        TickType_t now = xTaskGetTickCount();
-        if ((int32_t)(deadline - now) <= 0) break;
-        int n = uart_read_bytes(MODBUS_UART,
-                                response + got,
-                                expected - got,
-                                deadline - now);
-        if (n > 0) got += (size_t)n;
-    }
+    size_t got = modbus_rtu_read_exact(MODBUS_UART, response, expected,
+                                        pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got != expected) {
@@ -280,6 +273,7 @@ static esp_err_t modbus_service_write_single_register(uint8_t slave, uint16_t re
     uint8_t response[8] = {0};
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
 
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -297,7 +291,8 @@ static esp_err_t modbus_service_write_single_register(uint8_t slave, uint16_t re
         return wait_err;
     }
 
-    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    int got = (int)modbus_rtu_read_exact(MODBUS_UART, response, sizeof(response),
+                                           pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got != (int)sizeof(response)) {
@@ -417,6 +412,7 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_DEBUG);
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
     if (written != (int)sizeof(request)) {
@@ -428,14 +424,8 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
         xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
     }
 
-    size_t got = 0;
-    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(MODBUS_TIMEOUT_MS);
-    while (got < expected) {
-        TickType_t now = xTaskGetTickCount();
-        if ((int32_t)(deadline - now) <= 0) break;
-        int n = uart_read_bytes(MODBUS_UART, response + got, expected - got, deadline - now);
-        if (n > 0) got += (size_t)n;
-    }
+    size_t got = modbus_rtu_read_exact(MODBUS_UART, response, expected,
+                                        pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got > 0) {
@@ -476,6 +466,7 @@ static esp_err_t modbus_service_write_single_coil_impl(uint8_t slave, uint16_t c
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
     if (written != (int)sizeof(request)) {
@@ -486,7 +477,8 @@ static esp_err_t modbus_service_write_single_coil_impl(uint8_t slave, uint16_t c
     if (wait_err != ESP_OK) {
         xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
     }
-    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    int got = (int)modbus_rtu_read_exact(MODBUS_UART, response, sizeof(response),
+                                           pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got > 0) {
