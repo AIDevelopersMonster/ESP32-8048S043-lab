@@ -1,18 +1,13 @@
-name: App 06/07/08/09/11/12 - Platform OTA + Widget Runtime Build
+name: KONTAKTS Platform - Firmware Build
 
 on:
   push:
     branches:
       - main
-      - agent/app06-ota-recovery
-      - agent/app07-widget-runtime
-      - agent/app08-youtube-dashboard
-      - agent/app09-sd-widget-library
-      - agent/app11-usb-serial-terminal
-      - agent/app12-interactive-serial-terminal
-      - agent/app14-modbus-service
-      - agent/app15-web-control
-      - agent/app16-ble-control
+      - 'agent/**'
+      - 'feat/**'
+      - 'feature/**'
+      - 'fix/**'
     paths:
       - 'apps/06_OTARecovery/**'
       - 'apps/09_SDWidgetLibrary/**'
