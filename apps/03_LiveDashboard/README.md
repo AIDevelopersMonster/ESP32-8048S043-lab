@@ -70,6 +70,6 @@ Validated observations:
 
 Formal evidence record: `evidence/app03-live-dashboard-v0.1.0-physical-pass.md`.
 
-## Next platform step
+## Historical continuation
 
-App 03 closes the live-dashboard phase. The next foundation work is persistent settings/configuration, filesystem-backed partial resource loading, Wi-Fi STA/AP provisioning, local web setup and OTA/recovery support before the repository expands into concrete sensor/actuator projects.
+App03 closed the live-dashboard phase. The listed continuation — persistent storage, Wi-Fi provisioning, Web setup and OTA/recovery — was subsequently implemented in later platform stages and is now part of the Platform 0.3.9 lineage.
