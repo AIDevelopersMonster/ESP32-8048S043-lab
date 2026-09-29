@@ -145,6 +145,8 @@ idf_component_register(
         "serial_service.c"
         "command_service.c"
         "modbus_service.c"
+        "climate_logic.c"
+        "climate_service.c"
         "ble_service.c"
         "ma01_web.c"
         "network_manager.c"

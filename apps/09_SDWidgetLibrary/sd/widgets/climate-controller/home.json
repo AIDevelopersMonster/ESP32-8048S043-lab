@@ -1,0 +1,147 @@
+{
+  "schema": 1,
+  "id": "climate-home",
+  "name": "Climate Home",
+  "version": "0.1.0",
+  "background": "#0D1117",
+  "objects": [
+    {
+      "type": "label",
+      "x": 20,
+      "y": 10,
+      "w": 275,
+      "h": 32,
+      "color": "#58A6FF",
+      "text": "CLIMATE CONTROLLER"
+    },
+    {
+      "type": "label",
+      "x": 310,
+      "y": 10,
+      "w": 195,
+      "h": 30,
+      "color": "#79C0FF",
+      "bind": "climate.state",
+      "prefix": "MODE: "
+    },
+    {
+      "type": "button",
+      "x": 542,
+      "y": 7,
+      "w": 185,
+      "h": 42,
+      "text": "SETTINGS",
+      "action": "climate_open_settings"
+    },
+    {
+      "type": "label",
+      "x": 30,
+      "y": 62,
+      "w": 325,
+      "h": 45,
+      "color": "#FFA657",
+      "bind": "modbus.sensor1.temperature",
+      "prefix": "TEMPERATURE  ",
+      "suffix": " C"
+    },
+    {
+      "type": "label",
+      "x": 392,
+      "y": 62,
+      "w": 326,
+      "h": 45,
+      "color": "#A5D6FF",
+      "bind": "modbus.sensor1.humidity",
+      "prefix": "HUMIDITY  ",
+      "suffix": " %RH"
+    },
+    {
+      "type": "label",
+      "x": 30,
+      "y": 116,
+      "w": 325,
+      "h": 34,
+      "color": "#8B949E",
+      "bind": "modbus.state",
+      "prefix": "SENSOR: "
+    },
+    {
+      "type": "label",
+      "x": 392,
+      "y": 116,
+      "w": 326,
+      "h": 34,
+      "color": "#8B949E",
+      "bind": "modbus.ma01.state",
+      "prefix": "RELAYS: "
+    },
+    {
+      "type": "label",
+      "x": 30,
+      "y": 159,
+      "w": 325,
+      "h": 42,
+      "color": "#D2A8FF",
+      "bind": "climate.heater",
+      "prefix": "DO1 HEATER: "
+    },
+    {
+      "type": "label",
+      "x": 392,
+      "y": 159,
+      "w": 325,
+      "h": 42,
+      "color": "#D2A8FF",
+      "bind": "climate.cooler",
+      "prefix": "DO2 COOLER: "
+    },
+    {
+      "type": "label",
+      "x": 30,
+      "y": 215,
+      "w": 325,
+      "h": 42,
+      "color": "#D2A8FF",
+      "bind": "climate.humidifier",
+      "prefix": "DO3 HUMIDIFIER: "
+    },
+    {
+      "type": "label",
+      "x": 392,
+      "y": 215,
+      "w": 325,
+      "h": 42,
+      "color": "#D2A8FF",
+      "bind": "climate.dehumidifier",
+      "prefix": "DO4 DEHUMIDIFIER: "
+    },
+    {
+      "type": "button",
+      "x": 30,
+      "y": 290,
+      "w": 210,
+      "h": 55,
+      "text": "AUTO ON",
+      "action": "climate_auto_on"
+    },
+    {
+      "type": "button",
+      "x": 265,
+      "y": 290,
+      "w": 210,
+      "h": 55,
+      "text": "AUTO OFF",
+      "action": "climate_auto_off"
+    },
+    {
+      "type": "label",
+      "x": 498,
+      "y": 295,
+      "w": 230,
+      "h": 40,
+      "color": "#8B949E",
+      "bind": "climate.edit_state",
+      "prefix": "SETTINGS: "
+    }
+  ]
+}

@@ -27,6 +27,7 @@
 #include "network_manager.h"
 #include "command_service.h"
 #include "modbus_service.h"
+#include "climate_service.h"
 #include "ota_manager.h"
 #include "sd_manager.h"
 #include "serial_service.h"
@@ -96,6 +97,8 @@ typedef enum {
     WIDGET_JOB_MA01_SELECTED_LEVEL,
     WIDGET_JOB_MA01_SELECTED_PULSE,
     WIDGET_JOB_MA01_PULSE_ADJUST,
+    WIDGET_JOB_CLIMATE_ADJUST,
+    WIDGET_JOB_CLIMATE_DEFAULTS,
 } widget_job_kind_t;
 
 typedef struct {
@@ -144,6 +147,8 @@ static bool s_first_refresh = true;
 static bool s_sd_packages_scanned;
 static QueueHandle_t s_widget_job_queue;
 static ma01_view_t s_pending_ma01_view = MA01_VIEW_NONE;
+static bool s_pending_climate_view;
+static bool s_climate_settings_view;
 
 static void render_widget(void);
 
@@ -464,6 +469,13 @@ static void widget_job_task(void *arg)
         } else if (job.kind == WIDGET_JOB_MA01_PULSE_ADJUST) {
             esp_err_t err = modbus_service_ma01_adjust_selected_pulse(job.value);
             if (err != ESP_OK) ESP_LOGW(TAG, "MA01 pulse adjust rejected: %s", esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_CLIMATE_ADJUST) {
+            esp_err_t err = climate_service_adjust(job.channel, job.value);
+            if (err != ESP_OK) ESP_LOGW(TAG, "Climate adjustment rejected: %s", esp_err_to_name(err));
+        } else if (job.kind == WIDGET_JOB_CLIMATE_DEFAULTS) {
+            climate_config_t defaults = climate_defaults();
+            esp_err_t err = climate_service_set_config(&defaults);
+            if (err != ESP_OK) ESP_LOGW(TAG, "Climate defaults rejected: %s", esp_err_to_name(err));
         }
     }
 }
@@ -537,6 +549,23 @@ static void widget_action_cb(lv_event_t *e)
     } else if (strcmp(action, "serial_clear") == 0) {
         esp_err_t err = serial_service_clear();
         if (err != ESP_OK) ESP_LOGW(TAG, "SERIAL CLEAR rejected: %s", esp_err_to_name(err));
+    } else if (strcmp(action, "climate_auto_on") == 0) {
+        (void)climate_service_enable(true);
+    } else if (strcmp(action, "climate_auto_off") == 0) {
+        (void)climate_service_enable(false);
+    } else if (strcmp(action, "climate_defaults") == 0) {
+        queue_widget_job(WIDGET_JOB_CLIMATE_DEFAULTS, 0, 0);
+    } else if (strcmp(action, "climate_open_home") == 0 ||
+               strcmp(action, "climate_open_settings") == 0) {
+        s_climate_settings_view = strcmp(action, "climate_open_settings") == 0;
+        s_pending_climate_view = true;
+    } else if (strncmp(action, "climate_adj_", 12) == 0 &&
+               action[12] >= '0' && action[12] <= '5' &&
+               (strcmp(action + 13, "_plus") == 0 || strcmp(action + 13, "_minus") == 0)) {
+        unsigned index = (unsigned)(action[12] - '0');
+        int delta = index == 0 || index == 1 ? 5 : index == 2 ? 1 : 10;
+        if (action[13] == '_') delta *= strcmp(action + 13, "_minus") == 0 ? -1 : 1;
+        queue_widget_job(WIDGET_JOB_CLIMATE_ADJUST, index, delta);
     } else if (strcmp(action, "modbus_ma01_open_home") == 0) {
         s_pending_ma01_view = MA01_VIEW_HOME;
     } else if (strcmp(action, "modbus_ma01_open_work") == 0) {
@@ -900,6 +929,8 @@ static void binding_value(const char *binding, char *out, size_t out_len)
         else strlcpy(out, "offline", out_len);
     } else if (strncmp(binding, "serial.", 7) == 0) {
         serial_service_format_binding(binding, out, out_len);
+    } else if (strncmp(binding, "climate.", 8) == 0) {
+        climate_service_format_binding(binding, out, out_len);
     } else if (strncmp(binding, "modbus.", 7) == 0 ||
                strcmp(binding, "temperature.value") == 0 ||
                strcmp(binding, "humidity.value") == 0) {
@@ -1039,6 +1070,17 @@ static void refresh_ui(void)
     set_button_enabled(s_recovery_button, !ota.busy && strcmp(ota.running_partition, "factory") != 0);
 
     refresh_sd();
+
+    if (s_pending_climate_view) {
+        s_pending_climate_view = false;
+        char reason[160] = {0};
+        const char *path = s_climate_settings_view
+            ? "widgets/climate-controller/settings.json"
+            : "widgets/climate-controller/home.json";
+        esp_err_t err = sd_manager_run_widget(path, reason, sizeof(reason));
+        if (err != ESP_OK) ESP_LOGW(TAG, "Climate view switch rejected: %s | %s",
+                                    esp_err_to_name(err), reason);
+    }
 
     if (s_pending_ma01_view != MA01_VIEW_NONE) {
         ma01_view_t view = s_pending_ma01_view;

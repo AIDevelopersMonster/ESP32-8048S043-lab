@@ -74,3 +74,7 @@ esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms);
 
 void modbus_service_get_status(modbus_service_status_t *out);
 void modbus_service_format_binding(const char *binding, char *out, size_t out_len);
+
+/* Internal climate adapter; only the sensor polling task may claim/release. */
+esp_err_t modbus_service_climate_claim(bool claim);
+esp_err_t modbus_service_climate_snapshot(bool coils[4], bool require_level);

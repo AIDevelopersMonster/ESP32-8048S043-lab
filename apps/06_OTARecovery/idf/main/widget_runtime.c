@@ -90,6 +90,10 @@ static bool binding_allowed(const char *binding)
         "youtube.state", "youtube.period",
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
         "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
+        "climate.state", "climate.error", "climate.edit_state",
+        "climate.t_min", "climate.t_max", "climate.t_hyst",
+        "climate.rh_min", "climate.rh_max", "climate.rh_hyst",
+        "climate.heater", "climate.cooler", "climate.humidifier", "climate.dehumidifier",
         "modbus.state", "modbus.bus", "modbus.tx_count", "modbus.rx_count",
         "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
         "modbus.sensor1.temperature", "modbus.sensor1.humidity",
@@ -140,6 +144,14 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_mode_ascii") == 0 ||
                       strcmp(action, "serial_mode_hex") == 0 ||
                       strcmp(action, "serial_clear") == 0 ||
+                      strcmp(action, "climate_auto_on") == 0 ||
+                      strcmp(action, "climate_auto_off") == 0 ||
+                      strcmp(action, "climate_defaults") == 0 ||
+                      strcmp(action, "climate_open_home") == 0 ||
+                      strcmp(action, "climate_open_settings") == 0 ||
+                      (strncmp(action, "climate_adj_", 12) == 0 &&
+                       action[12] >= '0' && action[12] <= '5' &&
+                       (strcmp(action + 13, "_plus") == 0 || strcmp(action + 13, "_minus") == 0)) ||
                       strcmp(action, "modbus_ma01_refresh") == 0 ||
                       strcmp(action, "modbus_ma01_scan") == 0 ||
                       strcmp(action, "modbus_ma01_open_home") == 0 ||

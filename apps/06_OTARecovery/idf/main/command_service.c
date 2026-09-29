@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "modbus_service.h"
+#include "climate_service.h"
 
 static void trim(char *s)
 {
@@ -36,9 +37,11 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
         return ESP_ERR_INVALID_ARG;
     }
 
+    if (!strncmp(line, "CLIMATE ", 8)) return climate_service_command(line, response, response_len);
+
     if (strcmp(line, "HELP") == 0) {
         strlcpy(response,
-                "OK commands: HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>",
+                "OK commands: CLIMATE STATUS|ON|OFF|DEFAULTS|SET t_min t_max t_hyst rh_min rh_max rh_hyst (tenths) | HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>",
                 response_len);
         return ESP_OK;
     }
