@@ -201,6 +201,11 @@ sequence has been confirmed, the FAULT indication remains until an explicit
 OFF request, while redundant OFF writes stop.
 The clock-only platform remains OFF after boot and sends no climate relay writes.
 
+The EID041 sensor occupies Modbus slave address 1. The MA01 relay must use a
+different address (16 on Sample A). MA01 SCAN skips address 1 and only saves a
+candidate after the model, firmware, eight coils (FC01) and valid output modes
+have been read. If an earlier scan stored address 1, set MA01 ADDR 16 again.
+
 ## Sample A flash layout read from the board (2026-09-29)
 
 Before the App18 physical test, the board on COM4 identified as ESP32-S3

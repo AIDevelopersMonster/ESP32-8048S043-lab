@@ -91,7 +91,7 @@ static void ma01_load_slave(void)
 
     uint8_t slave = 0;
     if (nvs_get_u8(handle, MODBUS_NVS_MA01_ADDR, &slave) == ESP_OK &&
-        slave >= 1 && slave <= 247) {
+        slave != MODBUS_EID041_SLAVE && slave >= 1 && slave <= 247) {
         s_ma01_slave = slave;
     }
     nvs_close(handle);
@@ -109,7 +109,8 @@ uint8_t modbus_service_ma01_get_slave(void)
 static esp_err_t modbus_service_ma01_set_slave_impl(uint8_t slave)
 {
     if (!s_status_lock) return ESP_ERR_INVALID_STATE;
-    if (slave < 1 || slave > 247) return ESP_ERR_INVALID_ARG;
+    if (slave == MODBUS_EID041_SLAVE || slave < 1 || slave > 247)
+        return ESP_ERR_INVALID_ARG;
 
     nvs_handle_t handle;
     esp_err_t err = nvs_open(MODBUS_NVS_NAMESPACE, NVS_READWRITE, &handle);
@@ -138,6 +139,7 @@ static esp_err_t modbus_service_ma01_scan_impl(uint8_t *out_slave, uint16_t *out
     if (!s_bus_lock || !s_status_lock) return ESP_ERR_INVALID_STATE;
 
     for (unsigned slave = 1; slave <= 247; ++slave) {
+        if (slave == MODBUS_EID041_SLAVE) continue;
         uint16_t model = 0;
         esp_err_t err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07D0, 1, &model, 1);
         if (err != ESP_OK) continue;
@@ -145,6 +147,21 @@ static esp_err_t modbus_service_ma01_scan_impl(uint8_t *out_slave, uint16_t *out
         uint16_t fw = 0;
         err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07DC, 1, &fw, 1);
         if (err != ESP_OK) continue;
+
+        /* FC03 alone also matches the EID041 sensor. Require the relay's
+         * eight coils and its eight valid output modes before saving NVS. */
+        bool coils[MODBUS_MA01_COILS] = {0};
+        err = modbus_service_read_coils((uint8_t)slave, 0, MODBUS_MA01_COILS,
+                                        coils, MODBUS_MA01_COILS);
+        if (err != ESP_OK) continue;
+        uint16_t modes[MODBUS_MA01_COILS] = {0};
+        err = modbus_service_read_registers((uint8_t)slave, 0x03, MODBUS_MA01_MODE_BASE,
+                                            MODBUS_MA01_COILS, modes, MODBUS_MA01_COILS);
+        if (err != ESP_OK) continue;
+        bool valid_modes = true;
+        for (unsigned i = 0; i < MODBUS_MA01_COILS; ++i)
+            if (modes[i] > MODBUS_MA01_MODE_FOLLOW) valid_modes = false;
+        if (!valid_modes) continue;
 
         err = modbus_service_ma01_set_slave((uint8_t)slave);
         if (err != ESP_OK) return err;

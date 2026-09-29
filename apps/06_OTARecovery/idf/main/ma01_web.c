@@ -119,7 +119,7 @@ static esp_err_t page_get(httpd_req_t *req)
         "<div class='top'><b>Browser transport → command/service layer → MA01 provider → UART1/RS485</b>"
         "<p class='muted'>Local engineering UI. No authentication in this MVP; do not expose it to the public Internet.</p>"
         "<div id='bus'>Waiting for state...</div>"
-        "<div class='row'><button onclick='scan()'>SCAN MA01</button><button onclick='refresh()'>READ ALL</button><input id='addr' type='number' min='1' max='247' placeholder='Slave address'><button onclick='setAddr()'>SET ADDRESS</button></div>"
+        "<div class='row'><button onclick='scan()'>SCAN MA01</button><button onclick='refresh()'>READ ALL</button><input id='addr' type='number' min='2' max='247' placeholder='Slave address'><button onclick='setAddr()'>SET ADDRESS</button></div>"
         "<p id='msg' class='muted'></p></div>"
         "<div id='channels' class='grid'></div>"
         "<script>"
@@ -259,8 +259,8 @@ static esp_err_t address_post(httpd_req_t *req)
     }
     char *end = NULL;
     long address = strtol(value, &end, 10);
-    if (!end || *end || address < 1 || address > 247) {
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "address must be 1..247");
+    if (!end || *end || address < 2 || address > 247) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "address must be 2..247; 1 is EID041");
         return ESP_OK;
     }
     char command[32];
