@@ -71,6 +71,26 @@ The current Android MVP provides:
 
 The app writes to FFF1 and explicitly reads FFF2 after the write completes. The current firmware does not require notifications.
 
+## Permanent release
+
+The physically tested App17 v0.1.1 APK is published as a permanent GitHub Release:
+
+```text
+Tag: app17-v0.1.1
+APK: kontakts-mobile-app17-v0.1.1-debug.apk
+SHA-256: 5DE40BC802438A35285077241DA603B0441EAD28179928FAD0E15EA0285868D0
+```
+
+Direct release asset:
+
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app17-v0.1.1/kontakts-mobile-app17-v0.1.1-debug.apk
+
+SHA file:
+
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app17-v0.1.1/kontakts-mobile-app17-v0.1.1-debug.apk.sha256
+
+The release workflow deliberately publishes the exact physically tested CI artifact from run `36507403489` rather than silently rebuilding a different APK.
+
 ## Build and install
 
 CI workflow:
