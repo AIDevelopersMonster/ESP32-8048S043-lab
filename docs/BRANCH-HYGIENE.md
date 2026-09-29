@@ -17,7 +17,7 @@ No branch deletion is required for correctness. Deleting a branch only removes t
 main                                      KEEP / CANONICAL
 ```
 
-## Fully contained in main — delete candidates
+## Fully contained in main — REMOVE
 
 The comparison on 2026-09-29 showed no branch-only commits for these refs:
 
@@ -42,7 +42,9 @@ fix/app12-serial-package-keyboard
 fix/app13-buttonmatrix-keyboard
 ```
 
-These branches are **DELETE CANDIDATE**, not active development lines.
+Decision: **REMOVE THESE BRANCH REFS** after the final protected check. Their tips are already ancestors of current `main`, so removing the refs does not remove their commits from repository history.
+
+They should not be retained as historical pointers because the canonical application directories, evidence and commit history already preserve those milestones. Keeping them would make the branch list look artificially active.
 
 ## Superseded application branches with unique history — archive
 
@@ -120,3 +122,29 @@ Their useful current functionality is already represented on `main`; their branc
 3. Research/isolation branches may remain long-lived, but their role should be documented here.
 4. Never merge an archived divergent branch wholesale into `main`; inspect/cherry-pick only the intended commit(s).
 5. Re-run this audit before the next major platform release.
+
+
+## Final branch policy decision
+
+### Remove
+
+Remove all refs listed in **Fully contained in main — REMOVE**.
+
+Rationale:
+
+```text
+branch-only commits = 0
+useful history       = already reachable from main
+active work          = no
+navigation value     = lower than branch-list clutter
+```
+
+### Keep as historical archive
+
+Keep the divergent application branches, `feature/p4-io-rs485-widget`, `agent/platform-foundation-next`, and the complete `test20...test36e` research sequence.
+
+Rationale: these refs still have commits that are not ancestors of `main`; several are controlled-variable or third-party reproduction experiments. They are evidence/archaeology branches, not product branches.
+
+### Future rule
+
+A short-lived product/fix branch should normally be deleted after its tip becomes an ancestor of `main`. A research branch may remain only when it preserves unique experimental history and is classified in this document.
