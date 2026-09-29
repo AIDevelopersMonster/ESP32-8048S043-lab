@@ -8,11 +8,14 @@ on:
   push:
     branches:
       - main
-      - agent/app02-mixed-widgets
-      - agent/app03-live-dashboard
-      - agent/app05-network-provisioning
-      - agent/app05-stability
-      - agent/app11-usb-serial-terminal
+    paths:
+      - "apps/01_SixCardSerialDeck/**"
+      - "apps/02_MixedWidgets/**"
+      - "apps/03_LiveDashboard/**"
+      - "apps/05_NetworkProvisioning/**"
+      - "web-flasher/**"
+      - ".github/workflows/web-flasher.yml"
+  pull_request:
     paths:
       - "apps/01_SixCardSerialDeck/**"
       - "apps/02_MixedWidgets/**"
