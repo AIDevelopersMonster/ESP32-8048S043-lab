@@ -117,4 +117,27 @@ BLE client
  -> shared HMI/Web state
 ```
 
-The next user-facing stage is a dedicated mobile client. No MA01-specific Modbus logic should be duplicated in that client.
+The dedicated mobile-client stage is now completed as **App17 v0.1.1 physical MVP PASS**. The Android client uses this same GATT contract and does not duplicate MA01-specific Modbus logic.
+
+Physical App17 video:
+
+https://youtube.com/shorts/FxDnALva3xM
+
+Confirmed path:
+
+```text
+Android App17
+ -> BLE FFF1 / FFF2
+ -> command/service layer
+ -> MA01 provider
+ -> UART1 / RS485
+ -> physical relay ON/OFF
+```
+
+
+
+## Wi-Fi + BLE coexistence note
+
+Platform 0.3.9 physically ran Wi-Fi and BLE in the same ESP32-S3 platform while the RGB/LVGL display, SD, HTTP and MA01/RS485 services remained active. This demonstrates coexistence on the accepted workload.
+
+The earlier failures were resolved by memory-placement and initialization-order fixes; they were not evidence that Wi-Fi and BLE are mutually exclusive on ESP32-S3. Radio airtime is still shared, so this result should not be generalized into a claim of unlimited simultaneous throughput.
