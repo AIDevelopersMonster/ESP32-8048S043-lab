@@ -1,13 +1,10 @@
 # Publication checkpoint: Platform 0.3.9 Help refresh (2026-09-29)
-name: App 09/11/12 - SD Library Bundle
+name: KONTAKTS SD Library - Current Bundle
 
 on:
   push:
     branches:
       - main
-      - agent/app09-sd-widget-library
-      - agent/app11-usb-serial-terminal
-      - agent/app12-interactive-serial-terminal
     paths:
       - 'apps/09_SDWidgetLibrary/sd/**'
       - '.github/workflows/app09-sd-release.yml'
