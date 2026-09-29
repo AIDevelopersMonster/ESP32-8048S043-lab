@@ -54,7 +54,7 @@ UART1 GPIO17/18 -> RS485 -> MA01
 
 ## MVP
 
-The first Android MVP should provide:
+The current Android MVP provides:
 
 - scan for `KONTAKTS-8048`;
 - connect / disconnect;
@@ -62,7 +62,7 @@ The first Android MVP should provide:
 - read initial `FFF2` response;
 - raw command entry for diagnostic use;
 - MA01 READ;
-- DO1..DO8 state display;
+- DO1..DO8 control rows and best-effort state display from textual responses;
 - ACTION for each channel;
 - ON / OFF for each channel;
 - refresh state after a command;
@@ -70,6 +70,41 @@ The first Android MVP should provide:
 - one BLE connection at a time.
 
 The app writes to FFF1 and explicitly reads FFF2 after the write completes. The current firmware does not require notifications.
+
+## Build and install
+
+CI workflow:
+
+```text
+.github/workflows/app17-android-build.yml
+```
+
+Current physically tested application version:
+
+```text
+v0.1.1
+applicationId: ru.kontakts.mobile
+minSdk: 23
+targetSdk: 35
+```
+
+The CI artifact contains the debug APK and its SHA-256 file.
+
+On a development PC with ADB:
+
+```powershell
+adb devices
+adb install -r kontakts-mobile-app17-v0.1.1-debug.apk
+adb shell am start -n ru.kontakts.mobile/.MainActivity
+```
+
+On older Xiaomi/MIUI devices, `adb install` may be blocked by the vendor option **Install via USB**, which can itself require a SIM/Mi account. In that case the APK can be copied with ADB and installed through the normal package installer:
+
+```powershell
+adb push kontakts-mobile-app17-v0.1.1-debug.apk /sdcard/Download/
+```
+
+This is a device-policy issue, not a BLE protocol or APK-compatibility failure.
 
 ## Android compatibility
 
