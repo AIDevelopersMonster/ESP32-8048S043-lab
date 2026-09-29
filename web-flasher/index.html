@@ -54,7 +54,7 @@
     <header>
       <div class="meta">Project KONTAKTS · Programmer Sol · Engineer Alex Malachevsky</div>
       <h1>ESP32-8048S043 Platform & SD Catalog</h1>
-      <p>Firmware and SD applications are separate layers: flash the platform when needed, then download or update the SD library independently.</p>
+      <p>Platform firmware, SD applications and mobile clients are separate layers: flash the ESP32 platform when needed, update SD content independently, and install mobile clients on the phone.</p>
     </header>
 
     <h2 class="section-title">SD Application Library</h2>
@@ -70,6 +70,14 @@
       <article class="card sd-card">
         <h2>Loading SD applications…</h2>
         <p>The catalog is resolving individually downloadable widget packages.</p>
+      </article>
+    </section>
+
+    <h2 class="section-title">Mobile Clients</h2>
+    <section id="mobile-clients-slot" class="grid" aria-live="polite">
+      <article class="card sd-card">
+        <h2>Loading mobile clients…</h2>
+        <p>The catalog is resolving permanent Android/client releases.</p>
       </article>
     </section>
 
@@ -100,7 +108,7 @@
     <p class="warning"><strong>Target hardware:</strong> the validated ESP32-8048S043 ESP32-S3 800×480 RGB / GT911 board profile used by this repository. Firmware install writes the ESP32 flash. The SD Library ZIP is different: extract it to the FAT32 SD card and never flash the ZIP to the board.</p>
 
     <footer>
-      Platform firmware, the complete SD library and individual SD applications are delivered independently. Individual application versions remain defined inside each package.json.
+      Platform firmware, the SD library, individual SD applications and mobile clients are delivered independently. Do not flash APK or SD ZIP files to the ESP32.
     </footer>
 
     <script src="./app.js"></script>
