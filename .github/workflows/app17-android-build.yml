@@ -1,0 +1,63 @@
+name: App17 - Android BLE Mobile
+
+on:
+  push:
+    branches:
+      - main
+      - agent/app17-mobile-control
+    paths:
+      - 'apps/17_MobileControl/android/**'
+      - '.github/workflows/app17-android-build.yml'
+  pull_request:
+    paths:
+      - 'apps/17_MobileControl/android/**'
+      - '.github/workflows/app17-android-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android 35 SDK
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build debug APK
+        working-directory: apps/17_MobileControl/android
+        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          mkdir -p apps/17_MobileControl/android/dist
+          cp apps/17_MobileControl/android/app/build/outputs/apk/debug/app-debug.apk \
+             apps/17_MobileControl/android/dist/kontakts-mobile-app17-v0.1.0-debug.apk
+          cd apps/17_MobileControl/android/dist
+          sha256sum kontakts-mobile-app17-v0.1.0-debug.apk | tee kontakts-mobile-app17-v0.1.0-debug.apk.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app17-kontakts-mobile-v0.1.0
+          path: apps/17_MobileControl/android/dist/*
+          if-no-files-found: error
