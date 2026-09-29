@@ -79,22 +79,16 @@ The MVP is accepted for continued platform development.
 
 These are tracked as follow-up work and are not blockers for the current App15 MVP.
 
-## Remaining control transports / clients
+## Follow-on transports completed
 
-The common command/service architecture is intentionally kept transport-independent. Remaining planned user-facing work:
+The transport-independent design was subsequently exercised by:
 
-- **BLE transport** to the same command/service layer;
-- **mobile application** for phone control, using the common service/API model rather than duplicating MA01-specific Modbus logic.
+- **App16** — BLE transport, physically accepted in Platform 0.3.9;
+- **App17** — native Android BLE client, physically proven through real MA01 relay ON/OFF.
 
+Therefore Web, BLE, Android and UART0/P1 now share the same command/service/provider architecture without duplicating MA01 Modbus register knowledge.
 
+## Deferred App15-specific work
 
-1. Build and flash the App15 branch.
-2. Connect the board to Wi-Fi or its setup AP.
-3. Open `/ma01` from a browser.
-4. Confirm address and ONLINE state.
-5. Operate DO1 from the browser and observe the physical relay.
-6. Confirm the ESP32 HMI updates to the same state.
-7. Confirm `MA01 DO1 INFO` over UART0/P1 reports the same state.
-8. Change LEVEL/PULSE and pulse time in the browser and verify them on the real module.
-9. Leave the page open for several minutes and confirm the HMI/touch remain responsive.
+The browser MVP remains accepted. Follow-up work is limited to Web/Modbus polling efficiency, a clearer explicit READ ALL operation and UI/diagnostic polish. Those items should not be mixed with the already completed BLE/mobile transport proof.
 
