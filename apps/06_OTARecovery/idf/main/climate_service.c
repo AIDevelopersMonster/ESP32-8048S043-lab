@@ -145,7 +145,7 @@ void climate_service_poll(void)
     }
     modbus_service_status_t sensor = {0};
     modbus_service_get_status(&sensor);
-    bool valid = sensor.online && sensor.temperature_tenths_c >= -400 &&
+    bool valid = sensor.sensor_online && sensor.temperature_tenths_c >= -400 &&
         sensor.temperature_tenths_c <= 1250 && sensor.humidity_tenths_rh <= 1000;
     if (!s_enabled || !valid || !s_known || s_fault) {
         esp_err_t off_error = all_off();
@@ -213,6 +213,22 @@ void climate_service_format_binding(const char *binding, char *out, size_t size)
     if (!strcmp(binding, "climate.state")) snprintf(out, size, "%s", s_state);
     else if (!strcmp(binding, "climate.edit_state")) snprintf(out, size, "%s", s_edit_state);
     else if (!strcmp(binding, "climate.error")) snprintf(out, size, "%s", esp_err_to_name(s_error));
+    else if (!strcmp(binding, "climate.sensor_state") ||
+             !strcmp(binding, "climate.temperature") ||
+             !strcmp(binding, "climate.humidity")) {
+        modbus_service_status_t sensor = {0};
+        modbus_service_get_status(&sensor);
+        bool valid = sensor.sensor_online && sensor.temperature_tenths_c >= -400 &&
+            sensor.temperature_tenths_c <= 1250 && sensor.humidity_tenths_rh <= 1000;
+        if (!strcmp(binding, "climate.sensor_state"))
+            snprintf(out, size, "%s", valid ? "ONLINE" : "NO SENSOR");
+        else if (!valid) snprintf(out, size, "--");
+        else if (!strcmp(binding, "climate.temperature")) {
+            int v = sensor.temperature_tenths_c;
+            snprintf(out, size, "%s%d.%d", v < 0 ? "-" : "", abs(v) / 10, abs(v) % 10);
+        } else snprintf(out, size, "%u.%u", (unsigned)(sensor.humidity_tenths_rh / 10),
+                      (unsigned)(sensor.humidity_tenths_rh % 10));
+    }
     else {
         const char *keys[] = {"climate.t_min", "climate.t_max", "climate.t_hyst", "climate.rh_min", "climate.rh_max", "climate.rh_hyst"};
         int values[] = {s_config.t_min, s_config.t_max, s_config.t_hyst, s_config.rh_min, s_config.rh_max, s_config.rh_hyst};

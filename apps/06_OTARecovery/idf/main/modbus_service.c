@@ -706,9 +706,14 @@ static void eid041_poll_task(void *arg)
             xSemaphoreTake(s_status_lock, portMAX_DELAY);
             s_status.temperature_tenths_c = (int16_t)regs[0];
             s_status.humidity_tenths_rh = regs[1];
+            s_status.sensor_online = true;
             s_status.online = true;
             xSemaphoreGive(s_status_lock);
         } else {
+            xSemaphoreTake(s_status_lock, portMAX_DELAY);
+            s_status.sensor_online = false;
+            s_status.online = false;
+            xSemaphoreGive(s_status_lock);
             ESP_LOGW(TAG, "EID041 poll failed: %s", esp_err_to_name(err));
         }
 

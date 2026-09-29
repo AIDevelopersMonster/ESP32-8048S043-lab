@@ -8,7 +8,7 @@
 static int64_t now;
 static bool coils[4], reserved, fail_write, fail_read, fail_save, wrong_mode;
 static unsigned writes;
-static modbus_service_status_t sensor = {.online=true, .temperature_tenths_c=240, .humidity_tenths_rh=440};
+static modbus_service_status_t sensor = {.online=true, .sensor_online=true, .temperature_tenths_c=240, .humidity_tenths_rh=440};
 static int16_t stored[7];
 int64_t esp_timer_get_time(void) { return now; }
 SemaphoreHandle_t xSemaphoreCreateMutex(void) { return (void *)1; }
@@ -58,8 +58,13 @@ int main(void) {
     assert(climate_service_adjust(2, -10)!=ESP_OK);
     climate_service_get_config(&c);assert(c.t_hyst==5);
     sensor.temperature_tenths_c=310;sensor.humidity_tenths_rh=650;tick();assert(!coils[0]&&!coils[1]&&!coils[2]&&!coils[3]);tick();assert(coils[1]&&coils[3]);
-    sensor.online=false;tick();state("FAILSAFE");assert(!coils[1]&&!coils[3]);
-    sensor.online=true;tick();assert(coils[1]&&coils[3]);
+    sensor.online=false;sensor.sensor_online=false;tick();state("FAILSAFE");assert(!coils[1]&&!coils[3]);
+    char reading[24];
+    climate_service_format_binding("climate.temperature", reading, sizeof(reading));assert(!strcmp(reading,"--"));
+    climate_service_format_binding("climate.humidity", reading, sizeof(reading));assert(!strcmp(reading,"--"));
+    climate_service_format_binding("climate.sensor_state", reading, sizeof(reading));assert(!strcmp(reading,"NO SENSOR"));
+    sensor.online=true;sensor.sensor_online=true;tick();assert(coils[1]&&coils[3]);
+    climate_service_format_binding("climate.temperature", reading, sizeof(reading));assert(!strcmp(reading,"31.0"));
     fail_read=true;fail_write=true;tick();state("FAULT");assert(climate_service_enable(true)!=ESP_OK);assert(reserved);
     fail_read=false;fail_write=false;tick();state("FAULT");assert(!coils[1]&&!coils[3]);
     climate_service_enable(false);tick();state("OFF");assert(!reserved);

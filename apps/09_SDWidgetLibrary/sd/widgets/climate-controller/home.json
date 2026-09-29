@@ -40,7 +40,7 @@
       "w": 325,
       "h": 45,
       "color": "#FFA657",
-      "bind": "modbus.sensor1.temperature",
+      "bind": "climate.temperature",
       "prefix": "TEMPERATURE  ",
       "suffix": " C"
     },
@@ -51,7 +51,7 @@
       "w": 326,
       "h": 45,
       "color": "#A5D6FF",
-      "bind": "modbus.sensor1.humidity",
+      "bind": "climate.humidity",
       "prefix": "HUMIDITY  ",
       "suffix": " %RH"
     },
@@ -62,7 +62,7 @@
       "w": 325,
       "h": 34,
       "color": "#8B949E",
-      "bind": "modbus.state",
+      "bind": "climate.sensor_state",
       "prefix": "SENSOR: "
     },
     {

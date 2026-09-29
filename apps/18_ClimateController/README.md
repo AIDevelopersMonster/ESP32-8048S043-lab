@@ -137,7 +137,8 @@ Commands use letter O in ON/OFF; relay commands remain `DO1` etc., with letter O
 ### Widget bindings available now
 
 ```text
-climate.state             climate.error
+climate.state             climate.error         climate.edit_state
+climate.sensor_state      climate.temperature   climate.humidity
 climate.t_min             climate.t_max          climate.t_hyst
 climate.rh_min            climate.rh_max         climate.rh_hyst
 climate.heater            climate.cooler
@@ -172,3 +173,8 @@ The host test does not certify UART timing, concurrent RTOS execution or hardwar
 The normal App06 GitHub workflow builds the ESP-IDF firmware for this branch.
 Physical acceptance must still check DO1..DO4 with indicator loads, sensor removal,
 RS485 interruption, mode rejection, manual-command rejection and reboot/NVS restore.
+
+The climate sensor bindings display `--` and `NO SENSOR` until EID041 has
+responded successfully. On a failed sensor poll they immediately hide the last
+reading; sensor freshness is tracked separately from other RS485 device errors.
+The clock-only platform remains OFF after boot and sends no climate relay writes.

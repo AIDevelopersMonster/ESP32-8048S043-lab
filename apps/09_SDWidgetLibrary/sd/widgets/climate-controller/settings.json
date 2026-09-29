@@ -58,7 +58,7 @@
       "w": 325,
       "h": 34,
       "color": "#FFA657",
-      "bind": "modbus.sensor1.temperature",
+      "bind": "climate.temperature",
       "prefix": "T NOW: ",
       "suffix": " C"
     },
@@ -69,7 +69,7 @@
       "w": 342,
       "h": 34,
       "color": "#A5D6FF",
-      "bind": "modbus.sensor1.humidity",
+      "bind": "climate.humidity",
       "prefix": "RH NOW: ",
       "suffix": " %"
     },

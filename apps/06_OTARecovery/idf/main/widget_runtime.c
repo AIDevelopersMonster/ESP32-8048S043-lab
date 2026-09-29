@@ -91,6 +91,7 @@ static bool binding_allowed(const char *binding)
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
         "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
         "climate.state", "climate.error", "climate.edit_state",
+        "climate.sensor_state", "climate.temperature", "climate.humidity",
         "climate.t_min", "climate.t_max", "climate.t_hyst",
         "climate.rh_min", "climate.rh_max", "climate.rh_hyst",
         "climate.heater", "climate.cooler", "climate.humidifier", "climate.dehumidifier",
