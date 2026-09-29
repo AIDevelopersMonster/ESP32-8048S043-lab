@@ -2,9 +2,9 @@
 
 Проект: **KONTAKTS / ESP32-8048S043 Lab**  
 Платформа: ESP32-S3, 800×480 RGB, GT911, 16 MiB Flash, 8 MiB PSRAM  
-Текущая линия: App06/App07 Platform Shell + OTA + Persistent Widget Runtime  
-Текущая версия разработки: `0.2.1`  
-Статус документа: **рабочая структура с текущими правилами; дополняется по мере физической валидации**.
+Текущая линия: KONTAKTS Platform 0.3.9  
+Текущий физически принятый baseline: `0.3.9`  
+Статус документа: **living documentation / синхронизировано с интегрированным baseline 0.3.9**.
 
 ---
 
@@ -315,25 +315,26 @@ BOOT -> running partition -> version -> image state
 
 ## 14. Текущая программа системных работ
 
+Большой transport/platform proof этап завершён на Platform 0.3.9. Следующая системная работа — не повторное доказательство базовых транспортов, а hardening и долгие тесты.
+
 ### Приоритет A
 
-1. физически проверить `0.2.1` после TLS hardening;
-2. сделать `0.2.1` VALID до reset/persistence тестов;
-3. повторить несколько `CHECK GITHUB` подряд;
-4. проверить widget A/B и reset persistence.
+1. длительный coexistence test Wi-Fi + BLE + HTTP + LVGL + SD + MA01;
+2. измерение largest internal free block перед TLS/OTA и при активном BLE;
+3. reconnect/recovery тесты BLE и Wi-Fi;
+4. уменьшение избыточного Modbus polling в Web/SSE.
 
 ### Приоритет B
 
-5. спроектировать современный recovery factory;
-6. собрать отдельный factory application image;
-7. проверить запись только factory partition без NVS/storage erase;
-8. доказать boot/recovery/OTA из нового factory.
+5. production-security модель для BLE и локального HTTP;
+6. vendor-unique UUID/authentication strategy;
+7. современный recovery factory как отдельный, редко обновляемый продукт.
 
 ### Приоритет C
 
-9. доказать сохранение `widget.json` через следующий обычный firmware OTA;
-10. добавить crash/brownout tests для widget replacement;
-11. определить migration policy для будущей schema 2/filesystem backend.
+8. migration policy для будущих schema/runtime изменений;
+9. crash/brownout tests для хранения и SD;
+10. расширение generic provider/resource layer для новых внешних устройств.
 
 ## 15. Checklist перед изменением системного кода
 
@@ -346,3 +347,36 @@ BOOT -> running partition -> version -> image state
 - [ ] Изменение совместимо со старым widget schema?
 - [ ] Обновлены CI/release/evidence/manuals?
 - [ ] Physical PASS отделён от CI PASS?
+
+
+## 16. Транспортная архитектура Platform 0.3.9
+
+Каноническая схема:
+
+```text
+HMI -----------+
+UART0/P1 ------+
+Web -----------+
+BLE -----------+
+Android -------+--> command/service layer --> providers --> hardware
+```
+
+Проверенный field path:
+
+```text
+MA01 provider
+ -> UART1 TX GPIO17 / RX GPIO18
+ -> automatic-direction RS485
+ -> Ebyte MA01-XXCX0080
+```
+
+BLE coexistence физически проверена совместно с Wi-Fi. Проблемы bring-up были связаны с распределением internal/DMA RAM, поэтому memory ownership является частью системного контракта:
+
+```text
+LVGL draw buffer    -> PSRAM
+NimBLE allocations  -> external RAM where supported
+OTA worker stack    -> PSRAM
+RGB bounce buffer   -> internal DMA-capable RAM
+```
+
+Это не отменяет shared 2.4 GHz radio airtime и необходимости нагрузочного тестирования.
