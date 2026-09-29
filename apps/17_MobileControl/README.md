@@ -119,6 +119,14 @@ scan
 App16 Platform 0.3.9 remains the firmware baseline throughout this test.
 
 
+## Video demonstration
+
+Physical App17 BLE relay-control demonstration:
+
+- YouTube Shorts: https://youtube.com/shorts/FxDnALva3xM
+
+The video shows the Android App17 client controlling a real MA01 relay through the accepted Platform 0.3.9 BLE path.
+
 ## Physical result — Android 7.1.2
 
 Physical bench test completed on Xiaomi `vince_ru`, Android 7.1.2 / API 25.
