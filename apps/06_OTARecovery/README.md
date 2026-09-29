@@ -68,6 +68,26 @@ Physically tested CI full-image SHA-256:
 
 See `release-notes-0.3.9.md` and `../16_BLEControl/README.md`.
 
+## Platform 0.3.7 -> 0.3.9 OTA regression acceptance — 2026-09-29
+
+A downgrade/upgrade regression was physically exercised from the public distribution path:
+
+```text
+Web Flasher -> Platform 0.3.7        PASS
+0.3.7 CHECK GITHUB -> 0.3.9          PASS
+0.3.7 -> 0.3.9 OTA install          PASS
+boot into Platform 0.3.9             PASS
+0.3.9 CHECK GITHUB current release   PASS
+```
+
+This test also exposed and closed a release-channel bug: an unrelated App17 Android release had temporarily become GitHub's repository-wide `latest`, so the older firmware URL `releases/latest/download/app06-ota.json` returned HTTP 404 / `ESP_ERR_NOT_FOUND`.
+
+Release policy now preserves a simple invariant: the current platform firmware owns the normal non-prerelease `latest` release, while App17 and the mutable SD channel are prereleases. Existing deployed firmware therefore continues to resolve the stable OTA manifest without a firmware-side URL change.
+
+Evidence:
+
+- `evidence/platform-v0.3.7-to-v0.3.9-ota-regression-physical-pass.md`
+
 ## Platform 0.3.6 regression acceptance — 2026-09-22
 
 The current release line was re-tested physically on Sample A by updating Platform 0.3.5 to Platform 0.3.6 through the on-device GitHub OTA flow.
