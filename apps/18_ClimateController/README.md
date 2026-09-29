@@ -178,3 +178,37 @@ The climate sensor bindings display `--` and `NO SENSOR` until EID041 has
 responded successfully. On a failed sensor poll they immediately hide the last
 reading; sensor freshness is tracked separately from other RS485 device errors.
 The clock-only platform remains OFF after boot and sends no climate relay writes.
+
+## Sample A flash layout read from the board (2026-09-29)
+
+Before the App18 physical test, the board on COM4 identified as ESP32-S3
+revision 0.2 with 16 MB flash. The partition table was **read from the board**
+without writing flash:
+
+```powershell
+python -m esptool --chip esp32s3 --port COM4 read-flash 0x8000 0x1000 .\app18-ci\partition-table-before.bin
+```
+
+The readback yielded these entries (offset and size are hexadecimal):
+
+| Partition | Offset | Size | Purpose |
+| --- | ---: | ---: | --- |
+| `nvs` | `0x009000` | `0x006000` | Wi-Fi and persisted settings |
+| `otadata` | `0x00F000` | `0x002000` | OTA boot selection |
+| `phy_init` | `0x011000` | `0x001000` | Radio initialization data |
+| `factory` | `0x020000` | `0x300000` | Factory/recovery application |
+| `ota_0` | `0x320000` | `0x300000` | Application slot 0 |
+| `ota_1` | `0x620000` | `0x300000` | Application slot 1 |
+| `storage` | `0x920000` | `0x600000` | Persistent internal filesystem |
+| `coredump` | `0xF20000` | `0x010000` | Crash dumps |
+
+This matches `apps/06_OTARecovery/idf/partitions.csv`. The CI run for commit
+`f5919ae` produced an app-only BIN and a merged full BIN under the same
+platform version `0.3.9`. The full BIN written at `0x0` is a service/initial
+installation path: its contiguous merged range crosses `nvs` and `otadata`.
+Do not use it as a settings-preserving update of this already configured board.
+For the App18 lab, first identify the active OTA slot, then write the app-only
+image to the **inactive** slot and switch boot selection using the ESP-IDF OTA
+tool. A successful CI build does not constitute physical acceptance. The exact
+slot and commands must follow the observed board state; the SD package is
+installed separately under `/sd/widgets/climate-controller/`.
