@@ -72,7 +72,7 @@
       "w": 326,
       "h": 34,
       "color": "#8B949E",
-      "bind": "modbus.ma01.state",
+      "bind": "climate.relay_state",
       "prefix": "RELAYS: "
     },
     {

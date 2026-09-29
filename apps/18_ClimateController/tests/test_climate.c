@@ -6,8 +6,9 @@
 #include "nvs.h"
 #include "freertos/semphr.h"
 static int64_t now;
-static bool coils[4], reserved, fail_write, fail_read, fail_save, wrong_mode;
-static unsigned writes;
+static bool coils[4], reserved, fail_write, fail_read, fail_save, wrong_mode, corrupt_echo;
+static unsigned writes, snapshot_reads, transient_remaining;
+static esp_err_t read_error = ESP_FAIL;
 static modbus_service_status_t sensor = {.online=true, .sensor_online=true, .sensor_seen=true, .temperature_tenths_c=240, .humidity_tenths_rh=440};
 static int16_t stored[7];
 int64_t esp_timer_get_time(void) { return now; }
@@ -23,8 +24,14 @@ void nvs_close(nvs_handle_t h) { (void)h; }
 void modbus_service_get_status(modbus_service_status_t *s) { *s=sensor; }
 uint8_t modbus_service_ma01_get_slave(void) { return 2; }
 esp_err_t modbus_service_climate_claim(bool c) { reserved=c;return ESP_OK; }
-esp_err_t modbus_service_climate_snapshot(bool c[4], bool require_level) { memcpy(c,coils,sizeof(coils));return fail_read ? ESP_FAIL : (require_level && wrong_mode) ? ESP_ERR_NOT_SUPPORTED : ESP_OK; }
-esp_err_t modbus_service_write_single_coil(uint8_t a,uint16_t c,bool on) { (void)a;assert(reserved);++writes;if(fail_write)return ESP_FAIL;coils[c]=on;assert(!(coils[0]&&coils[1]));assert(!(coils[2]&&coils[3]));return ESP_OK; }
+esp_err_t modbus_service_climate_snapshot(bool c[4], bool require_level) {
+    ++snapshot_reads;
+    if (transient_remaining) { --transient_remaining; return ESP_ERR_INVALID_CRC; }
+    if (fail_read) return read_error;
+    memcpy(c,coils,sizeof(coils));
+    return require_level && wrong_mode ? ESP_ERR_NOT_SUPPORTED : ESP_OK;
+}
+esp_err_t modbus_service_write_single_coil(uint8_t a,uint16_t c,bool on) { (void)a;assert(reserved);++writes;if(fail_write)return ESP_FAIL;coils[c]=on;assert(!(coils[0]&&coils[1]));assert(!(coils[2]&&coils[3]));return corrupt_echo ? ESP_ERR_INVALID_CRC : ESP_OK; }
 esp_err_t modbus_service_ma01_set(uint8_t c,bool on) { return modbus_service_write_single_coil(2,c-1,on); }
 static void tick(void) { now+=6000000;climate_service_poll(); }
 static void state(const char *expected) { char s[32];climate_service_format_binding("climate.state",s,sizeof(s));assert(!strcmp(s,expected)); }
@@ -54,7 +61,7 @@ int main(void) {
     assert(stored[0]==1 && stored[1]==250 && stored[6]==20);
     assert(climate_service_command("CLIMATE SET 250 300 5 450 600 20 junk",response,sizeof(response))!=ESP_OK);
     assert(climate_service_command("CLIMATE SET 250 300 5 450 600",response,sizeof(response))!=ESP_OK);
-    assert(climate_service_enable(true)==ESP_OK);tick();state("STARTING");tick();state("AUTO");assert(coils[0]&&coils[2]);
+    assert(climate_service_enable(true)==ESP_OK);fail_write=true;tick();state("STARTING");fail_write=false;corrupt_echo=true;tick();state("AUTO");assert(coils[0]&&coils[2]);corrupt_echo=false;
     unsigned before=writes;tick();assert(writes==before);
     assert(climate_service_adjust(0, 5)==ESP_OK);
     climate_service_get_config(&c);assert(c.t_min==255 && stored[1]==255);
@@ -74,6 +81,26 @@ int main(void) {
     for (int i=0;i<9;i++) { before=writes;tick();state("SENSOR WAIT");assert(writes==before); }
     tick();state("FAILSAFE");assert(!coils[1]&&!coils[3]);
     sensor.online=true;sensor.sensor_online=true;tick();state("AUTO");assert(coils[1]&&coils[3]);
+    /* Two corrupted reads followed by a valid response never cause OFF. */
+    transient_remaining=2;before=writes;unsigned reads_before=snapshot_reads;
+    tick();state("AUTO");assert(writes==before && snapshot_reads==reads_before+3);
+    /* Failed readback retains last confirmed DOs, without commanding from stale data. */
+    read_error=ESP_ERR_INVALID_CRC;fail_read=true;before=writes;
+    tick();state("RELAY WAIT");assert(writes==before && coils[1] && coils[3]);
+    climate_service_format_binding("climate.cooler",reading,sizeof(reading));assert(!strcmp(reading,"ON (STALE)"));
+    climate_service_format_binding("climate.relay_state",reading,sizeof(reading));assert(!strcmp(reading,"STALE"));
+    fail_read=false;tick();state("AUTO");assert(writes==before);
+    climate_service_format_binding("climate.cooler",reading,sizeof(reading));assert(!strcmp(reading,"ON"));
+    /* Repeated bad reads expire at 60 seconds, then attempt OFF and latch fault. */
+    fail_read=true;read_error=ESP_ERR_TIMEOUT;
+    for (int i=0;i<9;i++) { before=writes;tick();state("RELAY WAIT");assert(writes==before); }
+    tick();state("FAULT");assert(!coils[1]&&!coils[3]);assert(reserved);
+    climate_service_format_binding("climate.cooler",reading,sizeof(reading));assert(!strcmp(reading,"ON (STALE)"));
+    fail_read=false;tick();state("FAULT");assert(!reserved);
+    climate_service_format_binding("climate.cooler",reading,sizeof(reading));assert(!strcmp(reading,"OFF"));
+    climate_service_enable(false);tick();state("OFF");
+    climate_service_enable(true);tick();tick();state("AUTO");assert(coils[1]&&coils[3]);
+    read_error=ESP_FAIL;
     fail_read=true;fail_write=true;tick();state("FAULT");assert(climate_service_enable(true)!=ESP_OK);assert(reserved);
     fail_read=false;fail_write=false;tick();state("FAULT");assert(!coils[1]&&!coils[3]);assert(!reserved);
     before=writes;tick();assert(writes==before);

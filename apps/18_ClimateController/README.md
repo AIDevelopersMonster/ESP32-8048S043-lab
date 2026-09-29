@@ -223,6 +223,34 @@ mandatory. Host tests cover fragmented frames, incomplete/absent replies,
 deadline expiry, tick wrap, and the gap at 1 ms and 10 ms RTOS ticks.
 The timing fix still requires a new firmware build and physical AUTO retest.
 
+### Transient relay read errors and retained display
+
+Physical AUTO testing of the RTU gap build reached confirmed relay states,
+but still encountered CRC errors. Captured OFF commands now receive valid
+echoes on all four channels; the available traces also show intermittent
+sensor CRC errors with recovery. Web ON/OFF remains functional. The failed
+AUTO read transaction has not yet been isolated by those traces.
+
+Climate snapshot reads now retry timeout, CRC and response errors up to three
+times. If all attempts fail during stable AUTO, keep confirmed outputs and
+issue no new relay writes for up to 60 seconds since the last valid snapshot.
+Show RELAY WAIT, then attempt OFF and latch FAULT if the grace period expires.
+A lost or corrupt LEVEL write echo triggers fresh mode/state readback rather
+than replaying the command. Only a correctly verified requested state and
+interlock may complete the transition. Unresolved write results and other
+faults after an attempted transition still follow the immediate shutdown path;
+they do not use the read-only grace period.
+Fresh readback showing all four outputs OFF completes shutdown even if a
+write echo failed. An old cached OFF value never completes shutdown.
+
+The display retains the last successfully read ON/OFF independently of control
+ownership and fault state. On read/write uncertainty it appends `(STALE)`;
+only fresh readback replaces that value. The home widget uses
+`climate.relay_state` for NOT READ / ONLINE / STALE. Update its SD home.json
+with this firmware change. Host tests cover retries, read-only grace without
+writes, recovery, exact 60-second expiry and retained state after shutdown
+without a valid readback. Physical testing remains necessary.
+
 ### Selecting the RTU fix from ota_0
 
 CI run 36631496253 (commit 8d93a23) built the RTU fix application with SHA-256

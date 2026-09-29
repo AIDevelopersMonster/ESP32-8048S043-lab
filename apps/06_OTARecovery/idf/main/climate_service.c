@@ -11,10 +11,13 @@
 /* Bench default, not a compressor-specific protection interval. */
 #define MIN_OFF_US (5000000LL)
 #define SENSOR_GRACE_US (60000000LL)
+#define RELAY_GRACE_US (60000000LL)
 static SemaphoreHandle_t s_lock;
 static climate_config_t s_config;
 static bool s_enabled, s_claimed, s_known, s_fault;
 static bool s_demand[4], s_actual[4];
+static bool s_display_seen, s_display_fresh, s_display_coils[4];
+static int64_t s_last_relay_fresh_us = -1;
 static int64_t s_off_since[4];
 static int64_t s_last_fresh_us = -1;
 static const char *s_state = "OFF";
@@ -121,19 +124,45 @@ esp_err_t climate_service_enable(bool enabled)
     return ESP_OK;
 }
 
+static bool transient_read_error(esp_err_t err)
+{
+    return err == ESP_ERR_TIMEOUT || err == ESP_ERR_INVALID_CRC ||
+           err == ESP_ERR_INVALID_RESPONSE;
+}
+
+/* Retry only reads: replaying a PULSE write could actuate a relay twice.
+ * A display cache is separate from the control state and never authorizes ON. */
+static esp_err_t read_snapshot(bool coils[4], bool require_level)
+{
+    esp_err_t err = ESP_OK;
+    for (unsigned attempt = 0; attempt < 3; ++attempt) {
+        err = modbus_service_climate_snapshot(coils, require_level);
+        if (err == ESP_OK || !transient_read_error(err)) break;
+    }
+    s_display_fresh = err == ESP_OK;
+    if (s_display_fresh) {
+        memcpy(s_display_coils, coils, sizeof(s_display_coils));
+        s_display_seen = true;
+        s_last_relay_fresh_us = esp_timer_get_time();
+    }
+    return err;
+}
+
 /* Try ALL channels even after an error. A timeout means UNKNOWN, not OFF. */
 static esp_err_t all_off(void)
 {
-    esp_err_t result = ESP_OK;
     uint8_t slave = modbus_service_ma01_get_slave();
     for (unsigned i = 0; i < 4; ++i) {
-        esp_err_t err = modbus_service_write_single_coil(slave, i, false);
-        if (err != ESP_OK) result = err;
+        s_display_fresh = false;
+        (void)modbus_service_write_single_coil(slave, i, false);
     }
     bool coils[4] = {0};
-    esp_err_t err = modbus_service_climate_snapshot(coils, false);
-    if (err != ESP_OK) result = err;
-    for (unsigned i = 0; i < 4; ++i) if (coils[i]) result = ESP_ERR_INVALID_RESPONSE;
+    esp_err_t err = read_snapshot(coils, false);
+    /* A valid all-OFF readback proves the resulting state even when one
+     * write echo was lost/corrupt. Never substitute cache for this proof. */
+    esp_err_t result = err;
+    if (err == ESP_OK)
+        for (unsigned i = 0; i < 4; ++i) if (coils[i]) result = ESP_ERR_INVALID_RESPONSE;
     s_known = result == ESP_OK;
     if (s_known) {
         memset(s_actual, 0, sizeof(s_actual));
@@ -163,7 +192,10 @@ void climate_service_poll(void)
      * stale values or issuing another relay command. A missing first reading
      * never receives this grace period. */
     if (s_enabled && !valid && s_known && !s_fault && s_last_fresh_us >= 0 &&
-        esp_timer_get_time() - s_last_fresh_us < SENSOR_GRACE_US) {
+        esp_timer_get_time() - s_last_fresh_us < SENSOR_GRACE_US &&
+        s_last_relay_fresh_us >= 0 &&
+        esp_timer_get_time() - s_last_relay_fresh_us < RELAY_GRACE_US) {
+        s_display_fresh = false;
         s_state = "SENSOR WAIT";
         goto done;
     }
@@ -179,8 +211,15 @@ void climate_service_poll(void)
         goto done;
     }
     bool observed[4];
-    s_error = modbus_service_climate_snapshot(observed, true);
-    if (s_error != ESP_OK) goto fault;
+    s_error = read_snapshot(observed, true);
+    if (s_error != ESP_OK) {
+        if (transient_read_error(s_error) && s_last_relay_fresh_us >= 0 &&
+            esp_timer_get_time() - s_last_relay_fresh_us < RELAY_GRACE_US) {
+            s_state = "RELAY WAIT";
+            goto done; /* Hold confirmed outputs; issue no writes on stale RX. */
+        }
+        goto fault;
+    }
     /* External changes are not silently adopted as legitimate hysteresis state. */
     if (memcmp(observed, s_actual, sizeof(observed)) != 0) {
         s_error = ESP_ERR_INVALID_STATE;
@@ -190,10 +229,14 @@ void climate_service_poll(void)
     /* Break before make: every OFF is confirmed before any ON. */
     for (unsigned i = 0; i < 4; ++i) {
         if (s_actual[i] && !s_demand[i]) {
+            s_display_fresh = false;
             s_error = modbus_service_ma01_set(i + 1, false);
+            if (s_error != ESP_OK && !transient_read_error(s_error)) goto fault;
+            /* A lost write echo is not proof of failure or success. Only
+             * fresh LEVEL-mode readback may resolve the command result. */
+            s_error = read_snapshot(observed, true);
             if (s_error != ESP_OK) goto fault;
-            s_error = modbus_service_climate_snapshot(observed, true);
-            if (s_error != ESP_OK || observed[i]) { s_error = ESP_ERR_INVALID_RESPONSE; goto fault; }
+            if (observed[i]) { s_error = ESP_ERR_INVALID_RESPONSE; goto fault; }
             s_actual[i] = false;
             s_off_since[i] = esp_timer_get_time();
         }
@@ -203,10 +246,14 @@ void climate_service_poll(void)
             esp_timer_get_time() - s_off_since[i] >= MIN_OFF_US &&
             esp_timer_get_time() - s_off_since[i ^ 1U] >= MIN_OFF_US) {
             if (s_actual[i ^ 1U]) { s_error = ESP_ERR_INVALID_STATE; goto fault; }
+            s_display_fresh = false;
             s_error = modbus_service_ma01_set(i + 1, true);
+            if (s_error != ESP_OK && !transient_read_error(s_error)) goto fault;
+            /* A lost write echo is not proof of failure or success. Only
+             * fresh LEVEL-mode readback may resolve the command result. */
+            s_error = read_snapshot(observed, true);
             if (s_error != ESP_OK) goto fault;
-            s_error = modbus_service_climate_snapshot(observed, true);
-            if (s_error != ESP_OK || !observed[i] || observed[i ^ 1U]) {
+            if (!observed[i] || observed[i ^ 1U]) {
                 s_error = ESP_ERR_INVALID_RESPONSE; goto fault;
             }
             s_actual[i] = true;
@@ -233,6 +280,8 @@ void climate_service_format_binding(const char *binding, char *out, size_t size)
     xSemaphoreTake(s_lock, portMAX_DELAY);
     if (!strcmp(binding, "climate.state")) snprintf(out, size, "%s", s_state);
     else if (!strcmp(binding, "climate.edit_state")) snprintf(out, size, "%s", s_edit_state);
+    else if (!strcmp(binding, "climate.relay_state"))
+        snprintf(out, size, "%s", !s_display_seen ? "NOT READ" : s_display_fresh ? "ONLINE" : "STALE");
     else if (!strcmp(binding, "climate.error")) snprintf(out, size, "%s", esp_err_to_name(s_error));
     else if (!strcmp(binding, "climate.sensor_state") ||
              !strcmp(binding, "climate.temperature") ||
@@ -260,7 +309,8 @@ void climate_service_format_binding(const char *binding, char *out, size_t size)
         }
         const char *relays[] = {"climate.heater", "climate.cooler", "climate.humidifier", "climate.dehumidifier"};
         for (unsigned i = 0; i < 4; ++i) if (!strcmp(binding, relays[i]))
-            snprintf(out, size, "%s", s_claimed && s_known ? (s_actual[i] ? "ON" : "OFF") : "--");
+            snprintf(out, size, "%s%s", s_display_seen ? (s_display_coils[i] ? "ON" : "OFF") : "--",
+                     s_display_seen && !s_display_fresh ? " (STALE)" : "");
     }
     xSemaphoreGive(s_lock);
 }
