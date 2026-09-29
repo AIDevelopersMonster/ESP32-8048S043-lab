@@ -43,6 +43,15 @@ esp_err_t climate_service_init(void)
     return ESP_OK;
 }
 
+bool climate_service_requires_sensor(void)
+{
+    if (!s_lock) return false;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    bool required = s_enabled || s_claimed;
+    xSemaphoreGive(s_lock);
+    return required;
+}
+
 void climate_service_get_config(climate_config_t *out)
 {
     if (!out || !s_lock) return;

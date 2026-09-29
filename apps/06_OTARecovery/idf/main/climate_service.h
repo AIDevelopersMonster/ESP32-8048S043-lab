@@ -4,6 +4,7 @@
 #include "climate_logic.h"
 
 esp_err_t climate_service_init(void);
+bool climate_service_requires_sensor(void);
 esp_err_t climate_service_set_config(const climate_config_t *config);
 void climate_service_get_config(climate_config_t *out);
 /* Index 0..5: T MIN/MAX/HYST, RH MIN/MAX/HYST; delta in tenths. */

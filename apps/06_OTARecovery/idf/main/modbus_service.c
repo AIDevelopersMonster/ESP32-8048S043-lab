@@ -11,6 +11,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "nvs.h"
+#include "widget_runtime.h"
 
 #define TAG "MODBUS_SERVICE"
 
@@ -394,9 +395,9 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     size_t expected = 5U + byte_count;
     uint8_t response[9] = {0};
 
-    ESP_LOGI(TAG, "FC01 TX slave=%u start=0x%04X count=%u",
+    ESP_LOGD(TAG, "FC01 TX slave=%u start=0x%04X count=%u",
              (unsigned)slave, (unsigned)start_coil, (unsigned)coil_count);
-    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_DEBUG);
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
     uart_flush_input(MODBUS_UART);
@@ -421,8 +422,8 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     xSemaphoreGive(s_bus_lock);
 
     if (got > 0) {
-        ESP_LOGI(TAG, "FC01 RX got=%u expected=%u", (unsigned)got, (unsigned)expected);
-        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_INFO);
+        ESP_LOGD(TAG, "FC01 RX got=%u expected=%u", (unsigned)got, (unsigned)expected);
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_DEBUG);
     } else {
         ESP_LOGW(TAG, "FC01 RX got=0 expected=%u", (unsigned)expected);
     }
@@ -691,10 +692,19 @@ static esp_err_t modbus_service_ma01_adjust_selected_pulse_impl(int32_t delta_ms
 static void eid041_poll_task(void *arg)
 {
     (void)arg;
-    ESP_LOGI(TAG, "EID041 provider poll started: slave=%u, FC04, regs 0x0000..0x0001",
+    ESP_LOGI(TAG, "EID041 provider ready: slave=%u, FC04, regs 0x0000..0x0001 (on demand)",
              MODBUS_EID041_SLAVE);
 
+    bool was_online = false;
     for (;;) {
+        if (!climate_service_requires_sensor() && !widget_runtime_uses_sensor()) {
+            xSemaphoreTake(s_status_lock, portMAX_DELAY);
+            s_status.sensor_online = false;
+            xSemaphoreGive(s_status_lock);
+            was_online = false;
+            vTaskDelay(pdMS_TO_TICKS(MODBUS_POLL_MS));
+            continue;
+        }
         uint16_t regs[2] = {0};
         esp_err_t err = modbus_service_read_registers(MODBUS_EID041_SLAVE,
                                                       0x04,
@@ -709,12 +719,15 @@ static void eid041_poll_task(void *arg)
             s_status.sensor_online = true;
             s_status.online = true;
             xSemaphoreGive(s_status_lock);
+            if (!was_online) ESP_LOGI(TAG, "EID041 sensor online");
+            was_online = true;
         } else {
             xSemaphoreTake(s_status_lock, portMAX_DELAY);
             s_status.sensor_online = false;
             s_status.online = false;
             xSemaphoreGive(s_status_lock);
-            ESP_LOGW(TAG, "EID041 poll failed: %s", esp_err_to_name(err));
+            if (was_online) ESP_LOGW(TAG, "EID041 sensor offline: %s", esp_err_to_name(err));
+            was_online = false;
         }
 
         climate_service_poll();

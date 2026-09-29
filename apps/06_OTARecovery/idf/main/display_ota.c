@@ -1101,7 +1101,13 @@ static void refresh_ui(void)
     }
 
     uint32_t generation = widget_runtime_generation();
-    if (generation != s_widget_generation) { s_widget_generation = generation; render_widget(); }
+    /* Keep the recovery controls reachable even when a persisted widget is
+     * slow or broken. Render it only after a deliberate WIDGET selection. */
+    if (generation != s_widget_generation &&
+        (!ota.pending_verify || !lv_obj_has_flag(s_widget_panel, LV_OBJ_FLAG_HIDDEN))) {
+        s_widget_generation = generation;
+        render_widget();
+    }
     refresh_bindings();
 
     if (s_first_refresh) {
@@ -1167,7 +1173,7 @@ static void ui_task(void *arg)
     s_ui_ready=true;
     ESP_LOGI(TAG,"Platform shell ready; UI stack high-water=%u bytes",(unsigned)uxTaskGetStackHighWaterMark(NULL));
     TickType_t last_refresh=0,last_stack=xTaskGetTickCount();
-    for(;;){lv_timer_handler();TickType_t now=xTaskGetTickCount();if(now-last_refresh>=pdMS_TO_TICKS(500)){refresh_ui();last_refresh=now;}if(now-last_stack>=pdMS_TO_TICKS(10000)){ESP_LOGI(TAG,"UI stack high-water=%u largest_internal=%u",(unsigned)uxTaskGetStackHighWaterMark(NULL),(unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));last_stack=now;}vTaskDelay(pdMS_TO_TICKS(5));}
+    for(;;){lv_timer_handler();TickType_t now=xTaskGetTickCount();if(now-last_refresh>=pdMS_TO_TICKS(500)){refresh_ui();last_refresh=now;}if(now-last_stack>=pdMS_TO_TICKS(10000)){ESP_LOGD(TAG,"UI stack high-water=%u largest_internal=%u",(unsigned)uxTaskGetStackHighWaterMark(NULL),(unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL));last_stack=now;}vTaskDelay(pdMS_TO_TICKS(5));}
 }
 
 esp_err_t display_ota_start(void)

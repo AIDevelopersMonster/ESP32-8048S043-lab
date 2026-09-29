@@ -572,3 +572,30 @@ uint32_t widget_runtime_generation(void)
     if (!s_lock) return 0;
     xSemaphoreTake(s_lock, portMAX_DELAY); uint32_t g = s_info.generation; xSemaphoreGive(s_lock); return g;
 }
+
+static bool sensor_binding(const char *binding)
+{
+    return strncmp(binding, "modbus.sensor1.", 15) == 0 ||
+           strcmp(binding, "temperature.value") == 0 ||
+           strcmp(binding, "humidity.value") == 0 ||
+           strcmp(binding, "climate.temperature") == 0 ||
+           strcmp(binding, "climate.humidity") == 0 ||
+           strcmp(binding, "climate.sensor_state") == 0;
+}
+
+bool widget_runtime_uses_sensor(void)
+{
+    if (!s_lock || !s_model) return false;
+    bool uses = false;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    if (s_info.installed) {
+        for (size_t i = 0; i < s_model->object_count && !uses; ++i) {
+            const widget_object_t *o = &s_model->objects[i];
+            uses = sensor_binding(o->binding);
+            for (size_t j = 0; j < o->carousel_item_count && !uses; ++j)
+                uses = sensor_binding(o->carousel_items[j].binding);
+        }
+    }
+    xSemaphoreGive(s_lock);
+    return uses;
+}

@@ -89,8 +89,21 @@ The SD widget is the HMI/configuration layer. Automatic regulation must continue
 
 `climate_logic.c` and `climate_service.c` are compiled into the common App06
 platform firmware. The existing EID041 polling task runs the controller after
-its sensor read (nominally every 5 seconds, plus bus transaction time). No new
-FreeRTOS task is allocated. Regulation does not depend on the displayed screen.
+its sensor read (nominally every 5 seconds, plus bus transaction time). When
+AUTO is OFF and no installed widget uses the sensor, that task does not transmit
+on RS485. A widget with T/RH bindings starts sensor polling even when AUTO is
+OFF. No new FreeRTOS task is allocated. Regulation does not depend on the
+displayed screen; AUTO continues to poll even if another panel is open.
+
+The MA01 Web Control page reads relay registers once when opened, after a
+manual command, and when READ ALL is pressed. Its optional cached events
+endpoint does not perform a Modbus transaction. Routine FC01 frame dumps and
+UI memory telemetry require DEBUG logging. UART0 remains available for
+commands and fault diagnostics without printing each successful poll.
+
+On a PENDING_VERIFY OTA boot, the SYS recovery controls appear before a
+persisted widget is rendered. Select WIDGET explicitly to load that view;
+confirm the OTA image only after the required screen and hardware checks.
 
 - Thresholds use integer tenths; equality preserves hysteresis state.
 - Configuration is validated and saved as one versioned NVS blob. RAM changes
