@@ -1,7 +1,7 @@
 # App 06 - GitHub OTA, Rollback and Recovery
 
 **Project:** KONTAKTS / ESP32-8048S043 Lab  
-**Status:** FUNCTIONAL PHYSICAL PASS — GitHub OTA + on-device LVGL9 OTA control + explicit rollback validated; TLS memory-headroom hardening remains open
+**Status:** PLATFORM CORE / PHYSICAL PASS LINE — OTA, rollback and Platform 0.3.9 integration validated; historical TLS-memory issue retained as hardening evidence
 
 ## Current validated result
 
@@ -105,7 +105,7 @@ Current App08 v0.2.6 API + local web-dashboard stage is physically validated. Pu
 
 - https://youtube.com/shorts/cjgx2RB0l_A
 
-This video supports the YouTube API/service and local dashboard physical pass. The final TFT YouTube widget/chart, `youtube.*` runtime bindings and 7D/30D/90D/ALL on-screen graph controls remain a separate open gate.
+This video supports the YouTube API/service and local dashboard physical pass. The later App08 v0.2.8 TFT widget stage was also physically validated and is preserved in the video/evidence registry.
 
 ## Controlled variable
 
@@ -227,7 +227,7 @@ app-only GitHub OTA              -> preserves NVS and stored Wi-Fi credentials
 
 This boundary has been physically observed across OTA and rollback operation on the reference board. The same saved SSID reconnects automatically after update and after return to factory.
 
-## Open hardening item: TLS allocation headroom
+## Historical hardening evidence: TLS allocation headroom
 
 One `CHECK GITHUB` while v0.1.2 + LVGL was already active failed with:
 
@@ -239,9 +239,7 @@ HTTP_CLIENT: Connection failed, sock < 0
 
 `-0x7F00` corresponds to `MBEDTLS_ERR_SSL_ALLOC_FAILED`, so this is a real internal-RAM / largest-free-block headroom issue, not a cosmetic UI problem.
 
-It does not invalidate the successful OTA and rollback cycles: subsequent update/install operations completed with the expected SHA-256 and booted v0.1.2 successfully. It remains the next technical hardening gate.
-
-Next measurement should include the largest internal free block immediately before TLS setup, not only total free heap.
+It did not invalidate the successful OTA and rollback cycles. In the later Platform 0.3.9 acceptance, GitHub OTA CHECK passed while BLE, Wi-Fi, display/LVGL, SD and MA01 services were active after the memory-placement fixes. The old failure remains useful evidence for why internal largest-free-block monitoring and explicit PSRAM ownership matter. Long-duration/repeated TLS stress remains a hardening test, not an unresolved blocker for the accepted 0.3.9 platform.
 
 ## Evidence
 
@@ -271,8 +269,8 @@ RE-INSTALL v0.1.2                        PASS
 INTENTIONAL-REBOOT RECONNECT SUPPRESSION PASS
 REPEATED FUNCTIONAL RUNS                 PASS
 KNOWN HEADER TEXT OVERLAP                COSMETIC / DEFERRED
-TLS ALLOCATION HEADROOM                  OPEN HARDENING ITEM
+TLS ALLOCATION HEADROOM                  HISTORICAL ISSUE / 0.3.9 CHECK PASS
 APP08 YOUTUBE API + LOCAL WEB DASHBOARD  PHYSICAL PASS
-APP08 FINAL TFT YOUTUBE CHART             OPEN
+APP08 TFT YOUTUBE WIDGET                  PHYSICAL PASS
 PLATFORM 0.3.6 OTA REGRESSION             PHYSICAL PASS
 ```
