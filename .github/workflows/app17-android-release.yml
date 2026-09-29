@@ -50,6 +50,10 @@ jobs:
 
           sha256sum app17-release/kontakts-mobile-app17-v0.1.1-debug.apk             > app17-release/kontakts-mobile-app17-v0.1.1-debug.apk.sha256
 
+      # OTA firmware up to Platform 0.3.9 resolves its manifest through
+      # /releases/latest/download/app06-ota.json. Therefore unrelated artifact
+      # channels must not become GitHub's global latest release.
+      # App17 is a physically accepted MVP/debug APK, so publish it as prerelease.
       - name: Publish permanent GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,7 +67,7 @@ jobs:
 
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$tag" app17-release/* --clobber --repo "$GITHUB_REPOSITORY"
-            gh release edit "$tag"               --target "$GITHUB_SHA"               --title "KONTAKTS Mobile App17 ${APP17_VERSION}"               --notes "$notes"               --repo "$GITHUB_REPOSITORY"
+            gh release edit "$tag"               --target "$GITHUB_SHA"               --title "KONTAKTS Mobile App17 ${APP17_VERSION}"               --notes "$notes"               --prerelease               --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$tag" app17-release/*               --target "$GITHUB_SHA"               --title "KONTAKTS Mobile App17 ${APP17_VERSION}"               --notes "$notes"               --repo "$GITHUB_REPOSITORY"
+            gh release create "$tag" app17-release/*               --target "$GITHUB_SHA"               --title "KONTAKTS Mobile App17 ${APP17_VERSION}"               --notes "$notes"               --prerelease               --repo "$GITHUB_REPOSITORY"
           fi
