@@ -8,7 +8,7 @@
 
 App09 extends the physically validated App08 platform with an SD-backed application library while preserving a firmware-resident recovery surface.
 
-The canonical navigation candidate for App09 is:
+The canonical navigation for the current platform line is:
 
 ```text
 SYS | SD | WIDGET
