@@ -1,6 +1,6 @@
 # App17 — Mobile BLE Control
 
-Status: **STARTED / ANDROID MVP DESIGN**.
+Status: **PHYSICAL MVP PASS / ANDROID 7.1.2**.
 
 App17 is a phone client for the already physically validated Platform 0.3.9 BLE transport. It must not change the MA01 provider, Modbus register map, command/service layer, or the accepted App16 BLE GATT contract.
 
@@ -117,3 +117,33 @@ scan
 ```
 
 App16 Platform 0.3.9 remains the firmware baseline throughout this test.
+
+
+## Physical result — Android 7.1.2
+
+Physical bench test completed on Xiaomi `vince_ru`, Android 7.1.2 / API 25.
+
+Confirmed with App17 v0.1.1:
+
+- APK installs and launches on Android 7.1.2;
+- BLE connection to `KONTAKTS-8048` works;
+- commands reach the existing Platform 0.3.9 BLE transport;
+- `MA01 DO<n> ON` physically switches a real relay ON;
+- `MA01 DO<n> OFF` physically switches a real relay OFF.
+
+This proves the end-to-end path:
+
+```text
+Android App17
+ -> BLE FFF1 / FFF2
+ -> Platform 0.3.9 command/service layer
+ -> MA01 provider
+ -> UART1 GPIO17/18
+ -> RS485
+ -> Ebyte MA01
+ -> physical relay
+```
+
+The firmware, MA01 provider and Modbus register map were not changed for App17.
+
+Not yet claimed by this checkpoint: complete UI state parsing for every response format, long-duration reconnect behaviour, background operation, multi-device operation, or production security.
