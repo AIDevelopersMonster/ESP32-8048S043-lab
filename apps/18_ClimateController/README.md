@@ -223,6 +223,21 @@ mandatory. Host tests cover fragmented frames, incomplete/absent replies,
 deadline expiry, tick wrap, and the gap at 1 ms and 10 ms RTOS ticks.
 The timing fix still requires a new firmware build and physical AUTO retest.
 
+### Selecting the RTU fix from ota_0
+
+CI run 36631496253 (commit 8d93a23) built the RTU fix application with SHA-256
+`4092e66d550c56caea5269014aae49ea5a1305575527599ab5a0617f69625376`.
+With SYS showing ota_1 VALID and readback entries seq=1 VALID / seq=2 VALID,
+write only this application BIN to inactive ota_0 at `0x320000`.
+After esptool reports successful write verification, use
+`tools/prepare_ota0_selection.py` with the verified partition table, current
+8192-byte otadata readback, application BIN and a new output filename.
+It checks the exact image hash and expected OTA states and prepares one
+4096-byte sector: seq=3, ota_0 NEW. Write that file only at `0xF000`.
+Leave sector 1 at `0x10000` intact for rollback to ota_1. After first boot,
+open SYS and press CONFIRM while ota_0 is PENDING_VERIFY, before any further
+reset or esptool operation. Then retest Climate AUTO. NVS is not rewritten.
+
 ## Sample A flash layout read from the board (2026-09-29)
 
 Before the App18 physical test, the board on COM4 identified as ESP32-S3
