@@ -204,9 +204,12 @@ Current physically tested MVP:
 
 ```text
 App17 v0.1.1
+release tag: app17-v0.1.1
 minSdk 23
 Android 6.0+
 physical test: Android 7.1.2 / API 25
+APK SHA-256:
+5DE40BC802438A35285077241DA603B0441EAD28179928FAD0E15EA0285868D0
 ```
 
 Confirmed end-to-end:
@@ -221,6 +224,10 @@ Android App17
  -> MA01
  -> physical relay ON/OFF
 ```
+
+Permanent APK:
+
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app17-v0.1.1/kontakts-mobile-app17-v0.1.1-debug.apk
 
 Video:
 
