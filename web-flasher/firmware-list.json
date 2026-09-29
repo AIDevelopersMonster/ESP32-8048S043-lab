@@ -131,5 +131,20 @@
     "examples_source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/libraries/ESP32_8048S043/examples",
     "examples": "01 BoardInfo through 19 LVGL9 ArduinoGFX BounceBufferUI",
     "notes": "Arduino CI uses Arduino CLI with esp32 core 3.3.8. Examples 01-05 are compiled in CI; multiple examples 01-14 have Sample A physical validation records, while later LVGL examples include explicit diagnostic/open boundaries."
-  }
+  },
+  "mobile_clients": [
+    {
+      "id": "app17-android",
+      "name": "KONTAKTS Mobile / BLE Control",
+      "version": "0.1.1",
+      "status": "PHYSICAL MVP PASS / ANDROID 7.1.2",
+      "minimum_android": "6.0 / API 23",
+      "description": "Native Android BLE client for KONTAKTS Platform 0.3.9. Uses FFF0 / FFF1 WRITE / FFF2 READ and the common command/service layer; physically validated through real Ebyte MA01 relay ON/OFF.",
+      "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app17-v0.1.1",
+      "apk": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app17-v0.1.1/kontakts-mobile-app17-v0.1.1-debug.apk",
+      "sha256": "5de40bc802438a35285077241da603b0441ead28179928fad0e15ea0285868d0",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/17_MobileControl",
+      "video": "https://youtube.com/shorts/FxDnALva3xM"
+    }
+  ]
 }
