@@ -1,5 +1,28 @@
 # App10 — KONTAKTS BLE Slider Sync
 
+Status: **HISTORICAL BLE EXPERIMENT / NOT THE CURRENT PLATFORM BLE CONTRACT**
+
+## Relationship to App16/App17
+
+App10 records an earlier purpose-built BLE slider experiment. Its custom slider service/characteristic should not be treated as the current KONTAKTS control API.
+
+The canonical later architecture is:
+
+```text
+App16 Platform 0.3.9
+Device   KONTAKTS-8048
+Service  FFF0
+Command  FFF1 WRITE
+Response FFF2 READ
+
+App17 Android
+ -> same textual command/service API
+ -> MA01 provider
+ -> UART1 / RS485
+```
+
+App10 is retained for BLE/UI learning history; new product work should use the App16/App17 contract unless a separate experiment explicitly requires otherwise.
+
 ## Goal
 
 Demonstrate not only the finished BLE feature, but the full engineering path used to build it.
@@ -185,10 +208,12 @@ GATT UUIDs, permissions and Android BLE details belong in the engineering explan
 - [ ] SD/touch regressions absent;
 - [ ] source and APK are reproducible from repository instructions.
 
-## Branch
+## Historical branch
 
-Development branch:
+The original development branch remains archived for research history:
 
 ```text
 agent/app10-ble-slider-sync
 ```
+
+Do not merge it wholesale into current `main`; later platform BLE work supersedes its protocol design.
