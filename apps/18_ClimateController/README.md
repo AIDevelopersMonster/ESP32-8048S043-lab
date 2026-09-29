@@ -212,3 +212,24 @@ image to the **inactive** slot and switch boot selection using the ESP-IDF OTA
 tool. A successful CI build does not constitute physical acceptance. The exact
 slot and commands must follow the observed board state; the SD package is
 installed separately under `/sd/widgets/climate-controller/`.
+
+### Serial app-only activation checkpoint for Sample A
+
+The image from the successful App18 CI run was written to inactive `ota_1`
+(`0x620000`) with esptool; its data hash was verified. The pre-switch `otadata`
+readback shows sector 0: `seq=1`, `state=2` (`VALID`), good CRC; sector 1 is
+erased. This is a **staged candidate**, not an App18 physical pass yet.
+
+`tools/prepare_ota1_selection.py` validates the board's saved 4 KiB partition
+table, saved 8 KiB `otadata`, and the exact CI app-only BIN SHA-256. It then
+creates only the 4 KiB second `otadata` sector with `seq=2`, a valid CRC and
+`ESP_OTA_IMG_NEW` state, without accessing the board. This differs from the
+ESP-IDF 5.5.5 `otatool.py switch_ota_partition` behavior, which updates the
+sequence and CRC but leaves an erased state as `UNDEFINED`. `NEW` enables the
+configured bootloader's `PENDING_VERIFY` flow on first boot.
+
+After writing the prepared sector at `0x10000`, the original first sector
+(`0xF000`) and NVS (`0x9000`) remain unchanged. The new app must be confirmed
+using the SYS/OTA `CONFIRM` control after its physical smoke test, before a
+second reboot; otherwise rollback may restore the previous app. Exact commands
+are applied one at a time, after checking the tool output and board state.
