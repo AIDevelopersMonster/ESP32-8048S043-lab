@@ -81,7 +81,7 @@ Validated on hardware:
 - KONTAKTSerial as the PC-side serial terminal;
 - Platform 0.3.5 browser Web Flasher install and normal boot.
 
-P1 is explicitly outside this acceptance and remains a separate service/UART0 investigation.
+P1 was explicitly outside this original App11 acceptance. In later platform work, P1/CH340C/UART0 was physically confirmed as the technological/service transport and is now used by KONTAKTSerial and the common command/service layer.
 
 ### Platform 0.3.6 GitHub OTA regression
 
@@ -97,15 +97,19 @@ Web Flasher installation of KONTAKTS Platform 0.3.5 on Sample A:
 
 https://youtube.com/shorts/eH-FXkjYH6s
 
-## Stage 2
+## Stage 2 — completed in later platform work
 
-After Stage 1, add generic LVGL 9 Widget Runtime capabilities:
+The planned generic Widget Runtime capabilities were subsequently implemented and physically exercised:
 
 ```text
 textarea
 keyboard
+ASCII / HEX
+NONE / LF / CR / CRLF
+history / repeat-last
+fullscreen keyboard overlay
 ```
 
-Then the same SD package can become an interactive terminal without adding a terminal-specific firmware screen.
+The same SD package evolved into the Advanced Serial Terminal, and Platform 0.3.7 physically validated the fullscreen keyboard path.
 
-Later stages can add CR/LF selection, command history, ASCII/HEX and finally use the same platform capability to investigate P1.
+The P1 investigation was also completed later: P1/CH340C/UART0 is the technological/service transport at 115200 8N1 and is intentionally distinct from the UART1 GPIO17/18 field Modbus path.
