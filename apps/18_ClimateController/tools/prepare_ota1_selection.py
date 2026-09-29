@@ -3,6 +3,7 @@
 
 Only the inactive ota_1 has been flashed with the verified App18 application.
 The first 4 KiB otadata sector (ota_0 VALID) stays untouched on the device.
+The second sector may be erased or may hold the ABORTED first App18 trial.
 """
 
 import argparse
@@ -12,7 +13,7 @@ from pathlib import Path
 import struct
 import zlib
 
-APP_SHA256 = "ed75a33fb90e04d1bb21ebd50dec45a7eb4c793ab91e730fb93c5e6860064efe"
+APP_SHA256 = "82f1d9c51a77c8888b4a643b67ae449386a77115e4bb620229a7ac766b0b160b"
 EXPECTED = {
     "nvs": (0x9000, 0x6000),
     "otadata": (0xF000, 0x2000),
@@ -67,8 +68,13 @@ def main() -> None:
     seq, state, crc = ota_entry(original, 0)
     if (seq, state) != (1, 2):  # ota_0, ESP_OTA_IMG_VALID
         raise ValueError(f"expected ota_0 VALID (seq=1 state=2), got seq={seq} state={state}")
-    if original[SECTOR_SIZE:] != bytes([0xFF]) * SECTOR_SIZE:
-        raise ValueError("second otadata sector is not fully erased; stop and inspect")
+    if original[SECTOR_SIZE:] == bytes([0xFF]) * SECTOR_SIZE:
+        second = "erased"
+    else:
+        second_seq, second_state, _ = ota_entry(original, 1)
+        if (second_seq, second_state) != (2, 4):  # ota_1, ESP_OTA_IMG_ABORTED
+            raise ValueError(f"expected ota_1 ABORTED (seq=2 state=4), got seq={second_seq} state={second_state}")
+        second = "ota_1 ABORTED, seq=2"
 
     image = args.image.read_bytes()
     image_sha256 = hashlib.sha256(image).hexdigest()
@@ -88,11 +94,11 @@ def main() -> None:
     assert struct.unpack_from("<I20sII", candidate)[2] == 0
     assert zlib.crc32(candidate[:4], 0xFFFFFFFF) == struct.unpack_from("<I", candidate, 28)[0]
 
-    # Refuse accidental overwrite of an existing, possibly previously used sector.
+    # Refuse accidental overwrite of a locally prepared candidate file.
     with os.fdopen(os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as output:
         output.write(candidate)
 
-    print("Source: ota_0 VALID, seq=1; second sector erased")
+    print(f"Source: ota_0 VALID, seq=1; second sector {second}")
     print(f"Verified App18 app SHA-256: {image_sha256}")
     print("Prepared: ota_1 NEW, seq=2, CRC valid; 4096 bytes")
     print(f"Output: {args.output}")

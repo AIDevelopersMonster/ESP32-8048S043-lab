@@ -246,3 +246,17 @@ After writing the prepared sector at `0x10000`, the original first sector
 using the SYS/OTA `CONFIRM` control after its physical smoke test, before a
 second reboot; otherwise rollback may restore the previous app. Exact commands
 are applied one at a time, after checking the tool output and board state.
+
+### Second App18 trial after automatic rollback
+
+The first trial reached `app09_ui` but the screen stayed dark and the task
+watchdog repeatedly reported `IDLE1` starvation. A controlled reboot restored
+the working `ota_0`; the saved selection then read `seq=1 state=2` (VALID) in
+sector 0 and `seq=2 state=4` (ABORTED) in sector 1. The earlier application
+remains intact. The corrected firmware from run `36560482258`, commit
+`e1e8262`, has app-only SHA-256
+`82f1d9c51a77c8888b4a643b67ae449386a77115e4bb620229a7ac766b0b160b`.
+The helper now accepts only the verified `ota_0 VALID` with an erased sector 1
+or the observed `ota_1 ABORTED` (seq 2, valid CRC), and only that corrected BIN.
+Always read fresh `otadata` immediately before preparing a new selection;
+never reuse the old `ota1-new-sector.bin` or overwrite `otadata` sector 0.
