@@ -1,359 +1,351 @@
-# ESP32-8048S043 Lab
+# ESP32-8048S043 Lab / KONTAKTS Platform
 
-Practical hardware/software laboratory for the **ESP32-8048S043 / ESP32-8048S043C-I** family of ESP32-S3 4.3-inch 800x480 display modules.
+Evidence-first hardware, firmware and application laboratory for the **ESP32-8048S043 / ESP32-8048S043C-I** family of ESP32-S3 4.3-inch 800x480 RGB touch modules.
 
-This repository is intentionally evidence-first. It is **not** a generic pinout dump and it does **not** promote vendor/community claims to PASS until they are reproduced on a named physical specimen.
+The repository started as a board-identification and hardware-validation lab and has grown into a physically tested platform with display/touch, SD applications, Wi-Fi, Web control, OTA, technological UART, field RS485/Modbus, BLE and an Android client.
 
-## Current status
+## Current milestone
 
-```text
-REPOSITORY STRUCTURE        CREATED
-REFERENCE BOARD PASSPORT    OPEN
-CHIP / FLASH / PSRAM        PASS
-ARDUINO BOARDINFO           PASS
-SCHEMATIC / BOM RESEARCH    SOURCE-BACKED
-PIN MAP                     SOURCE-BACKED / RGB OWN TEST PASS / GT911 OWN TOUCH PASS
-FACTORY FIRMWARE DUMP       DOUBLE-READ MATCH
-FACTORY FIRMWARE ANALYSIS   FIRST-PASS DONE
-FACTORY SERIAL BOOT         PASS
-FACTORY LVGL DISPLAY        PASS
-TOUCHSCREEN VISUAL CHECK    FACTORY DEMO PASS + OWN GT911 VISUAL PASS
-DISPLAY RGB PANEL           OWN MINIMAL ARDUINO_GFX TEST PASS
-GT911 / GOODIX IDENTITY     OWN I2C POLLING TEST PASS / 0x5D / PRODUCT ID 911
-WIFI RADIO                  SCAN PASS CANDIDATE / SAMPLE A / INFRASTRUCTURE PENDING
-ARDUINO BOARD PROFILE       LOCAL SKETCHBOOK PROFILE PASS CANDIDATE / SAMPLE A / BOARD MANAGER OPEN
-BSP LIBRARY                 SKELETON / 01-06 IMPLEMENTED / 01-03 PHYSICAL PASS / 06 WIFI SCAN CANDIDATE
-WEB FLASHER                 SKELETON
-PHYSICAL PASS CLAIMS        SAMPLE A FACTORY LVGL DISPLAY + TOUCH VISUAL + BOARDINFO + RGB DISPLAY + OWN GT911 TOUCH + WIFI SCAN CANDIDATE
-```
-
-## Factory firmware baseline
+**Current accepted platform:** KONTAKTS Platform **0.3.9**  
+**Board:** Sample A  
+**Status:** **PHYSICAL PASS**  
+**Accepted full-image SHA-256:**
 
 ```text
-Specimen    : Sample A
-Dump time   : 20260822-195722
-Read size   : 16 MB / 0x01000000
-Reads       : 2
-SHA-256     : 3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
-Result      : MATCH all reads are identical
-Analysis    : partition table found at 0x00008000, 5 entries
-Runtime     : serial boot PASS, factory LVGL Widgets Demo display + touch visual PASS
+20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
 ```
 
-Factory partition layout:
+The physically accepted integrated path includes:
 
 ```text
-nvs      0x00009000  size 0x5000
-otadata  0x0000E000  size 0x2000
-app0     0x00010000  size 0x140000
-app1     0x00150000  size 0x140000
-spiffs   0x00290000  size 0x170000
+800x480 RGB + GT911
+SD application library + Help
+Wi-Fi STA/AP + HTTP
+GitHub OTA / rollback infrastructure
+UART0/P1 technological service
+UART1 GPIO17/18 field bus
+RS485 / Modbus RTU
+MA01 relay provider
+Web control
+BLE GATT transport
+Android BLE client
 ```
 
-The factory `.bin` dump is intentionally not committed. Only metadata, hashes and reviewed analysis outputs are tracked.
-
-## Arduino BoardInfo baseline
-
-`01_BoardInfo` now runs from the Arduino IDE examples menu and records the first Arduino runtime PASS for Sample A.
-
-Current result:
+The accepted control architecture is deliberately transport-independent:
 
 ```text
-Upload / serial monitor : PASS
-Chip                    : PASS, ESP32-S3 rev 2, 2 cores, 240 MHz
-Flash size              : PASS, 16777216 bytes / 16 MB
-Flash mode / speed      : QIO / 80 MHz
-PSRAM                   : PASS, 8388608 bytes / 8 MB
-Running partition       : app0, address 0x010000, size 3145728
-Runtime stability       : PASS, ALIVE lines observed with PSRAM available
-Overall 01_BoardInfo    : PASS
+HMI -----------+
+UART0/P1 ------+
+Web browser ---+
+BLE -----------+--> command/service layer --> providers --> hardware
+Android app ---+
 ```
 
-Commit-safe runtime records:
+MA01 Modbus register knowledge remains in the provider/service layer. Web, BLE, Android and UART clients do not duplicate the register map.
+
+## Major result: Wi-Fi + BLE coexistence
+
+Platform 0.3.9 physically demonstrates **Wi-Fi and BLE operating in the same ESP32-S3 system** together with RGB/LVGL, SD, HTTP, OTA services and MA01/RS485 control.
+
+The bring-up problems were memory/resource-allocation issues, not a fundamental Wi-Fi/BLE incompatibility. The accepted build uses explicit memory ownership:
+
+- display/LVGL initialization before optional BLE;
+- LVGL draw buffer in PSRAM;
+- NimBLE host allocations in external RAM where supported;
+- OTA worker stack in PSRAM;
+- RGB bounce buffer kept in internal DMA-capable RAM.
+
+This is a hardware-observed coexistence result, not a claim that every Wi-Fi/BLE workload is automatically contention-free.
+
+## Current user paths
+
+### Web Flasher
+
+The current Web Flasher catalog publishes Platform 0.3.9 as:
 
 ```text
-evidence/specimens/sample-a/arduino/01-boardinfo-20260823.md
-evidence/specimens/sample-a/arduino/01-boardinfo-local-board-profile-20260825.md
+PHYSICAL PASS / CURRENT PLATFORM
 ```
 
-Video evidence:
+Source:
 
 ```text
-https://youtube.com/shorts/wELRdRWqlnw
+web-flasher/
 ```
 
-Note:
+Release image:
 
 ```text
-An earlier run reported PSRAM as 0 bytes. A later run, after changing the Arduino PSRAM type/profile and rebuilding, detected 8388608 bytes / 8 MB and stayed alive with freePsram reported in the ALIVE lines. The later runtime report is the current PASS evidence.
+app06-v0.3.9
+app06-ota-recovery-v0.3.9-full.bin
 ```
 
-## Arduino RGB display baseline
-
-`02_DisplayRGBTest` is the first own minimal RGB display validation from the local `ESP32_8048S043` Arduino library.
-
-Current result:
+Accepted full-image SHA-256:
 
 ```text
-Display begin           : PASS, serial reports Display begin: OK
-RGB control/data pins   : PASS candidate, source-backed map exercised by own sketch
-Backlight               : PASS candidate, GPIO2 full ON used by own sketch
-Color sequence          : PASS, RED/GREEN/BLUE/WHITE/BLACK shown visually
-Orientation frame       : PASS, landscape 800x480 visual check passed
-RGB color bars          : PASS, visual color-bar check passed
-Stripe pattern          : PASS, data-line sanity pattern visible
-Overall 02_DisplayRGBTest: PHYSICAL VISUAL PASS / SAMPLE A
+20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
 ```
 
-Commit-safe runtime record:
+### GitHub OTA
+
+Manifest:
 
 ```text
-evidence/specimens/sample-a/arduino/02-display-rgbtest-20260823.md
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/download/app06-ota.json
 ```
 
-## Arduino GT911 touch baseline
-
-`03_TouchGT911Test` is the first own GT911 touch validation from the local `ESP32_8048S043` Arduino library.
-
-Current result:
+Platform 0.3.9 OTA assets are published under release:
 
 ```text
-Display init through Arduino_GFX : PASS, gfx->begin(): OK
-GT911 I2C address                : PASS, 0x5D
-GT911 Product ID                 : PASS, 911
-GT911 firmware register          : PASS, 0x1060
-GT911 point polling              : PASS, 0x814E status / 0x814F point data
-Raw coordinate changes           : PASS
-Mapped screen coordinates        : PASS candidate
-Visible red marker movement      : PASS by video evidence
-Overall 03_TouchGT911Test        : PHYSICAL VISUAL PASS / SAMPLE A
+app06-v0.3.9
 ```
 
-Commit-safe runtime record:
+### SD application library and Help
+
+Current SD snapshot:
 
 ```text
-evidence/specimens/sample-a/arduino/03-touch-gt911-20260823.md
+app09-sd-current
+kontakts-sd-library.zip
 ```
 
-Video evidence:
+The SD Help system covers four roles:
 
 ```text
-https://youtube.com/shorts/_zhtl-AWcCE
+User
+Application programmer
+System programmer
+Hardware
 ```
 
-Boundary:
+Canonical browser paths include:
 
 ```text
-This PASS confirms the own low-level GT911/I2C touch path and basic visual marker movement. Final LVGL touch integration, calibration, rotation and gestures remain separate tests.
+/help
+/help/system?doc=user
+/help/system?doc=application-programmer
+/help/system?doc=system-programmer
+/help/system?doc=hardware
+/help/app?name=<package-folder>
 ```
 
-## Arduino Wi-Fi scan baseline
+### Technological UART
 
-`06_WiFiTest` is the first Wi-Fi radio validation from the local `ESP32_8048S043` Arduino library.
-
-Current scan-only result:
+P1 / CH340C / UART0 is the technological/service transport:
 
 ```text
-Mode                   : scan-only, no wifi_secrets.h present
-STA MAC                : PASS, 84:FC:E6:6C:69:3C
-Active Wi-Fi scan      : PASS, 3 network(s) found
-Infrastructure tests   : PENDING, no association/DHCP/DNS/TCP/reconnect yet
-Overall 06_WiFiTest    : WIFI RADIO SCAN PHYSICAL PASS CANDIDATE / SAMPLE A
+115200 8N1
 ```
 
-Commit-safe runtime record:
+Host tool:
 
 ```text
-evidence/specimens/sample-a/arduino/06-wifi-scan-20260825.md
+tools/KONTAKTSerial/
 ```
 
-Video evidence:
+UART0 is not the user field Modbus port.
+
+### Field RS485 / MA01
+
+Field transport:
 
 ```text
-https://youtube.com/shorts/DOus0uNBBZI
+UART1 TX GPIO17
+UART1 RX GPIO18
+9600 8N1
+automatic-direction TTL/RS485 adapter
 ```
 
-Boundary:
+Physically validated target:
 
 ```text
-This evidence confirms Wi-Fi radio scan only. Full Wi-Fi PASS requires a later run with local wifi_secrets.h and successful association, DHCP, DNS, TCP/HTTP and reconnect cycles.
+Ebyte MA01-XXCX0080
+slave address 16
 ```
 
-## Experimental Arduino board profile baseline
-
-The project now has a separate board-profile layer in addition to the runtime Arduino library.
-
-Validated local sketchbook hardware platform:
+Examples of the common textual service API:
 
 ```text
-Documents/Arduino/hardware/AIDevelopersMonster/esp32
+MA01 ADDR
+MA01 READ
+MA01 CONFIG
+MA01 DO1 INFO
+MA01 DO1 ACTION
+MA01 DO1 ON
+MA01 DO1 OFF
+MA01 DO1 TOGGLE
+MA01 DO1 MODE LEVEL
+MA01 DO1 MODE PULSE
+MA01 DO1 PULSEMS 5000
 ```
 
-Working board target:
+### BLE
+
+Platform 0.3.9 BLE contract:
 
 ```text
-AIDevelopersMonster:esp32:esp32_8048s043_lab_n16r8
-ESP32-8048S043 Lab N16R8 FIXED (ESP32-S3 RGB800x480 GT911)
+Device   KONTAKTS-8048
+Service  FFF0
+Command  FFF1  WRITE
+Response FFF2  READ
 ```
 
-Machine-readable Sample A profile:
+The current laboratory MVP supports one BLE connection and deliberately uses explicit reads rather than notifications.
+
+### Android App17
+
+Native Android client:
 
 ```text
-config/board_profiles/esp32-8048s043-lab-sample-a.json
+apps/17_MobileControl/
 ```
 
-Human-readable design note:
+Current physically tested MVP:
 
 ```text
-docs/arduino-board-profile.md
+App17 v0.1.1
+minSdk 23
+Android 6.0+
+physical test: Android 7.1.2 / API 25
 ```
 
-Experimental Arduino IDE kit staging area:
+Confirmed end-to-end:
 
 ```text
-boards/arduino-ide/esp32-8048s043-lab/
+Android App17
+ -> BLE FFF1 / FFF2
+ -> Platform 0.3.9 command/service layer
+ -> MA01 provider
+ -> UART1 GPIO17/18
+ -> RS485
+ -> MA01
+ -> physical relay ON/OFF
 ```
 
-Current boundary:
+Video:
+
+https://youtube.com/shorts/FxDnALva3xM
+
+## Application line
+
+The repository keeps incremental application/laboratory stages rather than hiding earlier development.
+
+| App | Purpose | Current role |
+|---|---|---|
+| 01 | Six Card Serial Deck | physical-pass laboratory firmware |
+| 02 | Mixed Widgets | closed physical-pass LVGL lab |
+| 03 | Live Dashboard | closed physical-pass telemetry lab |
+| 04 | Storage Config | storage/config development stage |
+| 05 | Network Provisioning | physical-pass legacy network lab |
+| 06 | OTA Recovery / platform core | current platform foundation |
+| 09 | SD Widget Library | current SD apps + Help distribution |
+| 10 | BLE Slider Sync | earlier BLE laboratory stage |
+| 11 | USB Serial Terminal | serial UI stage |
+| 14 | Modbus Controller | generic field-bus/service development record |
+| 15 | Web Control | physical MVP pass |
+| 16 | BLE Control | physical pass / Platform 0.3.9 |
+| 17 | Mobile BLE Control | physical MVP pass / Android |
+
+Some historical stage numbers are intentionally absent from `main/apps` because the useful implementation was folded into the platform line rather than preserved as a separate top-level application.
+
+## Hardware baseline — Sample A
+
+Current core hardware evidence:
 
 ```text
-The local sketchbook board profile validates 01_BoardInfo on Sample A with ESP32-S3, 16 MB flash, 8 MB OPI PSRAM and a 3 MB app0 partition.
-
-It is not yet a supported Arduino Boards Manager package and it does not yet replace the generic ESP32S3 Dev Module fallback for all examples.
+ESP32-S3                     PASS
+Flash                        16 MB
+PSRAM                        8 MB
+RGB display                  800x480 PHYSICAL PASS
+GT911                        0x5D / PHYSICAL PASS
+SD SPI                       GPIO10/11/12/13 PHYSICAL PASS
+P1                           +5V + UART0/CH340C service path
+P4                           GND / 3.3V / GPIO17 / GPIO18
+GPIO17/18                    UART1 field path PHYSICAL PASS
+Q1                           CJ3401 P-channel reverse-polarity protection
 ```
 
-## Source-backed hardware baseline
-
-Manufacturer/distributor documentation and a same-layout board reference now provide a source-backed reconstruction for the main hardware map:
+Board operating current observed around:
 
 ```text
-USB-UART bridge : CH340C
-Touch           : GT911 capacitive touch, factory visual runtime PASS and own I2C polling visual PASS
-RGB LCD         : 800x480 RGB parallel panel, factory LVGL display runtime PASS and own Arduino_GFX minimal test PASS
-SD / TF1        : SPI SD wiring recovered, own SD test still open
+~0.64 A @ 5 V
+~3.17 W
 ```
 
-Recovered source-backed GPIO map:
+An ordinary PC USB 2.0 port is not treated as the recommended normal power source for the integrated platform.
+
+## Factory baseline
+
+Sample A factory dump was read twice over the full 16 MB flash and matched:
 
 ```text
-LCD DE        40
-LCD VSYNC     41
-LCD HSYNC     39
-LCD PCLK      42
-Backlight PWM 2
-GT911 SDA/SCL 19 / 20
-GT911 RESET   38
-GT911 INT     18, optional / link-dependent
-SD CS/MOSI/CLK/MISO 10 / 11 / 12 / 13
-RGB R0..R4    45, 48, 47, 21, 14
-RGB G0..G5    5, 6, 7, 15, 16, 4
-RGB B0..B4    8, 3, 46, 9, 1
+SHA-256
+3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
 ```
 
-This map is now **source-backed** with **own RGB display runtime PASS** and **own GT911 touch runtime PASS**. SD and the final BSP still require separate validation.
+The proprietary factory binary is intentionally not committed. Metadata, hashes and reviewed analysis are preserved instead.
 
-## Third-party Robot-Core-Display reproduction
+## Evidence policy
 
-`Albert-Benavent-Cabrera/Robot-Core-Display` was reproduced on **Sample A** as an external GPL-3.0 reference implementation. The project uses **LVGL 9.1 + Arduino_GFX + double internal-SRAM LVGL buffers + RGB bounce buffer + GT911** and is the display/HMI side of the Robot-Core cocktail-machine ecosystem.
+This repository remains evidence-first:
 
-Physical result:
+1. **Identify before flashing.**
+2. **Separate source-backed claims from physical PASS.**
+3. **Name the specimen and firmware for physical evidence.**
+4. **Keep failed experiments as history when useful, but do not leave stale status in the current README.**
+5. **Do not promote a candidate to PASS without a hardware observation, log, photo or video.**
+6. **Do not duplicate hardware/protocol knowledge across transports.**
+
+## Repository map
 
 ```text
-Build / link / firmware image : PASS on current stack after a narrow ESP-NOW IDF 5.5 compatibility shim
-Display / touch runtime       : PHYSICAL FUNCTIONAL PASS / SAMPLE A
-Redraw                         : visibly slow, but stable
-Jitter / chatter               : NOT OBSERVED in this physical run
-Online ESP-NOW integration     : NOT YET TESTED
+apps/                       incremental firmware/platform/mobile stages
+boards/                     Arduino IDE board-profile work
+config/                     machine-readable board profiles
+docs/                       hardware/software/manuals/research
+evidence/                   named physical evidence
+hardware/                   schematic/BOM/photo research
+libraries/ESP32_8048S043/   Arduino BSP line
+tools/                      host tools, flasher, analysis
+web-flasher/                ESP Web Tools catalog/site
+.github/workflows/          CI, releases and deployment
 ```
 
-The important observation is that this implementation shows a **slow visible redraw rather than the unstable-looking redraw/jitter seen in some earlier current-stack partial-render experiments**. This makes the SRAM/bounce-buffer architecture a high-priority mechanism for controlled reproduction in the own BSP.
+Important starting points:
 
-Audit record:
+- `apps/06_OTARecovery/README.md` — current platform/OTA foundation.
+- `apps/09_SDWidgetLibrary/README.md` — SD application architecture.
+- `apps/14_ModbusController/README.md` — field-bus development record.
+- `apps/15_WebControl/README.md` — browser control.
+- `apps/16_BLEControl/README.md` — BLE transport and 0.3.9 acceptance.
+- `apps/17_MobileControl/README.md` — Android BLE client.
+- `tools/KONTAKTSerial/README.md` — technological UART tool.
+- `docs/HARDWARE-ACCEPTANCE-START.md` — board acceptance workflow.
+- `hardware/SCHEMATIC_BOM_RESEARCH.md` — reconstructed hardware evidence.
+- `web-flasher/firmware-list.json` — current public firmware/application catalog.
+
+## Current boundaries / next work
+
+The large **transport/platform proof stage is complete**. The next work should be refinement rather than another duplicated control stack:
 
 ```text
-docs/third-party/albert-benavent-robot-core-display.md
+App17 UI/state parsing
+BLE reconnect behaviour
+optional notifications/security design
+Web/Modbus polling cleanup
+long-duration coexistence tests
+generic external-device/provider expansion
+documentation/release hygiene
 ```
 
-Video demonstration:
+Not yet claimed:
 
-```text
-https://youtube.com/shorts/r2-6dwP3yoE
-```
-
-## Target family
-
-This lab is intended for boards sold under names similar to:
-
-```text
-ESP32-8048S043
-ESP32-8048S043C
-ESP32-8048S043C-I
-4.3 inch 800x480 ESP32-S3 capacitive touch display
-```
-
-Important: board labels, sellers and OEM revisions may differ. Treat every new board as a specimen until proven compatible.
-
-## Repository philosophy
-
-1. **Identify before flashing.** First capture photos, chip identity, flash size, PSRAM and the factory firmware dump.
-2. **Separate reported from verified.** Vendor/community pin maps live in docs until tested.
-3. **Keep examples incremental.** Factory dump -> BoardInfo -> display -> touch -> backlight -> console -> board profile -> Wi-Fi -> LVGL -> Web/OTA.
-4. **No hidden negative branches.** Failed experiments may be kept as history, but current README status must reflect the current validated result.
-5. **No PASS without evidence.** A working video/log/photo must name the specimen and firmware.
-
-## Start here
-
-- [`docs/HARDWARE-ACCEPTANCE-START.md`](docs/HARDWARE-ACCEPTANCE-START.md) — first-board acceptance workflow.
-- [`hardware/SCHEMATIC_BOM_RESEARCH.md`](hardware/SCHEMATIC_BOM_RESEARCH.md) — source-backed schematic/BOM/pinout reconstruction.
-- [`docs/firmware/README.md`](docs/firmware/README.md) — factory and third-party firmware preservation/analysis rules.
-- [`docs/firmware/reproducible-factory-dump-and-analysis.md`](docs/firmware/reproducible-factory-dump-and-analysis.md) — reader-facing reproduction guide for factory dump and analysis.
-- [`docs/pinout.md`](docs/pinout.md) — source-backed and future verified pin map.
-- [`docs/arduino-board-profile.md`](docs/arduino-board-profile.md) — experimental Arduino board-profile layer.
-- [`docs/videos.md`](docs/videos.md) — shooting plan and evidence links.
-- [`docs/third-party/README.md`](docs/third-party/README.md) — reference projects and firmware to study without copying blindly.
-- [`evidence/specimens/sample-a/README.md`](evidence/specimens/sample-a/README.md) — first specimen evidence folder.
-- [`libraries/ESP32_8048S043/README.md`](libraries/ESP32_8048S043/README.md) — Arduino BSP skeleton and example plan.
-- [`config/board_profiles/esp32-8048s043-lab-sample-a.json`](config/board_profiles/esp32-8048s043-lab-sample-a.json) — machine-readable Sample A board profile.
-
-## Planned architecture
-
-```text
-Factory firmware preservation
-        ↓
-USB / browser first lab install
-        ↓
-Arduino BSP for verified board profile
-        ↓
-RGB display + GT911 touch + backlight
-        ↓
-Experimental Arduino board profile
-        ↓
-Wi-Fi baseline
-        ↓
-LVGL local HMI shell
-        ↓
-Web setup / upload / logs
-        ↓
-Widget runtime and GitHub OTA only after stable partition layout
-```
-
-## Structure
-
-```text
-ESP32-8048S043-lab/
-├── .github/                 # issue templates and CI workflows
-├── boards/                  # experimental Arduino IDE / future board package files
-├── config/board_profiles/   # machine-readable board/specimen profiles
-├── docs/                    # hardware, software, firmware, variants, research, videos
-├── evidence/                # named specimen evidence only
-├── hardware/images/         # raw and annotated own photos
-├── libraries/               # Arduino BSP and examples
-├── tools/                   # host-side audit and packaging tools
-├── web-flasher/             # future ESP Web Tools site
-├── releases/                # release protocol notes
-└── README.md
-```
+- production BLE security;
+- long-duration multi-client/multi-device operation;
+- universal external I2C/ADC use on every board revision;
+- guaranteed GPIO current capability beyond the documented board evidence;
+- production certification.
 
 ## License
 
-Code and original text are intended for release under the MIT License. Third-party photos, firmware, vendor files and schematics retain their original licenses and must not be copied here unless redistribution is permitted.
+Original code and text are released under the repository license. Third-party firmware, photos, schematics and source material retain their own licenses and are not redistributed unless permitted.
