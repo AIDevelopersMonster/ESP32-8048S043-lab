@@ -140,8 +140,8 @@
       "w": 230,
       "h": 40,
       "color": "#8B949E",
-      "bind": "climate.edit_state",
-      "prefix": "SETTINGS: "
+      "bind": "climate.error",
+      "prefix": "ERR: "
     }
   ]
 }

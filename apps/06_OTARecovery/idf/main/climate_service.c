@@ -10,11 +10,13 @@
 
 /* Bench default, not a compressor-specific protection interval. */
 #define MIN_OFF_US (5000000LL)
+#define SENSOR_GRACE_US (60000000LL)
 static SemaphoreHandle_t s_lock;
 static climate_config_t s_config;
 static bool s_enabled, s_claimed, s_known, s_fault;
 static bool s_demand[4], s_actual[4];
 static int64_t s_off_since[4];
+static int64_t s_last_fresh_us = -1;
 static const char *s_state = "OFF";
 static esp_err_t s_error;
 static const char *s_edit_state = "READY";
@@ -156,11 +158,21 @@ void climate_service_poll(void)
     modbus_service_get_status(&sensor);
     bool valid = sensor.sensor_online && sensor.temperature_tenths_c >= -400 &&
         sensor.temperature_tenths_c <= 1250 && sensor.humidity_tenths_rh <= 1000;
+    if (valid) s_last_fresh_us = esp_timer_get_time();
+    /* Hold confirmed outputs during a brief sensor outage, without evaluating
+     * stale values or issuing another relay command. A missing first reading
+     * never receives this grace period. */
+    if (s_enabled && !valid && s_known && !s_fault && s_last_fresh_us >= 0 &&
+        esp_timer_get_time() - s_last_fresh_us < SENSOR_GRACE_US) {
+        s_state = "SENSOR WAIT";
+        goto done;
+    }
     if (!s_enabled || !valid || !s_known || s_fault) {
         esp_err_t off_error = all_off();
         if (!s_fault || off_error != ESP_OK) s_error = off_error;
         s_state = (s_error != ESP_OK || s_fault) ? "FAULT" : !s_enabled ? "OFF" : !valid ? "FAILSAFE" : "STARTING";
-        if (!s_enabled && !s_fault && s_error == ESP_OK) {
+        /* After confirmed OFF, keep the fault latched but stop retrying writes. */
+        if (!s_enabled && off_error == ESP_OK) {
             (void)modbus_service_climate_claim(false);
             s_claimed = false;
         }
@@ -227,10 +239,11 @@ void climate_service_format_binding(const char *binding, char *out, size_t size)
              !strcmp(binding, "climate.humidity")) {
         modbus_service_status_t sensor = {0};
         modbus_service_get_status(&sensor);
-        bool valid = sensor.sensor_online && sensor.temperature_tenths_c >= -400 &&
+        bool valid = sensor.sensor_seen && sensor.temperature_tenths_c >= -400 &&
             sensor.temperature_tenths_c <= 1250 && sensor.humidity_tenths_rh <= 1000;
         if (!strcmp(binding, "climate.sensor_state"))
-            snprintf(out, size, "%s", valid ? "ONLINE" : "NO SENSOR");
+            snprintf(out, size, "%s", !valid ? "NO SENSOR" :
+                     sensor.sensor_online ? "ONLINE" : "STALE");
         else if (!valid) snprintf(out, size, "--");
         else if (!strcmp(binding, "climate.temperature")) {
             int v = sensor.temperature_tenths_c;

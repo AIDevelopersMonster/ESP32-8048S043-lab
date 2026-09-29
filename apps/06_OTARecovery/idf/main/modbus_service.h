@@ -16,6 +16,8 @@ typedef struct {
     bool online;
     /* EID041 freshness is independent of MA01/other bus transaction errors. */
     bool sensor_online;
+    /* A successful sensor sample exists; retained when a later poll times out. */
+    bool sensor_seen;
     int16_t temperature_tenths_c;
     uint16_t humidity_tenths_rh;
     uint32_t tx_frames;

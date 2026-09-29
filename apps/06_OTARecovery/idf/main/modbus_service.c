@@ -712,11 +712,15 @@ static void eid041_poll_task(void *arg)
                                                       2,
                                                       regs,
                                                       2);
+        if (err == ESP_OK && ((int16_t)regs[0] < -400 ||
+                              (int16_t)regs[0] > 1250 || regs[1] > 1000))
+            err = ESP_ERR_INVALID_RESPONSE;
         if (err == ESP_OK) {
             xSemaphoreTake(s_status_lock, portMAX_DELAY);
             s_status.temperature_tenths_c = (int16_t)regs[0];
             s_status.humidity_tenths_rh = regs[1];
             s_status.sensor_online = true;
+            s_status.sensor_seen = true;
             s_status.online = true;
             xSemaphoreGive(s_status_lock);
             if (!was_online) ESP_LOGI(TAG, "EID041 sensor online");

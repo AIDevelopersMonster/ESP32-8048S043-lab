@@ -188,8 +188,17 @@ Physical acceptance must still check DO1..DO4 with indicator loads, sensor remov
 RS485 interruption, mode rejection, manual-command rejection and reboot/NVS restore.
 
 The climate sensor bindings display `--` and `NO SENSOR` until EID041 has
-responded successfully. On a failed sensor poll they immediately hide the last
-reading; sensor freshness is tracked separately from other RS485 device errors.
+responded successfully. After a failed sensor poll, the last measured values
+remain visible with `SENSOR: STALE`; they are **not** used to drive relays.
+For up to 60 seconds after the last fresh sample, AUTO holds its last confirmed
+relay states without making a new decision from the stale sample. At 60 seconds
+it commands all four climate outputs OFF and enters FAILSAFE. There is no grace
+period before the first valid sample; relay communication failures still use
+the immediate fault path. Only a fresh valid sample can make new decisions.
+The home screen also shows
+`climate.error` for diagnosis when a relay fault is latched. Once an OFF
+sequence has been confirmed, the FAULT indication remains until an explicit
+OFF request, while redundant OFF writes stop.
 The clock-only platform remains OFF after boot and sends no climate relay writes.
 
 ## Sample A flash layout read from the board (2026-09-29)
