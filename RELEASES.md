@@ -59,6 +59,22 @@ BLE KONTAKTS-8048
 Android App17 relay control
 ```
 
+## Verified current asset inventory
+
+See:
+
+```text
+docs/RELEASE-ASSET-INVENTORY.md
+```
+
+Current SD bundle SHA-256:
+
+```text
+38C8E2F8B490EB18C7052C6F9AD878BF91561B57F94D71A5BD75A5FAAAB56EF7
+```
+
+Because `app09-sd-current` is intentionally mutable, this value must be refreshed whenever the SD bundle workflow republishes the current tag.
+
 ## Security boundary
 
 Current BLE and local HTTP control are laboratory/trusted-network MVPs. Production authentication, BLE bonding/application authentication and public-network exposure are separate future gates.
