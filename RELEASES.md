@@ -30,7 +30,7 @@ https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/downlo
 | GitHub OTA | `app06-v0.3.9` | OTA `.bin` + JSON manifest | hardware OTA path must pass |
 | SD library | `app09-sd-current` | `kontakts-sd-library.zip` + package ZIPs | SD mount/launcher/help must pass |
 | Web Flasher | GitHub Pages from `main` | ESP Web Tools site | current platform image SHA checked in CI |
-| Android App17 | CI artifact `app17-kontakts-mobile-v0.1.1` | debug APK + SHA-256 | install/launch/BLE/relay physical pass |
+| Android App17 | `app17-v0.1.1` | permanent APK + SHA-256 | exact CI artifact + install/launch/BLE/relay physical pass |
 | Arduino BSP | `arduino-v*` when promoted | installable ZIP | CI compile + physical board evidence |
 
 ## Release discipline
@@ -62,3 +62,19 @@ Android App17 relay control
 ## Security boundary
 
 Current BLE and local HTTP control are laboratory/trusted-network MVPs. Production authentication, BLE bonding/application authentication and public-network exposure are separate future gates.
+
+
+## Android App17 permanent release
+
+```text
+Tag       app17-v0.1.1
+APK       kontakts-mobile-app17-v0.1.1-debug.apk
+SHA-256   5DE40BC802438A35285077241DA603B0441EAD28179928FAD0E15EA0285868D0
+CI run    36507403489
+```
+
+Release:
+
+https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app17-v0.1.1
+
+The publication workflow pins the physically tested artifact. A new App17 version must receive a new physical acceptance checkpoint before the pinned release workflow is extended to that version.
