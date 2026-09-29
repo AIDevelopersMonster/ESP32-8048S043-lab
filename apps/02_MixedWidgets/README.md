@@ -1,6 +1,6 @@
 # App 02 — Mixed Widgets
 
-Status: **PHYSICAL PASS (v0.1.0) / v0.1.1 COSMETIC FIX CANDIDATE**
+Status: **PHYSICAL PASS / CLOSED**
 
 App 02 keeps the physically validated App 01 hardware/runtime baseline unchanged and varies only the LVGL UI layer.
 
@@ -12,7 +12,7 @@ App 02 keeps the physically validated App 01 hardware/runtime baseline unchanged
 - Known cosmetic issue in v0.1.0: the top-right `BACK TO CONTROLS` button was slightly too narrow for its label.
 - Video evidence: https://youtube.com/shorts/LwmW8UwDED0
 
-The v0.1.1 candidate changes only the `BACK TO CONTROLS` button geometry from 200×48 at x=576 to 236×48 at x=540. No hardware, touch, widget, display, timing, memory, or callback behavior is changed.
+The v0.1.1 maintenance revision changes only the `BACK TO CONTROLS` button geometry from 200×48 at x=576 to 236×48 at x=540. The application line is closed; no further platform work depends on App02.
 
 ## Widgets under test
 
@@ -64,4 +64,4 @@ WIDGET:NAV:CONTROLS
 - Serial output matches the manipulated widget — PASS
 - UI task/runtime remained stable during the recorded test — PASS
 
-Public Web Flasher publication should use the corrected v0.1.1 candidate only after the cosmetic button fix is physically confirmed.
+The public catalog retains App02 as a closed physical-pass laboratory firmware. New UI work belongs in later platform/application stages rather than reopening this lab.
