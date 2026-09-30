@@ -5,15 +5,15 @@ The repository uses separate release channels for firmware, SD content, Web Flas
 ## Current accepted platform
 
 ```text
-KONTAKTS Platform 0.3.9
+KONTAKTS Platform 0.4.0
 Status: PHYSICAL PASS / Sample A
-Release tag: app06-v0.3.9
+Release tag: app06-v0.4.0
 ```
 
 Accepted full-image SHA-256:
 
 ```text
-20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
+F2787661FD55A8A6DA1CD8131B644D3C874D89182D1CC5A7F057255A777893B0
 ```
 
 OTA manifest:
@@ -26,8 +26,8 @@ https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/downlo
 
 | Channel | Current identifier | Output | Acceptance rule |
 |---|---|---|---|
-| Platform full image | `app06-v0.3.9` | full `.bin` | exact hardware-tested image/hash preferred |
-| GitHub OTA | `app06-v0.3.9` | OTA `.bin` + JSON manifest | hardware OTA path must pass |
+| Platform full image | `app06-v0.4.0` | full `.bin` | exact hardware-tested image/hash preferred |
+| GitHub OTA | `app06-v0.4.0` | OTA `.bin` + JSON manifest | hardware OTA path must pass |
 | SD library | `app09-sd-current` | `kontakts-sd-library.zip` + package ZIPs | SD mount/launcher/help must pass |
 | Web Flasher | GitHub Pages from `main` | ESP Web Tools site | current platform image SHA checked in CI |
 | Android App17 | `app17-v0.1.1` | permanent APK + SHA-256 | exact CI artifact + install/launch/BLE/relay physical pass |
@@ -45,16 +45,17 @@ Before promoting a platform release:
 6. Update root README, application README, release notes, Web Flasher catalog and SD Help as applicable.
 7. Do not call an untested rebuild equivalent to a hardware-tested binary merely because the source is the same.
 
-## Platform 0.3.9 accepted scope
+## Platform 0.4.0 accepted scope
 
 ```text
 RGB display + GT911
 SD library / launcher / Help
 Wi-Fi AP + STA
-Web control
+Web control + /climate
 UART0/P1 service
-UART1 GPIO17/18 + RS485 + MA01
-GitHub OTA CHECK
+UART1 GPIO17/18 + RS485 + EID041 + MA01
+Climate Controller with hysteresis and 60 s grace/FAILSAFE
+GitHub OTA CHECK / rollback / confirm
 BLE KONTAKTS-8048
 Android App17 relay control
 ```
@@ -70,7 +71,7 @@ docs/RELEASE-ASSET-INVENTORY.md
 Current SD bundle SHA-256:
 
 ```text
-38C8E2F8B490EB18C7052C6F9AD878BF91561B57F94D71A5BD75A5FAAAB56EF7
+73BEE9C2C744569D05880EF351262D434A5B486048633B5DC63EF9A3733B1ED8
 ```
 
 Because `app09-sd-current` is intentionally mutable, this value must be refreshed whenever the SD bundle workflow republishes the current tag.
@@ -97,7 +98,7 @@ The publication workflow pins the physically tested artifact. A new App17 versio
 
 ## GitHub `latest` ownership rule
 
-Platform firmware up to 0.3.9 resolves:
+Platform firmware up to 0.4.0 resolves:
 
 ```text
 https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/download/app06-ota.json
@@ -110,7 +111,7 @@ Other public artifact channels must not displace it:
 ```text
 app17-v0.1.1      -> prerelease
 app09-sd-current  -> prerelease
-app06-v0.3.9      -> normal release / current firmware latest
+app06-v0.4.0      -> normal release / current firmware latest
 ```
 
-This invariant was physically regression-tested by installing Platform 0.3.7 through Web Flasher, discovering and installing Platform 0.3.9 through GitHub OTA, then repeating CHECK GITHUB successfully on 0.3.9.
+This invariant was physically regression-tested by installing Platform 0.3.7 through Web Flasher, discovering and installing Platform 0.4.0 through GitHub OTA, then repeating CHECK GITHUB successfully on 0.4.0.
