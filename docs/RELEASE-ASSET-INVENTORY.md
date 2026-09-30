@@ -1,10 +1,35 @@
-# Current release asset inventory — 2026-09-29
+# Current release asset inventory — 2026-09-30
 
-This inventory is a checked snapshot of the public release assets used by the current KONTAKTS Platform, SD library and Android client.
+This file is the checked public-asset snapshot for the current KONTAKTS platform, SD library and Android client.
 
-The authoritative value for each binary is the digest attached to the GitHub Release asset. Documentation and the Web Flasher catalog must match these values.
+The GitHub Release asset digest is authoritative. Documentation and Web Flasher entries must match it.
 
-## KONTAKTS Platform 0.3.9
+## KONTAKTS Platform 0.4.0
+
+Release tag:
+
+```text
+app06-v0.4.0
+```
+
+| Asset | Size | SHA-256 |
+|---|---:|---|
+| `app06-factory-recovery-v0.1.0-full.bin` | 1,126,656 | `c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d` |
+| `app06-ota-recovery-v0.4.0-full.bin` | 2,030,128 | `f2787661fd55a8a6da1cd8131b644d3c874d89182d1cc5a7f057255a777893b0` |
+| `app06-ota.bin` | 1,899,056 | `f5a494ab887ba010c130c5afb29f1478fe42bb4d8384b5f136a414842dd554b6` |
+| `app06-ota.json` | 319 | `1ac83a7dc948af10375bd03034034dd1d81b9413a45984dae5682e52d1f747ba` |
+
+Acceptance note:
+
+- app-only image came from CI run `36713194827`;
+- flash digest verified on Sample A;
+- booted through NEW / PENDING_VERIFY;
+- Climate Controller + local Web page physically checked;
+- image then confirmed VALID.
+
+The full image is published for first install / Web Flasher. Browser fresh-install of that complete image remains a separate installation-path retest from the already accepted app-only OTA path.
+
+## Previous platform 0.3.9
 
 Release tag:
 
@@ -17,51 +42,30 @@ app06-v0.3.9
 | `app06-factory-recovery-v0.1.0-full.bin` | 1,126,656 | `c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d` |
 | `app06-ota-recovery-v0.3.9-full.bin` | 2,014,912 | `20d3cd2675e49fa84e1be6ff9dbf0c01a4d3786234138cf4511014b9b4fdbc76` |
 | `app06-ota.bin` | 1,883,840 | `061630b7871e045ebcded0837893cece455db95d093ed70fdf3dfba9ed8ccb26` |
-| `app06-ota.json` | 319 | `f43ee46c9e51d3ea3b2cdc60d30c458f88144e05b947643f4ef3c3ed6f6715ab` |
 
-The full image SHA is the physically accepted Platform 0.3.9 reference used by the Web Flasher.
-
-## Previous platform 0.3.7
-
-Release tag:
-
-```text
-app06-v0.3.7
-```
-
-| Asset | Size | SHA-256 |
-|---|---:|---|
-| `app06-factory-recovery-v0.1.0-full.bin` | 1,126,656 | `c241682145ff84db8f930d7a80997ea9a60583793456ab3a5cef4a457b01787d` |
-| `app06-ota-recovery-v0.3.7-full.bin` | 1,795,104 | `f12cc349dcbaa6b2f5fcf9eea0b9bb03bae57634a57ccdb7ec20fa4c2d2071a6` |
-| `app06-ota.bin` | 1,664,032 | `014e04359f0e357856637331283fa6d9b47e174d197d382e3b11ef923f0eb291` |
-| `app06-ota.json` | 319 | `bda9375c705629e633bf23a9d7abe493e314af5452fab9ff1354ec7808516b89` |
+0.3.9 remains useful as the previous accepted integrated platform / rollback reference, but it is no longer the current platform.
 
 ## KONTAKTS SD Application Library — current
 
-Mutable release tag:
+Mutable prerelease tag:
 
 ```text
 app09-sd-current
 ```
 
-Current tag ref at audit time:
-
-```text
-4cb8440c08daca50a57c8f3eb91238250f947797
-```
-
 | Asset | Size | SHA-256 |
 |---|---:|---|
-| `kontakts-sd-library.json` | 399 | `3de2a824b6392a24de162a82fa4a12462306898e07a9e875463e8681c64bcd27` |
-| `kontakts-sd-library.zip` | 39,915 | `38c8e2f8b490eb18c7052c6f9ad878bf91561b57f94d71a5bd75a5faaab56ef7` |
-| `widget-clock.zip` | 1,795 | `c61be5ec5a21ce6658c8301f97ce91845b9d3ec526656ce4d643e636ba0b6c67` |
-| `widget-modbus-controller.zip` | 3,775 | `79d08c92200ffe049227317a479d08dc66ab247a9607718bea157b2f51429428` |
-| `widget-usb-serial-terminal.zip` | 6,672 | `26dfa432445a7893cbbe361109296b63ab00b572410c211e10b981e108ee43dd` |
-| `widget-weather.zip` | 3,254 | `50acfb9dce622daabf893e43df301b663619ca8fa720d1062214bf914d4cad39` |
-| `widget-youtube-led.zip` | 1,875 | `d65bfb93ae62e1087d25e482b4cfb9f3dbc09aea69da3b7c64f36b76758e2b92` |
-| `widget-youtube.zip` | 3,212 | `b29cc1ecaf6a6a48e5a1d0ae2513598816665f7eaaee619846e521c2f9f8ce9e` |
+| `kontakts-sd-library.json` | 399 | `c3a616dcb58df61b497355fd0d49c23bfef508f0a6630de316afb393d9cc7aac` |
+| `kontakts-sd-library.zip` | 41,909 | `73bee9c2c744569d05880ef351262d434a5b486048633b5dc63ef9a3733b1ed8` |
+| `widget-climate-controller.zip` | 2,016 | `7b75d5859a34c763f8bb14ce76ddfc043d423ea455b1d0425fef577d2bf5eac3` |
+| `widget-clock.zip` | 1,795 | `21544faab9cc4adefcbd9ff802efe5ce7ac3ba44f9f2fd017b6d48d86394d50b` |
+| `widget-modbus-controller.zip` | 3,775 | `7de0827262071708391b7c155ae59e822a57cd53b12227d7c667e406a00ef214` |
+| `widget-usb-serial-terminal.zip` | 6,672 | `32e0cbc33c2017030e41cfaee5dea08b1b3877c1e8f71f4d0e945d8009ad7487` |
+| `widget-weather.zip` | 3,254 | `2e79b215066f0871b8dbf230d40562d14fa42a26946d9ae32b6277178d63f2f5` |
+| `widget-youtube-led.zip` | 1,875 | `9635af2a0060ffd95c9ae9e0357e3ab2a130c8509ef6961cb2029cf89dcc92d9` |
+| `widget-youtube.zip` | 3,212 | `02c76d9e158735965a537af607833d05173b2c07b7ea7c60ae04e3e2157bb49f` |
 
-Important: `app09-sd-current` is intentionally mutable. Re-check this table whenever the SD release workflow republishes the tag.
+Because `app09-sd-current` is intentionally mutable, re-check these values after every SD republish.
 
 ## KONTAKTS Mobile App17 0.1.1
 
@@ -80,15 +84,11 @@ The APK is the exact physically tested CI artifact from workflow run `3650740348
 
 ## Audit result
 
-At this checkpoint:
-
 ```text
-Platform 0.3.9 full image     MATCH
-Platform 0.3.9 OTA binary    MATCH
-Platform 0.3.7 assets        MATCH
-App17 APK                     MATCH
-SD current ZIP                CATALOG CORRECTED
-SD package ZIP hashes         CATALOG CORRECTED
+Platform 0.4.0 OTA image        MATCH / PHYSICAL + WEB PASS
+Platform 0.4.0 full image       MATCH / PUBLISHED
+Previous Platform 0.3.9         MATCH
+SD current bundle               MATCH
+Climate Controller SD package   MATCH
+App17 APK                       MATCH
 ```
-
-The SD catalog previously carried hashes from an older mutable snapshot. It has been synchronized to the current `app09-sd-current` release assets.
