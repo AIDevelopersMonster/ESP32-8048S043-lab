@@ -52,7 +52,19 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .app06-ota
-          if [[ "${APP06_VERSION}" == "0.3.9" ]]; then
+          if [[ "${APP06_VERSION}" == "0.4.0" ]]; then
+            echo "::notice::Publishing the exact App18 hardware/Web-accepted CI artifact from run 36713194827."
+            rm -rf .accepted-app18
+            gh run download 36713194827 --repo "$GITHUB_REPOSITORY" --name app06-platform-v0.3.9 --dir .accepted-app18
+            full_src="$(find .accepted-app18 -type f -name 'app06-ota-recovery-v0.3.9-full.bin' -print -quit)"
+            ota_src="$(find .accepted-app18 -type f -name 'app06-ota-v0.3.9.bin' -print -quit)"
+            test -n "$full_src"
+            test -n "$ota_src"
+            cp "$full_src" .app06-ota/app06-ota-recovery-v0.4.0-full.bin
+            cp "$ota_src" .app06-ota/app06-ota.bin
+            echo "F2787661FD55A8A6DA1CD8131B644D3C874D89182D1CC5A7F057255A777893B0  .app06-ota/app06-ota-recovery-v0.4.0-full.bin" | sha256sum -c -
+            echo "F5A494AB887BA010C130C5AFB29F1478FE42BB4D8384B5F136A414842DD554B6  .app06-ota/app06-ota.bin" | sha256sum -c -
+          elif [[ "${APP06_VERSION}" == "0.3.9" ]]; then
             echo "::notice::Publishing the exact App16 hardware-accepted CI artifact from run 36491495390."
             rm -rf .accepted-app16
             gh run download 36491495390 --repo "$GITHUB_REPOSITORY" --name app06-platform-v0.3.9 --dir .accepted-app16
@@ -118,5 +130,5 @@ jobs:
         shell: bash
         run: |
           tag="app06-v${APP06_VERSION}"
-          notes="KONTAKTS Platform ${APP06_VERSION} — PHYSICAL PASS on ESP32-8048S043 Sample A (2026-09-29). Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Full image SHA-256 ${APP06_FULL_SHA256}. Includes the merged full image for initial install/Web Flasher. Platform 0.3.9 adds BLE device KONTAKTS-8048 (service FFF0, command FFF1 WRITE, response FFF2 READ), keeps HMI/Web/UART0 transports on the common command/service layer, and includes the PSRAM/internal-RAM coexistence fixes required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation. SD Help/application content is released independently via app09-sd-current."
+          notes="KONTAKTS Platform ${APP06_VERSION} — PHYSICAL PASS on ESP32-8048S043 Sample A (2026-09-30). Built from ${GITHUB_REF_NAME} at ${GITHUB_SHA}. OTA SHA-256 ${APP06_SHA256}, size ${APP06_SIZE}. Full image SHA-256 ${APP06_FULL_SHA256}. Includes the merged full image for initial install/Web Flasher. Platform 0.4.0 adds the App18 Climate Controller for EID041 + MA01 over shared Modbus RTU, configurable temperature/humidity hysteresis, 60-second stale-data grace and FAILSAFE behavior, SD HMI, and a responsive local /climate page for phone/desktop control through the common command/service layer. AUTO ON reserves MA01 for climate control; AUTO OFF releases external relay control. The dedicated MA01-link-loss bench test remains deferred because it requires rewiring the current stand. SD Help/application content is released independently via app09-sd-current."
           gh release create "$tag" .app06-ota/* --target "$GITHUB_SHA" --title "KONTAKTS Platform ${APP06_VERSION}" --notes "$notes" --repo "$GITHUB_REPOSITORY"
