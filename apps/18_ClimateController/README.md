@@ -1,6 +1,6 @@
 # App18 — Climate Controller
 
-Status: **SERVICE IMPLEMENTED / HMI AND PHYSICAL ACCEPTANCE PENDING**
+Status: **PHYSICAL PASS / WEB PASS on Sample A (2026-09-30)**
 
 App18 combines the existing RS485 temperature/humidity sensor provider with the existing MA01 relay provider to form a thermostat and humidity regulator on the common KONTAKTS Platform command/service architecture.
 
@@ -83,7 +83,7 @@ The SD widget is the HMI/configuration layer. Automatic regulation must continue
 - no opposite outputs active at the same time;
 - relay writes only when desired output state changes;
 - configuration persisted in NVS;
-- later physical acceptance must verify each control rule independently.
+- Sample A physical acceptance completed for threshold control, interlocks, sensor-loss grace/FAILSAFE, recovery, SD HMI and local Web control; dedicated MA01-link-loss bench test remains deferred because it requires rewiring the test stand.
 
 ## Implemented service milestone (2026-09-29)
 
@@ -129,6 +129,29 @@ confirm the OTA image only after the required screen and hardware checks.
   or independent interlocks are required for that guarantee.
 - Normal regulation writes only changed outputs; startup, shutdown and fault
   handling explicitly resend OFF to establish/re-establish a known state.
+
+### Local Web / phone control
+
+The platform now exposes a responsive Climate Controller page at:
+
+```text
+http://<board-ip>/climate
+```
+
+The page is intended for a phone or desktop browser on the same local network.
+It shows temperature, humidity, controller mode, sensor/relay state and DO1..DO4,
+and provides AUTO ON/OFF, DEFAULTS and atomic editing of all six limits. The
+browser polls the common climate service once per second; it does not implement a
+second copy of control logic. Commands route through the same command/service
+layer used by UART0 and BLE. AUTO ON reserves MA01 for climate control; AUTO OFF
+releases it for external relay control.
+
+Physical Web acceptance on Sample A was completed from CI run 36713194827,
+commit `82d56cb78eb74347057bcde2cd3904cb268f49ac`. The app-only image size is
+1,899,056 bytes and SHA-256 is
+`F5A494AB887BA010C130C5AFB29F1478FE42BB4D8384B5F136A414842DD554B6`.
+The image was written to ota_1, verified by flash digest, booted as NEW /
+PENDING_VERIFY, exercised through `/climate`, and then confirmed VALID.
 
 ### Shared command API (UART0 / existing BLE command transport)
 
@@ -184,8 +207,7 @@ NVS commit failure, malformed SET commands, idle boot, output-change-only writes
 reversal delay, sensor loss, relay failures and explicit recovery.
 The host test does not certify UART timing, concurrent RTOS execution or hardware.
 The normal App06 GitHub workflow builds the ESP-IDF firmware for this branch.
-Physical acceptance must still check DO1..DO4 with indicator loads, sensor removal,
-RS485 interruption, mode rejection, manual-command rejection and reboot/NVS restore.
+Sample A physical acceptance has checked DO1..DO4 control paths, temperature and humidity hysteresis, sensor removal, the 60-second stale-data grace window, FAILSAFE all-off with relay communication available, automatic recovery, SD HMI operation, AUTO ownership/release semantics, and local Web control. The dedicated MA01 communication-loss test is intentionally deferred because isolating that branch requires rebuilding the current bench wiring.
 
 The climate sensor bindings display `--` and `NO SENSOR` until EID041 has
 responded successfully. After a failed sensor poll, the last measured values
