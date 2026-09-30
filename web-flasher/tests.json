@@ -12,6 +12,17 @@
   },
   "firmware": [
     {
+      "id": "app18-kontakts-platform",
+      "version": "0.4.0",
+      "manifest": "manifest-app18.json",
+      "runtimeStatus": "physical-pass-climate-and-web",
+      "webFlasherStatus": "published-candidate-awaiting-browser-install-retest",
+      "notes": "Sample A physically passed Climate Controller control logic, SD HMI and local /climate Web control on the exact app-only image from CI run 36713194827. The full 0.4.0 release image is now published for fresh-install Web Flasher use; browser installation of the full image remains a separate installation-path check.",
+      "source": "../apps/18_ClimateController/",
+      "otaStatus": "physical-pass-release-0.4.0",
+      "otaNotes": "The exact accepted app-only image was written to ota_1, flash digest verified, booted as PENDING_VERIFY, exercised through the Web UI, then confirmed VALID."
+    },
+    {
       "id": "app13-kontakts-platform",
       "version": "0.3.7",
       "manifest": "manifest-app13.json",
