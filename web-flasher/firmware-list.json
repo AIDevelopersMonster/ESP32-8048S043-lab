@@ -14,6 +14,22 @@
   },
   "firmwares": [
     {
+      "id": "app18",
+      "name": "KONTAKTS Platform / Climate Controller + Web",
+      "version": "0.4.0",
+      "status": "PHYSICAL PASS / CURRENT PLATFORM",
+      "description": "Current physically accepted KONTAKTS Platform for ESP32-8048S043. Adds the App18 Climate Controller for EID041 temperature/humidity + MA01 DO1..DO4 over shared Modbus RTU, configurable hysteresis, 60-second stale-data grace, FAILSAFE behavior, SD HMI, and responsive local browser control at /climate through the common command/service layer. AUTO ON reserves MA01 for climate control; AUTO OFF releases external relay control.",
+      "manifest": "./manifest-app18.json",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/18_ClimateController",
+      "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app06-v0.4.0",
+      "full_image": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.4.0/app06-ota-recovery-v0.4.0-full.bin",
+      "full_sha256": "f2787661fd55a8a6da1cd8131b644d3c874d89182d1cc5a7f057255a777893b0",
+      "ota_binary": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.4.0/app06-ota.bin",
+      "ota_manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.4.0/app06-ota.json",
+      "ota_sha256": "f5a494ab887ba010c130c5afb29f1478fe42bb4d8384b5f136a414842dd554b6",
+      "ota_status": "PHYSICAL + WEB PASS / RELEASED"
+    },
+    {
       "id": "app16",
       "name": "KONTAKTS Platform / BLE + Web + MA01",
       "version": "0.3.9",
