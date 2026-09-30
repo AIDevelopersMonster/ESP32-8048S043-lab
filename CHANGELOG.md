@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-09-30 — Platform 0.4.0 / Climate Controller milestone
+
+- Promote KONTAKTS Platform 0.4.0 as the current accepted platform.
+- Merge App18 Climate Controller into `main`.
+- Physically validate temperature/humidity control with EID041 + MA01 over shared Modbus RTU.
+- Validate DO1 HEATER, DO2 COOLER, DO3 HUMIDIFIER and DO4 DEHUMIDIFIER paths, hysteresis and mutual interlocks.
+- Validate 60-second stale-sensor grace, FAILSAFE all-off attempt and automatic recovery.
+- Add responsive local `/climate` Web control through the common command/service layer.
+- Verify AUTO ownership: AUTO ON reserves MA01; AUTO OFF releases external relay control.
+- Stage the accepted image in inactive OTA slot, verify flash digest, boot PENDING_VERIFY, physically test Web/HMI, then confirm VALID.
+- Publish Platform 0.4.0 exact accepted OTA artifact:
+  `F5A494AB887BA010C130C5AFB29F1478FE42BB4D8384B5F136A414842DD554B6`.
+- Publish Platform 0.4.0 full image for first install/Web Flasher:
+  `F2787661FD55A8A6DA1CD8131B644D3C874D89182D1CC5A7F057255A777893B0`.
+- Publish `widget-climate-controller.zip` in the current SD release.
+- Update Web Flasher catalog and deploy GitHub Pages successfully.
+- Start repository productization: user-first README, Quick Start, security boundary, roadmap and branch-consolidation programme.
+- Dedicated MA01 communication-loss physical test remains deferred because it requires rewiring the current bench.
+
+
 ## 2026-09-29 — Platform transport milestone
 
 - Promote KONTAKTS Platform 0.3.9 to the current physically accepted integrated platform.
