@@ -1,359 +1,229 @@
-# ESP32-8048S043 Lab / KONTAKTS Platform
+# ESP32-8048S043 / KONTAKTS Platform
 
-Evidence-first hardware, firmware and application laboratory for the **ESP32-8048S043 / ESP32-8048S043C-I** family of ESP32-S3 4.3-inch 800x480 RGB touch modules.
+KONTAKTS is a physically validated ESP32-S3 platform for the **ESP32-8048S043** 4.3-inch 800x480 RGB touch board. The current release combines display/touch, SD applications, Wi-Fi, local Web control, OTA/rollback, technological UART, field RS485/Modbus, BLE, Android control and the Climate Controller application.
 
-The repository started as a board-identification and hardware-validation lab and has grown into a physically tested platform with display/touch, SD applications, Wi-Fi, Web control, OTA, technological UART, field RS485/Modbus, BLE and an Android client.
+## Current stable release
 
-## Current milestone
+**KONTAKTS Platform 0.4.0**  
+**Reference board:** ESP32-8048S043 Sample A  
+**Status:** **PHYSICAL + WEB PASS**
 
-**Current accepted platform:** KONTAKTS Platform **0.3.9**  
-**Board:** Sample A  
-**Status:** **PHYSICAL PASS**  
-**Accepted full-image SHA-256:**
+Current Climate Controller path:
 
 ```text
-20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
+EID041 temperature/humidity sensor
+        |
+        v
+UART1 GPIO17/18 -> RS485 / Modbus RTU
+        |
+        v
+ESP32-S3 climate service
+        |
+        v
+Ebyte MA01-XXCX0080
+        |
+        +--> DO1 HEATER
+        +--> DO2 COOLER
+        +--> DO3 HUMIDIFIER
+        +--> DO4 DEHUMIDIFIER
 ```
 
-The physically accepted integrated path includes:
+User interfaces share one command/service architecture:
 
 ```text
-800x480 RGB + GT911
-SD application library + Help
-Wi-Fi STA/AP + HTTP
-GitHub OTA / rollback infrastructure
-UART0/P1 technological service
-UART1 GPIO17/18 field bus
-RS485 / Modbus RTU
-MA01 relay provider
-Web control
-BLE GATT transport
-Android BLE client
-```
-
-The accepted control architecture is deliberately transport-independent:
-
-```text
-HMI -----------+
-UART0/P1 ------+
+SD HMI --------+
 Web browser ---+
+UART0/P1 ------+
 BLE -----------+--> command/service layer --> providers --> hardware
-Android app ---+
+Android -------+
 ```
 
-MA01 Modbus register knowledge remains in the provider/service layer. Web, BLE, Android and UART clients do not duplicate the register map.
+Device register knowledge stays in providers/services and is not duplicated by each UI.
 
-## Major result: Wi-Fi + BLE coexistence
+## Install
 
-Platform 0.3.9 physically demonstrates **Wi-Fi and BLE operating in the same ESP32-S3 system** together with RGB/LVGL, SD, HTTP, OTA services and MA01/RS485 control.
+Start here:
 
-The bring-up problems were memory/resource-allocation issues, not a fundamental Wi-Fi/BLE incompatibility. The accepted build uses explicit memory ownership:
+**[Quick Start](docs/QUICKSTART.md)**
 
-- display/LVGL initialization before optional BLE;
-- LVGL draw buffer in PSRAM;
-- NimBLE host allocations in external RAM where supported;
-- OTA worker stack in PSRAM;
-- RGB bounce buffer kept in internal DMA-capable RAM.
+Preferred first installation: the public **Web Flasher** generated from `web-flasher/`.
 
-This is a hardware-observed coexistence result, not a claim that every Wi-Fi/BLE workload is automatically contention-free.
-
-## Current user paths
-
-### Web Flasher
-
-The current Web Flasher catalog publishes Platform 0.3.9 as:
+Current full image:
 
 ```text
-PHYSICAL PASS / CURRENT PLATFORM
+app06-ota-recovery-v0.4.0-full.bin
+SHA-256:
+F2787661FD55A8A6DA1CD8131B644D3C874D89182D1CC5A7F057255A777893B0
 ```
 
-Source:
+Current OTA image:
 
 ```text
-web-flasher/
+app06-ota.bin
+SHA-256:
+F5A494AB887BA010C130C5AFB29F1478FE42BB4D8384B5F136A414842DD554B6
 ```
 
-Release image:
+Release tag:
 
 ```text
-app06-v0.3.9
-app06-ota-recovery-v0.3.9-full.bin
+app06-v0.4.0
 ```
 
-Accepted full-image SHA-256:
+For an already configured board, prefer OTA over rewriting the complete flash image.
 
-```text
-20D3CD2675E49FA84E1BE6FF9DBF0C01A4D3786234138CF4511014B9B4FDBC76
-```
+## SD applications
 
-### GitHub OTA
-
-Manifest:
-
-```text
-https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/latest/download/app06-ota.json
-```
-
-Platform 0.3.9 OTA assets are published under release:
-
-```text
-app06-v0.3.9
-```
-
-### SD application library and Help
-
-Current SD snapshot:
+Current mutable SD distribution:
 
 ```text
 app09-sd-current
 kontakts-sd-library.zip
 ```
 
-The SD Help system covers four roles:
+Extract the ZIP directly into the root of a FAT32 SD card.
+
+The Climate Controller package is also available separately as:
 
 ```text
-User
-Application programmer
-System programmer
-Hardware
+widget-climate-controller.zip
 ```
 
-Canonical browser paths include:
+The verified on-card path is:
 
 ```text
-/help
-/help/system?doc=user
-/help/system?doc=application-programmer
-/help/system?doc=system-programmer
-/help/system?doc=hardware
-/help/app?name=<package-folder>
+widgets/climate-controller/
 ```
 
-### Technological UART
+## Climate Controller
 
-P1 / CH340C / UART0 is the technological/service transport:
+Default limits:
 
 ```text
-115200 8N1
+Temperature MIN   25.0 C
+Temperature MAX   30.0 C
+Temperature HYST   0.5 C
+
+Humidity MIN      45 %RH
+Humidity MAX      60 %RH
+Humidity HYST      2 %RH
 ```
 
-Host tool:
+AUTO ownership:
 
 ```text
-tools/KONTAKTSerial/
+AUTO ON  -> Climate Controller reserves MA01
+AUTO OFF -> external relay control is released
 ```
 
-UART0 is not the user field Modbus port.
+The controller rejects malformed Modbus data, retains only confirmed state, and uses a 60-second stale-data grace interval for transient sensor/relay read failures. After sensor grace expiry it attempts all-off and enters FAILSAFE.
 
-### Field RS485 / MA01
+A broken physical RS485 path cannot guarantee relay de-energization; only fresh readback confirms the actual relay state.
 
-Field transport:
+## Web control
+
+On the same trusted local network:
+
+```text
+http://<board-ip>/climate
+```
+
+The responsive page shows live temperature, humidity, controller mode, sensor/relay state, DO1..DO4 and all six climate limits. It supports AUTO ON/OFF, DEFAULTS and limit editing through the same climate service used by the SD HMI and other transports.
+
+## Field RS485 reference
 
 ```text
 UART1 TX GPIO17
 UART1 RX GPIO18
 9600 8N1
-automatic-direction TTL/RS485 adapter
+automatic-direction TTL/RS485 transceiver
 ```
 
-Physically validated target:
+Validated devices:
 
 ```text
-Ebyte MA01-XXCX0080
-slave address 16
+EID041 sensor              slave 1
+Ebyte MA01-XXCX0080        slave 16 on Sample A
 ```
 
-Examples of the common textual service API:
+P1/CH340C/UART0 remains the technological/service interface and is not the field Modbus port.
+
+## OTA / rollback
+
+The platform uses dual OTA slots and a confirm-or-rollback model:
 
 ```text
-MA01 ADDR
-MA01 READ
-MA01 CONFIG
-MA01 DO1 INFO
-MA01 DO1 ACTION
-MA01 DO1 ON
-MA01 DO1 OFF
-MA01 DO1 TOGGLE
-MA01 DO1 MODE LEVEL
-MA01 DO1 MODE PULSE
-MA01 DO1 PULSEMS 5000
+NEW -> PENDING_VERIFY -> VALID
 ```
 
-### BLE
+The 0.4.0 candidate was written to the inactive slot, flash digest verified, exercised through the physical Climate Controller and Web UI, then confirmed VALID.
 
-Platform 0.3.9 BLE contract:
-
-```text
-Device   KONTAKTS-8048
-Service  FFF0
-Command  FFF1  WRITE
-Response FFF2  READ
-```
-
-The current laboratory MVP supports one BLE connection and deliberately uses explicit reads rather than notifications.
-
-### Android App17
+## Android BLE client
 
 Native Android client:
 
 ```text
 apps/17_MobileControl/
+release: app17-v0.1.1
+minSdk: 23
 ```
 
-Current physically tested MVP:
+The tested end-to-end path is:
 
 ```text
-App17 v0.1.1
-release tag: app17-v0.1.1
-minSdk 23
-Android 6.0+
-physical test: Android 7.1.2 / API 25
-APK SHA-256:
-5DE40BC802438A35285077241DA603B0441EAD28179928FAD0E15EA0285868D0
+Android -> BLE -> command/service -> MA01 provider -> UART1/RS485 -> relay
 ```
-
-Confirmed end-to-end:
-
-```text
-Android App17
- -> BLE FFF1 / FFF2
- -> Platform 0.3.9 command/service layer
- -> MA01 provider
- -> UART1 GPIO17/18
- -> RS485
- -> MA01
- -> physical relay ON/OFF
-```
-
-Permanent APK:
-
-https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app17-v0.1.1/kontakts-mobile-app17-v0.1.1-debug.apk
-
-Video:
-
-https://youtube.com/shorts/FxDnALva3xM
-
-## Application line
-
-The repository keeps incremental application/laboratory stages rather than hiding earlier development.
-
-| App | Purpose | Current role |
-|---|---|---|
-| 01 | Six Card Serial Deck | physical-pass laboratory firmware |
-| 02 | Mixed Widgets | closed physical-pass LVGL lab |
-| 03 | Live Dashboard | closed physical-pass telemetry lab |
-| 04 | Storage Config | storage/config development stage |
-| 05 | Network Provisioning | physical-pass legacy network lab |
-| 06 | OTA Recovery / platform core | current platform foundation |
-| 09 | SD Widget Library | current SD apps + Help distribution |
-| 10 | BLE Slider Sync | earlier BLE laboratory stage |
-| 11 | USB Serial Terminal | serial UI stage |
-| 14 | Modbus Controller | generic field-bus/service development record |
-| 15 | Web Control | physical MVP pass |
-| 16 | BLE Control | physical pass / Platform 0.3.9 |
-| 17 | Mobile BLE Control | physical MVP pass / Android |
-
-Some historical stage numbers are intentionally absent from `main/apps` because the useful implementation was folded into the platform line rather than preserved as a separate top-level application.
-
-## Hardware baseline — Sample A
-
-Current core hardware evidence:
-
-```text
-ESP32-S3                     PASS
-Flash                        16 MB
-PSRAM                        8 MB
-RGB display                  800x480 PHYSICAL PASS
-GT911                        0x5D / PHYSICAL PASS
-SD SPI                       GPIO10/11/12/13 PHYSICAL PASS
-P1                           +5V + UART0/CH340C service path
-P4                           GND / 3.3V / GPIO17 / GPIO18
-GPIO17/18                    UART1 field path PHYSICAL PASS
-Q1                           CJ3401 P-channel reverse-polarity protection
-```
-
-Board operating current observed around:
-
-```text
-~0.64 A @ 5 V
-~3.17 W
-```
-
-An ordinary PC USB 2.0 port is not treated as the recommended normal power source for the integrated platform.
-
-## Factory baseline
-
-Sample A factory dump was read twice over the full 16 MB flash and matched:
-
-```text
-SHA-256
-3007E5A223CD70DD9E53746C899BA25AF24721C68F1CFC69AB8A8CE3D3E6EB4C
-```
-
-The proprietary factory binary is intentionally not committed. Metadata, hashes and reviewed analysis are preserved instead.
-
-## Evidence policy
-
-This repository remains evidence-first:
-
-1. **Identify before flashing.**
-2. **Separate source-backed claims from physical PASS.**
-3. **Name the specimen and firmware for physical evidence.**
-4. **Keep failed experiments as history when useful, but do not leave stale status in the current README.**
-5. **Do not promote a candidate to PASS without a hardware observation, log, photo or video.**
-6. **Do not duplicate hardware/protocol knowledge across transports.**
 
 ## Repository map
 
 ```text
-apps/                       incremental firmware/platform/mobile stages
-boards/                     Arduino IDE board-profile work
-config/                     machine-readable board profiles
-docs/                       hardware/software/manuals/research
-evidence/                   named physical evidence
-hardware/                   schematic/BOM/photo research
-libraries/ESP32_8048S043/   Arduino BSP line
-tools/                      host tools, flasher, analysis
-web-flasher/                ESP Web Tools catalog/site
-.github/workflows/          CI, releases and deployment
+apps/06_OTARecovery/       canonical platform core
+apps/09_SDWidgetLibrary/   SD applications and Help
+apps/17_MobileControl/     Android BLE client
+apps/18_ClimateController/ climate controller
+boards/                    Arduino IDE board profile
+libraries/ESP32_8048S043/  Arduino library line
+hardware/                  board research and schematics
+evidence/                  physical acceptance evidence
+tools/                     desktop/service tools
+web-flasher/               browser installer
+docs/                      manuals, release and engineering documentation
 ```
 
-Important starting points:
+Older numbered applications are retained as development history where they still help explain the platform. They are not separate current products.
 
-- `apps/06_OTARecovery/README.md` — current platform/OTA foundation.
-- `apps/09_SDWidgetLibrary/README.md` — SD application architecture.
-- `apps/14_ModbusController/README.md` — field-bus development record.
-- `apps/15_WebControl/README.md` — browser control.
-- `apps/16_BLEControl/README.md` — BLE transport and 0.3.9 acceptance.
-- `apps/17_MobileControl/README.md` — Android BLE client.
-- `tools/KONTAKTSerial/README.md` — technological UART tool.
-- `docs/HARDWARE-ACCEPTANCE-START.md` — board acceptance workflow.
-- `hardware/SCHEMATIC_BOM_RESEARCH.md` — reconstructed hardware evidence.
-- `web-flasher/firmware-list.json` — current public firmware/application catalog.
-- `docs/RELEASE-ASSET-INVENTORY.md` — verified current release assets and SHA-256 values.
-- `docs/BRANCH-HYGIENE.md` — branch keep/archive/remove policy.
+## Documentation
 
-## Current boundaries / next work
+- [Quick Start](docs/QUICKSTART.md)
+- [Productization programme](docs/PRODUCTIZATION-PLAN.md)
+- [Release protocol](RELEASES.md)
+- [Release asset inventory](docs/RELEASE-ASSET-INVENTORY.md)
+- [Security](SECURITY.md)
+- [Roadmap](ROADMAP.md)
+- [Branch hygiene](docs/BRANCH-HYGIENE.md)
+- [Climate Controller](apps/18_ClimateController/README.md)
 
-The large **transport/platform proof stage is complete**. The next work should be refinement rather than another duplicated control stack:
+## Evidence policy
 
-```text
-App17 UI/state parsing
-BLE reconnect behaviour
-optional notifications/security design
-Web/Modbus polling cleanup
-long-duration coexistence tests
-generic external-device/provider expansion
-documentation/release hygiene
-```
+1. Identify hardware before flashing.
+2. Separate source-backed claims from physical PASS.
+3. Name the specimen and firmware for physical evidence.
+4. Do not promote a candidate without an observation, log, photo or video.
+5. Keep current user documentation free of stale experimental status.
+6. Preserve important research history through Git history/evidence/archive tags rather than an ever-growing active branch list.
 
-Not yet claimed:
+## Current boundaries
 
-- production BLE security;
-- long-duration multi-client/multi-device operation;
-- universal external I2C/ADC use on every board revision;
-- guaranteed GPIO current capability beyond the documented board evidence;
-- production certification.
+Platform 0.4.0 is a physically validated laboratory/product baseline for the documented Sample A hardware.
+
+Not claimed:
+
+- industrial or functional-safety certification;
+- production public-Internet security;
+- universal compatibility with every ESP32-8048S043 revision;
+- guaranteed physical relay OFF when the RS485/relay path itself is unavailable.
+
+See [SECURITY.md](SECURITY.md) for deployment boundaries.
 
 ## License
 
