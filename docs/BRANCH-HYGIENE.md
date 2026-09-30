@@ -1,150 +1,65 @@
-# Branch hygiene — 2026-09-29
+# Branch hygiene — Platform 0.4.0 consolidation
 
-This file records the post-Platform-0.3.9 branch disposition. It is intentionally conservative: Git history is kept when a branch contains unique experimental commits, even if the corresponding feature has been superseded on `main`.
+The repository has completed the App18 / Platform 0.4.0 research-to-product milestone.
 
-## Rules
+## Final branch policy
 
-- **KEEP** — active canonical development branch or branch whose unique history is still directly useful.
-- **ARCHIVE** — superseded experiment/research branch with unique commits not fully contained in `main`; do not merge blindly.
-- **DELETE CANDIDATE** — branch tip is fully contained in `main`; safe to remove after a final human check because its commits remain reachable from `main`.
-- **CLOSED PR / ARCHIVE** — obsolete integration branch whose PR is closed but unique history is retained.
-
-No branch deletion is required for correctness. Deleting a branch only removes the ref, not commits already reachable from `main`.
-
-## Canonical
+The intended long-lived branch set is:
 
 ```text
-main                                      KEEP / CANONICAL
+main
 ```
 
-## Fully contained in main — REMOVE
+All product/fix branches should be short-lived and deleted after merge.
 
-The comparison on 2026-09-29 showed no branch-only commits for these refs:
+Historical branches that still contain unique experimental commits are not a reason to keep an active branch list indefinitely. Their useful tips should be preserved as immutable archive tags, then the branch refs should be deleted.
+
+Archive tag namespace:
 
 ```text
-agent/app01-six-card-serial-deck
-agent/app02-mixed-widgets
-agent/app04-storage-config
-agent/app05-network-provisioning
-agent/app05-stability
-agent/app12-modbus-controller
-agent/app14-modbus-service
-agent/app15-web-control
-agent/app16-ble-control
-agent/app17-mobile-control
-feat/app13-advanced-serial-terminal
-feat/app13-keyboard-overlay
-feat/web-flasher-platform-037
-fix/app12-keyboard-visibility
-fix/app12-launcher-tombstone
-fix/app12-remove-tombstone
-fix/app12-serial-package-keyboard
-fix/app13-buttonmatrix-keyboard
+archive/2026-09-30/<former-branch-name>
 ```
 
-Decision: **REMOVE THESE BRANCH REFS** after the final protected check. Their tips are already ancestors of current `main`, so removing the refs does not remove their commits from repository history.
+## One-time consolidation
 
-They should not be retained as historical pointers because the canonical application directories, evidence and commit history already preserve those milestones. Keeping them would make the branch list look artificially active.
+Use:
 
-## Superseded application branches with unique history — archive
-
-```text
-agent/app03-live-dashboard
-agent/app06-ota-recovery
-agent/app07-v0.2.4-progressfix
-agent/app07-widget-runtime
-agent/app08-youtube-dashboard
-agent/app09-sd-widget-library
-agent/app10-ble-slider-sync
-agent/app11-usb-serial-terminal
-agent/app12-interactive-serial-terminal
-agent/platform-foundation-next
+```powershell
+.\tools\windows\cleanup-merged-branches.ps1
 ```
 
-These refs diverge from current `main` and retain branch-only commits. Keep them as **ARCHIVE** until their unique commits are either deliberately documented/cherry-picked or judged disposable.
+for a dry run.
 
-## LVGL / third-party / isolation research — archive
+Then, only after reviewing the output:
 
-The following branches are experimental evidence, not product branches:
-
-```text
-agent/test20-lvgl9-esp-idf-limpens
-agent/test21-clumsycoder00
-agent/test22-no-bounce-isolation
-agent/test23-psram-draw-buffers-isolation
-agent/test24-psram-plus-bounce-isolation
-agent/test25-psram-internal-staging-isolation
-agent/test26-psram-bounce0-pclk12-isolation
-agent/test27-psram-bounce10-threshold
-agent/test28-psram-bounce5-threshold
-agent/test29-psram-bounce1-threshold
-agent/test30-thirdparty-ffod-lovyangfx-eez
-agent/test31-thirdparty-duck4i-native-idf
-agent/test32-thirdparty-devany-arduinogfx-eez
-agent/test33-thirdparty-ryanewen-esphome-lvgl
-agent/test34-thirdparty-xoquox-esphome-lvgl
-agent/test35-thirdparty-robot-core-display
-agent/test36-thirdparty-halys-son-lvgl-editor
-agent/test36b-touch-sleep16-isolation
-agent/test36c-modern-i2c-isolation
-agent/test36d-touch-pipeline-diagnostics
-agent/test36e-icon-wrapper-hit-test-fix
+```powershell
+.\tools\windows\cleanup-merged-branches.ps1 -Apply -ArchiveUnique
 ```
 
-Disposition: **ARCHIVE / KEEP FOR RESEARCH HISTORY**.
+The script:
 
-These branches intentionally preserve controlled-variable tests and third-party reproduction work. Do not bulk-delete them merely because the current platform has moved on.
+1. fetches current remote refs and tags;
+2. checks every audited branch against the exact SHA recorded at the 0.4.0 checkpoint;
+3. blocks cleanup if any branch moved;
+4. deletes branches already fully contained in `main`;
+5. creates an annotated archive tag for each divergent branch with unique commits;
+6. pushes the archive tags;
+7. deletes the corresponding remote branches;
+8. prunes local remote-tracking refs.
 
-## Closed integration branch with unique commits
+This preserves unique research history without presenting historical experiments as active development.
 
-```text
-feature/p4-io-rs485-widget
-```
+## Why tags instead of long-lived research branches
 
-PR #11 is closed because Platform 0.3.9 supersedes it. The branch still contains unique commits, so its disposition is **CLOSED PR / ARCHIVE**, not delete candidate.
+Branches imply ongoing work and create navigation noise. Archive tags provide a stable pointer to a historical state without suggesting that it should be merged or maintained.
 
-## Closed pull requests
+Git commit history, evidence documents and per-application READMEs remain the primary historical record.
 
-The following stale PRs were closed during the 2026-09-29 consolidation:
+## Future rule
 
-```text
-#8  Agent/app09 sd widget library
-#10 Agent/app12 interactive serial terminal
-#11 Platform 0.3.8: P4 UART1/RS-485 and GPIO output service
-```
-
-Their useful current functionality is already represented on `main`; their branch history remains available.
-
-## Recommended maintenance
-
-1. New work starts from current `main`.
-2. Product branches should be short-lived and removed after merge once fully contained.
-3. Research/isolation branches may remain long-lived, but their role should be documented here.
-4. Never merge an archived divergent branch wholesale into `main`; inspect/cherry-pick only the intended commit(s).
-5. Re-run this audit before the next major platform release.
-
-
-## Final branch policy decision
-
-### Remove
-
-Remove all refs listed in **Fully contained in main — REMOVE**.
-
-Rationale:
-
-```text
-branch-only commits = 0
-useful history       = already reachable from main
-active work          = no
-navigation value     = lower than branch-list clutter
-```
-
-### Keep as historical archive
-
-Keep the divergent application branches, `feature/p4-io-rs485-widget`, `agent/platform-foundation-next`, and the complete `test20...test36e` research sequence.
-
-Rationale: these refs still have commits that are not ancestors of `main`; several are controlled-variable or third-party reproduction experiments. They are evidence/archaeology branches, not product branches.
-
-### Future rule
-
-A short-lived product/fix branch should normally be deleted after its tip becomes an ancestor of `main`. A research branch may remain only when it preserves unique experimental history and is classified in this document.
+- New work starts from current `main`.
+- Use a short-lived `feature/*`, `fix/*` or equivalent branch.
+- Merge through a PR after CI.
+- Delete the branch after merge.
+- If an abandoned research branch contains uniquely valuable evidence, archive its exact tip as a tag before deletion.
+- Never merge an old divergent archive wholesale into `main`; cherry-pick only a deliberately reviewed change.
