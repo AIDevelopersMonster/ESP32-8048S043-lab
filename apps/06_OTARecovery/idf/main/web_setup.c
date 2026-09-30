@@ -11,6 +11,7 @@
 
 #include "network_manager.h"
 #include "ma01_web.h"
+#include "climate_web.h"
 #include "ota_manager.h"
 #include "storage_credentials.h"
 #include "storage_fs.h"
@@ -39,7 +40,7 @@ static esp_err_t root_get(httpd_req_t *req)
       "<div class='card'><h2>Navigation</h2><div class='grid'>"
       "<a class='navlink' href='/help'>HELP CENTER<br><span class='muted'>System, hardware and programming documentation</span></a>"
       "<a class='navlink' href='/help#applications'>PROJECT / APPLICATION PAGES<br><span class='muted'>Documentation supplied by SD application packages</span></a>"
-      "<a class='navlink' href='/youtube'>YOUTUBE DASHBOARD<br><span class='muted'>Live local project page</span></a><a class='navlink' href='/ma01'>MA01 WEB CONTROL<br><span class='muted'>Browser control through the common command/service layer</span></a>"
+      "<a class='navlink' href='/youtube'>YOUTUBE DASHBOARD<br><span class='muted'>Live local project page</span></a><a class='navlink' href='/ma01'>MA01 WEB CONTROL<br><span class='muted'>Browser control through the common command/service layer</span></a><a class='navlink' href='/climate'>CLIMATE CONTROLLER<br><span class='muted'>Phone / browser thermostat and humidity control</span></a>"
       "<a class='navlink' href='https://github.com/AIDevelopersMonster/ESP32-8048S043-lab'>GITHUB PROJECT<br><span class='muted'>Sources, releases and engineering evidence</span></a>"
       "</div></div>",
       network_manager_state_name(),network_manager_sta_ip(),network_manager_ap_ssid());
@@ -100,5 +101,6 @@ esp_err_t web_setup_start(void)
     ESP_RETURN_ON_ERROR(storage_web_register(s_httpd),TAG,"storage web register failed");
     ESP_RETURN_ON_ERROR(youtube_web_register(s_httpd),TAG,"youtube web register failed");
     ESP_RETURN_ON_ERROR(ma01_web_register(s_httpd),TAG,"MA01 web register failed");
-    ESP_LOGI(TAG,"Platform HTTP server started with navigation, widget, storage, Help, YouTube and MA01 APIs");return ESP_OK;
+    ESP_RETURN_ON_ERROR(climate_web_register(s_httpd),TAG,"Climate web register failed");
+    ESP_LOGI(TAG,"Platform HTTP server started with navigation, widget, storage, Help, YouTube, MA01 and Climate APIs");return ESP_OK;
 }
