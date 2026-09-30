@@ -5,11 +5,11 @@
   "sd_library": {
     "name": "KONTAKTS SD Application Library",
     "status": "CURRENT SNAPSHOT",
-    "description": "Current widgets, Platform 0.3.9 system Help and offline UPDATE content. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32. Help now covers user, application programmer, system programmer and hardware roles, including BLE/Web/UART transports and the current Sample A connector evidence.",
+    "description": "Current widgets, Platform 0.4.0 system Help and offline UPDATE content, including the physically accepted Climate Controller SD package. Download the complete ZIP and extract it into the root of the FAT32 SD card; do not flash it to ESP32.",
     "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.zip",
     "manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/kontakts-sd-library.json",
     "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd",
-    "sha256": "38c8e2f8b490eb18c7052c6f9ad878bf91561b57f94d71a5bd75a5faaab56ef7",
+    "sha256": "73bee9c2c744569d05880ef351262d434a5b486048633b5dc63ef9a3733b1ed8",
     "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app09-sd-current"
   },
   "firmwares": [
@@ -80,7 +80,7 @@
       "minimum_platform": "0.3.0",
       "description": "NTP seven-segment clock package. Used to prove that manifest-driven SD discovery is independent of YouTube-specific firmware.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-clock.zip",
-      "sha256": "c61be5ec5a21ce6658c8301f97ce91845b9d3ec526656ce4d643e636ba0b6c67",
+      "sha256": "21544faab9cc4adefcbd9ff802efe5ce7ac3ba44f9f2fd017b6d48d86394d50b",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/clock"
     },
     {
@@ -91,7 +91,7 @@
       "minimum_platform": "0.3.2",
       "description": "Three-entrypoint weather demonstration package (Current, Today, 7 Day Forecast). Current package uses static demo data for SD-only discovery and launcher testing.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-weather.zip",
-      "sha256": "50acfb9dce622daabf893e43df301b663619ca8fa720d1062214bf914d4cad39",
+      "sha256": "2e79b215066f0871b8dbf230d40562d14fa42a26946d9ae32b6277178d63f2f5",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/weather"
     },
     {
@@ -102,7 +102,7 @@
       "minimum_platform": "0.2.8",
       "description": "YouTube dashboard, views and subscribers entrypoints using the platform YouTube service; API secrets remain in NVS rather than on SD.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-youtube.zip",
-      "sha256": "b29cc1ecaf6a6a48e5a1d0ae2513598816665f7eaaee619846e521c2f9f8ce9e",
+      "sha256": "02c76d9e158735965a537af607833d05173b2c07b7ea7c60ae04e3e2157bb49f",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/youtube"
     },
     {
@@ -113,7 +113,7 @@
       "minimum_platform": "0.3.1",
       "description": "Manifest-driven SD package using the generic metric carousel to rotate live YouTube/time values on physical hardware.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-youtube-led.zip",
-      "sha256": "d65bfb93ae62e1087d25e482b4cfb9f3dbc09aea69da3b7c64f36b76758e2b92",
+      "sha256": "9635af2a0060ffd95c9ae9e0357e3ab2a130c8509ef6961cb2029cf89dcc92d9",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/youtube-led"
     },
     {
@@ -124,8 +124,19 @@
       "minimum_platform": "0.3.8",
       "description": "SD package with Modbus T/RH monitor and MA01 Control Center. Uses the platform modbus provider; MA01 field traffic is UART1 GPIO17/18 through an external automatic-direction RS485 transceiver.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-modbus-controller.zip",
-      "sha256": "79d08c92200ffe049227317a479d08dc66ab247a9607718bea157b2f51429428",
+      "sha256": "7de0827262071708391b7c155ae59e822a57cd53b12227d7c667e406a00ef214",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/modbus-controller"
+    },
+    {
+      "id": "climate-controller",
+      "name": "Climate Controller",
+      "version": "0.1.0",
+      "status": "PHYSICAL PASS WITH PLATFORM 0.4.0",
+      "minimum_platform": "0.4.0",
+      "description": "Temperature and humidity regulator for EID041 + MA01 with live status, editable limits/hysteresis and AUTO ON/OFF through the common climate service.",
+      "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-climate-controller.zip",
+      "sha256": "7b75d5859a34c763f8bb14ce76ddfc043d423ea455b1d0425fef577d2bf5eac3",
+      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/climate-controller"
     },
     {
       "id": "usb-serial-terminal",
@@ -135,7 +146,7 @@
       "minimum_platform": "0.3.7",
       "description": "USB Serial Monitor and Advanced Serial Terminal with ASCII/HEX, line-ending selection, history/repeat and fullscreen keyboard overlay.",
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
-      "sha256": "26dfa432445a7893cbbe361109296b63ab00b572410c211e10b981e108ee43dd",
+      "sha256": "32e0cbc33c2017030e41cfaee5dea08b1b3877c1e8f71f4d0e945d8009ad7487",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
     }
   ],
