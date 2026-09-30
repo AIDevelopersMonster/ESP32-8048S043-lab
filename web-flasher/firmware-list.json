@@ -1,5 +1,5 @@
 {
-  "project": "KONTAKTS / ESP32-8048S043 Lab",
+  "project": "KONTAKTS / ESP32-8048S043 Platform",
   "programmer": "Sol",
   "engineer": "Alex Malachevsky",
   "sd_library": {
@@ -33,8 +33,8 @@
       "id": "app16",
       "name": "KONTAKTS Platform / BLE + Web + MA01",
       "version": "0.3.9",
-      "status": "PHYSICAL PASS / CURRENT PLATFORM",
-      "description": "Current physically accepted KONTAKTS Platform for ESP32-8048S043. Adds BLE device KONTAKTS-8048 (FFF0 / FFF1 WRITE / FFF2 READ), keeps HMI, Web and technological UART0/P1 on the same command/service layer, and includes the memory hardening required for simultaneous display, SD, Wi-Fi/HTTP, BLE, OTA and MA01 UART1/RS485 operation.",
+      "status": "PHYSICAL PASS / PREVIOUS PLATFORM",
+      "description": "Previous physically accepted KONTAKTS Platform 0.3.9 for ESP32-8048S043. Keep this as the immediate rollback/reference release before Platform 0.4.0.",
       "manifest": "./manifest-app16.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/16_BLEControl",
       "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app06-v0.3.9",
@@ -46,27 +46,11 @@
       "ota_status": "PHYSICAL PLATFORM PASS / RELEASED"
     },
     {
-      "id": "app13",
-      "name": "KONTAKTS Platform / Advanced Serial Terminal",
-      "version": "0.3.7",
-      "status": "PHYSICAL PASS / PREVIOUS PLATFORM",
-      "description": "Current KONTAKTS Platform for ESP32-8048S043 with SYS | SD | WIDGET, GitHub OTA, SD application launcher, Widget Runtime, USB Serial Monitor and Advanced Serial Terminal support. Fullscreen keyboard overlay based on LVGL buttonmatrix was physically validated on hardware.",
-      "manifest": "./manifest-app13.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/06_OTARecovery",
-      "release": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/tag/app06-v0.3.7",
-      "full_image": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota-recovery-v0.3.7-full.bin",
-      "full_sha256": "f12cc349dcbaa6b2f5fcf9eea0b9bb03bae57634a57ccdb7ec20fa4c2d2071a6",
-      "ota_binary": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota.bin",
-      "ota_manifest": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.7/app06-ota.json",
-      "ota_sha256": "014e04359f0e357856637331283fa6d9b47e174d197d382e3b11ef923f0eb291",
-      "ota_status": "PHYSICAL PASS"
-    },
-    {
       "id": "app07-v024",
       "name": "KONTAKTS Platform Stable",
       "version": "0.2.4-r1",
-      "status": "PHYSICAL PASS / RECOVERY BASELINE / WEB FLASHER CANDIDATE",
-      "description": "Known-good KONTAKTS platform baseline with firmware-resident STATUS and OTA, persistent filesystem Widget Runtime, NTP clock support, Storage Manager and physically verified live OTA percentage/progress bar. Use this to restore the platform after experimental builds.",
+      "status": "PHYSICAL PASS / RECOVERY BASELINE",
+      "description": "Known-good recovery baseline. Use only when the current platform cannot be recovered through the normal 0.4.0/0.3.9 paths.",
       "manifest": "./manifest-app07-v024.json",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/8f054fe79798cd49ac5f0b9098d931811a0239dd/apps/06_OTARecovery"
     }
@@ -148,46 +132,6 @@
       "download": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app09-sd-current/widget-usb-serial-terminal.zip",
       "sha256": "32e0cbc33c2017030e41cfaee5dea08b1b3877c1e8f71f4d0e945d8009ad7487",
       "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/09_SDWidgetLibrary/sd/widgets/usb-serial-terminal"
-    }
-  ],
-  "laboratory_firmwares": [
-    {
-      "id": "app01",
-      "name": "Six-Card Serial Deck",
-      "version": "1.0.0",
-      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS",
-      "description": "Six touch cards with HOME, MEDIA and SYSTEM profiles plus Serial commands.",
-      "manifest": "./manifest-app01.json",
-      "video": "https://youtube.com/shorts/0I5JL6jt8e0",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/01_SixCardSerialDeck"
-    },
-    {
-      "id": "app02",
-      "name": "Mixed Widgets",
-      "version": "0.1.1",
-      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS / CLOSED",
-      "description": "LVGL button, switch, slider, arc, progress indicator and multi-screen navigation.",
-      "manifest": "./manifest-app02.json",
-      "video": "https://youtube.com/shorts/LwmW8UwDED0",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/02_MixedWidgets"
-    },
-    {
-      "id": "app03",
-      "name": "Live System Dashboard",
-      "version": "0.1.0",
-      "status": "PHYSICAL PASS / WEB FLASHER PHYSICAL PASS / CLOSED",
-      "description": "Real ESP32-S3 temperature, heap, PSRAM and uptime telemetry with a live chart and touch navigation.",
-      "manifest": "./manifest-app03.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/03_LiveDashboard"
-    },
-    {
-      "id": "app05",
-      "name": "Network Provisioning (legacy test)",
-      "version": "0.1.1",
-      "status": "PHYSICAL PASS / LEGACY TEST",
-      "description": "Earlier standalone Wi-Fi provisioning test. It is not the current KONTAKTS platform and is kept only as historical/diagnostic firmware.",
-      "manifest": "./manifest-app05.json",
-      "source": "https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/tree/main/apps/05_NetworkProvisioning"
     }
   ],
   "arduino_ide": {
