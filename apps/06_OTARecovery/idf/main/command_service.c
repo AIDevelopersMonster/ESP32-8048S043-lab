@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "modbus_service.h"
+#include "climate_service.h"
 
 static void trim(char *s)
 {
@@ -36,9 +37,11 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
         return ESP_ERR_INVALID_ARG;
     }
 
+    if (!strncmp(line, "CLIMATE ", 8)) return climate_service_command(line, response, response_len);
+
     if (strcmp(line, "HELP") == 0) {
         strlcpy(response,
-                "OK commands: HELP | MA01 ADDR [1..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>",
+                "OK commands: CLIMATE STATUS|ON|OFF|DEFAULTS|SET t_min t_max t_hyst rh_min rh_max rh_hyst (tenths) | HELP | MA01 ADDR [2..247] | MA01 SCAN | MA01 INFO | MA01 READ | MA01 CONFIG | MA01 DO<n> INFO|ACTION|ON|OFF|TOGGLE|MODE <LEVEL|PULSE>|PULSEMS <0..65535>",
                 response_len);
         return ESP_OK;
     }
@@ -53,8 +56,8 @@ esp_err_t command_service_execute(const char *command, char *response, size_t re
     if (strncmp(line, "MA01 ADDR ", 10) == 0) {
         char *end = NULL;
         long slave = strtol(line + 10, &end, 10);
-        if (!end || *end != '\0' || slave < 1 || slave > 247) {
-            strlcpy(response, "ERR syntax: MA01 ADDR <1..247>", response_len);
+        if (!end || *end != '\0' || slave < 2 || slave > 247) {
+            strlcpy(response, "ERR syntax: MA01 ADDR <2..247>; 1 is EID041", response_len);
             return ESP_ERR_INVALID_ARG;
         }
         esp_err_t err = modbus_service_ma01_set_slave((uint8_t)slave);

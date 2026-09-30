@@ -82,3 +82,4 @@ esp_err_t widget_runtime_delete(void);
 void widget_runtime_get_info(widget_info_t *out);
 void widget_runtime_get_model(widget_model_t *out);
 uint32_t widget_runtime_generation(void);
+bool widget_runtime_uses_sensor(void);

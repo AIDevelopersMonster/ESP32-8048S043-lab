@@ -23,15 +23,21 @@ static void set_no_cache(httpd_req_t *req)
     httpd_resp_set_hdr(req, "Cache-Control", "no-store, no-cache, must-revalidate");
 }
 
-static esp_err_t build_state_json(char *out, size_t out_len)
+static esp_err_t build_state_json(char *out, size_t out_len, bool refresh)
 {
     if (!out || out_len == 0) return ESP_ERR_INVALID_ARG;
 
-    char response[512];
-    esp_err_t refresh_err = command_service_execute("MA01 READ", response, sizeof(response));
+    esp_err_t refresh_err = ESP_OK;
+    if (refresh) {
+        char response[512];
+        refresh_err = command_service_execute("MA01 READ", response, sizeof(response));
+    }
 
     modbus_service_status_t bus = {0};
     modbus_service_get_status(&bus);
+    char ma01_state[16];
+    modbus_service_format_binding("modbus.ma01.state", ma01_state, sizeof(ma01_state));
+    bool online = strcmp(ma01_state, "ONLINE") == 0;
 
     bool states[8] = {0};
     for (unsigned i = 0; i < 8; ++i) {
@@ -48,7 +54,7 @@ static esp_err_t build_state_json(char *out, size_t out_len)
              "\"protocol_errors\":%lu,\"do\":[%s,%s,%s,%s,%s,%s,%s,%s],"
              "\"error\":\"%s\"}",
              (unsigned)modbus_service_ma01_get_slave(),
-             bus.online ? "true" : "false",
+             online ? "true" : "false",
              refresh_err == ESP_OK ? "true" : "false",
              (unsigned long)bus.tx_frames,
              (unsigned long)bus.rx_frames,
@@ -113,7 +119,7 @@ static esp_err_t page_get(httpd_req_t *req)
         "<div class='top'><b>Browser transport → command/service layer → MA01 provider → UART1/RS485</b>"
         "<p class='muted'>Local engineering UI. No authentication in this MVP; do not expose it to the public Internet.</p>"
         "<div id='bus'>Waiting for state...</div>"
-        "<div class='row'><button onclick='scan()'>SCAN MA01</button><input id='addr' type='number' min='1' max='247' placeholder='Slave address'><button onclick='setAddr()'>SET ADDRESS</button></div>"
+        "<div class='row'><button onclick='scan()'>SCAN MA01</button><button onclick='refresh()'>READ ALL</button><input id='addr' type='number' min='2' max='247' placeholder='Slave address'><button onclick='setAddr()'>SET ADDRESS</button></div>"
         "<p id='msg' class='muted'></p></div>"
         "<div id='channels' class='grid'></div>"
         "<script>"
@@ -125,10 +131,11 @@ static esp_err_t page_get(httpd_req_t *req)
         "'<div class=\"row\"><input id=\"p'+i+'\" type=\"number\" min=\"0\" max=\"65535\" placeholder=\"Pulse ms\"><button onclick=\"pulse('+i+')\">SET PULSE</button><button onclick=\"cmd('+i+',\\'TOGGLE\\')\">TOGGLE</button></div>';"
         "C.appendChild(d)}"
         "function q(v){return encodeURIComponent(v)}"
-        "async function post(url){let r=await fetch(url,{method:'POST'}),t=await r.text();M.textContent=t;if(!r.ok)throw new Error(t);return t}"
+        "async function post(url){let r=await fetch(url,{method:'POST'}),t=await r.text();M.textContent=t;if(!r.ok)throw new Error(t);await refresh();return t}"
         "function render(x){document.getElementById('addr').value=x.address||'';let b=document.getElementById('bus');"
         "b.innerHTML='<b>Address:</b> '+(x.address||'not set')+' &nbsp; <b>Bus:</b> '+(x.online?'ONLINE':'OFFLINE')+' &nbsp; <b>TX/RX:</b> '+x.tx+'/'+x.rx+' &nbsp; <b>Timeouts:</b> '+x.timeouts+(x.refresh_ok?'':' &nbsp; <span class=\"warn\">'+x.error+'</span>');"
-        "for(let i=1;i<=8;i++){let e=document.getElementById('s'+i),on=!!x.do[i-1];e.textContent=on?'ON':'OFF';e.className='state '+(on?'on':'off')}}"
+        "for(let i=1;i<=8;i++){let e=document.getElementById('s'+i),on=!!x.do[i-1];e.textContent=x.online?(on?'ON':'OFF'):'--';e.className='state '+(on&&x.online?'on':'off')}}"
+        "async function refresh(){try{let r=await fetch('/api/ma01/status'),x=await r.json();render(x);if(!x.refresh_ok)M.textContent=x.error}catch(e){M.textContent=e.message}}"
         "async function config(){try{let r=await fetch('/api/ma01/config'),t=await r.text();if(!r.ok)throw new Error(t);let x=JSON.parse(t);"
         "for(let c of x.channels){document.getElementById('m'+c.channel).value=c.mode;document.getElementById('p'+c.channel).value=c.pulse_ms}M.textContent='Configuration refreshed'}catch(e){M.textContent=e.message}}"
         "async function cmd(ch,op){try{await post('/api/ma01/command?ch='+ch+'&op='+op)}catch(e){}}"
@@ -136,9 +143,7 @@ static esp_err_t page_get(httpd_req_t *req)
         "async function pulse(ch){try{await post('/api/ma01/command?ch='+ch+'&op=PULSEMS&value='+q(document.getElementById('p'+ch).value));await config()}catch(e){}}"
         "async function scan(){try{await post('/api/ma01/scan');await config()}catch(e){}}"
         "async function setAddr(){try{await post('/api/ma01/address?value='+q(document.getElementById('addr').value));await config()}catch(e){}}"
-        "let es=new EventSource('/api/ma01/events');es.addEventListener('state',e=>{try{render(JSON.parse(e.data))}catch(_){}});"
-        "es.onerror=()=>{M.textContent='State stream reconnecting...'};"
-        "config();"
+        "refresh();config();"
         "</script></body></html>";
     httpd_resp_set_type(req, "text/html");
     set_no_cache(req);
@@ -148,7 +153,7 @@ static esp_err_t page_get(httpd_req_t *req)
 static esp_err_t status_get(httpd_req_t *req)
 {
     char json[768];
-    (void)build_state_json(json, sizeof(json));
+    (void)build_state_json(json, sizeof(json), true);
     httpd_resp_set_type(req, "application/json");
     set_no_cache(req);
     return httpd_resp_sendstr(req, json);
@@ -157,7 +162,7 @@ static esp_err_t status_get(httpd_req_t *req)
 static esp_err_t events_get(httpd_req_t *req)
 {
     char json[768];
-    (void)build_state_json(json, sizeof(json));
+    (void)build_state_json(json, sizeof(json), false);
 
     char event[900];
     int n = snprintf(event, sizeof(event), "retry: 1500\nevent: state\ndata: %s\n\n", json);
@@ -254,8 +259,8 @@ static esp_err_t address_post(httpd_req_t *req)
     }
     char *end = NULL;
     long address = strtol(value, &end, 10);
-    if (!end || *end || address < 1 || address > 247) {
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "address must be 1..247");
+    if (!end || *end || address < 2 || address > 247) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "address must be 2..247; 1 is EID041");
         return ESP_OK;
     }
     char command[32];

@@ -1,0 +1,309 @@
+{
+  "schema": 1,
+  "id": "climate-settings",
+  "name": "Climate Settings",
+  "version": "0.1.0",
+  "background": "#0D1117",
+  "objects": [
+    {
+      "type": "label",
+      "x": 18,
+      "y": 7,
+      "w": 200,
+      "h": 36,
+      "color": "#58A6FF",
+      "text": "CLIMATE / LIMITS"
+    },
+    {
+      "type": "label",
+      "x": 225,
+      "y": 8,
+      "w": 150,
+      "h": 34,
+      "color": "#79C0FF",
+      "bind": "climate.state",
+      "prefix": "MODE: "
+    },
+    {
+      "type": "button",
+      "x": 390,
+      "y": 5,
+      "w": 105,
+      "h": 42,
+      "text": "ON",
+      "action": "climate_auto_on"
+    },
+    {
+      "type": "button",
+      "x": 506,
+      "y": 5,
+      "w": 105,
+      "h": 42,
+      "text": "OFF",
+      "action": "climate_auto_off"
+    },
+    {
+      "type": "button",
+      "x": 622,
+      "y": 5,
+      "w": 105,
+      "h": 42,
+      "text": "BACK",
+      "action": "climate_open_home"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 53,
+      "w": 325,
+      "h": 34,
+      "color": "#FFA657",
+      "bind": "climate.temperature",
+      "prefix": "T NOW: ",
+      "suffix": " C"
+    },
+    {
+      "type": "label",
+      "x": 385,
+      "y": 53,
+      "w": 342,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.humidity",
+      "prefix": "RH NOW: ",
+      "suffix": " %"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 91,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "TEMP MIN"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 91,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.t_min",
+      "suffix": " C"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 88,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_0_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 88,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_0_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 133,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "TEMP MAX"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 133,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.t_max",
+      "suffix": " C"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 130,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_1_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 130,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_1_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 175,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "TEMP HYST"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 175,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.t_hyst",
+      "suffix": " C"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 172,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_2_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 172,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_2_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 217,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "RH MIN"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 217,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.rh_min",
+      "suffix": " %"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 214,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_3_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 214,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_3_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 259,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "RH MAX"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 259,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.rh_max",
+      "suffix": " %"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 256,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_4_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 256,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_4_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 301,
+      "w": 222,
+      "h": 34,
+      "color": "#F0F6FC",
+      "text": "RH HYST"
+    },
+    {
+      "type": "label",
+      "x": 275,
+      "y": 301,
+      "w": 180,
+      "h": 34,
+      "color": "#A5D6FF",
+      "bind": "climate.rh_hyst",
+      "suffix": " %"
+    },
+    {
+      "type": "button",
+      "x": 492,
+      "y": 298,
+      "w": 92,
+      "h": 38,
+      "text": "-",
+      "action": "climate_adj_5_minus"
+    },
+    {
+      "type": "button",
+      "x": 615,
+      "y": 298,
+      "w": 92,
+      "h": 38,
+      "text": "+",
+      "action": "climate_adj_5_plus"
+    },
+    {
+      "type": "label",
+      "x": 18,
+      "y": 344,
+      "w": 615,
+      "h": 20,
+      "color": "#8B949E",
+      "bind": "climate.edit_state",
+      "prefix": "SAVE: "
+    }
+  ]
+}

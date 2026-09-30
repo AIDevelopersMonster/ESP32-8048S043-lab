@@ -14,6 +14,10 @@ typedef enum {
 
 typedef struct {
     bool online;
+    /* EID041 freshness is independent of MA01/other bus transaction errors. */
+    bool sensor_online;
+    /* A successful sensor sample exists; retained when a later poll times out. */
+    bool sensor_seen;
     int16_t temperature_tenths_c;
     uint16_t humidity_tenths_rh;
     uint32_t tx_frames;
@@ -74,3 +78,7 @@ esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms);
 
 void modbus_service_get_status(modbus_service_status_t *out);
 void modbus_service_format_binding(const char *binding, char *out, size_t out_len);
+
+/* Internal climate adapter; only the sensor polling task may claim/release. */
+esp_err_t modbus_service_climate_claim(bool claim);
+esp_err_t modbus_service_climate_snapshot(bool coils[4], bool require_level);

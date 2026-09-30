@@ -1,4 +1,6 @@
 #include "modbus_service.h"
+#include "climate_service.h"
+#include "modbus_rtu_io.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,6 +12,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "nvs.h"
+#include "widget_runtime.h"
 
 #define TAG "MODBUS_SERVICE"
 
@@ -35,6 +38,8 @@ static bool s_ma01_config_valid;
 static uint8_t s_ma01_slave;
 static uint8_t s_ma01_selected_channel = 1;
 
+static SemaphoreHandle_t s_control_lock;
+static TaskHandle_t s_climate_owner;
 static SemaphoreHandle_t s_bus_lock;
 static SemaphoreHandle_t s_status_lock;
 static modbus_service_status_t s_status;
@@ -87,7 +92,7 @@ static void ma01_load_slave(void)
 
     uint8_t slave = 0;
     if (nvs_get_u8(handle, MODBUS_NVS_MA01_ADDR, &slave) == ESP_OK &&
-        slave >= 1 && slave <= 247) {
+        slave != MODBUS_EID041_SLAVE && slave >= 1 && slave <= 247) {
         s_ma01_slave = slave;
     }
     nvs_close(handle);
@@ -102,10 +107,11 @@ uint8_t modbus_service_ma01_get_slave(void)
     return slave;
 }
 
-esp_err_t modbus_service_ma01_set_slave(uint8_t slave)
+static esp_err_t modbus_service_ma01_set_slave_impl(uint8_t slave)
 {
     if (!s_status_lock) return ESP_ERR_INVALID_STATE;
-    if (slave < 1 || slave > 247) return ESP_ERR_INVALID_ARG;
+    if (slave == MODBUS_EID041_SLAVE || slave < 1 || slave > 247)
+        return ESP_ERR_INVALID_ARG;
 
     nvs_handle_t handle;
     esp_err_t err = nvs_open(MODBUS_NVS_NAMESPACE, NVS_READWRITE, &handle);
@@ -129,11 +135,12 @@ esp_err_t modbus_service_ma01_set_slave(uint8_t slave)
     return ESP_OK;
 }
 
-esp_err_t modbus_service_ma01_scan(uint8_t *out_slave, uint16_t *out_model, uint16_t *out_fw)
+static esp_err_t modbus_service_ma01_scan_impl(uint8_t *out_slave, uint16_t *out_model, uint16_t *out_fw)
 {
     if (!s_bus_lock || !s_status_lock) return ESP_ERR_INVALID_STATE;
 
     for (unsigned slave = 1; slave <= 247; ++slave) {
+        if (slave == MODBUS_EID041_SLAVE) continue;
         uint16_t model = 0;
         esp_err_t err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07D0, 1, &model, 1);
         if (err != ESP_OK) continue;
@@ -141,6 +148,21 @@ esp_err_t modbus_service_ma01_scan(uint8_t *out_slave, uint16_t *out_model, uint
         uint16_t fw = 0;
         err = modbus_service_read_registers((uint8_t)slave, 0x03, 0x07DC, 1, &fw, 1);
         if (err != ESP_OK) continue;
+
+        /* FC03 alone also matches the EID041 sensor. Require the relay's
+         * eight coils and its eight valid output modes before saving NVS. */
+        bool coils[MODBUS_MA01_COILS] = {0};
+        err = modbus_service_read_coils((uint8_t)slave, 0, MODBUS_MA01_COILS,
+                                        coils, MODBUS_MA01_COILS);
+        if (err != ESP_OK) continue;
+        uint16_t modes[MODBUS_MA01_COILS] = {0};
+        err = modbus_service_read_registers((uint8_t)slave, 0x03, MODBUS_MA01_MODE_BASE,
+                                            MODBUS_MA01_COILS, modes, MODBUS_MA01_COILS);
+        if (err != ESP_OK) continue;
+        bool valid_modes = true;
+        for (unsigned i = 0; i < MODBUS_MA01_COILS; ++i)
+            if (modes[i] > MODBUS_MA01_MODE_FOLLOW) valid_modes = false;
+        if (!valid_modes) continue;
 
         err = modbus_service_ma01_set_slave((uint8_t)slave);
         if (err != ESP_OK) return err;
@@ -186,6 +208,7 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
     uint8_t response[69] = {0};
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
 
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -203,17 +226,8 @@ esp_err_t modbus_service_read_registers(uint8_t slave,
         return wait_err;
     }
 
-    size_t got = 0;
-    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(MODBUS_TIMEOUT_MS);
-    while (got < expected) {
-        TickType_t now = xTaskGetTickCount();
-        if ((int32_t)(deadline - now) <= 0) break;
-        int n = uart_read_bytes(MODBUS_UART,
-                                response + got,
-                                expected - got,
-                                deadline - now);
-        if (n > 0) got += (size_t)n;
-    }
+    size_t got = modbus_rtu_read_exact(MODBUS_UART, response, expected,
+                                        pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got != expected) {
@@ -259,6 +273,7 @@ static esp_err_t modbus_service_write_single_register(uint8_t slave, uint16_t re
     uint8_t response[8] = {0};
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
 
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
@@ -276,7 +291,8 @@ static esp_err_t modbus_service_write_single_register(uint8_t slave, uint16_t re
         return wait_err;
     }
 
-    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    int got = (int)modbus_rtu_read_exact(MODBUS_UART, response, sizeof(response),
+                                           pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got != (int)sizeof(response)) {
@@ -391,11 +407,12 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     size_t expected = 5U + byte_count;
     uint8_t response[9] = {0};
 
-    ESP_LOGI(TAG, "FC01 TX slave=%u start=0x%04X count=%u",
+    ESP_LOGD(TAG, "FC01 TX slave=%u start=0x%04X count=%u",
              (unsigned)slave, (unsigned)start_coil, (unsigned)coil_count);
-    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_DEBUG);
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
     if (written != (int)sizeof(request)) {
@@ -407,19 +424,13 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
         xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
     }
 
-    size_t got = 0;
-    TickType_t deadline = xTaskGetTickCount() + pdMS_TO_TICKS(MODBUS_TIMEOUT_MS);
-    while (got < expected) {
-        TickType_t now = xTaskGetTickCount();
-        if ((int32_t)(deadline - now) <= 0) break;
-        int n = uart_read_bytes(MODBUS_UART, response + got, expected - got, deadline - now);
-        if (n > 0) got += (size_t)n;
-    }
+    size_t got = modbus_rtu_read_exact(MODBUS_UART, response, expected,
+                                        pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got > 0) {
-        ESP_LOGI(TAG, "FC01 RX got=%u expected=%u", (unsigned)got, (unsigned)expected);
-        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_INFO);
+        ESP_LOGD(TAG, "FC01 RX got=%u expected=%u", (unsigned)got, (unsigned)expected);
+        ESP_LOG_BUFFER_HEX_LEVEL(TAG, response, got, ESP_LOG_DEBUG);
     } else {
         ESP_LOGW(TAG, "FC01 RX got=0 expected=%u", (unsigned)expected);
     }
@@ -437,7 +448,7 @@ esp_err_t modbus_service_read_coils(uint8_t slave,
     return ESP_OK;
 }
 
-esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on)
+static esp_err_t modbus_service_write_single_coil_impl(uint8_t slave, uint16_t coil, bool on)
 {
     if (!s_bus_lock || !s_status_lock || !slave) return ESP_ERR_INVALID_STATE;
     uint16_t value = on ? 0xFF00 : 0x0000;
@@ -455,6 +466,7 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, request, sizeof(request), ESP_LOG_INFO);
 
     xSemaphoreTake(s_bus_lock, portMAX_DELAY);
+    modbus_rtu_request_gap();
     uart_flush_input(MODBUS_UART);
     int written = uart_write_bytes(MODBUS_UART, request, sizeof(request));
     if (written != (int)sizeof(request)) {
@@ -465,7 +477,8 @@ esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on
     if (wait_err != ESP_OK) {
         xSemaphoreGive(s_bus_lock); status_error(true, false); return wait_err;
     }
-    int got = uart_read_bytes(MODBUS_UART, response, sizeof(response), pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
+    int got = (int)modbus_rtu_read_exact(MODBUS_UART, response, sizeof(response),
+                                           pdMS_TO_TICKS(MODBUS_TIMEOUT_MS));
     xSemaphoreGive(s_bus_lock);
 
     if (got > 0) {
@@ -504,7 +517,7 @@ esp_err_t modbus_service_ma01_refresh(void)
     return err;
 }
 
-esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
+static esp_err_t modbus_service_ma01_set_impl(uint8_t channel, bool on)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
     uint8_t slave = modbus_service_ma01_get_slave();
@@ -537,7 +550,7 @@ esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
     return modbus_service_ma01_refresh();
 }
 
-esp_err_t modbus_service_ma01_toggle(uint8_t channel)
+static esp_err_t modbus_service_ma01_toggle_impl(uint8_t channel)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
 
@@ -560,7 +573,7 @@ esp_err_t modbus_service_ma01_toggle(uint8_t channel)
     return modbus_service_ma01_set(channel, next);
 }
 
-esp_err_t modbus_service_ma01_action(uint8_t channel)
+static esp_err_t modbus_service_ma01_action_impl(uint8_t channel)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
 
@@ -576,7 +589,7 @@ esp_err_t modbus_service_ma01_action(uint8_t channel)
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-esp_err_t modbus_service_ma01_set_mode(uint8_t channel, modbus_ma01_mode_t mode)
+static esp_err_t modbus_service_ma01_set_mode_impl(uint8_t channel, modbus_ma01_mode_t mode)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
     if (mode < MODBUS_MA01_MODE_LEVEL || mode > MODBUS_MA01_MODE_FOLLOW) return ESP_ERR_INVALID_ARG;
@@ -600,7 +613,7 @@ esp_err_t modbus_service_ma01_set_mode(uint8_t channel, modbus_ma01_mode_t mode)
     return modbus_service_ma01_refresh_config();
 }
 
-esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
+static esp_err_t modbus_service_ma01_cycle_mode_impl(uint8_t channel)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
 
@@ -619,7 +632,7 @@ esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
     return modbus_service_ma01_set_mode(channel, next);
 }
 
-esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms)
+static esp_err_t modbus_service_ma01_set_pulse_ms_impl(uint8_t channel, uint16_t pulse_ms)
 {
     if (channel < 1 || channel > MODBUS_MA01_COILS) return ESP_ERR_INVALID_ARG;
 
@@ -669,7 +682,7 @@ esp_err_t modbus_service_ma01_set_selected_mode(modbus_ma01_mode_t mode)
     return modbus_service_ma01_set_mode(modbus_service_ma01_get_selected_channel(), mode);
 }
 
-esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms)
+static esp_err_t modbus_service_ma01_adjust_selected_pulse_impl(int32_t delta_ms)
 {
     uint8_t channel = modbus_service_ma01_get_selected_channel();
     esp_err_t err = ma01_ensure_config();
@@ -688,10 +701,19 @@ esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms)
 static void eid041_poll_task(void *arg)
 {
     (void)arg;
-    ESP_LOGI(TAG, "EID041 provider poll started: slave=%u, FC04, regs 0x0000..0x0001",
+    ESP_LOGI(TAG, "EID041 provider ready: slave=%u, FC04, regs 0x0000..0x0001 (on demand)",
              MODBUS_EID041_SLAVE);
 
+    bool was_online = false;
     for (;;) {
+        if (!climate_service_requires_sensor() && !widget_runtime_uses_sensor()) {
+            xSemaphoreTake(s_status_lock, portMAX_DELAY);
+            s_status.sensor_online = false;
+            xSemaphoreGive(s_status_lock);
+            was_online = false;
+            vTaskDelay(pdMS_TO_TICKS(MODBUS_POLL_MS));
+            continue;
+        }
         uint16_t regs[2] = {0};
         esp_err_t err = modbus_service_read_registers(MODBUS_EID041_SLAVE,
                                                       0x04,
@@ -699,16 +721,29 @@ static void eid041_poll_task(void *arg)
                                                       2,
                                                       regs,
                                                       2);
+        if (err == ESP_OK && ((int16_t)regs[0] < -400 ||
+                              (int16_t)regs[0] > 1250 || regs[1] > 1000))
+            err = ESP_ERR_INVALID_RESPONSE;
         if (err == ESP_OK) {
             xSemaphoreTake(s_status_lock, portMAX_DELAY);
             s_status.temperature_tenths_c = (int16_t)regs[0];
             s_status.humidity_tenths_rh = regs[1];
+            s_status.sensor_online = true;
+            s_status.sensor_seen = true;
             s_status.online = true;
             xSemaphoreGive(s_status_lock);
+            if (!was_online) ESP_LOGI(TAG, "EID041 sensor online");
+            was_online = true;
         } else {
-            ESP_LOGW(TAG, "EID041 poll failed: %s", esp_err_to_name(err));
+            xSemaphoreTake(s_status_lock, portMAX_DELAY);
+            s_status.sensor_online = false;
+            s_status.online = false;
+            xSemaphoreGive(s_status_lock);
+            if (was_online) ESP_LOGW(TAG, "EID041 sensor offline: %s", esp_err_to_name(err));
+            was_online = false;
         }
 
+        climate_service_poll();
         vTaskDelay(pdMS_TO_TICKS(MODBUS_POLL_MS));
     }
 }
@@ -717,9 +752,10 @@ esp_err_t modbus_service_init(void)
 {
     if (s_bus_lock) return ESP_OK;
 
+    s_control_lock = xSemaphoreCreateRecursiveMutex();
     s_bus_lock = xSemaphoreCreateMutex();
     s_status_lock = xSemaphoreCreateMutex();
-    if (!s_bus_lock || !s_status_lock) return ESP_ERR_NO_MEM;
+    if (!s_control_lock || !s_bus_lock || !s_status_lock) return ESP_ERR_NO_MEM;
 
     uart_config_t config = {
         .baud_rate = MODBUS_BAUD,
@@ -873,4 +909,135 @@ void modbus_service_format_binding(const char *binding, char *out, size_t out_le
     } else {
         strlcpy(out, "unsupported", out_len);
     }
+}
+
+esp_err_t modbus_service_ma01_set_slave(uint8_t slave)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_set_slave_impl(slave);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_scan(uint8_t *out_slave, uint16_t *out_model, uint16_t *out_fw)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_scan_impl(out_slave, out_model, out_fw);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_write_single_coil(uint8_t slave, uint16_t coil, bool on)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_write_single_coil_impl(slave, coil, on);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_set(uint8_t channel, bool on)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_set_impl(channel, on);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_toggle(uint8_t channel)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_toggle_impl(channel);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_action(uint8_t channel)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_action_impl(channel);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_set_mode(uint8_t channel, modbus_ma01_mode_t mode)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_set_mode_impl(channel, mode);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_cycle_mode(uint8_t channel)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_cycle_mode_impl(channel);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_set_pulse_ms(uint8_t channel, uint16_t pulse_ms)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_set_pulse_ms_impl(channel, pulse_ms);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_ma01_adjust_selected_pulse(int32_t delta_ms)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    esp_err_t err = (s_climate_owner && s_climate_owner != xTaskGetCurrentTaskHandle())
+        ? ESP_ERR_INVALID_STATE : modbus_service_ma01_adjust_selected_pulse_impl(delta_ms);
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+/* Called only by the existing sensor polling task. Reservation spans poll cycles. */
+esp_err_t modbus_service_climate_claim(bool claim)
+{
+    if (!s_control_lock) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTakeRecursive(s_control_lock, portMAX_DELAY);
+    TaskHandle_t self = xTaskGetCurrentTaskHandle();
+    esp_err_t err = ESP_OK;
+    if (s_climate_owner && s_climate_owner != self) err = ESP_ERR_INVALID_STATE;
+    else s_climate_owner = claim ? self : NULL;
+    xSemaphoreGiveRecursive(s_control_lock);
+    return err;
+}
+
+esp_err_t modbus_service_climate_snapshot(bool coils[4], bool require_level)
+{
+    esp_err_t err;
+    if (require_level) {
+        err = modbus_service_ma01_refresh_config();
+        if (err != ESP_OK) return err;
+    }
+    err = modbus_service_ma01_refresh();
+    if (err != ESP_OK) return err;
+    xSemaphoreTake(s_status_lock, portMAX_DELAY);
+    for (unsigned i = 0; i < 4; ++i) {
+        coils[i] = s_ma01_coils[i];
+        if (require_level && s_ma01_modes[i] != MODBUS_MA01_MODE_LEVEL) err = ESP_ERR_NOT_SUPPORTED;
+    }
+    xSemaphoreGive(s_status_lock);
+    return err;
 }

@@ -90,6 +90,12 @@ static bool binding_allowed(const char *binding)
         "youtube.state", "youtube.period",
         "serial.rx_text", "serial.rx_bytes", "serial.tx_bytes", "serial.state",
         "serial.ending", "serial.tx_mode", "serial.last_tx", "serial.history_count",
+        "climate.state", "climate.error", "climate.edit_state",
+        "climate.sensor_state", "climate.temperature", "climate.humidity",
+        "climate.relay_state",
+        "climate.t_min", "climate.t_max", "climate.t_hyst",
+        "climate.rh_min", "climate.rh_max", "climate.rh_hyst",
+        "climate.heater", "climate.cooler", "climate.humidifier", "climate.dehumidifier",
         "modbus.state", "modbus.bus", "modbus.tx_count", "modbus.rx_count",
         "modbus.crc_errors", "modbus.timeout_count", "modbus.protocol_errors",
         "modbus.sensor1.temperature", "modbus.sensor1.humidity",
@@ -140,6 +146,14 @@ static bool button_action_allowed(const char *action)
                       strcmp(action, "serial_mode_ascii") == 0 ||
                       strcmp(action, "serial_mode_hex") == 0 ||
                       strcmp(action, "serial_clear") == 0 ||
+                      strcmp(action, "climate_auto_on") == 0 ||
+                      strcmp(action, "climate_auto_off") == 0 ||
+                      strcmp(action, "climate_defaults") == 0 ||
+                      strcmp(action, "climate_open_home") == 0 ||
+                      strcmp(action, "climate_open_settings") == 0 ||
+                      (strncmp(action, "climate_adj_", 12) == 0 &&
+                       action[12] >= '0' && action[12] <= '5' &&
+                       (strcmp(action + 13, "_plus") == 0 || strcmp(action + 13, "_minus") == 0)) ||
                       strcmp(action, "modbus_ma01_refresh") == 0 ||
                       strcmp(action, "modbus_ma01_scan") == 0 ||
                       strcmp(action, "modbus_ma01_open_home") == 0 ||
@@ -558,4 +572,31 @@ uint32_t widget_runtime_generation(void)
 {
     if (!s_lock) return 0;
     xSemaphoreTake(s_lock, portMAX_DELAY); uint32_t g = s_info.generation; xSemaphoreGive(s_lock); return g;
+}
+
+static bool sensor_binding(const char *binding)
+{
+    return strncmp(binding, "modbus.sensor1.", 15) == 0 ||
+           strcmp(binding, "temperature.value") == 0 ||
+           strcmp(binding, "humidity.value") == 0 ||
+           strcmp(binding, "climate.temperature") == 0 ||
+           strcmp(binding, "climate.humidity") == 0 ||
+           strcmp(binding, "climate.sensor_state") == 0;
+}
+
+bool widget_runtime_uses_sensor(void)
+{
+    if (!s_lock || !s_model) return false;
+    bool uses = false;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    if (s_info.installed) {
+        for (size_t i = 0; i < s_model->object_count && !uses; ++i) {
+            const widget_object_t *o = &s_model->objects[i];
+            uses = sensor_binding(o->binding);
+            for (size_t j = 0; j < o->carousel_item_count && !uses; ++j)
+                uses = sensor_binding(o->carousel_items[j].binding);
+        }
+    }
+    xSemaphoreGive(s_lock);
+    return uses;
 }
