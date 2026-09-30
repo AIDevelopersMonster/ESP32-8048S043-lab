@@ -48,7 +48,8 @@ function ArchiveTagName([string]$Branch) {
 }
 
 git rev-parse --is-inside-work-tree | Out-Null
-git fetch origin --prune --tags
+git fetch origin --prune
+if ($LASTEXITCODE -ne 0) { throw "git fetch origin --prune failed." }
 
 $main = (git rev-parse origin/main).Trim()
 Write-Host "origin/main = $main"
@@ -128,7 +129,8 @@ foreach ($Item in $ArchiveDelete) {
     git push origin --delete $Item.Branch
 }
 
-git fetch origin --prune --tags
+git fetch origin --prune
+if ($LASTEXITCODE -ne 0) { throw "final git fetch origin --prune failed." }
 
 Write-Host ""
 Write-Host "Repository branch consolidation complete."
