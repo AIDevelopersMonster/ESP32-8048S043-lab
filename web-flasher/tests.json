@@ -16,41 +16,28 @@
       "version": "0.4.0",
       "manifest": "manifest-app18.json",
       "runtimeStatus": "physical-pass-climate-and-web",
-      "webFlasherStatus": "published-candidate-awaiting-browser-install-retest",
-      "notes": "Sample A physically passed Climate Controller control logic, SD HMI and local /climate Web control on the exact app-only image from CI run 36713194827. The full 0.4.0 release image is now published for fresh-install Web Flasher use; browser installation of the full image remains a separate installation-path check.",
+      "webFlasherStatus": "published",
+      "notes": "Sample A physically passed Climate Controller control logic, SD HMI and local /climate Web control on the exact accepted app-only image. The matching full image is published for fresh-install Web Flasher use.",
       "source": "../apps/18_ClimateController/",
       "otaStatus": "physical-pass-release-0.4.0",
-      "otaNotes": "The exact accepted app-only image was written to ota_1, flash digest verified, booted as PENDING_VERIFY, exercised through the Web UI, then confirmed VALID."
+      "otaNotes": "The exact accepted app-only image was written to ota_1, flash digest verified, booted PENDING_VERIFY, exercised through the Web UI, then confirmed VALID."
     },
     {
-      "id": "app13-kontakts-platform",
-      "version": "0.3.7",
-      "manifest": "manifest-app13.json",
-      "runtimeStatus": "physical-pass-advanced-serial-terminal-0.4.0",
-      "webFlasherStatus": "candidate-pending-browser-retest",
-      "notes": "Sample A physically passed Platform 0.3.7 with USB Serial Monitor and Advanced Serial Terminal 0.4.0. The LVGL buttonmatrix keyboard and fullscreen modal keyboard overlay were physically accepted on 2026-09-23. Web Flasher catalog now points to the same released full image; browser installation of this exact 0.3.7 image remains a separate retest.",
-      "source": "../apps/06_OTARecovery/",
-      "otaStatus": "physical-pass-platform-0.3.7",
-      "otaNotes": "Platform 0.3.7 GitHub OTA assets and manifest are current. The same release supplies app06-ota.bin for app-only OTA and app06-ota-recovery-v0.3.7-full.bin for full installation."
+      "id": "app16-kontakts-platform",
+      "version": "0.3.9",
+      "manifest": "manifest-app16.json",
+      "runtimeStatus": "physical-pass-previous-platform",
+      "webFlasherStatus": "published",
+      "notes": "Previous accepted integrated platform retained as rollback/reference.",
+      "source": "../apps/16_BLEControl/"
     },
     {
-      "id": "app01-six-card-serial-deck",
-      "version": "1.0.0",
-      "manifest": "manifest-app01.json",
-      "runtimeStatus": "physical-pass",
-      "webFlasherStatus": "physical-pass",
-      "video": "https://youtube.com/shorts/0I5JL6jt8e0",
-      "source": "../apps/01_SixCardSerialDeck/"
-    },
-    {
-      "id": "app02-mixed-widgets",
-      "version": "0.1.1",
-      "manifest": "manifest-app02.json",
-      "runtimeStatus": "physical-pass-v0.1.0",
-      "webFlasherStatus": "pending-browser-install-v0.1.1",
-      "notes": "v0.1.1 only widens and repositions BACK TO CONTROLS; functional widget behavior is unchanged from physically validated v0.1.0.",
-      "video": "https://youtube.com/shorts/LwmW8UwDED0",
-      "source": "../apps/02_MixedWidgets/"
+      "id": "app07-recovery",
+      "version": "0.2.4-r1",
+      "manifest": "manifest-app07-v024.json",
+      "runtimeStatus": "physical-pass-recovery-baseline",
+      "webFlasherStatus": "published",
+      "notes": "Known-good recovery baseline retained for service/recovery use."
     }
   ]
 }
