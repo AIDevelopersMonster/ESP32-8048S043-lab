@@ -2,7 +2,6 @@
   const secure = window.isSecureContext;
   const serialSupported = "serial" in navigator;
   const grid = document.getElementById("firmware-grid");
-  const laboratoryGrid = document.getElementById("laboratory-grid");
   const arduinoIdeSlot = document.getElementById("arduino-ide-slot");
   const sdSlot = document.getElementById("sd-library-slot");
   const sdAppsSlot = document.getElementById("sd-apps-slot");
@@ -192,7 +191,6 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const catalog = await response.json();
       const firmwares = Array.isArray(catalog.firmwares) ? catalog.firmwares : [];
-      const laboratoryFirmwares = Array.isArray(catalog.laboratory_firmwares) ? catalog.laboratory_firmwares : [];
       if (!firmwares.length) throw new Error("catalog contains no platform firmware entries");
 
       renderSdLibrary(catalog.sd_library);
@@ -210,14 +208,9 @@
           : '<article class="card"><h2>No individual SD applications published yet</h2></article>';
       }
       grid.innerHTML = firmwares.map(renderFirmware).join("");
-      if (laboratoryGrid) {
-        laboratoryGrid.innerHTML = laboratoryFirmwares.length
-          ? laboratoryFirmwares.map(renderFirmware).join("")
-          : '<article class="card"><h2>No laboratory firmware entries</h2></article>';
-      }
 
-      console.log(`${catalog.project}: loaded ${firmwares.length} platform firmware entries, ${laboratoryFirmwares.length} laboratory entries and ${mobileClients.length} mobile clients`);
-      for (const firmware of [...firmwares, ...laboratoryFirmwares]) {
+      console.log(`${catalog.project}: loaded ${firmwares.length} platform firmware entries and ${mobileClients.length} mobile clients`);
+      for (const firmware of firmwares) {
         console.log(`${firmware.id}: ${firmware.name} ${firmware.version} - ${firmware.status}`);
       }
     } catch (error) {
@@ -226,7 +219,6 @@
       if (sdSlot) sdSlot.innerHTML = "";
       if (sdAppsSlot) sdAppsSlot.innerHTML = "";
       if (mobileClientsSlot) mobileClientsSlot.innerHTML = "";
-      if (laboratoryGrid) laboratoryGrid.innerHTML = "";
       if (arduinoIdeSlot) arduinoIdeSlot.innerHTML = "";
     }
   }
