@@ -57,6 +57,9 @@ env:
   APP16_BIN_NAME: app16-kontakts-platform-v0.3.9-full.bin
   APP16_RELEASE_URL: https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.3.9/app06-ota-recovery-v0.3.9-full.bin
   APP16_SHA256: 20d3cd2675e49fa84e1be6ff9dbf0c01a4d3786234138cf4511014b9b4fdbc76
+  APP18_BIN_NAME: app18-kontakts-platform-v0.4.0-full.bin
+  APP18_RELEASE_URL: https://github.com/AIDevelopersMonster/ESP32-8048S043-lab/releases/download/app06-v0.4.0/app06-ota-recovery-v0.4.0-full.bin
+  APP18_SHA256: f2787661fd55a8a6da1cd8131b644d3c874d89182d1cc5a7f057255a777893b0
 
 jobs:
   build:
@@ -124,6 +127,8 @@ jobs:
           echo "$APP13_SHA256  .web-flasher-downloads/$APP13_BIN_NAME" | sha256sum -c -
           curl -fL --retry 5 --retry-delay 3 "$APP16_RELEASE_URL" -o ".web-flasher-downloads/$APP16_BIN_NAME"
           echo "$APP16_SHA256  .web-flasher-downloads/$APP16_BIN_NAME" | sha256sum -c -
+          curl -fL --retry 5 --retry-delay 3 "$APP18_RELEASE_URL" -o ".web-flasher-downloads/$APP18_BIN_NAME"
+          echo "$APP18_SHA256  .web-flasher-downloads/$APP18_BIN_NAME" | sha256sum -c -
 
       - name: Verify firmware images
         run: |
@@ -134,6 +139,7 @@ jobs:
           test -s "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}"
           test -s ".web-flasher-downloads/${APP13_BIN_NAME}"
           test -s ".web-flasher-downloads/${APP16_BIN_NAME}"
+          test -s ".web-flasher-downloads/${APP18_BIN_NAME}"
           sha256sum "${APP01_PROJECT_DIR}/build/${APP01_BIN_NAME}"
           sha256sum "${APP02_PROJECT_DIR}/build/${APP02_BIN_NAME}"
           sha256sum "${APP03_PROJECT_DIR}/build/${APP03_BIN_NAME}"
@@ -141,6 +147,7 @@ jobs:
           sha256sum "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}"
           sha256sum ".web-flasher-downloads/${APP13_BIN_NAME}"
           sha256sum ".web-flasher-downloads/${APP16_BIN_NAME}"
+          sha256sum ".web-flasher-downloads/${APP18_BIN_NAME}"
 
       - name: Assemble Web Flasher catalog
         run: |
@@ -154,6 +161,7 @@ jobs:
           cp "${STABLE_PROJECT_DIR}/build/${STABLE_BIN_NAME}" "site/firmware/${STABLE_BIN_NAME}"
           cp ".web-flasher-downloads/${APP13_BIN_NAME}" "site/firmware/${APP13_BIN_NAME}"
           cp ".web-flasher-downloads/${APP16_BIN_NAME}" "site/firmware/${APP16_BIN_NAME}"
+          cp ".web-flasher-downloads/${APP18_BIN_NAME}" "site/firmware/${APP18_BIN_NAME}"
 
       - name: Upload firmware catalog for review
         uses: actions/upload-artifact@v4
@@ -167,6 +175,7 @@ jobs:
             ${{ env.STABLE_PROJECT_DIR }}/build/${{ env.STABLE_BIN_NAME }}
             .web-flasher-downloads/${{ env.APP13_BIN_NAME }}
             .web-flasher-downloads/${{ env.APP16_BIN_NAME }}
+            .web-flasher-downloads/${{ env.APP18_BIN_NAME }}
             web-flasher/manifest-app01.json
             web-flasher/manifest-app02.json
             web-flasher/manifest-app03.json
@@ -174,6 +183,7 @@ jobs:
             web-flasher/manifest-app07-v024.json
             web-flasher/manifest-app13.json
             web-flasher/manifest-app16.json
+            web-flasher/manifest-app18.json
             web-flasher/firmware-list.json
             web-flasher/tests.json
           if-no-files-found: error
