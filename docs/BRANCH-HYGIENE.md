@@ -1,10 +1,10 @@
 # Branch hygiene — Platform 0.4.0 consolidation
 
-The repository has completed the App18 / Platform 0.4.0 research-to-product milestone.
+The repository has completed the App18 / Platform 0.4.0 research-to-product milestone. The one-time branch consolidation was executed successfully: all 32 historical divergent branches were preserved as annotated archive tags and their remote branch refs were removed.
 
 ## Final branch policy
 
-The intended long-lived branch set is:
+The long-lived branch set is now:
 
 ```text
 main
@@ -63,3 +63,13 @@ Git commit history, evidence documents and per-application READMEs remain the pr
 - Delete the branch after merge.
 - If an abandoned research branch contains uniquely valuable evidence, archive its exact tip as a tag before deletion.
 - Never merge an old divergent archive wholesale into `main`; cherry-pick only a deliberately reviewed change.
+
+## Completed consolidation
+
+Remote branch audit after cleanup:
+
+```text
+main
+```
+
+Historical refs are indexed in `docs/ARCHIVE-MAP.md`.
